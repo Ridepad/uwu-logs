@@ -1,3 +1,9 @@
 *.exe
+
 *.txt
+
 *.log
+
+trash/
+
+test*.py

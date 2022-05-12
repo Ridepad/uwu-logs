@@ -1,8 +1,6 @@
-from logging import exception
 import os
 import threading
 from datetime import datetime, timedelta
-from turtle import exitonclick
 
 from flask import Flask, render_template, request, send_from_directory
 from flask.helpers import url_for
@@ -12,13 +10,11 @@ from werkzeug.utils import redirect
 import _main
 import constants
 import deaths
+import ladder_db_list
 import logs_calendar
 import logs_upload
-
-import ladder_db_list
-
-import WarmaneBossFights.main_db as boss_db
 import WarmaneBossFights.is_kill as _ladder
+import WarmaneBossFights.main_db as boss_db
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
