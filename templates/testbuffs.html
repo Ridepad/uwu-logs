@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block the_main %}
+<div class="wrapper">
+
+  <input class="radio" id="one" name="group" type="radio" checked="checked">
+  <label class="tab" id="one-tab" for="one">BUFFS</label>
+  <input class="radio" id="two" name="group" type="radio">
+  <label class="tab" id="two-tab" for="two">DEBUFFS</label>
+
+  <table class="panel" id="one-panel">
+    {% for spell_name, timings in auras.get('BUFF', {}).items() %}
+    <tr>
+      <td class="spell-name {{ spell_colors[spell_name] }}">{{ spell_name }}</td>
+      <td class="uppestoftime">
+      {% for t, l in timings %}
+        {% if t %}
+        <div class="rectangle-yes" style="width: {{ l }}%;"></div>
+        {% else %}
+        <div class="rectangle-nop" style="width: {{ l }}%;"></div>
+        {% endif %}
+      {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  
+  <table class="panel" id="two-panel">
+    {% for spell_name, timings in auras.get('DEBUFF', {}).items() %}
+    <tr>
+      <td class="spell-name {{ spell_colors[spell_name] }}">{{ spell_name }}</td>
+      <td class="uppestoftime">
+        {% for t, l in timings %}
+        {% if t %}
+        <div class="rectangle-yes" style="width: {{ l }}%;"></div>
+        {% else %}
+        <div class="rectangle-nop" style="width: {{ l }}%;"></div>
+        {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+</div>
+{% endblock the_main %}

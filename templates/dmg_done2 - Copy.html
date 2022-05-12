@@ -1,0 +1,100 @@
+{% extends "layout_report.html" %}
+
+{% block main1 %}
+<div class="panel2">
+  <table id="dmg-done">
+    <tr>
+      <th class="spell-name">=</th>
+      <th colspan="2">Totals</th>
+      <th colspan="5">Direct</th>
+      <th colspan="5">DoT</th>
+    </tr>
+    <tr>
+      <th class="spell-name">Spell Name
+      <th>Actual
+      <th>Absolute
+      <th colspan="2">Hit
+      <th colspan="2">Crit
+      <th>%
+      <th colspan="2">Hit
+      <th colspan="2">Crit
+      <th>%
+    </tr>
+    {% for spell_id, spell_name in spell_names.items() %} 
+    <tr>
+      <td class="spell-name {{ spell_colors[spell_id] }}">{{ spell_name }}</td>
+      <td class="total-cell">{{act_total[spell_id]}}</td>
+      <td class="total-cell">{{raw_total[spell_id]}}</td>
+      {% for hits_count, hits_avg, crits_count, crits_avg, percent in hits_data[spell_id] %}
+      
+      <td class="count">{{hits_count}}</td>
+      <td>
+        {% if hits_avg %}
+        {{hits_avg[0]}}
+        <table class="avgs">
+          <tr>
+            <td>{{hits_avg[1]}}
+            <th>MAX
+          </tr>
+          <tr>
+            <td>{{hits_avg[2]}}
+            <th>^ 10%
+          </tr>
+          <tr>
+            <td>{{hits_avg[3]}}
+            <th>^ 50%
+          </tr>
+          <tr>
+            <td>{{hits_avg[4]}}
+            <th>v 50%
+          </tr>
+          <tr>
+            <td>{{hits_avg[5]}}
+            <th>v 10%
+          </tr>
+          <tr>
+            <td>{{hits_avg[6]}}
+            <th>MIN
+          </tr>
+          </table>
+        {% endif %}
+      </td>
+      <td class="count">{{crits_count}}</td>
+      <td>
+        {% if crits_avg %}
+        {{crits_avg[0]}}
+        <table class="avgs">
+          <tr>
+            <td>{{crits_avg[1]}}
+            <th>MAX
+          </tr>
+          <tr>
+            <td>{{crits_avg[2]}}
+            <th>^ 10%
+          </tr>
+          <tr>
+            <td>{{crits_avg[3]}}
+            <th>^ 50%
+          </tr>
+          <tr>
+            <td>{{crits_avg[4]}}
+            <th>v 50%
+          </tr>
+          <tr>
+            <td>{{crits_avg[5]}}
+            <th>v 10%
+          </tr>
+          <tr>
+            <td>{{crits_avg[6]}}
+            <th>MIN
+          </tr>
+        </table>
+        {% endif %}
+      </td>
+      <td class="count">{{percent}}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock main1 %}

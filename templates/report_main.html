@@ -1,0 +1,65 @@
+{% extends "layout_report.html" %}
+
+{% block the_main %}
+<main id="report-main">
+  <section>
+    <table id="damage">
+      <caption>Damage done</caption>
+      <tr>
+        <th>Name</th>
+        <th colspan="2">Total</th>
+        <th>DPS</th>
+      </tr>
+      {% for player_name, source_total, dps, p in DAMAGE %}
+      <tr>
+        {% if player_name in SPECS %}
+        <td class="player-cell" title="{{ SPECS[player_name][0] }}">
+          <img src="{{ icon_cdn_link }}/{{ SPECS[player_name][1] }}.jpg">
+          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        </td>
+        {% else %}
+        <td class="player-cell" title="Unknown">
+          <img src="{{ icon_cdn_link }}/inv_misc_questionmark.jpg">
+          <a class="unknown" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        </td>
+        {% endif %}
+        <td class="total-cell">{{ source_total }}</td>
+        <td class="rectangle-cell"><div style="width: {{ p }}%;"></div></td>
+        <td class="dps-cell">{{ dps }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+  <section>
+    <table id="heal">
+      <caption>Healing done</caption>
+      <tr>
+        <th>Name</th>
+        <th colspan="2">Total</th>
+        <th>HPS</th>
+      </tr>
+      {% for player_name, source_total, hps, p in HEALS %}
+      <tr>
+        {% if player_name in SPECS %}
+        <td class="player-cell" title="{{ SPECS[player_name][0] }}">
+          <img src="{{ icon_cdn_link }}/{{ SPECS[player_name][1] }}.jpg">
+          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        </td>
+        {% else %}
+        <td class="player-cell" title="Unknown">
+          <img src="{{ icon_cdn_link }}/inv_misc_questionmark.jpg">
+          <a class="unknown" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        </td>
+        {% endif %}
+        <td class="total-cell">{{ source_total }}</td>
+        <td class="rectangle-cell">
+          <div style="width: {{ p }}%;"></div>
+        </td>
+        <td class="dps-cell">{{ hps }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+</main>
+
+{% endblock the_main %}

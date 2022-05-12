@@ -1,0 +1,41 @@
+{% extends "layout_report.html" %}
+
+{% block the_main %}
+<main id="report-damage">
+  <div>
+    <table>
+      <caption>damage to target</caption>
+
+      <tr>
+      {% for _th in _ths %}
+        <th>{{ _th }}</th>
+      {% endfor %}
+      </tr>
+      {% for player_name, player_total in _total.items() %}
+      <tr>
+        <td class="player-cell">
+          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        </td>
+        <td class="total-cell">{{ player_total }}</td>
+        {% for tguid, _t in _all_shit.items() %}
+        <td class="total-cell">{{ _t.get(player_name, 0) }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</main>
+{% endblock the_main %}
+{% block the_scripts %}
+<script>
+  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
+  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+
+  document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+    const tbody = th.closest('tbody');
+    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+         .sort(comparer(th.cellIndex))
+         .forEach(tr => tbody.appendChild(tr));
+  })));
+</script>
+{% endblock the_scripts %}

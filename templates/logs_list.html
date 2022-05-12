@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block the_main %}
+<main id="calendar">
+{{ new_month | safe }}
+</main>
+{% endblock the_main %}
+
+{% block main_foot %}
+<footer>
+  <ul>
+    <li>
+      <a href="/logs_list?page={{ page-1 }}">&lt;&lt;</a>
+    </li>
+    <li>
+      <h1 id="footer-date"></h1><a href="/logs_list">{{ month }} {{ year }}</a></h1>
+    </li>
+    <li>
+      <a href="/logs_list?page={{ page+1 }}">&gt;&gt;</a>
+    </li>
+  </ul>
+</footer>
+{% endblock main_foot %}

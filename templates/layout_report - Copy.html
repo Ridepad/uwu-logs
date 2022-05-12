@@ -1,0 +1,136 @@
+{% extends "layout.html" %}
+
+{% if report_id %}
+
+{% block head_meta %}
+<meta name="title" content="UwU Logs{% if report_name %} - {{ report_name }}{% endif %}">
+<meta name="description" content="WoTLK Logs. Check out full report via link.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://uwulogs.io/">
+<meta property="og:title" content="UwU Logs{% if report_name %} - {{ report_name }}{% endif %}">
+<meta property="og:description" content="WoTLK Logs. Check out full report via link.">
+<!-- <meta property="og:image" content="/static/123123.png"> -->
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://uwulogs.io/">
+<meta property="twitter:title" content="UwU Logs{% if report_name %} - {{ report_name }}{% endif %}">
+<meta property="twitter:description" content="WoTLK Logs. Check out full report via link.">
+<!-- <meta property="twitter:image" content="/static/123123.png"> -->
+{% endblock head_meta %}
+
+{% block fight_aside %}
+{% if segments_links %}
+<aside id="fights-container">
+  <h1><a href="/reports/{{ report_id }}">{{ report_name }}</a></h1>
+  <!-- <h2>BOSS SEGMENTS ▼</h2> -->
+  <ul>
+    {% for boss_name, diffs in segments_links.items() %}
+    <li>
+      {{ boss_links[boss_name] | safe }}
+      <ul class="diffs">
+        {% for diff, segms in diffs.items() %}
+        <li>
+          {{ diff_links[boss_name][diff] | safe }}
+          <ul class="segments">
+            {% for segm in segms %}
+            <li>
+              {{ segm | safe}}
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+</aside>
+{% endif %}
+{% endblock fight_aside %}
+{% block main_foot %}
+<footer>
+  <ul id="bot-nav">
+    <!-- <li>
+      <h1><a href="/reports/{{ report_id }}">{{ report_name }}</a></h1>
+    </li> -->
+    <li>
+      <a href="/reports/{{ report_id }}/{{ query }}">
+        {{ slice_duration }} | {% if boss_name_id %}{{ boss_name_id }}{% else %}Custom slice{% endif %}
+      </a>
+    </li>
+    <li>
+      {% if 'boss' in query %}
+      <a href="/reports/{{ report_id }}/damage/{{ query }}">DAMAGE</a>
+      {% else %}
+      <a href="#">DAMAGE</a>
+      {% endif %}
+    </li>
+    <!-- <a href="/reports/{{ report_id }}/heal/{{ query }}">HEAL</a> -->
+    <!-- <a href="/reports/{{ report_id }}/deaths/{{ query }}">DEATHS</a> -->
+    <!-- <a href="/reports/{{ report_id }}/valks/{{ query }}">VALKS</a> -->
+    <li>
+      <a href="/reports/{{ report_id }}/potions/{{ query }}">POTIONS</a>
+    </li>
+    <li>
+      <a href="/reports/{{ report_id }}/custom_search/{{ query }}">SEARCH</a>
+    </li>
+    <li id="filtered-spells-container">
+      <input id="spells-search" type="text" maxlength="10" size="10" placeholder="Search for spells">
+      <div id="filtered-spells"></div>
+      <!-- <table>
+        <tbody id="filtered-spells"></tbody>
+      </table> -->
+    </li>
+  </ul>
+</footer>
+{% endblock main_foot %}
+
+{% block main_scripts %}
+<script>
+  const tabs = document.querySelectorAll('[type="radio"]');
+  if (tabs.length > 0) tabs[0].checked = true;
+
+  const query = window.location.search
+  const reportID = window.location.pathname.split('/')[2]
+  const postEndPoint = `/reports/${reportID}/spellsearch`
+  const spellSearchInput = document.getElementById("spells-search");
+  const spellSearchResults = document.getElementById("filtered-spells");
+  
+  const xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = () => {
+    if (xhttp.readyState != 4 || xhttp.status != 200) return;
+
+    const response = JSON.parse(xhttp.response);
+
+    if (Object.keys(response).length === 0) {
+      spellSearchResults.innerHTML = "Spell not found!";
+      return
+    }
+
+    spellSearchResults.innerHTML = "";
+    for (let spellID in response) {
+      let link = document.createElement('a');
+      link.href = `/reports/${reportID}/spell/${spellID}/${query}`;
+      link.innerHTML = `<span>${spellID}</span><span>${response[spellID]}</span>`;
+      spellSearchResults.appendChild(link);
+    }
+  }
+
+  let requestTimeout;
+  spellSearchInput.addEventListener('input', () => {
+    clearTimeout(requestTimeout);
+    if (spellSearchInput.value.length < 3) return;
+
+    requestTimeout = setTimeout(() => {
+      xhttp.open("POST", postEndPoint, true);
+      xhttp.send(JSON.stringify({
+        'filter': spellSearchInput.value
+      }));
+    }, 500);
+  });
+</script>
+{% endblock main_scripts %}
+{% endif %}

@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block the_main %}
+<main id="fights-log">
+  <table id="fights-log-table">
+    <tr>
+      <th>ID</th>
+      <th class="boss-cell">BOSS</th>
+      <th>SIZE</th>
+      <th>DIFF</th>
+      <th>DUR</th>
+      <th>ATT</th>
+    </tr>
+    <tr>
+    {% for report_id, row in df.iterrows() %}
+    <tr>
+      <td><a href="http://armory.warmane.com/pveladder/Lordaeron/details/{{ report_id }}" rel="external" target="_blank">{{ report_id }}</a></td>
+      <td>{{ row["boss"] }}</td>
+      <td>{{ row["size"] }}</td>
+      <td>{% if row["difficulty"] %}H{% else %}N{% endif %}</td>
+      <td>{{ row["duration"] }}</td>
+      <td>{{ row["attempts"] }}</td>
+      <td>
+        <input id="k{{ report_id }}" class="radio" name="fights-players-group" type="radio" checked>
+        <label class="show-players" for="k{{ report_id }}">PLAYERS</label>
+        <section class="fights-players">
+          <table>
+            <tr>
+              <th colspan="2">NAME</th>
+              <th>GUILD</th>
+            </tr>
+            {% for _name, _guild, _spec in zip(row["names"], row["guilds"], row["specs"]) %}
+            <tr>
+              <td title="{{ _spec }}"><img src="http://cdn.cavernoftime.com/wotlk/icons/large/{{ _classes[_spec]['icon'] }}.jpg" alt="{{ _spec }}" width="20" height="20"></td>
+              <td class="player-cell {{ _classes[_spec]['class'] }}">{{ _name }}</td>
+              <td class="guild-cell">{{ _guild }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </section>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</main>
+{% endblock the_main %}
+{% block main_foot %}
+<footer>
+  <a href="{{ back }}"><h1>&lt;&lt;</h1></a>
+  <a href="{{ url }}"><h1>Page {{ page+1 }}</h1></a>
+  <a href="{{ forward }}"><h1>&gt;&gt;</h1></a>
+</footer>
+{% endblock main_foot %}
+
+{% block the_scripts %}
+{% endblock the_scripts %}

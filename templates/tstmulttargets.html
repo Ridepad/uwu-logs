@@ -1,0 +1,43 @@
+{% extends "layout_report.html" %}
+
+{% block head_after %}
+<style>
+  {{ customstyle }}
+</style>
+{% endblock head_after %}
+
+{% block the_main %}
+<!-- for target_name in shit -->
+<div class="panel2">
+  {% for name, color, name_css in checkboxes %}
+  <input type="checkbox" class="target-checkbox" id="tar-{{ name_css }}" checked>
+  <label class="target-checkbox-label" for="tar-{{ name_css }}" style="--hue-rect:{{ color }}">{{ name }}</label>
+  {% endfor %}
+  <table class="target-table">
+    {% for spell_name in spells %}
+    <tr>
+      <td class="spell-name  {{ spell_colors[spell_name] }}">{{ spell_name }}</td>
+      <td class="another-debuff-td">
+        <!-- data -->
+        {% for guid, color, zindex, name_css in intable %}
+        <div class="target tar-{{ name_css }}" style="z-index:{{ zindex }}">
+          {% for uptime in casts[guid]["spells"].get(spell_name, []) %}
+          <div class="target-uptime ">
+            {% for t, perc in uptime %}
+            <div class="rectangle" style="width: {{ perc }}%; 
+            {% if t %}
+            --hue-rect:{{ color }}
+            {% endif %}
+            ">
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock the_main %}
