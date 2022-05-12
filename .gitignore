@@ -5,7 +5,7 @@
 *.zip
 *.ini
 test*
-legacy*
+legacy[A-z0-9_]*
 
 trash/
 __pycache__/
@@ -21,4 +21,3 @@ kill_db*/
 kill_json*/
 tmp_cache*/
 bkup/
-
