@@ -1,0 +1,89 @@
+{% extends "layout_report.html" %}
+
+{% block head_after %}
+<style>
+
+</style>
+{% endblock head_after %}
+
+{% block the_main %}
+<main id="player">
+  <a class="swap-button" id="swap-buffs" href="/reports/{{ report_id }}/player/{{ source_name }}/{{ query }}">DAMAGE</a>
+
+  <input id="buffs" name="player-group" type="radio">
+  <label class="tab" for="buffs">BUFFS</label>
+
+  <input id="debuffs" name="player-group" type="radio">
+  <label class="tab" for="debuffs">DEBUFFS</label>
+
+  <input id="casts" name="player-group" type="radio">
+  <label class="tab" for="casts">CASTS</label>
+
+  <section id="buffs-panel">
+    <table>
+      <tr>
+        <th>SPELL</th>
+        <th>%</th>
+        <th>UPTIME</th>
+      </tr>
+      {% for spell_id, timings in buffs.items() %}
+      <tr>
+        <td class="spell-name"><a class="{{ spell_colors[spell_id] }}" href="/reports/{{ report_id }}/spell/{{ spell_id }}/{{ query }}">{{ all_spells[spell_id]['name'] }}</a></td>
+        <td>{{ buffs_uptime[spell_id] }}</td>
+        <td class="uppestoftime">
+          {% for t, l in timings %}
+          {% if t %}
+          <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
+          {% else %}
+          <div class="rectangle" style="width: {{ l }}%;"></div>
+          {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section id="debuffs-panel">
+    <table>
+      <tr>
+        <th>SPELL</th>
+        <th>%</th>
+        <th>UPTIME</th>
+      </tr>
+    {% for spell_id, timings in debuffs.items() %}
+    <tr>
+      <td class="spell-name"><a class="{{ spell_colors[spell_id] }}" href="/reports/{{ report_id }}/spell/{{ spell_id }}/{{ query }}">{{ all_spells[spell_id]['name'] }}</a></td>
+      <td>{{ debuffs_uptime[spell_id] }}</td>
+      <td class="uppestoftime">
+        {% for t, l in timings %}
+        {% if t %}
+        <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
+        {% else %}
+        <div class="rectangle" style="width: {{ l }}%;"></div>
+        {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+    </table>
+  </section>
+
+  <section id="casts-panel"></section>
+
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const getCellValue = (tr, idx) => tr.children[idx].innerText;
+  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+
+  document.querySelectorAll('th:nth-child(2)').forEach(th =>  {
+    const tbody = th.closest('tbody');
+    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+        .sort(comparer(th.cellIndex))
+        .forEach(tr => tbody.appendChild(tr));
+  });
+</script>
+{% endblock the_scripts %}

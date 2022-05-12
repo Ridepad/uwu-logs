@@ -1,0 +1,46 @@
+{% extends "layout_report.html" %}
+
+{% block head_after %}
+<style>
+  {{ customstyle }}
+</style>
+{% endblock head_after %}
+
+{% block the_main %}
+<main>
+<div id="deaths">
+  <input id="open-tabs" type="checkbox">
+  <label for="open-tabs">Select death</label>
+  <div id="all-tabs">
+    {% for name_css, name in tabs %}
+    <input id="{{ name_css }}" type="radio" name="deaths-group" checked>
+    <label id="{{ name_css }}-tab" class="tab" for="{{ name_css }}">{{ name }}</label>
+    {% endfor %}
+    {% for name_css, death in _deaths %}
+    <div id="{{ name_css }}-panel" class="panel">
+      <table>
+        <tr>
+          <th>TIME
+          <th>FLAG
+          <th>SOURCE
+          <th>SPELL
+          <th>VALUE
+          <th>OVER
+        </tr>
+        {% for css, time, suffix, source, spell, v1, v2 in death %}
+        <tr class="{{css}}">
+          <td>{{ time }}</td>
+          <td>{{ suffix }}</td>
+          <td class="name {{ class_data[source] }}">{{ source }}</td>
+          <td class="name">{{ spell }}</td>
+          <td>{{ v1 }}</td>
+          <td>{{ v2 }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</main>
+{% endblock the_main %}

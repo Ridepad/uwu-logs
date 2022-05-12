@@ -1,0 +1,40 @@
+{% extends "layout_report.html" %}
+
+{% block the_main %}
+<main id="potions">
+  <table id="potions-table">
+    <tr>
+      <th>
+      <th title="Total">T
+      {% for pot_id, _info in pot_info.items() %}
+      <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ pot_id }}" width="20" height="20">
+      {% endfor %}
+    </tr>
+    {% for player_name, total_value in total.items() %}
+    <tr>
+      <td class="player-cell">
+        <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+      </td>
+      <td>{{ total_value }}
+      {% for pot_id in pot_info %}
+      <td>{{ pots.get(pot_id, {})[player_name] }}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
+  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+
+  document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+    const tbody = th.closest('tbody');
+    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+         .sort(comparer(th.cellIndex))
+         .forEach(tr => tbody.appendChild(tr));
+  })));
+</script>
+{% endblock the_scripts %}

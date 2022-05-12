@@ -1,0 +1,1318 @@
+:root {
+  --highlight-color: rgb(24, 24, 24);
+  --footer-height: 4.5vh;
+  --nav-height: 6vh;
+  --primary-color: blueviolet;
+  --link-hover: hsl(271, 100%, 70%);
+  --secondary-color: darkviolet;
+  --third-color: darkorchid;
+  --link-text-shadow: burlywood;
+  --link-text-shadow-hover: brown;
+  --background: black;
+  --unfocused: hsl(271, 100%, 20%);
+  --hover: hsl(271, 100%, 35%);
+  --margin-top: 8vh;
+  --margin-bottom: 8vh;
+  /* --highlight-alternate-color: rgb(128, 128, 128); */
+}
+
+* {
+  color: gainsboro;
+  font-family: Ubuntu;
+  font-size: 1.6vh;
+  text-decoration: none;
+  font-weight: 500;
+  margin: 0;
+}
+
+@media (min-width: 1100px) {
+  * {
+    font-size: 2vh;
+  }
+}
+
+/* Hide scrollbar */
+html {
+  background-color: var(--background);
+  overflow: none;
+  -ms-overflow-style: none; /*IE Edge*/
+  scrollbar-width: none;  /*Firefox*/
+}
+html::-webkit-scrollbar {
+  display: none; /*Chrome Safari Opera*/
+}
+
+/* class colors */
+.death-knight {color: crimson;}
+.mage {color:lightskyblue;}
+.shaman {color:rgb(0, 80, 255);}
+.rogue {color:gold;}
+.hunter {color:yellowgreen;}
+.paladin {color:violet;}
+.priest {color:whitesmoke;}
+.warrior {color:sienna;}
+.druid {color:darkorange;}
+.warlock {color:slateblue;}
+/* spell colors */
+.holy {color:goldenrod;}
+.fire {color:orangered;}
+.nature {color:green;}
+.frost {color:skyblue;}
+.shadow {color:darkslateblue;}
+.arcane {color:mediumpurple;}
+.froststrike {color:lightgray;}
+.frostfire {color:indianred;}
+.shadowstrike {color:rebeccapurple;} /* shadow + physical */
+.shadowstorm {color:teal;} /*(plague) shadow + nature */
+.shadowfrost {color:slateblue;} /* shadow + frost */
+.divine {color:violet;} /* arcane + holy */
+.spellshadow {color:purple;} /* arcane + shadow */
+.firestorm {color:hsl(86, 100%, 40%);}
+.shadowlight {color:hsl(43, 75%, 30%);}
+.chaos {color:hsl(263, 100%, 30%);}
+
+.flamestrike,
+.holyfire,
+.stormstrike,
+.holystorm,
+.holyfrost,
+.froststorm,
+.shadowflame,
+.spellstrike,
+.spellfire,
+.spellstorm,
+.spellfrost,
+.elemental,
+.chromatic,
+.magic {
+  color:hsla(0, 0%, 50%, 0.5);
+}
+
+
+/* #home-page {
+  display: grid;
+  grid-auto-flow: row;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  height: 94vh;
+}
+#home-page a {
+  font-size: 14vmin;
+  width: 12ch;
+  text-shadow: 0 0 .1em dimgray;
+}
+#home-page a:hover,
+.row:hover {
+  color: var(--primary-color);
+  text-shadow: 0 0 .5em var(--primary-color);
+} */
+
+
+
+input[type="text"] {
+  background: var(--background);
+  color: var(--primary-color);
+  border: none;
+  border-bottom: 3px solid var(--primary-color);
+}
+input[type="submit"] {
+  color: black;
+} 
+
+#home-button {
+  /* position: fixed; */
+  /* margin-right: 50%;
+  margin-left: 50%; */
+  text-align: center;
+  font-size: 5vh;
+  color:var(--third-color);
+  /* border: currentColor .08em solid; */
+  padding: 0 1em;
+  /* margin: 0 1em; */
+  /* border-radius: 0.3em; */
+  text-shadow: 0 0 2em silver, 0 0 1em currentColor;
+  /* box-shadow: inset 0 0 .5em currentColor, 0 0 .5em currentColor; */
+  animation-name: homebutton;
+  animation-duration: 4s;
+  animation-iteration-count: infinite;
+}
+@keyframes homebutton {
+  0%,
+  100% {color: var(--third-color);}
+  50%  {color: var(--primary-color);}
+}
+#home-button:hover {
+  /* box-shadow: inset 0 0 .65em currentColor, 0 0 1em currentColor; */
+  text-shadow: 0 0 2em silver, 0 0 .5em currentColor;
+}
+
+
+
+.logs-list > a {
+  font-size: 3vh;
+  display: block;
+}
+
+
+
+nav {
+  display: grid;
+}
+
+#top-nav {
+  display: none;
+  width: 100%;
+  background-color: var(--background);
+  position: absolute;
+  top: 6vh;
+  box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
+}
+#top-nav > a {
+  text-align: center;
+  width: 100%;
+}
+#top-chkbox {
+  font-size: 5vh;
+  right: 0;
+  padding: 0 5vw;
+  position: absolute;
+}
+#open-top:checked ~ #top-nav {
+  display: grid;
+}
+
+/* footer {
+  display: grid;
+}
+
+footer > ul {
+  display: none;
+  width: 100%;
+  background-color: var(--background);
+  position: absolute;
+  top: 6vh;
+}
+footer > ul > a {
+  text-align: center;
+  width: 100%;
+} */
+/* #top-chkbox {
+  font-size: 5vh;
+  right: 0;
+  padding: 0 5vw;
+  position: absolute;
+}
+#open-top:checked ~ #top-nav {
+  display: grid;
+} */
+
+
+nav,
+footer {
+  z-index: 3;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  background-color: var(--background);
+
+}
+nav {
+  top: 0;
+  height: var(--nav-height);
+  box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
+  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
+}
+footer {
+  bottom: 0;
+  height: var(--footer-height);
+  box-shadow: inset 0 .5rem 1rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color);
+  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
+}
+
+nav > a
+/* footer > a, */
+/* footer > div > a */
+{
+  font-size: 3vh;
+  text-shadow: .1em .1em .5em var(--link-text-shadow);
+}
+/* ,
+footer > a:hover,
+footer > div > a:hover */
+nav a:hover {
+  color: var(--primary-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+}
+
+
+
+
+#top-nav > a {
+  font-size: 5vh;
+  text-shadow: 0 0 .1em dimgray;
+}
+@media (min-width: 1100px) {
+  nav,
+  #top-nav {
+    display: inline-block;
+  }
+  #top-chkbox {
+    display: none;
+  }
+  #top-nav {
+    top: unset;
+    background-color: unset;
+    box-shadow: unset;
+  }
+  #top-nav > a {
+    margin-left: 2vw;
+  }
+}
+
+
+ul {
+  list-style-type: none;
+}
+
+
+/* footer > * {
+  margin-top: .5vh;
+  display: inline-block;
+  margin-left: 1vw;
+}
+footer > h2 > a {
+  margin-left: 1rem;
+  font-size: 3vh;
+  color: var(--primary-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+} */
+
+#spells-search {
+  font-size: 3vh;
+  padding-left: .2em;
+  padding-right: .2em;
+  width: 14ch;
+  background: none;
+  color: dimgray;
+  border: none;
+  outline: none;
+  border-bottom: solid currentColor;
+}
+#spells-search:focus {
+  color: var(--primary-color);
+}
+
+
+
+footer > ul {
+  /* max-height: var(--footer-height); */
+  height: 100%;
+  /* padding: 0; */
+  /* margin: 0; */
+  /* padding-top: .5em; */
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 3rem;
+}
+
+footer a {
+  font-size: 3vh;
+  text-shadow: .1em .1em .5em var(--link-text-shadow);
+}
+footer a:hover {
+  color: var(--primary-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+}
+
+footer > ul > li {
+  min-width: fit-content;
+  text-align: center;
+  /* padding: 0 1rem; */
+  /* min-width: 20ch; */
+}
+
+
+/* boss segments */
+
+.wipe-link {color: crimson;}
+.kill-link {color: aquamarine;}
+
+#fights-container {
+  z-index: 2;
+  position: fixed;
+  left: 0;
+  top: calc(var(--nav-height) + .5vh);
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+#fights-container::after {
+  content: '';
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 5em;
+  background-color: rgba(0, 0, 0, 0);
+
+}
+#fights-container:hover::after,
+#fights-container:hover > ul,
+#fights-container li:hover > ul {
+  display: block;
+}
+
+#fights-container > h1 {
+  z-index: 2;
+  font-size: 150%;
+  padding: .1em;
+  padding-left: 1ch;
+  border: .1em solid var(--primary-color);
+  border-radius: .3em;
+  background-color: var(--background)
+}
+
+#fights-container > h1::after {
+  content: '▼';
+  /* padding-left: 1em;
+  padding-right: 1em; */
+  padding-left: 2ch;
+  padding-right: 2ch;
+}
+
+#fights-container > h1 > a {
+  font-size: inherit;
+}
+
+
+#fights-container > ul,
+#fights-container .segments {
+  border: .2em solid var(--primary-color);
+}
+#fights-container .segments {
+  z-index: 5;
+  position: absolute;
+  left: 75%;
+  top: 0;
+}
+@media (min-width: 1100px) {
+  #fights-container .segments {
+    left: 100%;
+  }
+}
+
+#fights-container ul a {
+  font-size: 2vh;
+  padding-right: 2ch;
+}
+#fights-container ul {
+  display: none;
+  padding: 0;
+  min-width: max-content;
+  background-color: black;
+}
+#fights-container li {
+  position: relative;
+}
+#fights-container a:hover {
+  color: var(--link-hover);
+}
+#fights-container li:hover {
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+  background-color: var(--highlight-color); 
+}
+
+#fights-container > ul > li::before {
+  content: '▼';
+  margin-right: 2ch;
+  margin-left: 2ch;
+  font-size: 2vh;
+}
+#fights-container .diffs > li::before {
+  content: '▶';
+  margin-right: 2ch;
+  margin-left: 3ch;
+  font-size: 2vh;
+}
+
+
+
+/* FILTERED SPELLS */
+#filtered-spells-container {
+  position: fixed;
+  right: 0;
+}
+#filtered-spells-container > div {
+  display: none;  
+  position: absolute;
+  width: max-content;
+  bottom: 100%;
+  right: 0;
+  z-index: 1;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
+
+}
+#filtered-spells-container:focus-within > div {
+  display: table;
+}
+#filtered-spells > a {
+  display: table-row;
+}
+#filtered-spells > a:hover span {
+  color: var(--link-hover);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+}
+#filtered-spells > a > span {
+  display: table-cell;
+  font-size: inherit;
+  padding-right: 1ch;
+  text-align: left;
+}
+#filtered-spells > a > span:first-child {
+  min-width: 6ch;
+  text-align: right;
+}
+
+
+
+
+main {
+  margin-top: 12vh;
+  margin-bottom: 8vh;
+  position: relative;
+  /* padding-bottom: 8vh; */
+  /* padding-top: 8vh;
+  padding-bottom: 8vh; */
+}
+
+#report-main {
+  display: grid;
+  grid-auto-flow: row;
+  justify-content: center;
+}
+#report-main > section {
+  padding-top: 2rem;
+}
+@media (min-width: 1100px) {
+  #report-main {
+    grid-auto-flow: column;
+  }
+  #report-main > section {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
+}
+
+
+caption {
+  text-transform: uppercase;
+  font-weight: 600;
+}
+table, th, td {
+  border-spacing: 0;
+  padding: 0;
+}
+th, td {
+  border: 1px solid dimgray;
+}
+
+th {
+  font-weight: 600;
+  background-color: var(--highlight-color);
+}
+tbody > tr:nth-child(odd) > td {
+  background-color: hsl(0, 0%, 5%);
+}
+tbody > tr:hover > td {
+  background-color: hsl(285, 100%, 5%);
+}
+td {
+  min-width: 4ch;
+  background-color: var(--background);
+  background-clip: padding-box;
+}
+td > a {
+  text-shadow: 0 0 3rem currentColor;
+}
+td > a:hover {
+  text-shadow: 0 0 3rem currentColor, 0 0 .3em currentColor;
+}
+
+
+
+/* TABLE CELLS */
+#dmg-taken td {
+  min-width: 12ch;
+}
+.avgs td {
+  min-width: 7ch;
+}
+.player-cell {
+  min-width: 15ch;
+}
+.boss-cell {
+  min-width: 20ch;
+}
+.dps-cell {
+  min-width: 7ch;
+  text-align: right;
+}
+.total-cell {
+  min-width: 10ch;
+  text-align: right;
+}
+.rectangle-cell {
+  width: 12rem;
+}
+.source-name {
+  min-width: 15ch;
+}
+.spell-name {
+  font-weight: 600;
+  width: 21vw;
+  text-overflow:clip;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.count {
+  min-width: 6ch;
+}
+
+.uppestoftime {
+  width: 78vw;
+}
+.buffs {
+  display: inline;
+  width: 25ch;
+  margin-left: 5em;
+}
+.buff-count {
+  width: 6ch;
+  text-align: right;
+}
+.percentage-cell {
+  width: 6ch;
+  text-align: right;
+}
+
+.rectangle-cell > div {
+  height: .9em;
+  height: 1em;
+  border-radius: 0.1em;
+  animation: 3s linear infinite;
+}
+#damage .rectangle-cell > div {
+  box-shadow: .1em .1em 1em darkred;
+  animation-name: dmgbar;
+}
+@keyframes dmgbar {
+  0%,
+  100% {background-color: hsl(0, 85%, 30%);}
+  50%  {background-color: hsl(0, 100%, 25%);}
+}
+#heal .rectangle-cell > div {
+  box-shadow: .1em .1em 1em forestgreen;
+  animation-name: healbar;
+}
+@keyframes healbar {
+  0%,
+  100% {background-color: hsl(120, 75%, 25%);}
+  50%  {background-color: hsl(120, 100%, 25%);}
+}
+
+td > img {
+  height: 1.1em;
+  vertical-align: middle;
+}
+
+/* USEFUL DAMAGE */
+#report-damage th {
+  min-width: 13ch;
+  max-width: 13ch;
+}
+
+
+/* LABELS */
+
+label,
+select {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.2rem;
+  padding-bottom: 0;
+  border: none;
+  background-color: unset;
+  color: var(--secondary-color);
+  border-bottom: .2rem solid var(--primary-color);
+}
+
+select * {
+  background-color: var(--background);
+}
+
+input:not(:checked) + label {
+  color: var(--unfocused);
+  border-bottom: .2rem solid currentColor;
+}
+
+input:not(:checked) + label:hover {
+  color: var(--hover);
+}
+
+label:hover {
+  text-shadow: 0 0 .5em currentColor;
+}
+label:hover,
+select:hover {
+  box-shadow: inset 0 0 .6em currentColor, 0 .1em 1em currentColor;
+}
+
+
+
+button,
+.swap-button {
+  cursor: pointer;
+  min-width: 7ch;
+  font-size: 3ch;
+  background: var(--background);
+  border: .1rem solid var(--primary-color);
+  border-radius: .2rem;
+}
+button:hover,
+.swap-button:hover {
+  color: var(--primary-color);
+  box-shadow: inset 0 0 .4em currentColor, 0 .1em .7em currentColor;
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+
+/* input:checked + label {
+  border-bottom: .2rem solid var(--primary-color);
+  color: var(--secondary-color);
+  color: var(--primary-color);
+}  */
+
+.panel,
+input[type="radio"],
+input[type="checkbox"],
+.target-table td > div {
+  display: none;
+}
+
+
+input:checked + label + div {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 20vh;
+}
+
+/* input:checked ~ div ~ div {
+  display: none;
+} */
+
+
+.target-checkbox-label {
+  display: inline-block;
+  padding-top: .2em;
+  padding-bottom: .2em;
+  padding-left: .5em;
+  padding-right: .5em;
+  font-size: 3vmin;
+  margin-left: 1em;
+  color: dimgray;
+  border-bottom: .15em solid;
+  border-radius: .3em;
+}
+
+.panel > input:checked + label {
+  color: hsl(var(--hue-rect), 100%, 25%);
+  text-shadow: 0 0 .5em currentColor;
+  box-shadow: inset 0 0 .6em currentColor, 0 .1em 1em currentColor;
+}
+
+.panel,
+.target-table {
+  margin-top: 2rem;
+  left: 0;
+}
+
+.target-uptime {
+  position: absolute;
+  padding: .15em;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.target-table td:last-child {
+  width: 80vw;
+  position: relative;
+}
+
+.rectangle {  
+  background-color: hsl(var(--hue-rect), 100%, 25%);
+  height: 1em;
+  float: left;
+}
+
+
+/* DEATHS */
+#deaths tr * {
+  text-shadow: 0 0 1em var(--background);
+}
+
+#open-tabs + label {
+  position: fixed;
+}
+#deaths .panel {
+  position: fixed;
+  top: 10vh;
+  overflow: scroll;
+  height: 80%;
+}
+#deaths table {
+  position: relative;
+  overflow: scroll;
+}
+#deaths .name {
+  text-overflow:ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#all-tabs label {
+  position: relative;
+  display: none;
+  z-index: 1;
+  top: -2vh;
+  padding: 0 1rem;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .4rem var(--primary-color);
+}
+#open-tabs:checked ~ div label {
+  display: block;
+}
+#deaths input:checked + label {
+  color: crimson;
+}
+#deaths .damage > td {
+  background-color: hsl(348, 100%, 15%);
+}
+#deaths .buff > td {
+  background-color: hsl(50, 50%, 20%);
+}
+#deaths .debuff > td {
+  background-color: hsl(325, 100%, 15%);
+}
+#deaths .heal > td {
+  background-color: hsl(135, 100%, 15%);
+}
+
+/* DAMAGE */
+
+#dmg-done {
+  padding-bottom: 17vh;
+}
+
+#dmg-done button {
+  /* margin: 0; */
+  padding: 0 1rem;
+  background: var(--background);
+  border: .2rem solid var(--primary-color);
+  border-radius: .2rem;
+  box-shadow: inset 0 0 .4rem var(--primary-color), 0 .1rem 1rem var(--primary-color);
+}
+#dmg-done button:hover {
+  cursor: pointer;
+  box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
+}
+
+#dmg-done section {
+  margin: 0;
+  /* padding-top: 2rem; */
+}
+#dmg-done-selection {
+  position: fixed;
+  bottom: 4vh;
+  background-color: var(--background);
+  width: 100%;
+  z-index: 1;
+  padding: 1rem 0;
+}
+#dmg-done-selection select {
+  margin-left: 1rem;
+  min-width: 22ch;
+}
+#dmg-done-selection button,
+#dmg-done-selection select {
+  font-size: clamp(1vw, 3rem, 5vw);
+}
+#dmg-done #dmg-done-main {
+  /* padding-top: 10vh; */
+  margin-left: clamp(15ch, 19vw, 40ch);
+}
+#dmg-done .spell-name {
+  width: clamp(15ch, 20vw, 40ch);
+  text-align: left;
+  position: fixed;
+  left: 0;
+  z-index: 1;
+}
+@media (min-width: 1100px) {
+  #dmg-done #dmg-done-main {
+    margin: unset;
+  }
+  #dmg-done .spell-name {
+    position: unset;
+  }
+}
+#dmg-done td:nth-child(n+5):hover {
+  background-color: hsl(285, 100%, 15%);
+}
+#dmg-done #dmg-done-main table {
+  overflow-y:scroll;
+}
+#dmg-done .count {
+  position: relative;
+}
+#dmg-done th:nth-child(n+2),
+#dmg-done td:nth-child(2),
+#dmg-done td:nth-child(3),
+#dmg-done td:nth-child(4),
+#dmg-done td:nth-child(5),
+#dmg-done td:nth-child(7),
+#dmg-done td:nth-child(9),
+#dmg-done td:nth-child(10),
+#dmg-done td:nth-child(12),
+#dmg-done td:nth-child(14),
+#dmg-done td:nth-child(16) {
+  border-left: 3px solid dimgray;
+}
+#dmg-done > tfoot > tr > td {
+  border-top: 3px solid dimgray;
+  color: var(--third-color);
+}
+#dmg-done td:nth-child(n+2) {
+  text-align: right;
+}
+
+td:hover > table {
+  display: table;
+}
+.avgs {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 95%;
+  z-index: 2;
+  box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
+}
+.avgs tr:nth-child(1) > td {
+  background-color: hsl(140, 100%, 10%);
+}
+.avgs tr:nth-child(2) > td {
+  background-color: hsl(140, 100%, 10%);
+}
+.avgs tr:nth-child(3) > td {
+  background-color: hsl(100, 100%, 10%);
+}
+.avgs tr:nth-child(4) > td {
+  background-color: hsl(60, 100%, 10%);
+}
+.avgs tr:nth-child(5) > td {
+  background-color: hsl(20, 100%, 10%);
+}
+.avgs tr:nth-child(6) > td {
+  background-color: hsl(20, 100%, 10%);
+}
+
+
+/* VALKS */
+#valks section {
+  position: absolute;
+}
+#valks input:checked ~ section {
+  display: flex;
+}
+#valks input:checked ~ section ~ section {
+  display: none;
+}
+#valks article {
+  margin: 0 5rem;
+}
+
+#grabs .grab {
+  background-color: crimson;
+}
+#grabs .absent {
+  background-color: hsl(271, 67%, 20%);
+}
+#grabs td {
+  min-width: 4ch;
+}
+#grabs .absent {
+  min-width: 1ch;
+}
+
+
+
+/* UPLOAD */
+.upload {
+  display: grid;
+  justify-content: center;
+}
+
+#upload-error {
+  margin-top: 1rem;
+  color: crimson;
+}
+#upload-status {
+  width: 20vw;
+}
+
+
+/* NO PAGE */
+#no-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#no-page > img {
+  width: clamp(112px, 95vw, 60vh);
+  height: clamp(112px, 95vw, 60vh);
+}
+#no-page p {
+  margin: 1rem;
+}
+
+
+/* SELECTION */
+:is(div, label, #home-button)::-moz-selection {
+  background: none;
+  color:currentColor;
+}
+:is(div, label, #home-button)::-webkit-selection {
+  background: none;
+  color:currentColor;
+}
+:is(div, label, #home-button)::selection {
+  background: none;
+  color:currentColor;
+}
+
+
+/* FIGHTS */
+
+/* #fights-log-table > tbody > tr:first-child {
+  position: absolute;
+  top: 10vh;
+  left: 0;
+} */
+
+
+#fights-log input {
+  background: var(--background);
+  color: var(--primary-color);
+  border: none;
+  border-bottom: 3px solid var(--primary-color);
+}
+
+#fights-log {
+  padding: 2ch;
+  padding-bottom: 100vh;
+}
+
+#fights-log-table td {
+  padding: 0;
+}
+
+#fights-log-table-header {
+  text-align: center;
+  background-color: var(--background);
+  position: fixed;
+  top: calc(var(--margin-top) - .2vh);
+}
+
+#fights-log-table  #figdts-log-table-header td {
+  text-align: center;
+  position: sticky;
+}
+
+#fights-log-table td {
+  text-align: center;
+}
+
+#fights-log-table td:first-child,
+#fights-log-table td:nth-child(8) {
+  min-width: 8ch;
+}
+
+#fights-log-table td:nth-child(2),
+#fights-log-table td:nth-child(3) {
+  min-width: 24ch;
+}
+
+#fights-log-table td:nth-child(4),
+#fights-log-table td:nth-child(5) {
+  min-width: 2ch;
+}
+
+#fights-log-table td:nth-child(6) {
+  min-width: 4ch;
+  text-align: right;
+}
+#fights-log-table td:nth-child(7) {
+  min-width: 5ch;
+  text-align: right;
+}
+
+#fights-log-table input + label {
+  border-bottom: none;
+  margin: 0;
+  padding: 0;
+}
+
+
+#fights-log .fights-players td:first-child {
+  text-align: left;
+  min-width: 14ch;
+}
+
+#fights-log-table td section {
+  display: none;
+  position: fixed;
+  bottom: 10%;
+  right: 5%;
+}
+
+#fights-log-table input:checked ~ section {
+  display: block;
+}
+
+
+
+#db-search-buttons {
+  padding-top: 2rem;
+  padding-left: 2rem;
+}
+#db-search-field {
+  margin: 1rem;
+}
+#db-search-field > article {
+  margin-top: 1rem;
+}
+#db-search-field > article > * {
+  margin-left: 1rem;
+}
+#db-search-field > article > button {
+  min-width: 2ch;
+}
+#db-search-field > article > .db-search-input {
+  min-width: 30ch;
+  padding: 0;
+}
+
+
+/* PLAYER */
+
+#player section {
+  display: none;
+}
+
+#player #buffs:checked ~ #buffs-panel,
+#player #debuffs:checked ~ #debuffs-panel,
+#player #casts:checked ~ #casts-panel {
+  display: block;
+}
+
+#player label {
+  margin: 0 0;
+  width: 4em;
+  text-align: center;
+  padding: .2rem 1.5rem;
+  background: var(--background);
+  position: fixed;
+  bottom: 4.5vh;
+  left: 0;
+}
+
+#player td:nth-child(2) {
+  min-width: 6ch;
+  text-align: right;
+}
+
+#player label ~ label {
+  margin-left: 7rem;
+}
+
+#player label ~ label  ~ label {
+  margin-left: 14rem;
+}
+
+/* #player section {
+  position: fixed;
+  left: 0;
+  top: 10vh;
+} */
+
+/* #player input:checked + label + section {
+  display: block;
+} */
+
+
+/* CALENDAR */
+#calendar * {
+  font-size: clamp(10pt, calc(100vw / 17), 40pt);
+}
+#calendar td > section {
+  display: none;
+}
+#calendar td {
+  text-align: right;
+}
+#calendar label {
+  padding: 0;
+  min-width: 3ch;
+}
+#calendar input:checked ~ section {
+  display: grid;
+  grid-template-rows: auto;
+}
+#calendar section a {
+  min-width: 19ch;
+  text-align: left;
+}
+
+#calendar section a:hover {
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+
+#calendar section {
+  position: fixed;
+  bottom: 10%;
+  right: 5%;
+}
+#calendar tr:nth-child(n+2) > td {
+  color: var(--highlight-color);
+}
+
+#footer-date {
+  min-width: 14ch;
+  text-align: center;
+}
+
+
+
+
+#controls > * {
+  font-size: clamp(10pt, 3vh, 7vw);
+  text-align: center;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+#ladder #instance,
+#ladder #boss {
+  grid-column: span 3;
+}
+
+
+#table-section {
+  margin-top: 1vh;
+}
+#ladder table {
+  display: flex;
+  justify-content: center;
+}
+#ladder table * {
+  border: 0;
+}
+#ladder table th {
+  border-bottom: .2em solid var(--primary-color);
+}
+#ladder table td {
+  padding: 0 1vw;
+}
+
+#ladder td {
+  text-align: right;
+}
+
+#table-section td:nth-child(4) {
+  min-width: 2ch;
+  max-width: 4ch;
+}
+#table-section td:nth-child(5), 
+#table-section td:last-child {
+  min-width: calc(8ch + 2px);
+  max-width: calc(8ch + 2px);
+}
+#ladder table td:first-child,
+#table-section td:nth-child(3) {
+  min-width: 4.5ch;
+  max-width: 4.5ch;
+}
+#ladder .guild-cell,
+#ladder table td:last-child {
+  text-align: center;
+}
+#ladder .guild-cell {
+  /* word-break: break-word; */
+  /* word-break: keep-all; */
+  max-width: 35vw;
+  min-width: 10ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: "";
+  
+}
+
+@media (min-width: 1100px) {
+  #ladder #instance,
+  #ladder #boss {
+    min-width: 25ch;
+    margin-left: 0;
+  }
+  #ladder table {
+    width: unset;
+  }
+  #controls {
+    margin-inline: 30vw;
+  }
+  abbr span {
+    display: none;
+  }
+  abbr::before {
+    content: attr(title);
+  }
+}
+
+#swap-buffs {
+  font-size: clamp(1vw, 3rem, 5vw);
+  text-align: center;
+  position: fixed;
+  right:0;
+  bottom: 5vh;
+  /* margin: 0; */
+  padding: 0 1rem;
+  background: var(--background);
+  border: .2rem solid var(--primary-color);
+  border-radius: .2rem;
+  box-shadow: inset 0 0 .4rem var(--primary-color), 0 .1rem 1rem var(--primary-color);
+}
+#dmg-done button:hover {
+  cursor: pointer;
+  box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
+}
+
+#potions-table > tbody > tr th {
+  position: sticky;
+}

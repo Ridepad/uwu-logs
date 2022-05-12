@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block the_main %}
+<main>
+<section class="upload">
+  <h1>Upload new File</h1>
+  <form method=post enctype=multipart/form-data>
+    <input type=file name=file accept=".7z, .zip" multiple>
+    <input type=submit value=Upload>
+  </form>
+  <div id="upload-error">{{status}}</div>
+</section>
+</main>
+{% endblock the_main %}

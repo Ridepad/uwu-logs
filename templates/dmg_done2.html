@@ -1,0 +1,95 @@
+{% extends "layout_report.html" %}
+
+{% block the_main %}
+<main id="dmg-done">
+<section id="dmg-done-selection">
+  <a class="swap-button" id="swap-buffs" href="/reports/{{ report_id }}/player2/{{ source_name }}/{{ query }}">AURAS</a>
+  <button type="button" id="dmg-done-reset">Reset</button>
+  <select id="dmg-done-select">
+    <option>Select specific target:</option>
+    {% for target_name, guid_id in targets.items() %}
+    <option value="{{ guid_id }}">{{ target_name }}</option>
+    {% endfor %}
+  </select>
+</section>
+<section id="dmg-done-main">
+  <table>
+    <tbody>
+      <tr>
+        <th class="spell-name">-
+        <th colspan="3">Totals</th>
+        <th colspan="5">Direct hits</th>
+        <th colspan="5">Damage over time</th>
+      </tr>
+      <tr>
+        <th class="spell-name">Spell
+        <th>%
+        <th>Actual
+        <th>Absolute
+        <th colspan="2">Hit
+        <th colspan="2">Crit
+        <th>%
+        <th colspan="2">Hit
+        <th colspan="2">Crit
+        <th>%
+      </tr>
+      {% for spell_id, spell_name in spell_names.items() %} 
+      <tr class="{{ spell_id }}">
+        <td class="spell-name"><a class="{{ spell_colors[spell_id] }}" href="/reports/{{ report_id }}/spell/{{ spell_id }}/{{ query }}">{{ spell_name }}</a></td>
+        <td class="count">{{useful[spell_id][1]}}</td>
+        <td class="total-cell">{{useful[spell_id][0]}}</td>
+        <td class="total-cell">{{total[spell_id]}}</td>
+        {% for hits, percent in hits_data[spell_id] %}
+        {% for _count, _avg in hits %}
+        
+        <td class="count">{{ _count }}</td>
+        <td class="count">
+          {% if _avg %}
+          {{ _avg[0] }}
+          <table class="avgs">
+            {% for avg in _avg[1:] %}
+            <tr><td>{{ avg }}
+            {% endfor %}
+          </table>
+          {% endif %}
+        </td>
+        {% endfor %}
+        <td class="count">{{ percent }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td class="spell-name">Total</td>
+        <td></td>
+        <td>{{ useful["Total"][0] }}</td>
+        <td>{{ total["Total"] }}</td>
+        <td colspan="69"></td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const loc = window.location
+  const reset = document.getElementById("dmg-done-reset");
+  const select = document.getElementById("dmg-done-select");
+
+  const p = new URLSearchParams(loc.search);
+  const target = p.get('target');
+  target ? select.value = target : select.selectedIndex = 0;
+  
+  function redirect() {
+    const isReset = (select.selectedIndex == 0 || event.target == reset);
+    isReset ? p.delete('target') : p.set('target', select.value);
+    loc.replace(`${loc.origin}${loc.pathname}?${p}`)
+  };
+
+  reset.addEventListener('click', redirect);
+  select.addEventListener('change', redirect);
+</script>
+{% endblock the_scripts %}
