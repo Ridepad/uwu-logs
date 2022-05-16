@@ -16,7 +16,7 @@ import logs_spells_list
 import logs_units_guid
 import logs_valks3
 
-from constants import running_time, sort_dict_by_value
+from constants import running_time, sort_dict_by_value, add_new_numeric_data
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
@@ -118,11 +118,6 @@ def get_targets(logs_slice: list[str], source="0x06", target="0xF1"):
         target_id: {x for x in _targets if target_id in x}
         for target_id in target_ids
     }
-
-def add_new_number_data(data_total: defaultdict, data_new: dict):
-    for source, amount in data_new.items():
-        data_total[source] += amount
-
 
 def convert_to_html_name(name: str):
     return name.lower().replace(' ', '-').replace("'", '')
@@ -242,12 +237,12 @@ class THE_LOGS:
     def get_all_guids(self):
         return self.get_guids()[0]
 
-    def get_players_guids(self, filter_names=None, filter_guids=None):
+    def get_players_guids(self, filter_guids=None, filter_names=None):
         players = self.get_guids()[1]
-        if filter_names is not None:
-            return {k:v for k,v in players.items() if v in filter_names}
         if filter_guids is not None:
             return {k:v for k,v in players.items() if k in filter_guids}
+        if filter_names is not None:
+            return {k:v for k,v in players.items() if v in filter_names}
         return players
 
     def guid_to_player_name(self):
@@ -887,8 +882,8 @@ class THE_LOGS:
             durations.append(self.get_fight_duration(s, f))
 
             _data = self.report_page(s, f)
-            add_new_number_data(damage, _data["damage"])
-            add_new_number_data(heal, _data["heal"])
+            add_new_numeric_data(damage, _data["damage"])
+            add_new_numeric_data(heal, _data["heal"])
             specs |= _data['specs']
 
         total_duration = sum(durations)
@@ -939,7 +934,7 @@ class THE_LOGS:
             data = dmg_breakdown.parse_logs(logs_slice, all_guids, sGUID, tGUID)
             cached_data[sliceID] = data
 
-            add_new_number_data(total, data['absolute'])
+            add_new_numeric_data(total, data['absolute'])
 
             for spell_id, cats in data['useful'].items():
                 spells = actual[spell_id]
@@ -1039,7 +1034,7 @@ class THE_LOGS:
             durations.append(self.get_fight_duration(s, f))
             for spell_id, sources in _potions.items():
                 # q = potions.setdefault(spell_id, {})
-                add_new_number_data(potions[spell_id], sources)
+                add_new_numeric_data(potions[spell_id], sources)
         
         slice_duration = combine_durations(durations)
 
@@ -1112,7 +1107,10 @@ class THE_LOGS:
         }
 
 
-
+    # def useful_damage_combined(self, s, f, targets, boss_name):
+    #     logs_slice = self.get_logs(s, f)
+    #     data.update(dmg_useful.get_dmg(logs_slice, targets))
+    #     return
 
     def useful_damage(self, s, f, targets, boss_name) -> dict[str, dict[str, int]]:
         sliceID = f"{s}_{f}"
@@ -1154,7 +1152,7 @@ class THE_LOGS:
             data = self.useful_damage(s, f, targets_all, boss_name)
             for guid_id, _dmg_new in data.items():
                 # _dmg = all_data.setdefault(guid_id, {})
-                add_new_number_data(all_data[guid_id], _dmg_new)
+                add_new_numeric_data(all_data[guid_id], _dmg_new)
 
         slice_duration = combine_durations(durations)
 

@@ -121,7 +121,7 @@ def classes_gen(logs: list[str], players):
         yield line_split[2], line_split[7]
         if not players_set:
             break
-    print(players_set)
+    print(f"{players_set=}")
 
 @constants.running_time
 def get_classes(logs: list[str], players: dict[str, str]):
@@ -445,10 +445,15 @@ def specs_gen2(logs: list[str], players: dict[str, str], classes: dict[str, str]
             break
 
 @constants.running_time
-def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str]):
+def get_specs_guids(logs: list[str], players: dict[str, str], classes: dict[str, str]):
     specs = {guid: 0 for guid in players}
     for guid, spec_index in specs_gen(logs, players, classes):
         specs[guid] = spec_index
+    return specs
+
+@constants.running_time
+def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str]):
+    specs = get_specs_guids(logs, players, classes)
     
     new_data: dict[str, tuple[str, str]] = {}
     for guid, spec_index in specs.items():

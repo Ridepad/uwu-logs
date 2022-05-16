@@ -19,6 +19,15 @@ def dmg_gen_no_friendly(logs: list[str], players_and_pets: set[str]):
                 continue
         yield guid, int(d) - int(ok)
 
+def dmg_gen_targets(logs: list[str], targets: set[str]):
+    for line in logs:
+        if "_DAMAGE" not in line:
+            continue
+        _, _, guid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+        if tguid[:-6] not in targets:
+                continue
+        yield guid, int(d) - int(ok)
+
 def heal_gen(logs: list[str]):
     for line in logs:
         if "_H" not in line:
@@ -31,6 +40,7 @@ DATA_GEN = {
     "damage": dmg_gen,
     "heal": heal_gen,
     "damage_no_friendly": dmg_gen_no_friendly,
+    "damage_targets": dmg_gen_targets,
 }
 
 def parse_data(gen):
@@ -49,6 +59,12 @@ def parse_only_dmg(logs):
 def parse_only_dmg_no_friendly(logs, players_and_pets):
     gen_func = DATA_GEN["damage_no_friendly"]
     gen = gen_func(logs, players_and_pets)
+    return parse_data(gen)
+
+@running_time
+def parse_dmg_targets(logs, targets):
+    gen_func = DATA_GEN["damage_targets"]
+    gen = gen_func(logs, targets)
     return parse_data(gen)
 
 @running_time
@@ -79,27 +95,45 @@ def parse_both(logs: list[str], players_and_pets):
         "heal": heal,
     }
 
-def add_pets(data: dict[str, int], guids: dict[str, dict[str, str]]):
-    new_data: defaultdict[str, int] = defaultdict(int)
-    aboms: defaultdict[str, int] = defaultdict(int)
+CUSTOM_UNITS = {"00958D"}
+
+def add_pets_guids(data: dict[str, int], guids: dict[str, dict[str, str]]):
+    players: defaultdict[str, int] = defaultdict(int)
+    custom: defaultdict[str, int] = defaultdict(int)
+    other: defaultdict[str, int] = defaultdict(int)
+
     for sGUID, value in data.items():
-        try:
-            masterGUID = guids[sGUID].get('master_guid', sGUID)
-        except KeyError:
-            print(f"{sGUID} not in GUIDS!")
+        if sGUID not in guids:
+            print(f"[ERROR] {sGUID} not in GUIDS!")
             continue
-        if "00958D" in sGUID:
-            aboms[masterGUID] += value
+
+        masterGUID = guids[sGUID].get('master_guid', sGUID)
+        if sGUID[6:-6] in CUSTOM_UNITS:
+            custom[masterGUID] += value
         elif masterGUID.startswith('0x06'):
-            name = guids[masterGUID]["name"]
-            new_data[name] += value
+            players[masterGUID] += value
+        else:
+            other[masterGUID] += value
 
-    for sGUID, value in aboms.items():
+    return {
+        "players": players,
+        "custom": custom,
+        "other": other,
+    }
+
+def add_pets(data: dict[str, int], guids: dict[str, dict[str, str]]):
+    combined_data = add_pets_guids(data, guids)
+    players_dmg: dict[str, int] = {}
+    
+    for sGUID, value in combined_data["players"].items():
         name = guids[sGUID]["name"]
-        new_data[f"{name}-A"] = new_data.get(name, 0) + value
-
-    return new_data
-
+        players_dmg[name] = value
+    
+    for sGUID, value in combined_data["custom"].items():
+        name = guids[sGUID]["name"]
+        players_dmg[f"{name}-A"] = players_dmg.get(name, 0) + value
+    
+    return players_dmg
 
 
 @running_time

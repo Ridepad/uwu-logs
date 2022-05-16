@@ -4,11 +4,13 @@ import re
 import shutil
 import subprocess
 import threading
+from urllib.error import ContentTooShortError
+import py7zr
 
 import _main
 import constants
 import cut_logs
-from constants import T_DELTA_SEP, running_time, to_dt
+from constants import T_DELTA_SEP, running_time
 
 SIZE_CHECK = 4*1024*1024
 BUGGED_NAMES = {"nil", "Unknown"}
@@ -20,29 +22,48 @@ RAW_DIR = os.path.join(DIR_PATH, "LogsRaw")
 LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
 PARSED_DIR = os.path.join(UPLOADS_DIR, "__parsed__")
 constants.create_folder(PARSED_DIR)
+PARSED_LOGS_DIR = os.path.join(PARSED_DIR, "logs")
+constants.create_folder(PARSED_LOGS_DIR)
+LEGACY_UPLOAD = os.path.join(UPLOADS_DIR, 'legacy')
+constants.create_folder(LEGACY_UPLOAD)
 
-
-def archive_file(file_path: str, archive_path: str):
-    print("[UPLOAD LOGS]: ACHIVE RAW:", archive_path)
-    cmd = ['7za.exe', 'a', archive_path, file_path, '-m0=PPMd', '-mo=11', '-mx=9']
-    subprocess.call(cmd, shell=False)
 
 @running_time
-def write_new_logs(logs_id: str, new_logs: str):
+def write_new_logs(logs_id: str, new_logs: str, logs_slice: list[str]):
     logs_raw_path = os.path.join(PARSED_DIR, f"{logs_id}.txt")
-    old_logs = constants.file_read(logs_raw_path)
-    print(f"[SLICE LOGS]: LEN OLD: {len(old_logs):>13,} bytes")
-    print(f"[SLICE LOGS]: LEN NEW: {len(new_logs):>13,} bytes")
-
-    new_version = len(old_logs) != len(new_logs)
-    if new_version:
-        constants.file_write(logs_raw_path, new_logs)
-    else:
-        print('[SLICE LOGS]: LOGS EXIST')
-    
     archive_path = os.path.join(RAW_DIR, f"{logs_id}.7z")
-    if new_version or not os.path.exists(archive_path) or os.path.getsize(archive_path) < 1024*1024:
-        archive_file(logs_raw_path, archive_path)
+
+    old_logs = constants.file_read(logs_raw_path)
+    len_new = len(new_logs) + len(logs_slice)
+    with py7zr.SevenZipFile(archive_path) as a:
+        len_old = a.archiveinfo().uncompressed + 1
+    
+    print(f"[LOGS UPLOAD]: LEN NEWRAW: {len(new_logs):>13,} bytes")
+    print(f"[LOGS UPLOAD]: LEN OLDRAW: {len(old_logs):>13,} bytes")
+    print(f"[LOGS UPLOAD]: LEN NEWTXT: {len_new:>13,} bytes")
+    print(f"[LOGS UPLOAD]: LEN OLDTXT: {len_old:>13,} bytes")
+
+    if len_new == len_old:
+        print('[LOGS UPLOAD]: write_new_logs LOGS ARCHIVED')
+        if os.path.isfile(logs_raw_path):
+            os.remove(logs_raw_path)
+            print('[LOGS UPLOAD]: write_new_logs CACHE REMOVED')
+        return 0
+    
+    if len(new_logs) == len(old_logs):
+        print('[LOGS UPLOAD]: write_new_logs LOGS CACHED')
+    else:
+        constants.file_write(logs_raw_path, new_logs)
+    
+    print("[LOGS UPLOAD]: ACHIVE RAW:", archive_path)
+    
+    logs = os.path.join(PARSED_LOGS_DIR, f"{logs_id}.log")
+    cmd = ['7za.exe', 'a', archive_path, logs_raw_path, '-m0=PPMd', '-mo=11', '-mx=9']
+    with open(logs, 'a+') as f:
+        code = subprocess.call(cmd, stdout=f)
+        if code == 0 and os.path.isfile(logs_raw_path):
+            os.remove(logs_raw_path)
+            print('[LOGS UPLOAD]: write_new_logs CACHE REMOVED')
     
 
 @running_time
@@ -50,6 +71,7 @@ def _splitlines(s: str):
     return s.splitlines()
 
 def get_logs_name(logs: list[str]) -> str:
+    to_dt = constants.to_dt_closure()
     date = to_dt(logs[0]).strftime("%y-%m-%d--%H-%M")
     for line in logs:
         if "SPELL_CAST_FAILED" not in line:
@@ -59,16 +81,15 @@ def get_logs_name(logs: list[str]) -> str:
         if name not in BUGGED_NAMES:
             return f"{date}--{name}"
 
-@running_time
-def save_logs(logs, file_name):
-    logs_raw = cut_logs.join_logs(logs)
-    constants.zlib_text_write(logs_raw, file_name)
-
 def unzip_shit(full_path, upload_dir):
     if not full_path:
         return ""
+    
     cmd = ['7za.exe', 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
-    subprocess.call(cmd, stdout=None)
+    unzip_log = os.path.join(upload_dir, "unzip.log")
+    with open(unzip_log, 'a+') as f:
+        subprocess.call(cmd, stdout=f)
+    
     for file in os.listdir(upload_dir):
         if ".txt" in file:
             return file
@@ -80,8 +101,9 @@ def remove_scuff(logs, scuff, start, finish=None):
     return _slice
 
 def gothrufile(logs_raw):
+    to_dt = constants.to_dt_closure()
     logs_raw_lines = _splitlines(logs_raw)
-    index_start = 0
+    new_slice_start = 0
     last_dt = to_dt(logs_raw_lines[0])
     scuff = []
     for index_current, line in enumerate(logs_raw_lines):
@@ -94,22 +116,14 @@ def gothrufile(logs_raw):
             continue
 
         if dt - last_dt > T_DELTA_SEP:
-            # _slice = logs_raw_lines[index_start:index_current+1]
-            # for i in reversed(sorted(scuff)):
-            #     del _slice[index_start+i]
-            # yield _slice
-            yield remove_scuff(logs_raw_lines, scuff, index_start, index_current)
+            yield remove_scuff(logs_raw_lines, scuff, new_slice_start, index_current)
 
             scuff.clear()
-            index_start = index_current
+            new_slice_start = index_current
         
         last_dt = dt
 
-    # _slice = logs_raw_lines[index_start:]
-    # for i in reversed(sorted(scuff)):
-    #     del _slice[index_start+i]
-    # yield _slice
-    yield remove_scuff(logs_raw_lines, scuff, index_start)
+    yield remove_scuff(logs_raw_lines, scuff, new_slice_start)
     
 
 class NewUpload(threading.Thread):
@@ -149,30 +163,30 @@ class NewUpload(threading.Thread):
         logs_trimmed = cut_logs.trim_logs(logs_raw_formatted)
         logs_trimmed_joined = cut_logs.join_logs(logs_trimmed)
 
-        exists = constants.zlib_text_write(logs_trimmed_joined, cut_path, True)
+        exists = constants.zlib_text_write(logs_trimmed_joined, cut_path)
         if exists:
-            print('[UPLOAD LOGS] LOGS EXIST!')
+            print('[LOGS UPLOAD] main_parser LOGS EXIST!')
             self.parsed_new_logs(logs_id)
             return
 
-        new_logs = _main.THE_LOGS(logs_id)
-        new_logs.LOGS = logs_trimmed
-        print('[UPLOAD LOGS] NEW LOGS SET')
+        new_report = _main.THE_LOGS(logs_id)
+        new_report.LOGS = logs_trimmed
+        print('[LOGS UPLOAD] NEW LOGS SET')
         
         self.change_status("Parsing encounter data...")
-        new_logs.get_enc_data(rewrite=True)
+        new_report.get_enc_data(rewrite=True)
         
         self.change_status("Parsing GUIDs...")
-        new_logs.get_guids(rewrite=True)
+        new_report.get_guids(rewrite=True)
         
         self.change_status("Parsing player classes...")
-        new_logs.get_classes(rewrite=True)
+        new_report.get_classes(rewrite=True)
         
         self.change_status("Parsing timings...")
-        new_logs.get_timestamp(rewrite=True)
+        new_report.get_timestamp(rewrite=True)
         
         self.change_status("Parsing spells...")
-        new_logs.get_spells(rewrite=True)
+        new_report.get_spells(rewrite=True)
         
         self.parsed_new_logs(logs_id)
     
@@ -182,13 +196,15 @@ class NewUpload(threading.Thread):
             logs_slice.append('')
             new_logs = '\n'.join(logs_slice)
             if len(new_logs) < SIZE_CHECK:
+                print("[UPLOAD LOGS] run len(new_logs) < SIZE_CHECK")
                 continue
-
+            print("[UPLOAD LOGS] len(logs_slice) ", len(logs_slice))
             logs_id = get_logs_name(logs_slice)
-            
-            t = threading.Thread(target=write_new_logs, args=(logs_id, new_logs))
+            print('run threading?')
+            t = threading.Thread(target=write_new_logs, args=(logs_id, new_logs, logs_slice))
             self.threads.append(t)
             t.start()
+            print('run threading!')
             
             self.main_parser(new_logs, logs_id)
 
@@ -199,6 +215,8 @@ class NewUpload(threading.Thread):
 
         for t in self.threads:
             t.join()
+
+        os.remove(self.logs_raw_name)
 
 
 def new_upload_folder(ip='localhost'):
@@ -237,22 +255,18 @@ def main2(logs_raw_name_path, move=True):
 
     if not move:
         return NewUpload(logs_raw_name_path, new_upload_dir)
-    os.path.e
     logs_raw_name = os.path.basename(logs_raw_name_path)
     logs_new_name_path = os.path.join(new_upload_dir, logs_raw_name)
     os.rename(logs_raw_name_path, logs_new_name_path)
 
     return NewUpload(logs_new_name_path, new_upload_dir)
 
-LEGACY_UPLOAD = os.path.join(UPLOADS_DIR, 'legacy')
-# constants.create_folder(LEGACY_UPLOAD)
-
 def upload_legacy(full_path):
     print(f"[LOGS UPLOAD] upload_legacy {full_path}")
     file = File(full_path)
     new_upload_dir = os.path.join(LEGACY_UPLOAD, file.name)
     if os.path.exists(new_upload_dir):
-        print(f"[LOGS UPLOAD] {file.name} exists")
+        print(f"[LOGS UPLOAD] upload_legacy {file.name} exists")
         return
     
     constants.create_folder(new_upload_dir)
@@ -270,10 +284,10 @@ if __name__ == "__main__":
     import sys
     print(sys.argv)
     try:
-        # name = sys.argv[1]
-        # name = r"F:\World of Warcraft 3.3.5a HD\Logs\WoWCombatLog.txt"
-        name = r"F:\Python\wow_logs\LogsRaw\legacy\upload_12062.zip"
+        name = sys.argv[1]
     except IndexError as e:
+        # name = r"F:\Python\wow_logs\LogsRaw\legacy\upload_12062.zip"
+        # name = r"F:\World of Warcraft 3.3.5a HD\Logs\WoWCombatLog.txt"
         print(e)
         input()
     if name.endswith('.txt'):

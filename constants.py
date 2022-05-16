@@ -3,8 +3,16 @@ import os
 import pickle
 import re
 import zlib
+from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
+
+real_path = os.path.realpath(__file__)
+DIR_PATH = os.path.dirname(real_path)
+UPLOADS_DIR = os.path.join(DIR_PATH, "uploads")
+RAW_DIR = os.path.join(DIR_PATH, "LogsRaw")
+LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
+PARSED_DIR = os.path.join(UPLOADS_DIR, "__parsed__")
 
 
 T_DELTA = timedelta(seconds=100)
@@ -238,10 +246,6 @@ ENV_DAMAGE = {
     'SLIME': "90006",
 }
 
-
-def sort_dict_by_value(d: dict):
-    return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
-
 def running_time(f):
     def inner(*args, **kwargs):
         st = perf_counter()
@@ -251,11 +255,31 @@ def running_time(f):
         return q
     return inner
 
+def sort_dict_by_value(d: dict):
+    return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
+    
+def create_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+        print('[LOG]: Created folder:', path)
+
+def fix_extention(ext: str):
+    if ext[0] == '.':
+        return ext
+    return f".{ext}"
+
+def add_extention(path: str, ext=None):
+    if ext is not None:
+        ext = fix_extention(ext)
+        if not path.endswith(ext):
+            path = path.split('.')[0]
+            return f"{path}{ext}"
+    return path
+
 
 @running_time
 def json_read(path: str):
-    if not path.endswith('.json'):
-        path = f"{path}.json"
+    path = add_extention(path, '.json')
     print("[LOAD JSON]:", path)
     try:
         with open(path) as file:
@@ -265,39 +289,19 @@ def json_read(path: str):
 
 @running_time
 def json_read_no_exception(path: str):
-    if not path.endswith('.json'):
-        path = f"{path}.json"
-    print("[LOAD JSON]:", path)
+    path = add_extention(path, '.json')
     with open(path) as file:
         return json.load(file)
 
 def json_write(path: str, data, indent=2):
-    if not path.endswith('.json'):
-        path = f"{path}.json"
+    path = add_extention(path, '.json')
     with open(path, 'w') as file:
         json.dump(data, file, default=sorted, indent=indent)
 
 
 @running_time
-def file_read(path: str):
-    try:
-        with open(path, 'r') as f:
-            return f.read()
-    except FileNotFoundError:
-        return ""
-
-@running_time
-def file_write(path: str, data: str):
-    with open(path, 'w') as f:
-        f.write(data)
-
-@running_time
-def bytes_write(path: str, data: bytes):
-    with open(path, 'wb') as file:
-        file.write(data)
-
-@running_time
-def bytes_read(path: str):
+def bytes_read(path: str, ext=None):
+    path = add_extention(path, ext)
     try:
         with open(path, 'rb') as file:
             return file.read()
@@ -305,46 +309,31 @@ def bytes_read(path: str):
         return b''
 
 @running_time
-def zlib_compress(__data, level=7):
-    return zlib.compress(__data, level=level)
-
-def pickle_dumps(data):
-    return pickle.dumps(data)
-
-@running_time
-def zlib_pickle_write(data_raw, path: str):
-    if not path.endswith('.pickle.zlib'):
-        path = f"{path}.pickle.zlib"
-    data_pickle = pickle_dumps(data_raw)
-    comresesed = zlib_compress(data_pickle)
-    bytes_write(path, comresesed)
+def bytes_write(path: str, data: bytes, ext=None):
+    path = add_extention(path, ext)
+    with open(path, 'wb') as file:
+        file.write(data)
 
 @running_time
-def zlib_text_write(data_raw: str, path: str, check_exists: bool=False):
-    if not path.endswith('.zlib'):
-        path = f"{path}.zlib"
-    data_enc = data_raw.encode()
-    comresesed = zlib_compress(data_enc)
-    if not check_exists:
-        bytes_write(path, comresesed)
-        return
-    old_data = bytes_read(path)
-    exists = old_data == comresesed
-    if not exists:
-        bytes_write(path, comresesed)
-    return exists
+def file_read(path: str, ext=None):
+    path = add_extention(path, ext)
+    # try:
+    #     raw = bytes_read(path, ext)
+    #     return raw.decode()
+    # except Exception as e:
+    #     print(f"[file_read] {e}")
+
+    try:
+        with open(path, 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
 
 @running_time
-def zlib_text_write_check_exists(data_raw: str, path: str):
-    if not path.endswith('.zlib'):
-        path = f"{path}.zlib"
-    data_enc = data_raw.encode()
-    comresesed = zlib_compress(data_enc)
-    old_data = bytes_read(path)
-    exists = old_data == comresesed
-    if not exists:
-        bytes_write(path, comresesed)
-    return exists
+def file_write(path: str, data: str, ext=None):
+    path = add_extention(path, ext)
+    with open(path, 'w') as f:
+        f.write(data)
 
 
 @running_time
@@ -357,19 +346,55 @@ def pickle_from_bytes(data: bytes):
 
 @running_time
 def zlib_pickle_read(path: str):
-    if not path.endswith('.pickle.zlib'):
-        path = f"{path}.pickle.zlib"
+    path = add_extention(path, '.pickle.zlib')
     data_raw = bytes_read(path)
     data = zlib_decompress(data_raw)
     return pickle_from_bytes(data)
 
 @running_time
 def zlib_text_read(path: str):
-    if not path.endswith('.zlib'):
-        path = f"{path}.zlib"
+    path = add_extention(path, '.zlib')
     data_raw = bytes_read(path)
     data = zlib_decompress(data_raw)
     return data.decode()
+
+
+@running_time
+def pickle_dumps(data):
+    return pickle.dumps(data)
+
+@running_time
+def zlib_compress(__data, level=7):
+    return zlib.compress(__data, level=level)
+
+def zlib_pickle_make(data_raw):
+    data_pickle = pickle_dumps(data_raw)
+    comresesed = zlib_compress(data_pickle)
+    return comresesed
+
+@running_time
+def zlib_pickle_write(data_raw, path: str):
+    path = add_extention(path, '.pickle.zlib')
+    zlib_pickle = zlib_pickle_make(data_raw)
+    bytes_write(path, zlib_pickle)
+
+def zlib_text_make(data_raw: str):
+    data_enc = data_raw.encode()
+    comresesed = zlib_compress(data_enc)
+    return comresesed
+
+@running_time
+def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
+    path = add_extention(path, '.zlib')
+    zlib_text = zlib_text_make(data_raw)
+    if not check_exists:
+        bytes_write(path, zlib_text)
+        return
+    old_data = bytes_read(path)
+    exists = old_data == zlib_text
+    if not exists:
+        bytes_write(path, zlib_text)
+    return exists
 
 
 @running_time
@@ -377,8 +402,7 @@ def logs_splitlines(logs: str):
     return logs.splitlines()
 
 def pickle_read(path: str):
-    if not path.endswith('.pickle'):
-        path = f"{path}.pickle"
+    path = add_extention(path, '.pickle')
     try:
         with open(path, 'rb') as f:
             return pickle.load(f)
@@ -386,33 +410,9 @@ def pickle_read(path: str):
         print('[ERROR]: FILE DOESNT EXISTS:', path)
 
 def pickle_write(path: str, data):
-    if not path.endswith('.pickle'):
-        path = f"{path}.pickle"
+    path = add_extention(path, '.pickle')
     with open(path, 'wb') as f:
         pickle.dump(data, f)
-
-
-
-EXT_OPEN = {
-    '.pickle': pickle_read,
-    '.zlib': zlib_text_read,
-    '.pickle.zlib': zlib_pickle_read,
-    '.json': json_read,
-}
-
-def ext_strip(ext: str):
-    return f".{ext.strip().strip('.')}"
-
-def __open(path: str, ext: str):
-    ext = ext_strip(ext)
-    func = EXT_OPEN[ext]
-    try:
-        return func(path)
-    except FileNotFoundError:
-        if not path.endswith(ext):
-            return __open(func, f"{path}{ext}")
-        print('[ERROR]: FILE DOESNT EXISTS:', path)
-
 
 
 def get_now():
@@ -448,26 +448,22 @@ def convert_duration(t):
     minutes = t // 60 % 60
     hours = t // 3600
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
-    
-def create_folder(path):
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
-        print('[LOG]: Created folder:', path)
 
-def get_folders(dir) -> list[str]:
-    return next(os.walk(dir))[1]
 
-def get_files(dir):
-    return next(os.walk(dir))[2]
+def get_folders(path) -> list[str]:
+    return next(os.walk(path))[1]
 
-def get_all_files(folder=None, ext=None):
-    if folder is None:
-        folder = '.'
-    files = next(os.walk(folder))[2]
-    files = sorted(files)
+def get_files(path) -> list[str]:
+    return next(os.walk(path))[2]
+
+def get_all_files(path=None, ext=None):
+    if path is None:
+        path = '.'
+    files = get_files(path)
     if ext is None:
         return files
-    return [file for file in files if file.rsplit('.', 1)[-1] == ext]
+    ext = fix_extention(ext)
+    return [file for file in files if file.endswith(ext)]
 
     
 def redo_data(redo_func, multi=True, startfrom=None, end=None):
@@ -600,3 +596,8 @@ def find_date(report_id: int) -> str:
         if report_id > date_report_id:
             return date
 
+
+
+def add_new_numeric_data(data_total: defaultdict, data_new: dict):
+    for source, amount in data_new.items():
+        data_total[source] += amount

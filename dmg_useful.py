@@ -197,17 +197,14 @@ ALL_GUIDS = {
 def get_all_targets(boss_name: str, boss_guid_id: str=None):
     if not boss_name:
         return {}, {}
+    
     if boss_name in USEFUL:
         targets_useful = USEFUL[boss_name]
     elif boss_guid_id:
         targets_useful = {boss_guid_id[:-6]: boss_name}
     else:
         targets_useful = {}
-    # default_dict = {}
-    # if boss_guid_id is not None:
-    #     default_dict[boss_guid_id[:-6]] = boss_name
-    
-    # targets_useful = USEFUL.get(boss_name, default_dict)
+
     targets_all = ALL_GUIDS.get(boss_name, targets_useful)
     return targets_useful, targets_all
 
@@ -299,6 +296,14 @@ def specific_useful(logs_slice, boss_name):
         data['Valks Useful'] = valks_dmg['useful']
         # data['0xF150008F01'] = valks_dmg['useful']
     return data
+
+def specific_useful_combined(logs_slice, boss_name):
+    new_data = defaultdict(int)
+    data = specific_useful(logs_slice, boss_name)
+    for _data in data.values():
+        for guid, d in _data.items():
+            new_data[guid] += d
+    return new_data
 
 
 
