@@ -15,6 +15,7 @@ GHOUL_NAMES = {f"{x}{y}" for x in _prefix for y in _suffix}
 BASE_DK_PETS = {'Army of the Dead Ghoul', 'Risen Ghoul', 'Risen Ally'}
 
 SKIP = {'PARTY_KILL', 'UNIT_DIED'}
+NAMES_SKIP = {'nil', 'Unknown'}
 PET_FILTER_SPELLS = {
     '34952', # Go for the Throat
     '70840', # Devious Minds
@@ -34,6 +35,13 @@ BOSS_PETS = {
     # '008809': '0087DC', # Nether Portal
     # '0087FD': '0087DC', # Infernal Volcano
 }
+
+def save_new_dk_pet_names(_dk_missing_ghoul_names):
+    errors = constants.new_folder_path(constants.UPLOADS_DIR, 'errors')
+    for name in _dk_missing_ghoul_names:
+        p = os.path.join(errors, name)
+        open(p, 'w').close()
+
 
 def pet_sort_by_id(pets_raw):
     d: dict[str, set[str]] = {}
@@ -71,7 +79,7 @@ def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, 
 def logs_parser(logs: list[str]): # sourcery no-metrics
     everything: dict[str, dict[str, str]] = {}
     pets_data: dict[str, dict[str, str]] = {}
-    unholy_DK_pets: dict[str, set[str]] = {}
+    unholy_DK_pets: defaultdict[str, set[str]] = defaultdict(set)
 
     temp_pets: dict[str, dict[str, str]] = {}
     pets_raw: set[str] = set()
@@ -80,33 +88,24 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     _dk_missing_ghoul_names = set()
 
     for line in logs:
-        timestamp, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 7)
-        # timestamp, flag, source_guid, source_name, target_guid, target_name, *other = line.split(',')
+        _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 7)
 
-        if flag in SKIP or \
-            sName == 'Unknown' or \
-            tName == 'Unknown' or \
-            tName == 'nil':
+        if flag in SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
             continue
 
         if sGUID not in everything:
             everything[sGUID] = {'name': sName}
         elif tGUID not in everything:
             everything[tGUID] = {'name': tName}
-        if sGUID == "0x06000000005AA270" or tGUID == "0x06000000005AA270":
-            print(sName, tName)
-        # spell_id = other.split(',', 1)[0]
+
         spell_id = other[0]
 
-        if (
-            sName in GHOUL_NAMES
-            and "0xF14" in sGUID
-            or spell_id == '47468'
-            and sName not in BASE_DK_PETS
-        ) and sGUID != tGUID:  
-            unholy_DK_pets.setdefault(sGUID, set()).add(tGUID)
-            if sName not in GHOUL_NAMES:
-                _dk_missing_ghoul_names.add(sName)
+        if sName in GHOUL_NAMES and sGUID[:5] == "0xF14" or spell_id == '47468' and sName not in BASE_DK_PETS:
+            if sGUID != tGUID and tGUID[:4] == "0xF1":
+                # unholy_DK_pets.setdefault(sGUID, set()).add(tGUID)
+                unholy_DK_pets[sGUID].add(tGUID)
+                if sName not in GHOUL_NAMES:
+                    _dk_missing_ghoul_names.add(sName)
 
         elif spell_id == '43771' and sGUID != tGUID:
             pets_raw.add(tGUID)
@@ -130,39 +129,28 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         elif spell_id == '70308': # Mutated Transformation
             last_abom = new_entry('Mutated Abomination', sName, sGUID)
         
-        elif last_abom and sGUID[6:-6] == '00958D' and tGUID[6:-6] == '00958D':
-            # Mutated Abomination
+        elif last_abom and sGUID == tGUID and sGUID[6:-6] == '00958D': # Mutated Abomination
             temp_pets[sGUID] = last_abom
             last_abom = {}
 
     everything.update(temp_pets)
     add_missing_pets(everything, pets_data, pets_raw)
-    
-    for name in _dk_missing_ghoul_names:
-        print(f"=============== {name} ==============")
+
+    save_new_dk_pet_names(_dk_missing_ghoul_names)
 
     return everything, pets_data, unholy_DK_pets
 
 def convert_masters(data: dict[str, dict[str, str]]):
     for p in data.values():
-        master_guid = p.get('master_guid')
-        if not master_guid:
+        if 'master_guid' not in p:
             continue
+        master_guid = p['master_guid']
         master_master_guid = data.get(master_guid, {}).get('master_guid')
         if not master_master_guid:
             continue
         p['master_guid'] = master_master_guid
         p['master_name'] = data[master_master_guid]['name']
 
-
-def get_all_players(everything: dict[str, str]):
-    players: dict[str, str] = {}
-    for guid, properties in everything.items():
-        if guid[:4] == "0x06":
-            name = properties['name']
-            players[guid] = name
-            everything[guid] = {'name': name}
-    return players
 
 @constants.running_time
 def prune_players(logs: list[str], everything):
@@ -234,4 +222,4 @@ def __redo_all(startfrom=None, end=None):
 
 if __name__ == "__main__":
     # __redo_all("22-01-26--20-58--Safiyah")
-    __redo('21-12-12--20-54--Nomadra')
+    __redo('22-01-20--21-43--Wardawg')

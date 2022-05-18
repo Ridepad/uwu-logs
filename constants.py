@@ -7,12 +7,23 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
 
+    
+def create_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+        print('[CREATED FOLDER]', path)
+
+def new_folder_path(current, name):
+    new_folder = os.path.join(current, name)
+    create_folder(new_folder)
+    return new_folder
+
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
-UPLOADS_DIR = os.path.join(DIR_PATH, "uploads")
-RAW_DIR = os.path.join(DIR_PATH, "LogsRaw")
-LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
-PARSED_DIR = os.path.join(UPLOADS_DIR, "__parsed__")
+UPLOADS_DIR = new_folder_path(DIR_PATH, "uploads")
+RAW_DIR = new_folder_path(DIR_PATH, "LogsRaw")
+LOGS_DIR = new_folder_path(DIR_PATH, "LogsDir")
+PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
 
 
 T_DELTA = timedelta(seconds=100)
@@ -251,17 +262,13 @@ def running_time(f):
         st = perf_counter()
         q = f(*args, **kwargs)
         fin = int((perf_counter() - st) * 1000)
-        print(f'[PERF]: Done in {fin:>6,} ms with {f.__module__}.{f.__name__}')
+        print(f'[PERFOMANCE] Done in {fin:>6,} ms with {f.__module__}.{f.__name__}')
         return q
     return inner
 
 def sort_dict_by_value(d: dict):
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
-    
-def create_folder(path):
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
-        print('[LOG]: Created folder:', path)
+
 
 def fix_extention(ext: str):
     if ext[0] == '.':
@@ -280,7 +287,7 @@ def add_extention(path: str, ext=None):
 @running_time
 def json_read(path: str):
     path = add_extention(path, '.json')
-    print("[LOAD JSON]:", path)
+    print("[JSON READ]", path)
     try:
         with open(path) as file:
             return json.load(file)
@@ -407,7 +414,7 @@ def pickle_read(path: str):
         with open(path, 'rb') as f:
             return pickle.load(f)
     except FileNotFoundError:
-        print('[ERROR]: FILE DOESNT EXISTS:', path)
+        print('[ERROR] FILE DOESNT EXISTS:', path)
 
 def pickle_write(path: str, data):
     path = add_extention(path, '.pickle')

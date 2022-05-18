@@ -8,6 +8,7 @@ test*
 legacy*.json
 all_*.json
 
+WarmaneBossFights/
 trash/
 __pycache__/
 LogsDir/

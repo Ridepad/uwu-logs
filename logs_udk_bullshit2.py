@@ -1,7 +1,6 @@
-from typing import Dict, List, Set
-import constants
+from collections import defaultdict
 
-def checkdks(logs: List[str]):
+def checkdks(logs: list[str]):
     # 50526 = Wandering Plague
     return {
         line.split(',')[2]
@@ -9,7 +8,7 @@ def checkdks(logs: List[str]):
         if '50526' in line and '0x20' in line and 'SPELL_' in line
     }
 
-def same_guid_ids(pets: Set[str], missing_pets: Set[str]):
+def same_guid_ids(pets: set[str], missing_pets: set[str]):
     if len(pets) != len(missing_pets):
         return False
     pets = {x[6:12] for x in pets}
@@ -19,11 +18,13 @@ def same_guid_ids(pets: Set[str], missing_pets: Set[str]):
 def missing_targets_f(data):
     return {y for x in data.values() for y in x}
     
-def sort_by_target(data: Dict[str, Set[str]]):
-    new: Dict[str, Set[str]] = {}
+def sort_by_target(data: dict[str, set[str]]):
+    new: dict[str, set[str]]
+    new = defaultdict(set)
     for guid, targets in data.items():
         for tguid in targets:
-            new.setdefault(tguid, set()).add(guid)
+            new[tguid].add(guid)
+            # new.setdefault(tguid, set()).add(guid)
     return new
 
 
@@ -34,9 +35,9 @@ class UDK_BULLSHIT:
         self.enc_data = enc_data
         self.pets_data = pets_data
         self.unholy_DK_pets = unholy_DK_pets
-        #self.missing_targets: Dict[str, Set[str]] = missing_targets
+        #self.missing_targets: dict[str, set[str]] = missing_targets
 
-    def pet_owners(self, pets) -> Dict[str, str]:
+    def pet_owners(self, pets) -> dict[str, str]:
         d = {}
         for guid in pets:
             master = self.everything[guid].get('master_guid')
@@ -122,5 +123,4 @@ class UDK_BULLSHIT:
             for tguid, attackers in targets.items()
             if tguid in missing_targets and self.get_boss_data(tguid)
         }
-        # return targets
         self.missing_targets = targets

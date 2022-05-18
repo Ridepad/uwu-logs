@@ -227,6 +227,7 @@ def main():
     name = '21-11-21--15-53--Matzumoto'
     name = '22-05-04--14-06--Piscolita'
     name = '22-05-06--21-05--Nomadra'
+    name = '21-12-06--21-11--Solarstoned'
     report = _main.THE_LOGS(name)
     s, f = None, None
     # enc_data = report.get_enc_data()
@@ -234,7 +235,8 @@ def main():
     logs = report.get_logs(s, f)
     # filter_logs_npc_spells(logs)
     # filter_spells(logs)
-    filter_flags(logs)
+    # filter_flags(logs)
+    print(len(logs))
     # filter_logs_source_spells(logs, "0x0600000000584358")
 
 main()

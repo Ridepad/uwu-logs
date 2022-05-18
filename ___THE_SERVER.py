@@ -10,11 +10,8 @@ from werkzeug.utils import redirect
 import _main
 import constants
 import deaths
-import ladder_db_list
 import logs_calendar
 import logs_upload
-import WarmaneBossFights.is_kill as _ladder
-import WarmaneBossFights.main_db as boss_db
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
@@ -511,54 +508,6 @@ def custom_search(report_id):
         'custom_search.html', **_default,
     )
         
-
-@SERVER.route("/WarmaneBossFights")
-def boss_fights_raw():
-    _args = request.args.to_dict()
-    if not _args:
-        return render_template('fights_main.html')
-
-    page = int(_args.pop('page', 0))
-    page, name = ladder_db_list.page_parse(page)
-    url = '?' + '&'.join(f"{x}={y}" for x,y in _args.items())
-    url = url.replace(' ', '+')
-
-    df_raw = boss_db.get_data(_args, name)
-    df = ladder_db_list.df_gen(df_raw)
-
-    return render_template(
-        'fights.html', df=df, 
-        url=url, page=page,
-        icon_cdn_link=ICON_CDN_LINK,
-    )
-
-TOPS: dict[int, _ladder.Top] = {}
-def get_top(s):
-    if s not in TOPS:
-        TOPS[s] = _ladder.Top(s)
-    return TOPS[s]
-
-LADDER_ARGS = {
-    'instance': 'Icecrown Citadel',
-    'boss': 'The Lich King',
-    'size': '25',
-    'difficulty': '1',
-    'combine_guilds': '1',
-}
-FUNCS = [_ladder.make_top_all, _ladder.make_top_combined]
-@SERVER.route("/WarmaneLadder")
-def boss_ladder():
-    _args = request.args.to_dict()
-    if not _args:
-        return redirect(url_for('boss_ladder', **LADDER_ARGS))
-    _args.pop('instance', None)
-    combine = int(_args.pop('combine_guilds', 1))
-    s = 0
-    df = get_top(s)
-    df_f = df.prep_df(_args)
-    _top = FUNCS[combine](df_f)
-    return render_template('top_main.html', q=_top)
-
 
 if __name__ == "__main__":
     SERVER.run(host="0.0.0.0", port=5000, debug=True)
