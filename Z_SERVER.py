@@ -509,4 +509,4 @@ def test3():
 
 if __name__ == "__main__":
     # SERVER.run(host="0.0.0.0", port=5000, debug=True)
-    serve(SERVER, listen='0.0.0.0:5000')
+    serve(SERVER, listen='0.0.0.0:80')

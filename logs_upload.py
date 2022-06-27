@@ -1,20 +1,17 @@
 import json
 import logging
 import os
-from sys import platform
 import re
 import shutil
-import subprocess
 import zipfile
 from datetime import datetime
 from multiprocessing import Process
 from threading import Thread
 
-import py7zr
-
 import constants
 import logs_cut
 import logs_main
+import logs_unzip
 from constants import (DIR_PATH, LOGS_CUT_NAME, T_DELTA_15MIN, UPLOADED,
                        new_folder_path, running_time, zlib_text_write)
 
@@ -30,77 +27,6 @@ UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
 UPLOAD_LOGGER = constants.setup_logger('upload_logger', UPLOAD_LOGGER_FILE)
 
 BUGGED_NAMES = {"nil", "Unknown"}
-
-def get_archived_len(archive_path):
-    try:
-        with py7zr.SevenZipFile(archive_path) as a:
-            return a.archiveinfo().uncompressed
-    except py7zr.exceptions.Bad7zFile:
-        os.remove(archive_path)
-        return 0
-    except FileNotFoundError:
-        return 0
-
-# @running_time
-# def write_new_logs(logs_id: str, new_logs: str):
-#     archive_path = os.path.join(RAW_DIR, f"{logs_id}.7z")
-#     logs_raw_zlib_path = os.path.join(PARSED_DIR, f"{logs_id}.zlib")
-
-#     print("[LOGS UPLOAD] NEW LOGS RAW ACHIVE:", archive_path)
-
-#     logs_zlib_old = constants.bytes_read(logs_raw_zlib_path)
-#     logs_zlib_old_len = len(logs_zlib_old)
-#     logs_zlib_new = constants.zlib_text_make(new_logs)
-#     logs_zlib_new_len = len(logs_zlib_new)
-
-#     archived_len = get_archived_len(archive_path)
-#     diff_cache = archived_len / len(new_logs)
-
-#     if logs_zlib_new_len == logs_zlib_old_len:
-#         print('[LOGS UPLOAD] write_new_logs CACHE EXISTS')
-#         if diff_cache > 1:
-#             return 0
-
-#     print(f"[LOGS UPLOAD] LEN DIFF1: {diff_cache:>.5f}")
-    
-#     print(f"[LOGS UPLOAD] LEN NEWZLIB: {logs_zlib_new_len:>13,} bytes")
-#     print(f"[LOGS UPLOAD] LEN OLDZLIB: {logs_zlib_old_len:>13,} bytes")
-    
-#     constants.bytes_write(logs_raw_zlib_path, logs_zlib_new)
-    
-#     if diff_cache > 1:
-#         print('[LOGS UPLOAD] write_new_logs LOGS CACHED')
-#         return 0
-    
-
-#     logs_raw_path = os.path.join(PARSED_DIR, f"{logs_id}.txt")
-#     constants.file_write(logs_raw_path, new_logs)
-    
-#     arhive_logs_path = os.path.join(PARSED_LOGS_DIR, f"{logs_id}.log")
-#     cmd = ['7za.exe', 'a', archive_path, logs_raw_path, '-m0=PPMd', '-mo=11', '-mx=9']
-#     with open(arhive_logs_path, 'a+') as f:
-#         code = subprocess.call(cmd, stdout=f)
-#         if code == 0 and os.path.isfile(logs_raw_path):
-#             os.remove(logs_raw_path)
-#             print('[LOGS UPLOAD] write_new_logs CACHE REMOVED')
-#         return code
-
-# @running_time
-# def write_new_logs(logs_id: str, new_logs: str):
-#     archive_path = os.path.join(RAW_DIR, f"{logs_id}.7z")
-#     logs_raw_zlib_path = os.path.join(PARSED_DIR, f"{logs_id}.zlib")
-#     logs_zlib_new = constants.zlib_text_make(new_logs)
-#     constants.bytes_write(logs_raw_zlib_path, logs_zlib_new)
-    
-#     logs_raw_path = os.path.join(PARSED_DIR, f"{logs_id}.txt")
-#     constants.file_write(logs_raw_path, new_logs)
-
-#     cmd = ['7za.exe', 'a', archive_path, logs_raw_path, '-m0=PPMd', '-mo=11', '-mx=9']
-#     with open(UPLOAD_LOGGER_FILE, 'a+') as f:
-#         code = subprocess.call(cmd, stdout=f)
-#         if os.path.isfile(logs_raw_path):
-#             os.remove(logs_raw_path)
-#             print('[LOGS UPLOAD] write_new_logs CACHE REMOVED')
 
 def write_new_logs(logs_id: str, new_logs: str):
     file_name = f"{logs_id}.txt"
@@ -123,26 +49,6 @@ def get_logs_id(logs_slice, to_dt):
     date = to_dt(logs_slice[0]).strftime("%y-%m-%d--%H-%M")
     logs_author = get_logs_author(logs_slice)
     return f"{date}--{logs_author}"
-
-def unzip_shit(full_path, upload_dir):
-    if not full_path:
-        return ""
-    
-    if platform == "linux" or platform == "linux2":
-        file_path = "7zz"
-    elif platform == "win32":
-        file_path = "7za.exe"
-    else:
-        print('wtf', platform)
-        return
-    cmd = [file_path, 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
-    unzip_log = os.path.join(upload_dir, "unzip.log")
-    with open(unzip_log, 'a+') as f:
-        subprocess.call(cmd, stdout=f)
-    
-    for file in os.listdir(upload_dir):
-        if ".txt" in file:
-            return file
 
 @running_time
 def prepare_logs(file_name):
@@ -305,26 +211,16 @@ class NewUpload(Thread):
 
         self.new_process(write_new_logs, args=(logs_id, new_logs))
         return new_logs
-        # del logs_slice
-
-        # # t = Thread(target=write_new_logs, args=(logs_id, new_logs))
-        # # self.processes.append(t)
-        # # t.start()
-        # self.new_thread(write_new_logs, args=(logs_id, new_logs))
-        
-        # self.main_parser(new_logs, logs_id)
     
     def wait_for_processes(self):
         for _process in self.processes:
             _process.join()
-            # if _process.is_alive():
 
     def run(self):
         if "logs_list" in self.archive_data:
             print('file has been uploaded already')
             self.change_status("Done! Select 1 of the reports below.", True)
             return
-        
 
         try:
             logs_raw = prepare_logs(self.logs_raw_name)
@@ -341,7 +237,7 @@ class NewUpload(Thread):
 
             self.archive_data["logs_list"] = self.logs_list
             
-            # os.remove(self.logs_raw_name)
+            os.remove(self.logs_raw_name)
         
         except Exception:
             logging.exception(f"NewUpload run {self.upload_dir}")
@@ -361,8 +257,8 @@ class File:
 
 
 def new_upload_folder(ip='localhost'):
+    new_upload_dir_ip = new_folder_path(UPLOADS_DIR, ip)
     timestamp = constants.get_now().strftime("%y-%m-%d--%H-%M-%S")
-    new_upload_dir_ip = os.path.join(UPLOADS_DIR, ip)
     new_upload_dir = new_folder_path(new_upload_dir_ip, timestamp)
     return new_upload_dir
 
@@ -372,13 +268,12 @@ def main(file: File, ip='localhost'):
     file_name = f"{'_'.join(words)}.{ext}"
 
     new_upload_dir = new_upload_folder(ip)
-    full_path = os.path.join(new_upload_dir, file_name)
-    file.save(full_path)
+    full_file_path = os.path.join(new_upload_dir, file_name)
+    file.save(full_file_path)
 
-    logs_raw_name = unzip_shit(full_path, new_upload_dir)
-    logs_raw_name_path = os.path.join(new_upload_dir, logs_raw_name)
+    data = logs_unzip.new_archive(full_file_path, new_upload_dir)
     
-    return NewUpload(logs_raw_name_path, new_upload_dir)
+    return NewUpload(data)
 
 # def main_local_text(logs_path, move=True):
 def main_local_text(logs_path, move=False):
@@ -420,7 +315,7 @@ def main_legacy(full_path, redo=False):
     return NewUpload(logs_raw_name_path, new_upload_dir)
     
 @running_time
-def sdfiaksiofjksdifjaof(logs):
+def __test2(logs):
     to_dt = constants.to_dt
     q = [len(x) for x in slice_logs2(logs, to_dt)]
     # q = [x for x in slice_logs2(logs, to_dt)]
