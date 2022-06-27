@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from sys import platform
 import re
 import shutil
 import subprocess
@@ -127,7 +128,14 @@ def unzip_shit(full_path, upload_dir):
     if not full_path:
         return ""
     
-    cmd = ['7za.exe', 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
+    if platform == "linux" or platform == "linux2":
+        file_path = "7zz"
+    elif platform == "win32":
+        file_path = "7za.exe"
+    else:
+        print('wtf', platform)
+        return
+    cmd = [file_path, 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
     unzip_log = os.path.join(upload_dir, "unzip.log")
     with open(unzip_log, 'a+') as f:
         subprocess.call(cmd, stdout=f)

@@ -1,5 +1,4 @@
 from collections import defaultdict
-from email.policy import default
 import json
 import constants
 
