@@ -4,20 +4,20 @@
 <main id="potions">
   <table id="potions-table">
     <tr>
-      <th>
-      <th title="Total">T
-      {% for pot_id, _info in pot_info.items() %}
-      <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ pot_id }}" width="20" height="20">
+      <th></th>
+      <th title="Total"></th>
+      {% for spell_id, _info in ITEM_INFO.items() %}
+      <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
       {% endfor %}
     </tr>
-    {% for player_name, total_value in total.items() %}
+    {% for player_name, total_value in ITEMS_TOTAL.items() %}
     <tr>
       <td class="player-cell">
-        <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+        <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
       </td>
-      <td>{{ total_value }}
-      {% for pot_id in pot_info %}
-      <td>{{ pots.get(pot_id, {})[player_name] }}
+      <td>{{ total_value }}</td>
+      {% for spell_id in ITEM_INFO %}
+      <td>{{ ITEMS.get(spell_id, {}).get(player_name, '') }}</td>
       {% endfor %}
     </tr>
     {% endfor %}
@@ -30,7 +30,7 @@
   const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
   const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
 
-  document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+  document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', (() => {
     const tbody = th.closest('tbody');
     Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
          .sort(comparer(th.cellIndex))

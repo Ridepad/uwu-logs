@@ -1,6 +1,6 @@
-import _main
+import logs_main
 import dmg_useful
-import dmg_heals2
+import dmg_heals
 from constants import add_new_numeric_data, sort_dict_by_value
 import logs_player_class
 import json
@@ -35,7 +35,7 @@ def pretty_print(report, data: dict[str, dict[str, int]]):
             continue
         print(f"{players[guid]:<12} {specs[guid]:<10} {d:>9}")
 
-def get_dmg(report: _main.THE_LOGS, segment: dict[str, str], boss_name: str):
+def get_dmg(report: logs_main.THE_LOGS, segment: dict[str, str], boss_name: str):
     DATA = {}
 
     boss_guid_id = report.name_to_guid(boss_name)
@@ -44,12 +44,12 @@ def get_dmg(report: _main.THE_LOGS, segment: dict[str, str], boss_name: str):
     s = segment['start']
     f = segment['end']
     logs_slice = report.get_logs(s, f)
-    dmg = dmg_heals2.parse_dmg_targets(logs_slice, targets_useful)
+    dmg = dmg_heals.parse_dmg_targets(logs_slice, targets_useful)
     specific_useful = dmg_useful.specific_useful_combined(logs_slice, boss_name)
     add_new_numeric_data(dmg, specific_useful)
 
     guids = report.get_all_guids()
-    data = dmg_heals2.add_pets_guids(dmg, guids)
+    data = dmg_heals.add_pets_guids(dmg, guids)
     DATA['damage'] = data['players']
 
     # print(data['players'])
@@ -64,7 +64,7 @@ def get_dmg(report: _main.THE_LOGS, segment: dict[str, str], boss_name: str):
     return DATA
 
     
-def get_lk(report: _main.THE_LOGS):
+def get_lk(report: logs_main.THE_LOGS):
     boss_name = "Blood Prince Council"
     boss_name = "The Lich King"
     sep = report.SEGMENTS_SEPARATED
@@ -78,7 +78,7 @@ def get_lk(report: _main.THE_LOGS):
             print(json.dumps(data))
             pretty_print(report, data)
             
-def get_data(report: _main.THE_LOGS):
+def get_data(report: logs_main.THE_LOGS):
     sep = report.SEGMENTS_SEPARATED
     for boss_name, diff_data in sep.items():
         for diff_id, segments in diff_data.items():
@@ -90,7 +90,7 @@ def get_data(report: _main.THE_LOGS):
 
 def main():
     name = "22-04-27--21-02--Safiyah"
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     enc_data = report.get_enc_data()
     boss = "The Lich King"
     # s, f = enc_data[boss][-2]

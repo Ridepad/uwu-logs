@@ -1,9 +1,10 @@
 from collections import defaultdict
 
 import constants
+from constants import is_player, TOC_CHAMPIONS
 
 VALK_HALF_HP = 2992500 // 2
-TOC_CHAMPIONS_USEFUL = {f"0xF130{guid}": name for guid, name in constants.TOC_CHAMPIONS.items()}
+TOC_CHAMPIONS_USEFUL = {f"0xF130{guid}": name for guid, name in TOC_CHAMPIONS.items()}
 TOC_PETS = {
     "0xF130008B1A": "Cat",
     "0xF130008A89": "Demon",
@@ -25,8 +26,8 @@ USEFUL = {
     "Gunship": {
         "0xF1300090FC": "Skybreaker Sorcerer",
         "0xF1300090FD": "Kor'kron Battle-Mage",
-        "0xF130009069": "Skybreaker Rifleman",
-        "0xF130009068": "Kor'kron Axethrower",
+        # "0xF130009069": "Skybreaker Rifleman",
+        # "0xF130009068": "Kor'kron Axethrower",
     },
     "Deathbringer Saurfang": {
         "0xF1500093B5": "Deathbringer Saurfang",
@@ -82,8 +83,9 @@ USEFUL = {
         "0xF1300086C1": "Fjola Lightbane",
     },
     "Anub'arak": {
-        "0xF13000872D": "Swarm Scarab",
         "0xF130008704": "Anub'arak",
+        "0xF13000872D": "Swarm Scarab",
+        "0xF13000872F": "Nerubian Burrower",
     },
     "Toravon the Ice Watcher": {
         "0xF130009621": "Toravon the Ice Watcher",
@@ -124,8 +126,8 @@ ALL_GUIDS = {
         "0xF130008FB7": "Blazing Skeleton",
         "0xF130009413": "Rot Worm",
         "0xF1300093E7": "Suppresser",
-        "0xF1300093FE": "Gluttonous Abomination",
         "0xF1300093EC": "Risen Archmage",
+        "0xF1300093FE": "Gluttonous Abomination",
         "0xF13000942E": "Blistering Zombie",
     },
     "The Lich King": {
@@ -221,15 +223,14 @@ def get_dmg(logs_slice: list[str], targets: dict):
         all_dmg[tGUID_ID][sGUID] += int(dmg) - int(ok)
     return all_dmg
 
-VALK = {'0xF130008F01', '0xF150008F01'}
 def dmg_gen_valk(logs: list[str]):
     for line in logs:
-        if '0008F01' not in line:
+        if '8F01' not in line:
             continue
         if "_DAMAGE" not in line:
             continue
         _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
-        if tGUID[:-6] in VALK:
+        if tGUID[5:-6] == '0008F01':
             yield sGUID, tGUID, int(dmg)
 
 @constants.running_time
@@ -240,11 +241,12 @@ def get_valks_dmg(logs: list[str]):
     valks_dmg_taken: defaultdict[str, int] = defaultdict(int)
 
     for sGUID, tGUID, amount in dmg_gen_valk(logs):
-        if valks_dmg_taken.get(tGUID) == -1:
+        _dmg_taken = valks_dmg_taken.get(tGUID, 0)
+        if _dmg_taken == -1:
             valks_overkill[sGUID] += amount
             continue
 
-        current_dmg_taken = valks_dmg_taken.get(tGUID, 0) + amount
+        current_dmg_taken = _dmg_taken + amount
         if current_dmg_taken < VALK_HALF_HP:
             valks_dmg_taken[tGUID] = current_dmg_taken
         else:
@@ -253,26 +255,30 @@ def get_valks_dmg(logs: list[str]):
             amount -= overkill
             valks_overkill[sGUID] += overkill
         valks_useful[sGUID] += amount
+
     return {
         'overkill': valks_overkill,
         'useful': valks_useful,
     }
 
-def combine_pets(data: dict[str, int], guids: dict[str, dict], trim_non_players=False):
+def combine_pets(data: dict[str, int], guids: dict[str, dict], trim_non_players=False, ignore_abom=False):
     def check_master(guid: str):
         return guids[guid].get('master_guid', guid)
     
-    q: dict[str, int] = {}
-    for sGUID, w in data.items():
-        sGUID = check_master(sGUID)
-        if trim_non_players and not sGUID.startswith('0x06'):
+    combined: dict[str, int] = defaultdict(int)
+    for sGUID, value in data.items():
+        if ignore_abom and sGUID[6:-6] == "00958D":
             continue
-        q[sGUID] = q.get(sGUID, 0) + w
-    return q
+        _sGUID = check_master(sGUID)
+        if trim_non_players and not is_player(_sGUID):
+            continue
+        combined[_sGUID] += value
 
-def combine_pets_all(data: dict, guids, trim_non_players=True):
+    return combined
+
+def combine_pets_all(data: dict[str, int], guids, trim_non_players=False, ignore_abom=False):
     return {
-        tGUID: combine_pets(d, guids, trim_non_players)
+        tGUID: combine_pets(d, guids, trim_non_players, ignore_abom)
         for tGUID, d in data.items()
     }
 
@@ -311,14 +317,14 @@ def add_space(v):
     return f"{v:,}".replace(',', ' ')
 
 def __test():
-    import _main
+    import logs_main
     name = '21-10-04--19-54--Cedrist'
     name = '21-10-06--20-51--Safiyah'
     name = '21-10-07--21-06--Inia'
     name = '21-10-08--20-57--Nomadra'
     name = '22-03-25--22-02--Nomadra'
 
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     guids = report.get_all_guids()
     enc_data = report.get_enc_data()

@@ -18,7 +18,7 @@
 
   const xhttp = new XMLHttpRequest();
   const t = setInterval(() => {
-    xhttp.open("POST", "/upload/check_progress", true);
+    xhttp.open("GET", "/upload/check_progress", true);
     xhttp.send();
   }, 500);
   

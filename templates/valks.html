@@ -16,7 +16,7 @@
         {% for player_name, source_total in data %}
         <tr>
           <td class="player-cell">
-            <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
           <td class="total-cell">{{ source_total }}</td>
         </tr>
@@ -39,7 +39,7 @@
         {% for player_name, grabs in valk_grabs %}
         <tr>
           <td class="player-cell">
-            <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
           <td>{{ grabs }}</td>
           {% for is_grab, value in valk_grabs_details[player_name] %}

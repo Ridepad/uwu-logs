@@ -1,5 +1,5 @@
 from constants import to_dt
-import _main
+import logs_main
 from datetime import timedelta
 
 DELTA = timedelta(seconds=1)
@@ -295,7 +295,7 @@ class FUCKINGBULLSHIT:
 name = '210618-Illusion'
 name = '21-07-22--21-30--Inia'
 # name = '210625-Illusion'
-LOGS = _main.THE_LOGS(name)
+LOGS = logs_main.THE_LOGS(name)
 logs = LOGS.get_logs()
 enc_data = LOGS.get_enc_data()
 class_data = LOGS.get_classes()

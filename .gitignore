@@ -5,8 +5,11 @@
 *.zip
 *.ini
 test*
-legacy*.json
+legacy*
 all_*.json
+*.old
+_*.*
+db_*
 
 WarmaneBossFights/
 trash/

@@ -8,7 +8,7 @@
       {% for player_name, player_total in _total %}
       <tr>
         <td class="player-cell">
-          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+          <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
         </td>
         <td class="total-cell">{{ player_total }}</td>
       </tr>

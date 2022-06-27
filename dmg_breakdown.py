@@ -14,7 +14,7 @@ def group_targets(targets: set[str]):
 PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_ENERGIZE', 'SPELL_PERIODIC_HEAL', 'SPELL_PERIODIC_LEECH', 'SPELL_PERIODIC_MISSED'}
 
 @constants.running_time
-def parse_logs(logs_slice: list[str], filter_guids: set[str], mainGUID: str, target_filter=None) -> dict[str, Any]:
+def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None) -> dict[str, Any]:
     '''absolute = { spell_id: sum }
     useful = { spell_id: {
         "spells_hit": [],
@@ -23,22 +23,24 @@ def parse_logs(logs_slice: list[str], filter_guids: set[str], mainGUID: str, tar
         "dot_crit": [] } }'''
     targets = set()
 
-    absolute = defaultdict(int)
-    useful: dict[int, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+    overkill = defaultdict(int)
+    reduced = defaultdict(int)
+    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
 
-    print(f"[parse_logs] {mainGUID=} {target_filter=}")
+    # print(f"[parse_logs] {mainGUID=} {target_filter=}")
 
     for line in logs_slice:
         if "DAMAGE" not in line:
             continue
         try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, _ = line.split(',', 16)
+            # 4047,0,1,0,0,0,1,nil,nil
+            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, glanc, _ = line.split(',', 17)
         except ValueError:
-            # damage_shield_missed
+            # DAMAGE_SHIELD_MISSED
             continue
         if flag == "DAMAGE_SPLIT":
             continue
-        if sGUID not in filter_guids:
+        if sGUID not in controlled_units:
             continue
 
         targets.add(tGUID)
@@ -50,19 +52,23 @@ def parse_logs(logs_slice: list[str], filter_guids: set[str], mainGUID: str, tar
             continue
         
         dmg_raw = int(dmg)
-        spell_id = int(sp_id) if sGUID == mainGUID else -int(sp_id)
-
-        dmg_actual = dmg_raw - int(over)
+        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
+        over = int(over)
+        dmg_actual = dmg_raw - over
+        overkill[spell_id] += over
         _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
-        useful[spell_id][HIT_TYPE[_hit_type]].append(dmg_actual)
+        actual[spell_id][HIT_TYPE[_hit_type]].append(dmg_actual)
         
-        dmg_absolute = dmg_raw + int(res) + int(absrb)
-        absolute[spell_id] += dmg_absolute
+        if glanc == "1":
+            reduced[spell_id] += int(dmg_raw*.25)
+        elif res != "0":
+            reduced[spell_id] += int(res)
         
     return {
-        "absolute": absolute,
-        "useful": useful,
         "targets": targets,
+        "actual": actual,
+        "overkill": overkill,
+        "reduced": reduced,
     }
 
 def rounder(num):
@@ -107,25 +113,20 @@ def format_hits_data(hits, crits):
     return ((hits_count, hits_avg), (crits_count, crits_avg)), percent
 
 def format_hits(hits: dict[str, list[int]]):
-    s_h, s_c, d_h, d_c = [hits.get(x, []) for x in HIT_TYPE]
-    return format_hits_data(s_h, s_c), format_hits_data(d_h, d_c)
+    hit_hit, hit_crt, dot_hit, dot_crt = [hits.get(x, []) for x in HIT_TYPE]
+    return format_hits_data(hit_hit, hit_crt), format_hits_data(dot_hit, dot_crt)
 
 def hits_data(data: dict[int, dict[str, list[int]]]):
     return {spell_id: format_hits(hits) for spell_id, hits in data.items()}
 
 def __test():
-    import _main
+    import logs_main
     name = "22-05-04--21-05--Safiyah"
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     player_guid = '0x06000000004B2086'
     filter_guids = report.get_pets_of(player_guid)
     filter_guids.add(player_guid)
-    parse_logs(logs, filter_guids, player_guid)
-    parse_logs(logs, filter_guids, player_guid)
-    parse_logs(logs, filter_guids, player_guid)
-    parse_logs(logs, filter_guids, player_guid)
-    parse_logs(logs, filter_guids, player_guid)
 
 if __name__ == "__main__":
     __test()

@@ -3,8 +3,8 @@
 # get all lines
 # split if big gap 
 
-import _main
-import check_difficulty
+import logs_main
+import logs_check_difficulty
 
 # def npccount(logs: list[str], guids):
 #     q = {}
@@ -35,7 +35,7 @@ def print_by_guid(data, guids):
     s = 0
     t = 0
     for guid, c in z1:
-        if guid.startswith('0x06') or guid.startswith('0xF14'):
+        if guid.startswith('0x0') or guid.startswith('0xF14'):
             continue
         if not guids.get(guid):
             continue
@@ -47,7 +47,7 @@ def print_by_guid(data, guids):
 def combine_names(data, guids):
     newd = {}
     for guid, c in data.items():
-        if guid.startswith('0x06') or guid.startswith('0xF14'):
+        if guid.startswith('0x0') or guid.startswith('0xF14'):
             continue
         d = guids.get(guid)
         if d is None:
@@ -109,7 +109,7 @@ def bosses_block():
 def main():
     report_id = "22-03-26--22-02--Nomadra"
     report_id = "22-03-25--22-02--Nomadra"
-    report = _main.THE_LOGS(report_id)
+    report = logs_main.THE_LOGS(report_id)
     logs = report.get_logs()
     guids = report.get_all_guids()
     enc = report.get_enc_data()
@@ -120,7 +120,7 @@ def main():
         q = {}
         for s, f in _slice:
             logs_slice = logs[s:f]
-            diff, is_kill, duration = check_difficulty.make_line(logs, s, f, boss_name)
+            diff, is_kill, duration = logs_check_difficulty.make_line(logs, s, f, boss_name)
             q.setdefault(diff, []).append((is_kill, duration, s, f))
             # z = npc_count(logs_slice)
             # combine_names(z, guids)

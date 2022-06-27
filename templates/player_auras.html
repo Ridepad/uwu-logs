@@ -8,7 +8,7 @@
 
 {% block the_main %}
 <main id="player">
-  <a class="swap-button" id="swap-buffs" href="/reports/{{ report_id }}/player/{{ source_name }}/{{ query }}">DAMAGE</a>
+  <a class="swap-button" id="swap-buffs" href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a>
 
   <input id="buffs" name="player-group" type="radio">
   <label class="tab" for="buffs">BUFFS</label>
@@ -26,10 +26,10 @@
         <th>%</th>
         <th>UPTIME</th>
       </tr>
-      {% for spell_id, timings in buffs.items() %}
+      {% for spell_id, timings in BUFFS.items() %}
       <tr>
-        <td class="spell-name"><a class="{{ spell_colors[spell_id] }}" href="/reports/{{ report_id }}/spell/{{ spell_id }}/{{ query }}">{{ all_spells[spell_id]['name'] }}</a></td>
-        <td>{{ buffs_uptime[spell_id] }}</td>
+        <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a></td>
+        <td>{{ BUFF_UPTIME[spell_id] }}</td>
         <td class="uppestoftime">
           {% for t, l in timings %}
           {% if t %}
@@ -51,21 +51,21 @@
         <th>%</th>
         <th>UPTIME</th>
       </tr>
-    {% for spell_id, timings in debuffs.items() %}
-    <tr>
-      <td class="spell-name"><a class="{{ spell_colors[spell_id] }}" href="/reports/{{ report_id }}/spell/{{ spell_id }}/{{ query }}">{{ all_spells[spell_id]['name'] }}</a></td>
-      <td>{{ debuffs_uptime[spell_id] }}</td>
-      <td class="uppestoftime">
-        {% for t, l in timings %}
-        {% if t %}
-        <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
-        {% else %}
-        <div class="rectangle" style="width: {{ l }}%;"></div>
-        {% endif %}
-        {% endfor %}
-      </td>
-    </tr>
-    {% endfor %}
+      {% for spell_id, timings in DEBUFFS.items() %}
+      <tr>
+        <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a></td>
+        <td>{{ DEBUFF_UPTIME[spell_id] }}</td>
+        <td class="uppestoftime">
+          {% for t, l in timings %}
+          {% if t %}
+          <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
+          {% else %}
+          <div class="rectangle" style="width: {{ l }}%;"></div>
+          {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
     </table>
   </section>
 

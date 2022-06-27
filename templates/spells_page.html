@@ -3,19 +3,19 @@
 {% block the_main %}
 <main id="spells">
 <section>
-  <h1><a href="https://wotlk.evowow.com/?spell={{ spell_id }}">{{ spell_name }}</a></h1>
+  <h1><a href="https://wotlk.evowow.com/?spell={{ SPELL_ID }}">{{ SPELL_NAME }}</a></h1>
   
-  {% for name_css, flag in tabs %}
+  {% for name_css, flag in TABS %}
   <input id="{{ name_css }}" name="flags-group" type="radio">
   <label class="tab" for="{{ name_css }}">{{ flag }}</label>
   <div class="panel">
-    {% for type_, v in spells[flag].items() %}
+    {% for type_, v in SPELLS[flag].items() %}
     <table class="buffs">
       <caption>{{ type_ }}</caption>
       {% for player_name, total in v.items() %}
       <tr>
         <td class="player-cell">
-          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+          <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
         </td>
         <td class="buff-count">{{ total }}</td>
       </tr>

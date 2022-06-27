@@ -97,7 +97,7 @@ class AurasMain:
         guid: str
         new_casts = {}
         for guid, spells in casts.items():
-            guid = guid if guid.startswith('0x06000000') else guid[:12]
+            guid = guid if guid.startswith('0x0') else guid[:-6]
             q = new_casts.setdefault(guid, {})
             q.setdefault("targets", []).append(guid)
             for spell, uptime in spells.items():
@@ -105,9 +105,9 @@ class AurasMain:
         return new_casts
 
 def __test():
-    import _main
+    import logs_main
     report_id = '21-11-05--21-07--Nomadra'
-    report = _main.THE_LOGS(report_id)
+    report = logs_main.THE_LOGS(report_id)
     logs = report.get_logs()
     enc_data = report.get_enc_data()
     filter_guid = '0x060000000040F817'

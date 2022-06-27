@@ -1,18 +1,10 @@
 from collections import defaultdict
 
-def checkdks(logs: list[str]):
-    # 50526 = Wandering Plague
-    return {
-        line.split(',')[2]
-        for line in logs
-        if '50526' in line and '0x20' in line and 'SPELL_' in line
-    }
-
 def same_guid_ids(pets: set[str], missing_pets: set[str]):
     if len(pets) != len(missing_pets):
         return False
-    pets = {x[6:12] for x in pets}
-    missing_pets = {x[6:12] for x in missing_pets}
+    pets = {x[6:-6] for x in pets}
+    missing_pets = {x[6:-6] for x in missing_pets}
     return pets == missing_pets
 
 def missing_targets_f(data):
@@ -24,43 +16,95 @@ def sort_by_target(data: dict[str, set[str]]):
     for guid, targets in data.items():
         for tguid in targets:
             new[tguid].add(guid)
-            # new.setdefault(tguid, set()).add(guid)
     return new
 
+def get_missing_targets(unholy_DK_pets, pets_data):
+    missing = {
+        guid: v
+        for guid, v in unholy_DK_pets.items()
+        if guid not in pets_data
+    }
+    missing_targets = missing_targets_f(missing)
+    targets = sort_by_target(unholy_DK_pets)
+    targets = {
+        tguid: attackers
+        for tguid, attackers in targets.items()
+        if tguid in missing_targets
+    }
+    return targets
 
 class UDK_BULLSHIT:
-    def __init__(self, logs, everything, enc_data, pets_data, unholy_DK_pets) -> None:
+    def __init__(self,
+    logs: list[str],
+    everything: dict[str, dict[str, str]],
+    enc_data: dict[str, list],
+    targets: dict[str, set[str]]
+    ) -> None:
         self.logs = logs
         self.everything = everything
         self.enc_data = enc_data
-        self.pets_data = pets_data
-        self.unholy_DK_pets = unholy_DK_pets
-        #self.missing_targets: dict[str, set[str]] = missing_targets
+        self.missing_targets = targets
+        self.filter_loop()
 
-    def pet_owners(self, pets) -> dict[str, str]:
+    def get_boss_segments(self, tguid):
+        target_name = self.everything[tguid]['name']
+        return self.enc_data.get(target_name)
+
+    def get_all_dks_in_segment(self, s, f):
+        # 50526 = Wandering Plague
+        logs_slice = self.logs[s:f]
+        return {
+            line.split(',', 3)[2]
+            for line in logs_slice
+            if '50526' in line and '0x20' in line and 'SPELL_DAMAGE' in line
+        }
+
+    def find_solo_dk(self, boss_data: list[tuple[int, int]]):
+        for s, f in boss_data:
+            dks = self.get_all_dks_in_segment(s, f)
+            if len(dks) != 1:
+                continue
+            return dks.pop()
+
+    def pet_owners(self, pets):
         d = {}
         for guid in pets:
             master = self.everything[guid].get('master_guid')
             if master:
                 d[guid] = master
-        return d
+        return set(d), set(d.values())
 
-    def get_boss_data(self, tguid):
-        target_name = self.everything[tguid]['name']
-        return self.enc_data.get(target_name)
 
-    def find_solo_dk(self, boss_data):
-        for s, f in boss_data:
-            logs_slice = self.logs[s:f]
-            dks = checkdks(logs_slice)
-            if len(dks) != 1:
+    def filter_pets_by_combat(self):
+        for tGUID, pets_attacking in self.missing_targets.items():
+            if not pets_attacking:
                 continue
-            return dks.pop()
+
+            boss_segments = self.get_boss_segments(tGUID)
+            if not boss_segments:
+                continue
+
+            if len(pets_attacking) == 1:
+                dk_guid = self.find_solo_dk(boss_segments)
+                if dk_guid:
+                    pet_guid = list(pets_attacking)[0]
+                    return pets_attacking, dk_guid, pet_guid
+            
+            _pets, masters = self.pet_owners(pets_attacking)
+            remaining_pets = pets_attacking - _pets
+            if len(remaining_pets) != 1:
+                continue
+            pet_guid = remaining_pets.pop()
+            for s, f in boss_segments:
+                dks = self.get_all_dks_in_segment(s, f) - masters
+                if len(dks) == 1:
+                    dk_guid = dks.pop()
+                    return pets_attacking, dk_guid, pet_guid
         
     def update_dk_pet_owners(self, dk_guid, pet_guid):
         dk_name = self.everything[dk_guid]['name']
         p = {'name': 'Ghoul', 'master_name': dk_name, 'master_guid': dk_guid}
-        guid_id = pet_guid[6:12]
+        guid_id = pet_guid[6:-6]
 
         for guid in self.everything:
             if guid_id not in guid:
@@ -72,55 +116,36 @@ class UDK_BULLSHIT:
         for tguid, missing_pets in dict(self.missing_targets).items():
             if same_guid_ids(pets, missing_pets):
                 del self.missing_targets[tguid]
+    
+    def do_filter(self):
+        returned = self.filter_pets_by_combat()
+        if returned:
+            pets, dk_guid, pet_guid = returned
+            self.update_dk_pet_owners(dk_guid, pet_guid)
+            self.remove_parsed_pets(pets)
 
-    def filter_pets_by_combat(self):
-        for tguid, pets in self.missing_targets.items():
-            if not pets:
-                continue
+    def filter_loop(self):
+        for n in range(1,6):
+            print('filter_pets_by_combat Loop:', n)
+            missing_targets_cached = dict(self.missing_targets)
+            self.do_filter()
+            if self.missing_targets == missing_targets_cached:
+                break
 
-            boss_data = self.get_boss_data(tguid)
-            if not boss_data:
-                continue
+    # def missing_dk_pets(self):
+    #     return {
+    #         guid: v
+    #         for guid, v in self.unholy_DK_pets.items()
+    #         if guid not in self.pets_data
+    #     }
 
-            if len(pets) == 1:
-                dk_guid = self.find_solo_dk(boss_data)
-                if not dk_guid:
-                    continue
-                pet_guid = list(pets)[0]
-                self.update_dk_pet_owners(dk_guid, pet_guid)
-                self.remove_parsed_pets(pets)
-                return
-            
-            owners = self.pet_owners(pets)
-            remaining_pets = pets - set(owners)
-            if len(remaining_pets) != 1:
-                continue
-            for s, f in boss_data:
-                logs_slice = self.logs[s:f]
-                dks = checkdks(logs_slice) - set(owners.values())
-                if len(dks) != 1:
-                    continue
-                dk_guid = dks.pop()
-                pet_guid = remaining_pets.pop()
-                self.update_dk_pet_owners(dk_guid, pet_guid)
-                self.remove_parsed_pets(pets)
-                return
-
-
-    def missing_dk_pets(self):
-        return {
-            guid: v
-            for guid, v in self.unholy_DK_pets.items()
-            if guid not in self.pets_data
-        }
-
-    def get_missing_targets(self):
-        missing = self.missing_dk_pets()
-        missing_targets = missing_targets_f(missing)
-        targets = sort_by_target(self.unholy_DK_pets)
-        targets = {
-            tguid: attackers
-            for tguid, attackers in targets.items()
-            if tguid in missing_targets and self.get_boss_data(tguid)
-        }
-        self.missing_targets = targets
+    # def get_missing_targets(self):
+    #     missing = self.missing_dk_pets()
+    #     missing_targets = missing_targets_f(missing)
+    #     targets = sort_by_target(self.unholy_DK_pets)
+    #     targets = {
+    #         tguid: attackers
+    #         for tguid, attackers in targets.items()
+    #         if tguid in missing_targets and self.get_boss_segments(tguid)
+    #     }
+    #     self.missing_targets = targets

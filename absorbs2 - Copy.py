@@ -1,6 +1,6 @@
 from os import abort
 import constants
-import _main
+import logs_main
 
 # use classes instead of dict
 
@@ -369,7 +369,7 @@ class FUCKINGBULLSHIT:
         return self.absorbs
 
 name = '210618-Illusion'
-LOGS = _main.THE_LOGS(name)
+LOGS = logs_main.THE_LOGS(name)
 logs = LOGS.get_logs()
 enc_data = LOGS.get_enc_data()
 guids, players = LOGS.get_guids()

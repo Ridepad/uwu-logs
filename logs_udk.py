@@ -1,6 +1,6 @@
 from constants import running_time
 from logs_units_guid import logs_parser
-import _main
+import logs_main
 
 @running_time
 def find_summon_timing(logs: list, guid):
@@ -38,7 +38,7 @@ def lost_gargoyles(everything):
 
 if __name__ == "__main__":
     name = '210621-Passionne'
-    LOGS = _main.THE_LOGS(name)
+    LOGS = logs_main.THE_LOGS(name)
 
     logs = LOGS.get_logs()
 

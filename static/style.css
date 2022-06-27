@@ -343,8 +343,8 @@ footer > ul > li {
   z-index: 2;
   position: fixed;
   left: 0;
-  top: calc(var(--nav-height) + .5vh);
-  padding: 0;
+  top: var(--nav-height);
+  padding: .5em;
   margin: 0;
   text-align: left;
 }
@@ -488,19 +488,19 @@ main {
   padding-bottom: 8vh; */
 }
 
-#report-main {
+#report-main-tables {
   display: grid;
   grid-auto-flow: row;
   justify-content: center;
 }
-#report-main > section {
+#report-main-tables > section {
   padding-top: 2rem;
 }
 @media (min-width: 1100px) {
-  #report-main {
+  #report-main-tables {
     grid-auto-flow: column;
   }
-  #report-main > section {
+  #report-main-tables > section {
     padding-left: 5vw;
     padding-right: 5vw;
   }
@@ -551,7 +551,7 @@ td > a:hover {
   min-width: 7ch;
 }
 .player-cell {
-  min-width: 15ch;
+  min-width: 16ch;
 }
 .boss-cell {
   min-width: 20ch;
@@ -578,7 +578,7 @@ td > a:hover {
   overflow: hidden;
 }
 .count {
-  min-width: 6ch;
+  min-width: 6.1ch;
 }
 
 .uppestoftime {
@@ -855,7 +855,7 @@ input:checked + label + div {
   /* padding-top: 10vh; */
   margin-left: clamp(15ch, 19vw, 40ch);
 }
-#dmg-done .spell-name {
+#dmg-done :is(.spell-name, .player-cell) {
   width: clamp(15ch, 20vw, 40ch);
   text-align: left;
   position: fixed;
@@ -866,11 +866,11 @@ input:checked + label + div {
   #dmg-done #dmg-done-main {
     margin: unset;
   }
-  #dmg-done .spell-name {
+  #dmg-done :is(.spell-name, .player-cell) {
     position: unset;
   }
 }
-#dmg-done td:nth-child(n+5):hover {
+#dmg-done-main > table > tbody > tr > td:hover {
   background-color: hsl(285, 100%, 15%);
 }
 #dmg-done #dmg-done-main table {
@@ -879,22 +879,17 @@ input:checked + label + div {
 #dmg-done .count {
   position: relative;
 }
-#dmg-done th:nth-child(n+2),
+/* #dmg-done th:nth-child(n+2),
 #dmg-done td:nth-child(2),
-#dmg-done td:nth-child(3),
 #dmg-done td:nth-child(4),
-#dmg-done td:nth-child(5),
-#dmg-done td:nth-child(7),
-#dmg-done td:nth-child(9),
-#dmg-done td:nth-child(10),
-#dmg-done td:nth-child(12),
-#dmg-done td:nth-child(14),
-#dmg-done td:nth-child(16) {
+#dmg-done td:nth-child(6),
+#dmg-done td:nth-child(8),
+#dmg-done td:nth-child(11),
+#dmg-done td:nth-child(13) {
   border-left: 3px solid dimgray;
-}
-#dmg-done > tfoot > tr > td {
+} */
+#dmg-done-main > table > tfoot > tr > td {
   border-top: 3px solid dimgray;
-  color: var(--third-color);
 }
 #dmg-done td:nth-child(n+2) {
   text-align: right;
@@ -1315,4 +1310,57 @@ td:hover > table {
 
 #potions-table > tbody > tr th {
   position: sticky;
+}
+
+#potions-table th img {
+  min-height: 1.5em;
+  max-height: 1.5em;
+}
+
+#potions-table td:not(.player-cell) {
+  text-align: right;
+}
+
+#auras-table th img {
+  min-height: 2em;
+  max-height: 2em;
+}
+#auras-table td:not(.player-cell) {
+  min-width: 7.5ch;
+  text-align: right;
+}
+
+#auras-table td:not(.player-cell, :empty)::after {
+  content: "%";
+}
+
+
+
+
+#class-filter {
+  position: fixed;
+  bottom: 4vh;
+  padding: .5em;
+}
+#class-filter:hover > div {
+  display: block;
+}
+#class-filter > h2 {
+  font-size: 150%;
+  padding: .1em;
+  padding-left: 1ch;
+  border: .1em solid var(--primary-color);
+  border-radius: .3em;
+  background-color: var(--background)
+}
+#class-filter > div {
+  display: none;
+  width: max-content;
+  position: absolute;
+  bottom: 100%;
+  left:0;
+  z-index: 1;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
 }

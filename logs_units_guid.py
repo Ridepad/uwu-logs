@@ -1,10 +1,14 @@
 from collections import defaultdict
 import os
+import logging
 
-import _main
+import logs_main
 import constants
 import logs_udk_bullshit2
+from logs_player_class import SPELL_BOOK
+from constants import CLASS_FROM_HTML, running_time
 
+CLASSES = list(CLASS_FROM_HTML)
 _prefix = [
     'Bat', 'Blight', 'Bone', 'Brain', 'Carrion', 'Casket', 'Corpse', 'Crypt', 'Dirt', 'Earth', 'Eye', 'Grave', 'Gravel', 'Hammer',
     'Limb', 'Marrow', 'Pebble', 'Plague', 'Rat', 'Rib', 'Root', 'Rot', 'Skull', 'Spine', 'Stone', 'Tomb', 'Worm']
@@ -14,6 +18,7 @@ _suffix = [
 GHOUL_NAMES = {f"{x}{y}" for x in _prefix for y in _suffix}
 BASE_DK_PETS = {'Army of the Dead Ghoul', 'Risen Ghoul', 'Risen Ally'}
 
+NIL_GUID = '0x0000000000000000'
 SKIP = {'PARTY_KILL', 'UNIT_DIED'}
 NAMES_SKIP = {'nil', 'Unknown'}
 PET_FILTER_SPELLS = {
@@ -36,17 +41,18 @@ BOSS_PETS = {
     # '0087FD': '0087DC', # Infernal Volcano
 }
 
-def save_new_dk_pet_names(_dk_missing_ghoul_names):
-    errors = constants.new_folder_path(constants.UPLOADS_DIR, 'errors')
-    for name in _dk_missing_ghoul_names:
-        p = os.path.join(errors, name)
-        open(p, 'w').close()
+
+def is_player(guid):
+    return guid[:3] == "0x0"
+
+def is_perma_pet(guid):
+    return guid[:5] == "0xF14"
 
 
 def pet_sort_by_id(pets_raw):
     d: dict[str, set[str]] = {}
     for guid in pets_raw:
-        if '0xF14' in guid:
+        if is_perma_pet(guid):
             d.setdefault(guid[6:-6], set()).add(guid)
     return d
 
@@ -75,20 +81,39 @@ def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, 
         for pet_guid in pet_guids:
             everything[pet_guid] = _pet
 
+def finishplayers(p, players_names, everything):
+    p.pop(NIL_GUID, None)
+
+    players: dict[str, str] = {}
+    for guid, v in p.items():
+        name = players_names[guid]
+        everything[guid] = {'name': name}
+        print(f"{name:<20}", v)
+        if v > 200: #  or guid not in everything:
+            players[guid] = name
+        # else:
+            # print(name, v)
+    
+    return dict(sorted(players.items()))
+
 @constants.running_time
 def logs_parser(logs: list[str]): # sourcery no-metrics
     everything: dict[str, dict[str, str]] = {}
-    pets_data: dict[str, dict[str, str]] = {}
+    pets_perma: dict[str, dict[str, str]] = {}
     unholy_DK_pets: defaultdict[str, set[str]] = defaultdict(set)
 
     temp_pets: dict[str, dict[str, str]] = {}
     pets_raw: set[str] = set()
     last_abom = {}
 
-    _dk_missing_ghoul_names = set()
+    # players_seen = defaultdict(int)
+    # players_names = {}
+    players_classes = {}
+    players = {}
+    players_skip = set()
 
     for line in logs:
-        _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 7)
+        _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 8)
 
         if flag in SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
             continue
@@ -98,49 +123,73 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         elif tGUID not in everything:
             everything[tGUID] = {'name': tName}
 
-        spell_id = other[0]
+        try:
+            spell_id = other[0]
+        except IndexError:
+            continue
 
-        if sName in GHOUL_NAMES and sGUID[:5] == "0xF14" or spell_id == '47468' and sName not in BASE_DK_PETS:
-            if sGUID != tGUID and tGUID[:4] == "0xF1":
-                # unholy_DK_pets.setdefault(sGUID, set()).add(tGUID)
+        if sGUID not in players_skip:
+            if not is_player(sGUID):
+                players_skip.add(sGUID)
+            else:
+                # print(other)
+                # spellname = other[1].split(',', 1)[0]
+                if other[1] in SPELL_BOOK:
+                    players[sGUID] = sName
+                    players_classes[sGUID] = CLASSES[SPELL_BOOK[other[1]]]
+                    players_skip.add(sGUID)
+        # if (sName in GHOUL_NAMES and is_perma_pet(sGUID)
+        # or spell_id == '47468' and sName not in BASE_DK_PETS):
+
+        if spell_id == '47468' and sName not in BASE_DK_PETS:
+            if tGUID[:4] == "0xF1":
                 unholy_DK_pets[sGUID].add(tGUID)
                 if sName not in GHOUL_NAMES:
-                    _dk_missing_ghoul_names.add(sName)
+                    logging.debug(f'sName not in GHOUL_NAMES {sName}')
 
-        elif spell_id == '43771' and sGUID != tGUID:
-            pets_raw.add(tGUID)
-            if tGUID not in pets_data:
-                pets_data[tGUID] = new_entry(tName, sName, sGUID)
+        elif spell_id == '43771':
+            if sGUID != tGUID and tGUID not in pets_perma:
+                pets_perma[tGUID] = new_entry(tName, sName, sGUID)
+                pets_raw.add(tGUID)
 
-        elif spell_id in PET_FILTER_SPELLS and '0x06' in sGUID or flag == 'SPELL_SUMMON' and tGUID[6:-6] not in BOSS_PETS:
-            if '0xF14' in tGUID:
-                pets_data[tGUID] = new_entry(tName, sName, sGUID)
+        elif (spell_id in PET_FILTER_SPELLS and is_player(sGUID)
+        or flag == 'SPELL_SUMMON' and tGUID[6:-6] not in BOSS_PETS):
+            if is_perma_pet(tGUID):
+                pets_perma[tGUID] = new_entry(tName, sName, sGUID)
                 pets_raw.add(tGUID)
             elif sGUID != tGUID:
                 temp_pets[tGUID] = new_entry(tName, sName, sGUID)
-        
+
+        elif spell_id in WARLOCK_SPELLS:
+            if is_player(sGUID) and sGUID != tGUID:
+                pets_perma[sGUID] = new_entry(sName, tName, tGUID)
+                pets_raw.add(sGUID)
+
         elif spell_id == "34650": # Mana Leech
             temp_pets[sGUID] = new_entry('Shadowfiend', tName, tGUID)
 
-        elif spell_id in WARLOCK_SPELLS and '0x06' in sGUID and sGUID != tGUID:
-            pets_data[sGUID] = new_entry(sName, tName, tGUID)
-            pets_raw.add(sGUID)
-        
         elif spell_id == '70308': # Mutated Transformation
             last_abom = new_entry('Mutated Abomination', sName, sGUID)
-        
+
         elif last_abom and sGUID == tGUID and sGUID[6:-6] == '00958D': # Mutated Abomination
             temp_pets[sGUID] = last_abom
             last_abom = {}
 
-    everything.update(temp_pets)
-    add_missing_pets(everything, pets_data, pets_raw)
+    everything |= temp_pets
+    for guid, name in players.items():
+        everything[guid] = {'name': name}
 
-    save_new_dk_pet_names(_dk_missing_ghoul_names)
+    add_missing_pets(everything, pets_perma, pets_raw)
 
-    return everything, pets_data, unholy_DK_pets
+    return {
+        "everything": everything,
+        "players": dict(sorted(players.items())),
+        "classes": dict(sorted(players_classes.items())),
+        "pets_perma": pets_perma,
+        "unholy_DK_pets": unholy_DK_pets,
+    }
 
-def convert_masters(data: dict[str, dict[str, str]]):
+def convert_nested_masters(data: dict[str, dict[str, str]]):
     for p in data.values():
         if 'master_guid' not in p:
             continue
@@ -151,75 +200,44 @@ def convert_masters(data: dict[str, dict[str, str]]):
         p['master_guid'] = master_master_guid
         p['master_name'] = data[master_master_guid]['name']
 
-
-@constants.running_time
-def prune_players(logs: list[str], everything):
-    p = defaultdict(int)
-    players_names = {}
-    for line in logs:
-        if '0x06' not in line:
-            continue
-        _line = line.split(',', 4)
-        # _, _, sGUID, sName, _ = line.split(',', 4)
-        # _, _, sGUID, _ = line.split(',', 3)
-        if _line[2].startswith('0x06'):
-            players_names[_line[2]] = _line[3]
-            p[_line[2]] += 1
-    
-    players: dict[str, str] = {}
-    for guid, v in p.items():
-        # print(f"{players_names[guid]:>12} {guid}")
-        name = players_names[guid]
-        everything[guid] = {'name': name}
-        if v > 500: #  or guid not in everything:
-            players[guid] = name
-    
-    return dict(sorted(players.items()))
-
+@running_time
 def guids_main(logs, enc_data):
-    everything, pets_data, unholy_DK_pets = logs_parser(logs)
-    __qq = logs_udk_bullshit2.UDK_BULLSHIT(logs, everything, enc_data, pets_data, unholy_DK_pets)
-    __qq.get_missing_targets()
-    missing_targets_cached = dict(__qq.missing_targets)
-    for n in range(5):
-        __qq.filter_pets_by_combat()
-        if __qq.missing_targets == missing_targets_cached:
-            break
-        print('filter_pets_by_combat Loop:', n+2)
-        missing_targets_cached = dict(__qq.missing_targets)
-    convert_masters(everything)
-    players = prune_players(logs, everything)
-    # players = get_players(everything)
-    return everything, players
+    parsed = logs_parser(logs)
+    everything: dict[str, dict[str, str]] = parsed["everything"]
 
-def __main(name):
-    report = _main.THE_LOGS(name)
-    logs = report.get_logs()
-    enc_data = report.get_enc_data()
-    return guids_main(logs, enc_data)
+    missing_pets_targets = logs_udk_bullshit2.get_missing_targets(parsed["unholy_DK_pets"], parsed["pets_perma"])
+    logs_udk_bullshit2.UDK_BULLSHIT(logs, everything, enc_data, missing_pets_targets)
 
+    convert_nested_masters(everything)
+    return parsed
 
 def __redo(name):
     print(name)
-    everything, players = __main(name)
-    pth = f"LogsDir/{name}"
-    constants.json_write(f"{pth}/GUIDS_DATA", everything)
-    constants.json_write(f"{pth}/PLAYERS_DATA", players)
+    report = logs_main.THE_LOGS(name)
+    logs = report.get_logs()
+    enc_data = report.get_enc_data()
+    parsed = guids_main(logs, enc_data)
+    guids_data_file_name = report.relative_path("GUIDS_DATA.json")
+    players_data_file_name = report.relative_path("PLAYERS_DATA.json")
+    classes_data_file_name = report.relative_path("CLASSES_DATA.json")
+    _guids = parsed['everything']
+    _players = parsed['players']
+    _classes = parsed['classes']
+    # print(guids_data_file_name)
+    constants.json_write(guids_data_file_name, _guids)
+    constants.json_write(players_data_file_name, _players)
+    constants.json_write(classes_data_file_name, _classes)
 
-
-def __redo_all(startfrom=None, end=None):
-    import os
-    from multiprocessing import Pool
-    folders = next(os.walk('LogsDir/'))[1]
-    if startfrom:
-        folders = folders[folders.index(startfrom):]
-    if end:
-        folders = folders[:folders.index(end)]
-    for x in folders:
-        __redo(x)
-    # with Pool(4) as p:
-        # p.map(__redo, folders)
+def __redo_wrapped(name):
+    try:
+        __redo(name)
+    except Exception:
+        logging.exception(f'units_guid __redo {name}')
 
 if __name__ == "__main__":
-    # __redo_all("22-01-26--20-58--Safiyah")
-    __redo('22-01-20--21-43--Wardawg')
+    # start = "22-05-21--21-30--Piscolita"
+    constants.redo_data(__redo_wrapped)
+    # __redo_wrapped('21-08-16--18-19--Napnap')
+    # __redo_wrapped('22-06-19--04-15--Lismee')
+    # __redo('21-04-30--21-02--Nomadra')
+    # __redo('22-06-17--20-57--Nomadra')

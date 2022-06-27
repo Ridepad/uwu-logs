@@ -12,17 +12,17 @@
       <th>ATT</th>
     </tr>
     <tr>
-    {% for report_id, row in df.iterrows() %}
+    {% for REPORT_ID, row in df.iterrows() %}
     <tr>
-      <td><a href="http://armory.warmane.com/pveladder/Lordaeron/details/{{ report_id }}" rel="external" target="_blank">{{ report_id }}</a></td>
+      <td><a href="http://armory.warmane.com/pveladder/Lordaeron/details/{{ REPORT_ID }}" rel="external" target="_blank">{{ REPORT_ID }}</a></td>
       <td>{{ row["boss"] }}</td>
       <td>{{ row["size"] }}</td>
       <td>{% if row["difficulty"] %}H{% else %}N{% endif %}</td>
       <td>{{ row["duration"] }}</td>
       <td>{{ row["attempts"] }}</td>
       <td>
-        <input id="k{{ report_id }}" class="radio" name="fights-players-group" type="radio" checked>
-        <label class="show-players" for="k{{ report_id }}">PLAYERS</label>
+        <input id="k{{ REPORT_ID }}" class="radio" name="fights-players-group" type="radio" checked>
+        <label class="show-players" for="k{{ REPORT_ID }}">PLAYERS</label>
         <section class="fights-players">
           <table>
             <tr>

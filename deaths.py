@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import List
-import _main
+import logs_main
 import constants
 import re
 CDS = {
@@ -183,7 +183,7 @@ def find_deaths(logs: list, guid: str):
 
 if __name__ == "__main__":
     name = '210628-Passionne'
-    LOGS = _main.THE_LOGS(name)
+    LOGS = logs_main.THE_LOGS(name)
 
     logs = LOGS.get_logs()
     enc_data = LOGS.get_enc_data()

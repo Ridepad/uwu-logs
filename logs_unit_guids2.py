@@ -1,5 +1,5 @@
 from typing import List
-import _main
+import logs_main
 import constants
 
 @constants.running_time
@@ -15,7 +15,7 @@ def get_all(logs: List[str]):
 if __name__ == "__main__":
     name = "21-05-07--21-02--Nomadra"
     print(name)
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     guids = get_all(logs)
     assert "0x0600000000311347" in guids

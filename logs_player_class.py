@@ -1,137 +1,138 @@
-import _main
+import logging
+import logs_main
 import constants
-import dmg_heals2
+import dmg_heals
+from constants import SPECS_LIST, CLASS_FROM_HTML
 
-SPEC_LIST = constants.SPECS_LIST
-CLASSES = list(constants.CLASS_FROM_HTML)
-
-def get_spec_info(player_class, spec_index=0):
-    classi = CLASSES.index(player_class)
-    return SPEC_LIST[classi*4+spec_index]
+CLASSES = list(CLASS_FROM_HTML)
 
 SPELL_BOOK = {
-    'Hysteria': 0,
-    'Ebon Plague': 0,
-    'Bone Shield': 0,
-    'Horn of Winter': 0,
-    'Wandering Plague': 0,
-    'Plague Strike': 0,
-    'Killing Machine': 0,
-    'Icy Touch': 0,
-    'Shred': 1,
-    'Savage Roar': 1,
-    'Swipe (Bear)': 1,
-    'Swipe (Cat)': 1,
-    'Mangle (Cat)': 1,
-    'Rake': 1,
-    'Starfire': 1,
-    'Wrath': 1,
-    'Moonfire': 1,
-    'Insect Swarm': 1,
-    'Wild Growth': 1,
-    'Regrowth': 1,
-    'Rejuvenation': 1,
-    'Leader of the Pack': 1,
-    'Master Shapeshifter': 1,
-    'Serpent Sting': 2,
-    'Misdirection': 2,
-    'Volley': 2,
-    'Readiness': 2,
-    'Aimed Shot': 2,
-    'Chimera Shot': 2,
-    'Ignite': 3,
-    'Fireball': 3,
-    'Focus Magic': 3,
-    'Beacon of Light': 4,
+    "Hysteria": 0,
+    "Death Grip": 0,
+    "Frost Fever": 0,
+    "Ebon Plague": 0,
+    "Bone Shield": 0,
+    "Horn of Winter": 0,
+    "Wandering Plague": 0,
+    "Plague Strike": 0,
+    "Killing Machine": 0,
+    "Icy Touch": 0,
+    "Shred": 1,
+    "Savage Roar": 1,
+    "Swipe (Bear)": 1,
+    "Swipe (Cat)": 1,
+    "Mangle (Cat)": 1,
+    "Rake": 1,
+    "Starfire": 1,
+    "Wrath": 1,
+    "Moonfire": 1,
+    "Insect Swarm": 1,
+    "Wild Growth": 1,
+    "Regrowth": 1,
+    "Rejuvenation": 1,
+    "Leader of the Pack": 1,
+    "Master Shapeshifter": 1,
+    "Serpent Sting": 2,
+    "Misdirection": 2,
+    "Volley": 2,
+    "Readiness": 2,
+    "Aimed Shot": 2,
+    "Chimera Shot": 2,
+    "Ignite": 3,
+    "Fireball": 3,
+    "Arcane Barrage": 3,
+    "Missile Barrage": 3,
+    "Arcane Blast": 3,
+    "Arcane Power": 3,
+    "Blizzard": 3,
+    "Icy Veins": 3,
+    "Arcane Explosion": 3,
+    "Winter's Chill": 3,
+    "Arctic Winds": 3,
+    "Brain Freeze": 3,
+    "Beacon of Light": 4,
     "Avenger's Shield": 4,
-    'Judgement of Wisdom': 4,
-    'Judgement of Light': 4,
-    'Hand of Reckoning': 4,
-    'Hammer of Justice': 4,
-    'Hammer of the Righteous': 4,
-    'Sacred Shield': 4,
-    'Consecration': 4,
-    'Divine Shield': 4,
-    'Holy Shock': 4,
-    'Illumination': 4,
-    'Flash of Light': 4,
-    'Greater Blessing of Wisdom': 4,
-    'Greater Blessing of Kings': 4,
-    'Mind Flay': 5,
-    'Penance': 5,
-    'Divine Aegis': 5,
-    'Circle of Healing': 5,
-    'Renew': 5,
-    'Prayer of Fortitude': 5,
-    'Prayer of Spirit': 5,
-    'Prayer of Shadow Protection': 5,
-    'Sinister Strike': 6,
-    'Fan of Knives': 6,
-    'Blade Flurry': 6,
-    'Eviscerate': 6,
-    'Killing Spree': 6,
-    'Combat Potency': 6,
-    'Tricks of the Trade': 6,
-    'Focused Attacks': 6,
-    'Envenom': 6,
-    'Feint': 6,
-    'Vanish': 6,
-    'Water Shield': 7,
-    'Lightning Shield': 7,
-    'Windfury Attack': 7,
-    'Stormstrike': 7,
-    'Feral Spirit': 7,
-    'Thunderstorm': 7,
-    'Totem of Wrath': 7,
-    'Elemental Mastery': 7,
-    'Riptide': 7,
-    'Tidal Waves': 7,
-    'Earth Shield': 7,
-    'Rapid Currents': 7,
-    'Cleanse Spirit': 7,
-    'Mana Tide Totem': 7,
-    'Ancestral Awakening': 7,
-    'Unstable Affliction': 8,
-    'Soulfire': 8,
-    'Metamorphosis': 8,
-    'Shadow Bolt': 8,
-    'Life Tap': 8,
-    'Fel Armor': 8,
-    'Soul Link': 8,
-    'Corruption': 8,
-    'Death Wish': 9,
-    'Bloodrage': 9,
-    'Heroic Strike': 9,
-    'Bloodthirst': 9,
-    'Damage Shield': 9,
+    "Judgement of Wisdom": 4,
+    "Judgement of Light": 4,
+    "Hand of Reckoning": 4,
+    "Hammer of Justice": 4,
+    "Hammer of the Righteous": 4,
+    "Sacred Shield": 4,
+    "Consecration": 4,
+    "Divine Shield": 4,
+    "Holy Shock": 4,
+    "Illumination": 4,
+    "Flash of Light": 4,
+    "Greater Blessing of Wisdom": 4,
+    "Greater Blessing of Kings": 4,
+    "Greater Blessing of Sanctuary": 4,
+    "Mind Flay": 5,
+    "Shadowform": 5,
+    "Power Word: Shield": 5,
+    "Weakened Soul": 5,
+    "Vampiric Touch": 5,
+    "Shadow Word: Pain": 5,
+    "Penance": 5,
+    "Divine Aegis": 5,
+    "Circle of Healing": 5,
+    "Renew": 5,
+    "Prayer of Fortitude": 5,
+    "Prayer of Spirit": 5,
+    "Prayer of Shadow Protection": 5,
+    "Sinister Strike": 6,
+    "Fan of Knives": 6,
+    "Blade Flurry": 6,
+    "Eviscerate": 6,
+    "Killing Spree": 6,
+    "Combat Potency": 6,
+    "Tricks of the Trade": 6,
+    "Backstab": 6,
+    "Shadowstep": 6,
+    "Stealth": 6,
+    "Kidney Shot": 6,
+    "Focused Attacks": 6,
+    "Envenom": 6,
+    "Feint": 6,
+    "Vanish": 6,
+    "Water Shield": 7,
+    "Lightning Shield": 7,
+    "Windfury Attack": 7,
+    "Stormstrike": 7,
+    "Feral Spirit": 7,
+    "Thunderstorm": 7,
+    "Totem of Wrath": 7,
+    "Elemental Mastery": 7,
+    "Riptide": 7,
+    "Tidal Waves": 7,
+    "Earth Shield": 7,
+    "Rapid Currents": 7,
+    "Cleanse Spirit": 7,
+    "Mana Tide Totem": 7,
+    "Ancestral Awakening": 7,
+    "Unstable Affliction": 8,
+    "Soulfire": 8,
+    "Metamorphosis": 8,
+    "Shadow Bolt": 8,
+    "Life Tap": 8,
+    "Fel Armor": 8,
+    "Soul Link": 8,
+    "Corruption": 8,
+    "Death Wish": 9,
+    "Bloodrage": 9,
+    "Heroic Strike": 9,
+    "Bloodthirst": 9,
+    "Damage Shield": 9,
+    "Commanding Shout": 9,
+    "Deep Wounds": 9,
+    "Defensive Stance": 9,
+    "Berserker Stance": 9,
+    "Battle Stance": 9,
+    "Whirlwind": 9,
 }
 
-def classes_gen(logs: list[str], players):
-    players_set = set(players)
-    for line in logs:
-        line_split = line.split(',', 8)
-        if line_split[2] not in players_set:
-            continue
-        try:
-            if line_split[7] not in SPELL_BOOK:
-                continue
-        except IndexError:
-            continue
-        players_set.remove(line_split[2])
-        yield line_split[2], line_split[7]
-        if not players_set:
-            break
-    print(f"{players_set=}")
-
-@constants.running_time
-def get_classes(logs: list[str], players: dict[str, str]):
-    classes = {
-        sGUID: CLASSES[SPELL_BOOK[spellName]]
-        for sGUID, spellName in classes_gen(logs, players)
-    }
-    return dict(sorted(classes.items()))
-
 IGNORED_SPELLS = {
+    'PvP Trinket',
+    'Melee',
     'Asphyxiation',
     'Backlash',
     'Basic Campfire',
@@ -221,6 +222,27 @@ IGNORED_SPELLS = {
 }
 
 SPELLS = {
+    "death-knight": {
+        "Hysteria": 1,
+        "Vampiric Blood": 1,
+        "Mark of Blood": 1,
+        "Rune Tap": 1,
+        "Bloody Vengeance": 1,
+        "Blood Armor": 1,
+
+        "Frost Strike": 2,
+        "Unbreakable Armor": 2,
+        "Hungering Cold": 2,
+        "Howling Blast": 2,
+        "Acclimation": 2,
+        
+        "Summon Gargoyle": 3,
+        "Scourge Strike": 3,
+        "Anti-Magic Zone": 3,
+        "Wandering Plague": 3,
+        "Ebon Plague": 3,
+        "Desolation": 3,
+    },
     "druid": {
         "Earth and Moon": 1,
         "Eclipse (Lunar)": 1,
@@ -257,6 +279,46 @@ SPELLS = {
         "Living Seed": 3,
         "Tree of Life": 3,
     },
+    "hunter": {
+        "Bestial Wrath": 1,
+        "Intimidation": 1,
+        "Chimera Shot": 2,
+        "Explosive Shot": 3,
+    },
+    "mage": {
+        "Arcane Barrage": 1,
+        "Arcane Power": 1,
+        "Living Bomb": 2,
+        "Combustion": 2,
+        "Hot Streak": 2,
+        "Cold Snap": 3,
+        "Winter's Chill": 3,
+        "Summon Water Elemental": 3,
+        "Deep Freeze": 3,
+    },
+    "paladin": {
+        "Beacon of Light": 1,
+        "Holy Shock": 1,
+        "Infusion of Light": 1,
+        "Divine Illumination": 1,
+
+        "Ardent Defender": 2,
+        "Divine Guardian": 2,
+        "Hammer of the Righteous": 2,
+        "Avenger's Shield": 2,
+        "Redoubt": 2,
+        "Holy Shield": 2,
+        "Blessing of Sanctuary": 2,
+        "Greater Blessing of Sanctuary": 2,
+        "Deliverance": 2,
+        
+        "Seal of Command": 3,
+        "The Art of War": 3,
+        "Crusader Strike": 3,
+        "Divine Storm": 3,
+        "Repentance": 3,
+    },
+    
     "priest": {
         "Renewed Hope": 1,
         "Rapture": 1,
@@ -283,28 +345,21 @@ SPELLS = {
         "Dispersion": 3,
         "Shadowform": 3,
     },
-    "paladin": {
-        "Beacon of Light": 1,
-        "Holy Shock": 1,
-        "Infusion of Light": 1,
-        "Divine Illumination": 1,
-
-        "Ardent Defender": 2,
-        "Divine Guardian": 2,
-        "Hammer of the Righteous": 2,
-        "Avenger's Shield": 2,
-        "Redoubt": 2,
-        "Holy Shield": 2,
-        "Blessing of Sanctuary": 2,
-        "Greater Blessing of Sanctuary": 2,
-        "Deliverance": 2,
-        
-        "Seal of Command": 3,
-        "The Art of War": 3,
-        "Crusader Strike": 3,
-        "Divine Storm": 3,
-        "Repentance": 3,
+    
+    "rogue": {
+        "Envenom": 1,
+        "Mutilate": 1,
+        "Cold Blood": 1,
+        "Sinister Strike": 2,
+        "Adrenaline Rush": 2,
+        "Blade Flurry": 2,
+        "Killing Spree": 2,
+        "Shadow Dance": 3,
+        "Shadowstep": 3,
+        "Premeditation": 3,
+        "Preparation": 3,
     },
+
     "shaman": {
         "Totem of Wrath": 1,
         "Thunderstorm": 1,
@@ -327,57 +382,21 @@ SPELLS = {
         "Mana Tide Totem": 3,
         "Nature's Swiftness": 3,
     },
-    "death-knight": {
-        "Hysteria": 1,
-        "Vampiric Blood": 1,
-        "Mark of Blood": 1,
-        "Rune Tap": 1,
-        "Bloody Vengeance": 1,
-        "Blood Armor": 1,
+    
+    "warlock": {
+        "Haunt": 1,
+        "Unstable Affliction": 1,
+        "Eradication": 1,
+        "Molten Core": 2,
+        "Metamorphosis": 2,
+        "Decimation": 2,
+        "Demonic Empowerment": 2,
+        "Chaos Bolt": 3,
+        "Shadowfury": 3,
+        "Conflagrate": 3,
+        "Devastation": 3,
+    },
 
-        "Frost Strike": 2,
-        "Unbreakable Armor": 2,
-        "Hungering Cold": 2,
-        "Howling Blast": 2,
-        "Acclimation": 2,
-        
-        "Summon Gargoyle": 3,
-        "Scourge Strike": 3,
-        "Anti-Magic Zone": 3,
-        "Wandering Plague": 3,
-        "Ebon Plague": 3,
-        "Desolation": 3,
-    },
-    "hunter": {
-        "Bestial Wrath": 1,
-        "Intimidation": 1,
-        "Chimera Shot": 2,
-        "Explosive Shot": 3,
-    },
-    "mage": {
-        "Arcane Barrage": 1,
-        "Arcane Power": 1,
-        "Living Bomb": 2,
-        "Combustion": 2,
-        "Hot Streak": 2,
-        "Cold Snap": 3,
-        "Winter's Chill": 3,
-        "Summon Water Elemental": 3,
-        "Deep Freeze": 3,
-    },
-    "rogue": {
-        "Envenom": 1,
-        "Mutilate": 1,
-        "Cold Blood": 1,
-        "Sinister Strike": 2,
-        "Adrenaline Rush": 2,
-        "Blade Flurry": 2,
-        "Killing Spree": 2,
-        "Shadow Dance": 3,
-        "Shadowstep": 3,
-        "Premeditation": 3,
-        "Preparation": 3,
-    },
     "warrior": {
         "Bladestorm": 1,
         "Mortal Strike": 1,
@@ -391,23 +410,42 @@ SPELLS = {
         "Vigilance": 3,
         "Concussion Blow": 3,
     },
-    "warlock": {
-        "Haunt": 1,
-        "Unstable Affliction": 1,
-        "Eradication": 1,
-        "Molten Core": 2,
-        "Metamorphosis": 2,
-        "Decimation": 2,
-        "Demonic Empowerment": 2,
-        "Chaos Bolt": 3,
-        "Shadowfury": 3,
-        "Conflagrate": 3,
-        "Devastation": 3,
-    }
 }
+
+def classes_gen(logs: list[str], players):
+    players_set = set(players)
+    for line in logs:
+        line_split = line.split(',', 8)
+        if line_split[2] not in players_set:
+            continue
+        try:
+            if line_split[7] not in SPELL_BOOK:
+                continue
+        except IndexError:
+            continue
+
+        players_set.remove(line_split[2])
+        yield line_split[2], line_split[7]
+        if not players_set:
+            break
+    
+    if players_set:
+        # print(players_set)
+        logging.debug(f'player_class classes_gen {players_set} {logs[0][:100]}')
+
+@constants.running_time
+def get_classes(logs: list[str], players: dict[str, str]):
+    classes = {
+        sGUID: CLASSES[SPELL_BOOK[spellName]]
+        for sGUID, spellName in classes_gen(logs, players)
+    }
+    return dict(sorted(classes.items()))
 
 def specs_gen(logs: list[str], players: dict[str, str], classes: dict[str, str]):
     # players_set = set(players)
+    # for guid in players:
+    #     # if guid in classes:
+    #     print(classes[guid], SPELLS[classes[guid]])
     class_spells = {guid: SPELLS[classes[guid]] for guid in players if guid in classes}
     for line in logs:
         line_split = line.split(',', 8)
@@ -451,6 +489,10 @@ def get_specs_guids(logs: list[str], players: dict[str, str], classes: dict[str,
         specs[guid] = spec_index
     return specs
 
+def get_spec_info(player_class, spec_index=0):
+    classi = CLASSES.index(player_class)
+    return SPECS_LIST[classi*4+spec_index]
+
 @constants.running_time
 def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str]):
     specs = get_specs_guids(logs, players, classes)
@@ -465,10 +507,22 @@ def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str])
     
     return new_data
 
+@constants.running_time
+def get_specs_no_names(logs: list[str], players: dict[str, str], classes: dict[str, str]):
+    specs = get_specs_guids(logs, players, classes)
+    
+    new_data: dict[str, tuple[str, str]] = {}
+    for guid, spec_index in specs.items():
+        player_class = classes[guid]
+        classi = CLASSES.index(player_class)
+        new_data[guid] = classi*4+spec_index
+    
+    return new_data
+
 
 def test_class(name):
     print(name)
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     players = report.get_players_guids()
     q = get_classes(logs, players)
@@ -478,7 +532,7 @@ def test_class(name):
 
 def test_spec(name):
     print(name)
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     enc_data = report.get_enc_data()
     # boss = "Lady Deathwhisper"
     # boss = "Professor Putricide"
@@ -487,10 +541,10 @@ def test_spec(name):
     boss = "The Lich King"
     s, f = enc_data[boss][-2]
     logs = report.get_logs(s, f)
-    dmg = dmg_heals2.parse_only_dmg(logs)
+    dmg = dmg_heals.parse_only_dmg(logs)
     # dmg = dmg_heals2.add_pets(dmg, guids)
     print(dmg)
-    players = {x for x in dmg if x.startswith('0x06')}
+    players = {x for x in dmg if x.startswith('0x0')}
     print(players)
     classes = report.get_classes()
     q = get_specs(logs, players, classes)
@@ -503,15 +557,25 @@ def test_spec(name):
 
 def __redo(name):
     print(name)
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     players = report.get_players_guids()
     classes = get_classes(logs, players)
-    pth = f'LogsDir/{name}/CLASSES_DATA'
+    pth = report.relative_path("CLASSES_DATA")
     constants.json_write(pth, classes)
 
+def __redo_wrapped(name):
+    try:
+        __redo(name)
+    except Exception:
+        logging.exception(f'player_class __redo {name}')
+
 if __name__ == '__main__':
-    # test_spec("22-05-05--20-34--Inia")
-    __redo("22-01-20--21-43--Wardawg")
-    # constants.redo_data(__redo)
+    names = [
+        # '21-12-26--16-44--Imnotadk',
+        '21-08-16--18-19--Napnap',
+    ]
+    for name in names:
+        __redo_wrapped(name)
+    # constants.redo_data(__redo_wrapped)
 

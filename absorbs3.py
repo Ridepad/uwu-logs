@@ -1,5 +1,5 @@
 from typing import List
-import _main
+import logs_main
 import constants
 from datetime import timedelta
 
@@ -123,7 +123,7 @@ def do(logs_slice: List[str], target_name):  # sourcery no-metrics
 
 def main():
     name = "21-11-14--00-05--Lismee"
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     enc_data = report.get_enc_data()
     s, f = enc_data["Festergut"][-1]

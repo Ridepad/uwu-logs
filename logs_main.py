@@ -1,14 +1,15 @@
+import json
 import os
 from collections import defaultdict
 from datetime import datetime
 
 import auras
-import check_difficulty
+import logs_check_difficulty
 import constants
 import dmg_breakdown
-import dmg_heals2
+import dmg_heals
 import dmg_useful
-import fight_separator
+import logs_fight_separator
 import logs_get_time
 import logs_player_class
 import logs_spell_info
@@ -16,27 +17,36 @@ import logs_spells_list
 import logs_units_guid
 import logs_valks3
 
-from constants import running_time, sort_dict_by_value, add_new_numeric_data
+from constants import is_player, running_time, sort_dict_by_value, add_new_numeric_data, add_space
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
 LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
 
 IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
+PLAYER = "0x0"
 
 def separate_thousands(num):
+    if not num: return ""
     v = f"{num:,}" if type(num) == int else f"{num:,.1f}"
     return v.replace(",", " ")
 
+def format_total_data(data: dict):
+    data["Total"] = sum(data.values())
+    return {k: separate_thousands(v) for k, v in data.items()}
+
 def calc_percent(value: int, max_value: int):
-    return value / max_value * 100 // 1
+    return int(value / max_value * 100)
 
 def calc_per_sec(value: int, duration: float, precision: int=1):
+    v = value / (duration or 1)
     precision = 10**precision
-    v = value / duration * precision // 1 / precision
+    v = int(v * precision) / precision
     return separate_thousands(v)
 
 def convert_to_table(data: dict[str, int], duration):
+    if not data:
+        return []
     _data = list(data.items())
     max_value = _data[0][1]
     return [
@@ -62,6 +72,7 @@ def count_total(spell_data: dict[str, dict[str, list[int]]]):
     }
     total = sum(new.values())
     new["Total"] = total
+    total = total or 1
     return {
         spell_id: (separate_thousands(value), f"{separate_thousands(value / total * 100)}%")
         for spell_id, value in new.items()
@@ -79,6 +90,7 @@ def format_raw(raw_total: dict[int, int]):
 
 def build_query(boss_name_html, mode, s, f, attempt):
     slice_q = f"s={s}&f={f}" if s and f else ""
+    
     if boss_name_html:
         query = f"boss={boss_name_html}"
         if mode:
@@ -88,7 +100,10 @@ def build_query(boss_name_html, mode, s, f, attempt):
             query = f"{query}&attempt={attempt}"
     else:
         query = slice_q
-    return f"?{query}"
+    
+    if query:
+        return f"?{query}"
+    return ""
 
 def convert_duration(t):
     milliseconds = int(t % 1 * 1000)
@@ -102,7 +117,7 @@ def combine_durations(durations: list):
     return convert_duration(sum(durations))
     
 @constants.running_time
-def get_targets(logs_slice: list[str], source="0x06", target="0xF1"):
+def get_targets(logs_slice: list[str], source=PLAYER, target="0xF1"):
     _targets: set[str] = set()
     for line in logs_slice:
         if "_DAMAGE" not in line:
@@ -113,17 +128,11 @@ def get_targets(logs_slice: list[str], source="0x06", target="0xF1"):
         if source in sguid and target in tguid:
             _targets.add(tguid)
     target_ids = {x[6:-6] for x in _targets}
-    print(target_ids)
+    # print(target_ids)
     return {
         target_id: {x for x in _targets if target_id in x}
         for target_id in target_ids
     }
-
-def convert_to_html_name(name: str):
-    return name.lower().replace(' ', '-').replace("'", '')
-
-def slice_apply_shift(p):
-    return
 
 
 def group_targets(targets: set[str]):
@@ -132,6 +141,22 @@ def group_targets(targets: set[str]):
         target_id: {guid for guid in targets if target_id in guid}
         for target_id in target_ids
     }
+
+def regroup_targets(data):
+    grouped_targets = group_targets(data)
+    targets_players = set()
+    for x in grouped_targets:
+        if x[:3] == PLAYER:
+            targets_players = grouped_targets.pop(x, set())
+            break
+    return set(grouped_targets) | targets_players
+
+def convert_to_html_name(name: str):
+    return name.lower().replace(' ', '-').replace("'", '')
+
+def slice_apply_shift(p):
+    return
+
 
 class THE_LOGS:
     # GUIDS: dict[str, dict[str, str]]
@@ -150,9 +175,25 @@ class THE_LOGS:
         self.DURATIONS: dict[str, float] = {}
         self.TARGETS: dict[str, dict[str, set[str]]] = {}
         self.CACHE: dict[str, dict[str, dict]] = {x: {} for x in dir(self) if "__" not in x}
+        self.CONTROLLED_UNITS: dict[str, set[str]] = {}
 
     def relative_path(self, s: str):
         return os.path.join(self.PATH, s)
+
+    def get_logger(self):
+        try:
+            return self.LOGGER
+        except AttributeError:
+            log_file = self.relative_path('log.log')
+            logger = constants.setup_logger(f"{self.NAME}_logger", log_file)
+            self.LOGGER = logger
+            return logger
+    
+    def cache_files_missing(self, files):
+        try:
+            return not os.path.isfile(files)
+        except TypeError:
+            return not all(os.path.isfile(file) for file in files)
     
     def get_fight_targets(self, s, f):
         return self.TARGETS[f"{s}_{f}"]
@@ -173,12 +214,12 @@ class THE_LOGS:
         return logs_slice[0], logs_slice[-1]
     
     def get_fight_duration(self, s, f):
-        sliceID = f"{s}_{f}"
-        if sliceID in self.DURATIONS:
-            return self.DURATIONS[sliceID]
+        slice_ID = f"{s}_{f}"
+        if slice_ID in self.DURATIONS:
+            return self.DURATIONS[slice_ID]
         first_line, last_line = self.logs_first_last_line(s, f)
         dur = constants.get_fight_duration(first_line, last_line)
-        self.DURATIONS[sliceID] = dur
+        self.DURATIONS[slice_ID] = dur
         return dur
         
     def get_enc_data(self, rewrite=False):
@@ -186,53 +227,50 @@ class THE_LOGS:
             return self.ENCOUNTER_DATA
         except AttributeError:
             enc_data_file_name = self.relative_path("ENCOUNTER_DATA.json")
-            if rewrite or self.files_missing(enc_data_file_name):
+            if rewrite or self.cache_files_missing(enc_data_file_name):
                 logs = self.get_logs()
-                self.ENCOUNTER_DATA = fight_separator.main(logs)
+                self.ENCOUNTER_DATA = logs_fight_separator.main(logs)
                 constants.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
             else:
                 self.ENCOUNTER_DATA: dict[str, list[tuple[int, int]]] = constants.json_read(enc_data_file_name)
             return self.ENCOUNTER_DATA
-            # enc_data_file_name = self.relative_path("ENCOUNTER_DATA")
-            # try:
-            #     if rewrite: raise FileNotFoundError
-            #     _enc_data = constants.json_read_no_exception(enc_data_file_name)
-            #     self.ENCOUNTER_DATA = _enc_data
-            # except FileNotFoundError:
-            #     logs = self.get_logs()
-            #     self.ENCOUNTER_DATA = fight_separator.main(logs)
-            #     constants.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
-            # return self.ENCOUNTER_DATA
     
-    def new_guids(self, guids_data_file_name, players_data_file_name):
+    def new_guids(self, guids_data_file_name, players_data_file_name, classes_data_file_name):
         logs = self.get_logs()
         enc_data = self.get_enc_data()
-        self.GUIDS, self.PLAYERS = logs_units_guid.guids_main(logs, enc_data)
-        constants.json_write(guids_data_file_name, self.GUIDS)
-        constants.json_write(players_data_file_name, self.PLAYERS)
-        return self.GUIDS, self.PLAYERS
-    
-    def files_missing(self, files):
-        try:
-            return not os.path.isfile(files)
-        except TypeError:
-            return not all(os.path.isfile(file) for file in files)
+        parsed = logs_units_guid.guids_main(logs, enc_data)
+        _guids = parsed['everything']
+        _players = parsed['players']
+        _classes = parsed['classes']
+        constants.json_write(guids_data_file_name, _guids)
+        constants.json_write(players_data_file_name, _players)
+        constants.json_write(classes_data_file_name, _classes)
+        return _guids, _players, _classes
     
     def get_guids(self, rewrite=False):
         try:
-            return self.GUIDS, self.PLAYERS
+            return self.GUIDS, self.PLAYERS, self.CLASSES
         except AttributeError:
-            guids_data_file_name = self.relative_path("GUIDS_DATA.json")
-            players_data_file_name = self.relative_path("PLAYERS_DATA.json")
-            if rewrite or self.files_missing([guids_data_file_name, players_data_file_name]):
-                return self.new_guids(guids_data_file_name, players_data_file_name)
-            
             _guids: dict[str, dict[str, str]]
             _players: dict[str, str]
-            _guids = constants.json_read_no_exception(guids_data_file_name)
-            _players = constants.json_read_no_exception(players_data_file_name)
-            self.GUIDS, self.PLAYERS = _guids, _players
-            return self.GUIDS, self.PLAYERS
+            _classes: dict[str, str]
+
+            files = [
+                self.relative_path("GUIDS_DATA.json"),
+                self.relative_path("PLAYERS_DATA.json"),
+                self.relative_path("CLASSES_DATA.json")
+            ]
+            
+            if rewrite or self.cache_files_missing(files):
+                _guids, _players, _classes = self.new_guids(*files)
+            else:
+                _guids, _players, _classes = [
+                    constants.json_read_no_exception(_file_name)
+                    for _file_name in files
+                ]
+            
+            self.GUIDS, self.PLAYERS, self.CLASSES = _guids, _players, _classes
+            return self.GUIDS, self.PLAYERS, self.CLASSES
 
     def get_all_guids(self):
         return self.get_guids()[0]
@@ -241,9 +279,13 @@ class THE_LOGS:
         players = self.get_guids()[1]
         if filter_guids is not None:
             return {k:v for k,v in players.items() if k in filter_guids}
-        if filter_names is not None:
+        elif filter_names is not None:
             return {k:v for k,v in players.items() if v in filter_names}
-        return players
+        else:
+            return players
+
+    def get_classes(self):
+        return self.get_guids()[2]
 
     def guid_to_player_name(self):
         try:
@@ -252,41 +294,42 @@ class THE_LOGS:
             players = self.get_players_guids()
             self.PLAYERS_NAMES = {v:k for k,v in players.items()}
             return self.PLAYERS_NAMES
+        
+    def get_all_players_pets(self):
+        try:
+            return self.ALL_PETS
+        except AttributeError:
+            guids = self.get_all_guids()
+            self.ALL_PETS = {
+                guid
+                for guid, p in guids.items()
+                if p.get("master_guid", "").startswith(PLAYER)
+            }
+            return self.ALL_PETS
 
     def get_players_and_pets_guids(self):
         try:
             return self.PLAYERS_AND_PETS
         except AttributeError:
-            players = set(self.get_guids()[1])
-            pets = self.get_players_pets()
+            players = set(self.get_players_guids())
+            pets = self.get_all_players_pets()
             self.PLAYERS_AND_PETS = players | pets
             return self.PLAYERS_AND_PETS
         
-    def get_classes(self, rewrite=False):
-        try:
-            return self.CLASSES
-        except AttributeError:
-            classes_data_file_name = self.relative_path("CLASSES_DATA.json")
-            if rewrite or self.files_missing(classes_data_file_name):
-                logs = self.get_logs()
-                players = self.get_players_guids()
-                self.CLASSES = logs_player_class.get_classes(logs, players)
-                constants.json_write(classes_data_file_name, self.CLASSES)
-            else:
-                self.CLASSES: dict[str, str] = constants.json_read(classes_data_file_name)
-            return self.CLASSES
-
-            # try:
-            #     if rewrite: raise FileNotFoundError
-            #     _classes: dict[str, str]
-            #     _classes = constants.json_read_no_exception(classes_data_file_name)
-            #     self.CLASSES = _classes
-            # except FileNotFoundError:
-            #     logs = self.get_logs()
-            #     players = self.get_players_guids()
-            #     self.CLASSES = logs_player_class.get_classes(logs, players)
-            #     constants.json_write(classes_data_file_name, self.CLASSES)
-            # return self.CLASSES
+    # def get_classes(self, rewrite=False):
+    #     try:
+    #         return self.CLASSES
+    #     except AttributeError:
+    #         classes_data_file_name = self.relative_path("CLASSES_DATA.json")
+    #         if rewrite or self.cache_files_missing(classes_data_file_name):
+    #             logs = self.get_logs()
+    #             players = self.get_players_guids()
+    #             self.CLASSES = logs_player_class.get_classes(logs, players)
+    #             constants.json_write(classes_data_file_name, self.CLASSES)
+    #         else:
+    #             self.CLASSES: dict[str, str] = constants.json_read(classes_data_file_name)
+    #         return self.CLASSES
+            
     def get_classes_with_names(self):
         try:
             return self.CLASSES_NAMES
@@ -301,7 +344,7 @@ class THE_LOGS:
             return self.SPELLS
         except AttributeError:
             spells_data_file_name = self.relative_path("SPELLS_DATA.json")
-            if rewrite or self.files_missing(spells_data_file_name):
+            if rewrite or self.cache_files_missing(spells_data_file_name):
                 logs = self.get_logs()
                 self.SPELLS = logs_spells_list.get_all_spells(logs)
                 constants.json_write(spells_data_file_name, self.SPELLS)
@@ -309,39 +352,19 @@ class THE_LOGS:
                 _spells = constants.json_read_no_exception(spells_data_file_name)
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
-            # spells_data_file_name = self.relative_path("SPELLS_DATA.json")
-            # try:
-            #     if rewrite: raise FileNotFoundError
-            #     _spells = constants.json_read_no_exception(spells_data_file_name)
-            #     self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
-            # except FileNotFoundError:
-            #     logs = self.get_logs()
-            #     self.SPELLS = logs_spells_list.get_all_spells(logs)
-            #     constants.json_write(spells_data_file_name, self.SPELLS)
-            # return self.SPELLS
         
     def get_timestamp(self, rewrite=False) -> list[int]:
         try:
             return self.TIMESTAMP
         except AttributeError:
             timestamp_data_file_name = self.relative_path("TIMESTAMP_DATA.json")
-            if rewrite or self.files_missing(timestamp_data_file_name):
+            if rewrite or self.cache_files_missing(timestamp_data_file_name):
                 logs = self.get_logs()
                 self.TIMESTAMP = logs_get_time.ujiowfuiwefhuiwe(logs)
                 constants.json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None)
             else:
                 self.TIMESTAMP: list[int] = constants.json_read(timestamp_data_file_name)
             return self.TIMESTAMP
-            # timestamp_data_file_name = self.relative_path("TIMESTAMP_DATA")
-            # try:
-            #     if rewrite: raise FileNotFoundError
-            #     _ts = constants.json_read_no_exception(timestamp_data_file_name)
-            #     self.TIMESTAMP = _ts
-            # except FileNotFoundError:
-            #     logs = self.get_logs()
-            #     self.TIMESTAMP = logs_get_time.ujiowfuiwefhuiwe(logs)
-            #     constants.json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None)
-            # return self.TIMESTAMP
         
     # @constants.running_time
     # def get_difficulty(self):
@@ -495,7 +518,7 @@ class THE_LOGS:
         s, f = self.attempt_time(boss_name, attempt)
         href3 = f"{href2}&s={s}&f={f}&attempt={attempt}"
         class_name = f"{seg_info['attempt_type']}-link"
-        segment_str = f"{seg_info['slice_duration'][2:]} | {seg_info['segment_type']}"
+        segment_str = f"{seg_info['duration_str']} | {seg_info['segment_type']}"
         return {"href": href3, "class_name": class_name, "text": segment_str}
     
     def make_segment_query_diff(self ,segments, boss_name, href1, diff_id):
@@ -552,7 +575,7 @@ class THE_LOGS:
         except AttributeError:
             logs = self.get_logs()
             enc_data = self.get_enc_data()
-            _data = check_difficulty.get_segments2(logs, enc_data)
+            _data = logs_check_difficulty.get_segments2(logs, enc_data)
 
             segments = _data['segments']
             self.SEGMENTS = segments
@@ -560,7 +583,7 @@ class THE_LOGS:
             self.BOSSES_TO_HTML = bosses_html
             self.BOSSES_CONVERT = {v:k for k, v in bosses_html.items()}
             
-            separated = check_difficulty.separate_modes(segments)
+            separated = logs_check_difficulty.separate_modes(segments)
             self.SEGMENTS_SEPARATED = separated
             self.SEGMENTS_QUERIES = self.make_segment_queries(separated)
 
@@ -748,39 +771,26 @@ class THE_LOGS:
             return guid
         return guids.get(master_guid, {}).get('master_guid', master_guid)
 
-    def get_pets_of(self, master_guid):
-        guids = self.get_all_guids()
-        return {
+    def get_units_controlled_by(self, master_guid: str):
+        if master_guid in self.CONTROLLED_UNITS:
+            return self.CONTROLLED_UNITS[master_guid]
+        
+        all_guids = self.get_all_guids()
+        controlled_units = {
             guid
-            for guid, p in guids.items()
+            for guid, p in all_guids.items()
             if p.get("master_guid") == master_guid
         }
-
-    @running_time
-    def get_units_controlled_by(self, master_guid):
-        guids = self.get_pets_of(master_guid)
-        guids.add(master_guid)
-        return guids
-        
-
-    def get_players_pets(self):
-        try:
-            return self.ALL_PETS
-        except AttributeError:
-            guids = self.get_all_guids()
-            self.ALL_PETS = {
-                guid
-                for guid, p in guids.items()
-                if p.get("master_guid", "").startswith("0x06")
-            }
-            return self.ALL_PETS
+        controlled_units.add(master_guid)
+        self.CONTROLLED_UNITS[master_guid] = controlled_units
+        return controlled_units
 
     def dmg_taken(self, logs_slice, filter_guids=None, players=False):
         if filter_guids is None:
-            filter_guid = '0x06' if players else '0xF1'
-            dmg = dmg_heals2.parse_dmg_taken_single(logs_slice, filter_guid)
+            filter_guid = PLAYER if players else '0xF1'
+            dmg = dmg_heals.parse_dmg_taken_single(logs_slice, filter_guid)
         else:
-            dmg = dmg_heals2.parse_dmg_taken(logs_slice, filter_guids)
+            dmg = dmg_heals.parse_dmg_taken(logs_slice, filter_guids)
         new_data: dict[str, dict[str, int]] = {}
         for tguid, sources in dmg.items():
             name = self.guid_to_name(tguid)
@@ -827,31 +837,34 @@ class THE_LOGS:
 
     @constants.running_time
     def report_page(self, s, f) -> tuple[dict[str, int], dict[str, int]]:
-        sliceID = f"{s}_{f}"
-        cache_slices = self.CACHE['report_page']
-        if sliceID in cache_slices:
-            return cache_slices[sliceID]
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['report_page']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
         
         logs_slice = self.get_logs(s, f)
         players_and_pets = self.get_players_and_pets_guids()
-        data = dmg_heals2.parse_both(logs_slice, players_and_pets)
+        data = dmg_heals.parse_both(logs_slice, players_and_pets)
         
         units = set(data["damage"]) | set(data["heal"])
         players = self.get_players_guids(filter_guids=units)
         classes = self.get_classes()
         if s is None and f is None:
-            logs_slice = self.get_logs(None, 100000)
+            logs_slice = self.get_logs(None, 50000)
         data['specs'] = logs_player_class.get_specs(logs_slice, players, classes)
+
+        data['first_hit'] = logs_slice[0]
+        data['last_hit'] = logs_slice[-1]
         # print(data['damage'])
         # print(data['heal'])
         # print(data['specs'])
 
-        cache_slices[sliceID] = data
+        cached_data[slice_ID] = data
         return data
     
     def dry_data(self, data, slice_duration):
         guids = self.get_all_guids()
-        data_with_pets = dmg_heals2.add_pets(data, guids)
+        data_with_pets = dmg_heals.add_pets(data, guids)
         data_sorted = sort_dict_by_value(data_with_pets)
         return convert_to_table(data_sorted, slice_duration)
 
@@ -867,12 +880,13 @@ class THE_LOGS:
             elif unit_name not in specs and unit_name in classes_names:
                 player_class = classes_names[unit_name]
                 specs[unit_name] = logs_player_class.get_spec_info(player_class)
-                print(f"{unit_name} not in specs!")
+                print(f"{unit_name} doenstt have spec!")
             # elif unit_name not in classes_names:
             #     print(f"{unit_name} not in classes_names!")
 
 
     def get_report_page_all(self, segments):
+        return_dict = {}
         durations = []
         damage = defaultdict(int)
         heal = defaultdict(int)
@@ -885,6 +899,8 @@ class THE_LOGS:
             add_new_numeric_data(damage, _data["damage"])
             add_new_numeric_data(heal, _data["heal"])
             specs |= _data['specs']
+            return_dict["FIRST_HIT"] = _data['first_hit']
+            return_dict["LAST_HIT"] = _data['last_hit']
 
         total_duration = sum(durations)
         total_duration_str = convert_duration(total_duration)
@@ -894,85 +910,55 @@ class THE_LOGS:
 
         self.report_add_missing_specs(specs, damage, heal)
 
-        return {
-            "damage": damage,
-            "heals": heal,
-            "duration": total_duration_str,
-            "specs": specs,
+        return return_dict | {
+            "DAMAGE": damage,
+            "HEAL": heal,
+            "DURATION": total_duration_str,
+            "SPECS": specs,
         }
 
-    def player_info(self, s, f, sGUID, tGUID):
-        sliceID = f"{s}_{f}"
-        cache_slices = self.CACHE['player_info_all_add'].setdefault(sGUID, {}).setdefault(tGUID, {})
-
-        if sliceID in cache_slices:
-            return cache_slices[sliceID]
+    def player_info(self, s, f, sGUID, tGUID=None):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['player_info'].setdefault(sGUID, {}).setdefault(tGUID, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
 
         logs_slice = self.get_logs(s, f)
-        all_guids = self.get_units_controlled_by(sGUID)
-        data = dmg_breakdown.parse_logs(logs_slice, all_guids, sGUID, tGUID)
-        cache_slices[sliceID] = data
+        controlled_units = self.get_units_controlled_by(sGUID)
+        all_player_pets = self.get_players_and_pets_guids()
+        data = dmg_breakdown.parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        cached_data[slice_ID] = data
         return data
 
-    def player_info_all_add(self, segments, sGUID, tGUID):
+    def player_info_all_add(self, segments, sGUID, tGUID=None):
+        info_data = defaultdict(lambda: defaultdict(int))
         durations: list[int] = []
+        info_data['durations'] = durations
         targets: set[str] = set()
-        total = defaultdict(int)
+        info_data['targets'] = targets
         actual = defaultdict(lambda: defaultdict(list))
+        info_data['actual'] = actual
 
-        all_guids = self.get_units_controlled_by(sGUID)
-
-        cached_data = self.CACHE['player_info_all_add'].setdefault(sGUID, {}).setdefault(tGUID, {})
-        
         for s, f in segments:
             durations.append(self.get_fight_duration(s, f))
 
-            sliceID = f"{s}_{f}"
-            data = cached_data.get(sliceID)
-            # if not data:
-            logs_slice = self.get_logs(s, f)
-            data = dmg_breakdown.parse_logs(logs_slice, all_guids, sGUID, tGUID)
-            cached_data[sliceID] = data
+            data = self.player_info(s, f, sGUID, tGUID)
 
-            add_new_numeric_data(total, data['absolute'])
+            for k, v in data.items():
+                if k == "targets":
+                    targets.update(v)
+                elif k == "actual":
+                    for spell_id, cats in v.items():
+                        spells = actual[spell_id]
+                        for hit_type, hits in cats.items():
+                            spells[hit_type].extend(hits)
+                else:
+                    add_new_numeric_data(info_data[k], v)
 
-            for spell_id, cats in data['useful'].items():
-                spells = actual[spell_id]
-                for hit_type, hits in cats.items():
-                    spells[hit_type].extend(hits)
-
-            targets.update(data['targets'])
-        
-        return {
-            "useful": actual,
-            "total": total,
-            "durations": durations,
-            "targets": targets,
-        }
-
+        return info_data
 
     @constants.running_time
-    def player_info_all(self, segments, sGUID, tGUID=None, single=False):
-        if tGUID and single:
-            tGUID = tGUID[:-6]
-
-        _data = self.player_info_all_add(segments, sGUID, tGUID)
-        # print(_data['targets'])
-        grouped_targets = group_targets(_data['targets'])
-        # print(grouped_targets)
-        targets_players = grouped_targets.pop('0x0600000000', set())
-        targets = {self.guid_to_name(gid): gid for gid in grouped_targets}
-        for player_guid in targets_players:
-            targets[self.guid_to_name(player_guid)] = player_guid
-        targets = sort_dict_by_value(targets)
-        
-        hits_data = dmg_breakdown.hits_data(_data['useful'])
-        try:
-            useful_formatted = count_total(_data['useful'])
-        except:
-            useful_formatted = {"Total": [0,]}
-        total_sorted = sort_dict_by_value(_data['total'])
-
+    def player_info_all(self, segments, sGUID, tGUID=None):
         spell_data = self.get_spells()
         def spell_name(spell_id):
             try:
@@ -981,59 +967,100 @@ class THE_LOGS:
                 return f"{spell_data[spell_id]['name']}"
             except KeyError:
                 return spell_id
-        
-        spell_names = {spell_id: spell_name(spell_id) for spell_id in total_sorted}
-        spell_colors = self.get_spells_colors(spell_names)
 
-        total_sorted["Total"] = sum(v for k,v in total_sorted.items() if k not in IGNORED_ADDS)
-        total_formatted = {k: separate_thousands(v) for k, v in total_sorted.items()}
+        _data = self.player_info_all_add(segments, sGUID, tGUID)
 
         slice_duration = combine_durations(_data['durations'])
+
+        targets_set = regroup_targets(_data['targets'])
+        targets = {self.guid_to_name(gid): gid for gid in sorted(targets_set)}
+        targets = dict(sorted(targets.items()))
         
-        return {
-            "duration": slice_duration,
-            "names": spell_names,
-            "colors": spell_colors,
-            "total": total_formatted,
-            "useful": useful_formatted,
-            "hits": hits_data,
-            "targets": targets,
+        actual = _data['actual']
+        hits_data = dmg_breakdown.hits_data(actual)
+        actual_sum = {
+            spell_id: sum(sum(x) for x in d.values())
+            for spell_id, d in actual.items()
         }
+        actual_sorted = sort_dict_by_value(actual_sum)
+        spell_names = {spell_id: spell_name(spell_id) for spell_id in actual_sorted}
+        spell_colors = self.get_spells_colors(spell_names)
+        
+        reduced = _data['reduced']
+        reduced_formatted = format_total_data(reduced)
+        reduced_percent = {
+            spell_id: f"{(((value + reduced[spell_id]) / value - 1) * 100):.1f}%"
+            for spell_id, value in actual_sum.items()
+            if reduced.get(spell_id)
+        }
+        
+        actual_formatted = format_total_data(actual_sum)
+        actual_total = actual_sum['Total'] or 1
+        actual_percent =  {
+            spell_id: f"{(value / actual_total * 100):.1f}%"
+            for spell_id, value in actual_sum.items()
+        }
+
+        return {
+            "DURATION": slice_duration,
+            "TARGETS": targets,
+            "NAMES": spell_names,
+            "COLORS": spell_colors,
+            "ACTUAL": actual_formatted,
+            "ACTUAL_PERCENT": actual_percent,
+            "REDUCED": reduced_formatted,
+            "REDUCED_PERCENT": reduced_percent,
+            "HITS": hits_data,
+        }
+    
+    def get_comp_data(self, segments, class_filter: str, tGUID=None):
+        class_filter = class_filter.lower()
+        response = {}
+        for guid, class_name in self.get_classes().items():
+            if class_name != class_filter:
+                continue
+            name = self.guid_to_name(guid)
+            data = {
+                "name": name,
+                "data": self.player_info_all(segments, guid, tGUID)
+            }
+            yield f"{json.dumps(data, separators=(',', ':'))}\n"
+            # response[name] = self.player_info_all(segments, guid, tGUID)
+            # yield json.dumps(response)
 
     
     # POTIONS
 
     def potions_info(self, s, f) -> dict[str, dict[str, int]]:
-        sliceID = f"{s}_{f}"
-        cache_slices = self.CACHE['potions_info']
-        if sliceID in cache_slices:
-            return cache_slices[sliceID]
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['potions_info']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
 
         logs_slice = self.get_logs(s, f)
         data = logs_spell_info.get_potions_count(logs_slice)
-        cache_slices[sliceID] = data
+        cached_data[slice_ID] = data
         return data
     
     def convert_dict_guids_to_name(self, data: dict):
         return {self.guid_to_name(guid): v for guid, v in data.items()}
 
-    def add_missing_players(self, data):
+    def add_missing_players(self, data, default=0):
         players = self.get_players_guids()
         for guid in players:
             if guid not in data:
-                data[guid] = 0
+                data[guid] = default
         return data
     
     def potions_all(self, segments):
         durations = []
-        # potions: dict[str, dict[str, int]] = {}
         potions = defaultdict(lambda: defaultdict(int))
 
         for s, f in segments:
-            _potions = self.potions_info(s, f)
             durations.append(self.get_fight_duration(s, f))
+
+            _potions = self.potions_info(s, f)
             for spell_id, sources in _potions.items():
-                # q = potions.setdefault(spell_id, {})
                 add_new_numeric_data(potions[spell_id], sources)
         
         slice_duration = combine_durations(durations)
@@ -1041,29 +1068,84 @@ class THE_LOGS:
         pots = {x: self.convert_dict_guids_to_name(y) for x,y in potions.items()}
         
         p_total = logs_spell_info.count_total(potions)
+        p_total = sort_dict_by_value(p_total)
         p_total = self.add_missing_players(p_total)
         p_total = self.convert_dict_guids_to_name(p_total)
 
         return {
-            "duration": slice_duration,
-            "pot_info": logs_spell_info.POT_INFO,
-            "total": p_total,
-            "pots": pots,
+            "DURATION": slice_duration,
+            "ITEM_INFO": logs_spell_info.ITEM_INFO,
+            "ITEMS_TOTAL": p_total,
+            "ITEMS": pots,
         }
 
+    def auras_info(self, s, f):
+        data: defaultdict[str, dict[str, tuple[int, float]]]
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['auras_info']
+        if slice_ID in cached_data:
+            data = cached_data[slice_ID]
+            return data
+
+        logs_slice = self.get_logs(s, f)
+        data = logs_spell_info.get_raid_buff_count(logs_slice)
+        data = logs_spell_info.get_auras_uptime(logs_slice, data)
+        cached_data[slice_ID] = data
+        return data
+
+    def auras_info_all(self, segments, trim_non_players=True):
+        durations = []
+        auras_uptime = defaultdict(lambda: defaultdict(list))
+        auras_count = defaultdict(lambda: defaultdict(int))
+
+        for s, f in segments:
+            durations.append(self.get_fight_duration(s, f))
+
+            _auras = self.auras_info(s, f)
+            for guid, aura_data in _auras.items():
+                if trim_non_players and not is_player(guid):
+                    continue
+                for spell_id, (count, uptime) in aura_data.items():
+                    auras_count[guid][spell_id] += count
+                    auras_uptime[guid][spell_id].append(uptime)
+
+        slice_duration = combine_durations(durations)
+
+        aura_info_set = set()
+        auras_uptime_formatted = defaultdict(lambda: defaultdict(float))
+        for guid, aura_data in auras_uptime.items():
+            for spell_id, uptimes in aura_data.items():
+                aura_info_set.add(spell_id)
+                v = sum(uptimes) / len(uptimes) * 100
+                auras_uptime_formatted[guid][spell_id] = f"{v:.2f}"
+        
+        self.add_missing_players(auras_count, {})
+        self.add_missing_players(auras_uptime, {})
+
+        auras_count_with_names = self.convert_dict_guids_to_name(auras_count)
+        auras_uptime_with_names = self.convert_dict_guids_to_name(auras_uptime_formatted)
+
+        filtered_aura_info = logs_spell_info.get_filtered_info(aura_info_set)
+
+        return {
+            "DURATION": slice_duration,
+            "AURA_UPTIME": auras_uptime_with_names,
+            "AURA_COUNT": auras_count_with_names,
+            "AURA_INFO": filtered_aura_info,
+        }
 
 
     @constants.running_time
     def spell_count(self, s, f, spell_id_str) -> dict[str, dict[str, int]]:
-        sliceID = f"{s}_{f}"
-        cache_slices = self.CACHE['spell_count'].setdefault(spell_id_str, {})
-        if sliceID in cache_slices:
-            return cache_slices[sliceID]
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['spell_count'].setdefault(spell_id_str, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
             
         logs_slice = self.get_logs(s, f)
         spells = logs_spell_info.get_spell_count(logs_slice, spell_id_str)
 
-        cache_slices[sliceID] = spells
+        cached_data[slice_ID] = spells
         return spells
     
     def spell_count_all(self, segments, spell_id: str):
@@ -1072,9 +1154,9 @@ class THE_LOGS:
         if int(spell_id) not in all_spells:
             print('ERROR: spell_id not in spells:', spell_id)
             return {
-                "duration": "",
-                "spells": {},
-                "tabs": {},
+                "DURATION": "",
+                "SPELLS": {},
+                "TABS": {},
             }
         
         durations = []
@@ -1100,10 +1182,17 @@ class THE_LOGS:
         
         tabs = [(flag.lower().replace('_', '-'), flag) for flag in spells]
 
+        _spells = self.get_spells()
+        s_id = abs(int(spell_id))
+        spell_name = _spells.get(s_id, {}).get('name', '')
+        spell_name = f"{spell_id} {spell_name}"
+
         return {
-            "duration": slice_duration,
-            "spells": spells,
-            "tabs": tabs,
+            "DURATION": slice_duration,
+            "SPELLS": spells,
+            "TABS": tabs,
+            "SPELL_NAME": spell_name,
+            "SPELL_ID": s_id,
         }
 
 
@@ -1113,18 +1202,18 @@ class THE_LOGS:
     #     return
 
     def useful_damage(self, s, f, targets, boss_name) -> dict[str, dict[str, int]]:
-        sliceID = f"{s}_{f}"
-        cache_slices = self.CACHE['useful_damage']
-        if sliceID in cache_slices:
-            return cache_slices[sliceID]
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['useful_damage']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
 
         logs_slice = self.get_logs(s, f)
 
         data: dict[str, dict[str, int]] = {}
-        data = dmg_useful.specific_useful(logs_slice, boss_name)
-        data.update(dmg_useful.get_dmg(logs_slice, targets))
+        data |= dmg_useful.specific_useful(logs_slice, boss_name)
+        data |= dmg_useful.get_dmg(logs_slice, targets)
         
-        cache_slices[sliceID] = data
+        cached_data[slice_ID] = data
         return data
 
     def add_total_and_names(self, data: dict):
@@ -1151,7 +1240,6 @@ class THE_LOGS:
 
             data = self.useful_damage(s, f, targets_all, boss_name)
             for guid_id, _dmg_new in data.items():
-                # _dmg = all_data.setdefault(guid_id, {})
                 add_new_numeric_data(all_data[guid_id], _dmg_new)
 
         slice_duration = combine_durations(durations)
@@ -1162,8 +1250,8 @@ class THE_LOGS:
         if "Valks Useful" in all_data:
             targets_useful["Valks Useful"] = "Valks Useful"
     
-        targets_useful = dmg_useful.combine_targets(all_data, targets_useful)
-        targets_useful = self.add_total_and_names(targets_useful)
+        targets_useful_dmg = dmg_useful.combine_targets(all_data, targets_useful)
+        targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
 
         _formatted_dmg = {
             guid_id: self.add_total_and_names(_data)
@@ -1177,17 +1265,29 @@ class THE_LOGS:
         table_heads.extend([targets_all[guid_id] for guid_id in _formatted_dmg if guid_id in targets_all])
 
         return {
-            "duration": slice_duration,
-            "head": table_heads,
-            "total": targets_useful,
-            "formatted": _formatted_dmg,
+            "DURATION": slice_duration,
+            "HEADS": table_heads,
+            "TOTAL": targets_useful_dmg,
+            "FORMATTED": _formatted_dmg,
         }
 
 
     def get_auras(self, s, f, filter_guid):
         logs_slice = self.get_logs(s, f)
         a = auras.AurasMain(logs_slice)
-        return a.main(filter_guid)
+        data = a.main(filter_guid)
+        spell_colors = self.get_spells_colors(data['spells'])
+        all_spells = self.get_spells()
+        segment_duration = self.get_fight_duration(s, f)
+        return {
+            'DURATION': convert_duration(segment_duration),
+            'BUFFS': data['buffs'],
+            'DEBUFFS': data['debuffs'],
+            'COLORS': spell_colors,
+            'ALL_SPELLS': all_spells,
+            "BUFF_UPTIME": data['buffs_uptime'],
+            "DEBUFF_UPTIME": data['debuffs_uptime'],
+        }
 
     def get_auras_all(self, segments, player_name):
         durations = []
@@ -1205,3 +1305,16 @@ class THE_LOGS:
         logs = self.get_logs()
         # for 
         return 'Spell not found'
+
+
+    def pretty_print_players_data(self, data):
+        guids = self.get_all_guids()
+        data = sort_dict_by_value(data)
+        for guid, value in data.items():
+            print(f"{guids[guid]['name']:<12} {add_space(value):>13}")
+
+    def get_players_specs_in_segments(self, s, f):
+        logs_slice = self.get_logs(s, f)
+        players = self.get_players_guids()
+        classes = self.get_classes()
+        return logs_player_class.get_specs_no_names(logs_slice, players, classes)

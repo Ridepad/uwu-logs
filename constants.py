@@ -1,20 +1,22 @@
 import json
 import os
+import logging
 import pickle
 import re
 import zlib
 from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
+import atexit
 
-    
+
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
         print('[CREATED FOLDER]', path)
 
-def new_folder_path(current, name):
-    new_folder = os.path.join(current, name)
+def new_folder_path(root, name):
+    new_folder = os.path.join(root, name)
     create_folder(new_folder)
     return new_folder
 
@@ -25,10 +27,41 @@ RAW_DIR = new_folder_path(DIR_PATH, "LogsRaw")
 LOGS_DIR = new_folder_path(DIR_PATH, "LogsDir")
 PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
 
+LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
+LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] %(message)s"
 
+def setup_logger(logger_name, log_file, level=logging.DEBUG):
+    logger = logging.getLogger(logger_name)
+    formatter = logging.Formatter(LOGGING_FORMAT)
+    fileHandler = logging.FileHandler(log_file)
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    logger.setLevel(level)
+    logger.addHandler(fileHandler)
+    logger.addHandler(streamHandler)
+    return logger
+
+LOGFILE = os.path.join(DIR_PATH,'_log.log')
+# MAIN_LOGGER = setup_logger('main_logger', LOGFILE)
+logging.basicConfig(
+    filename=LOGFILE,
+    format=LOGGING_FORMAT,
+    datefmt="%d/%m/%Y %H:%M:%S",
+    level=logging.DEBUG,
+    
+)
+
+T_DELTA_2MIN = timedelta(minutes=2)
+T_DELTA_5MIN = timedelta(minutes=5)
+T_DELTA_10MIN = timedelta(minutes=10)
+T_DELTA_15MIN = timedelta(minutes=15)
+T_DELTA_20MIN = timedelta(minutes=20)
 T_DELTA = timedelta(seconds=100)
 T_DELTA_SHORT = timedelta(seconds=15)
 T_DELTA_SEP = timedelta(minutes=20)
+T_DELTA_ONE_SECOND = timedelta(seconds=1)
 
 LOGS_CUT_NAME = "LOGS_CUT"
 
@@ -37,21 +70,6 @@ FLAG_ORDER = [
     "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "SPELL_HEAL",
     "SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH", "SPELL_AURA_REMOVED",
     "SPELL_MISSED", "SPELL_CAST_START", ]
-
-BOSSES = [
-    "Lord Marrowgar", "Lady Deathwhisper", "Gunship", "Deathbringer Saurfang",
-    "Festergut", "Rotface", "Professor Putricide",
-    "Blood Prince Council", "Blood-Queen Lana'thel",
-    "Valithria Dreamwalker", "Sindragosa",
-    "The Lich King",
-
-    "Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian", "Halion",
-
-    "Northrend Beasts", "Lord Jaraxxus", "Faction Champions", "Twin Val'kyr", "Anub'arak",
-
-    "Sartharion", "Onixia", "Malygos",
-    "Archavon the Stone Watcher", "Emalon the Storm Watcher", "Koralon the Flame Watcher", "Toravon the Ice Watcher",
-]
 
 BOSSES_FROM_HTML = {
     "the-lich-king": "The Lich King",
@@ -154,6 +172,70 @@ BOSSES_GUIDS = {
     "0086C0": "Eydis Darkbane",
     "0086C1": "Fjola Lightbane",
     "008704": "Anub'arak",
+
+    "0076F1": "Vesperon",
+    "0076F3": "Shadron",
+    "0076F4": "Tenebron",
+    "0070BC": "Sartharion",
+
+    "003E54": "Anub'Rekhan",
+    "003E51": "Grand Widow Faerlina",
+    "003E50": "Maexxna",
+    "003E52": "Noth the Plaguebringer",
+    "003E40": "Heigan the Unclean",
+    "003E8B": "Loatheb",
+    "003EBD": "Instructor Razuvious",
+    "003EBC": "Gothik the Harvester",
+    "003EBF": "Sir Zeliek",
+    "003EC0": "Thane Korth'azz",
+    "003EC1": "Lady Blaumeux",
+    "007755": "Baron Rivendare",
+    "003E9C": "Patchwerk",
+    "003E3B": "Grobbulus",
+    "003E3C": "Gluth",
+    "003E38": "Thaddius",
+    "003E75": "Sapphiron",
+    "003E76": "Kel'Thuzad",
+
+    
+    "008159": "Flame Leviathan",
+    "00808A": "Freya",
+    "008061": "Thorim",
+    "0081A2": "Razorscale",
+    "00815E": "Ignis the Furnace Master",
+    "00820D": "XT-002 Deconstructor",
+    
+    "008063": "Steelbreaker",
+    "00809F": "Runemaster Molgeim",
+    "008059": "Stormcaller Brundir",
+    "0080A2": "Kologarn",
+    "0082EB": "Auriaya",
+    "008067": "Algalon the Observer",
+    "00804D": "Hodir",
+    "008208": "Leviathan Mk II",
+    "008373": "VX-001",
+    "008386": "Aerial Command Unit",
+    "008246": "Mimiron",
+    "008061": "Thorim",
+    "0081F7": "General Vezax",
+    "008208": "Yogg-Saron",
+
+    # "0080A5": "Left Arm",
+    # "0080A6": "Right Arm",
+
+    # "008231": "Heart of the Deconstructor",
+    # "008242": "XE-321 Boombot",
+    # "008240": "XM-024 Pummeller",
+    # "00823F": "XS-013 Scrapbot",
+
+    # "0081B3": "Ancient Conservator",
+    # "0081B2": "Ancient Water Spirit",
+    # "008096": "Detonating Lasher",
+    # "0081CC": "Eonar's Gift",
+    # "008094": "Snaplasher",
+    # "008097": "Storm Lasher",
+    # "008190": "Strengthened Iron Roots",
+
 }
 
 TOC_CHAMPIONS = {
@@ -196,6 +278,10 @@ MUTLIBOSSES = {
     "Northrend Beasts": ['0087EC', '008948', '0087EF', '0087ED'],
     "Faction Champions": list(TOC_CHAMPIONS),
     "Twin Val'kyr": ['0086C0', '0086C1'],
+    "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
+    "Mimiron": ["008246", "008208", "008373", "008386"],
+    "Assembly of Iron": ["008063", "00809F", "008059"],
+
 }
 
 SPELLS_SCHOOLS = {
@@ -258,16 +344,24 @@ ENV_DAMAGE = {
 }
 
 def running_time(f):
-    def inner(*args, **kwargs):
+    def running_time_inner(*args, **kwargs):
         st = perf_counter()
         q = f(*args, **kwargs)
         fin = int((perf_counter() - st) * 1000)
         print(f'[PERFOMANCE] Done in {fin:>6,} ms with {f.__module__}.{f.__name__}')
         return q
-    return inner
+    return running_time_inner
 
 def sort_dict_by_value(d: dict):
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
+
+
+NIL_GUID = '0x0000000000000000'
+def is_player(guid: str):
+    return guid.startswith('0x0') and guid != NIL_GUID
+
+def add_space(v):
+    return f"{v:,}".replace(',', ' ')
 
 
 def fix_extention(ext: str):
@@ -283,15 +377,21 @@ def add_extention(path: str, ext=None):
             return f"{path}{ext}"
     return path
 
+def save_backup(path):
+    if os.path.isfile(path):
+        old = f"{path}.old"
+        if os.path.isfile(old):
+            os.remove(old)
+        os.rename(path, old)
 
 @running_time
 def json_read(path: str):
     path = add_extention(path, '.json')
-    print("[JSON READ]", path)
     try:
         with open(path) as file:
-            return json.load(file)
-    except FileNotFoundError:
+            j: dict = json.load(file)
+            return j
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
         return {}
 
 @running_time
@@ -302,6 +402,7 @@ def json_read_no_exception(path: str):
 
 def json_write(path: str, data, indent=2):
     path = add_extention(path, '.json')
+    save_backup(path)
     with open(path, 'w') as file:
         json.dump(data, file, default=sorted, indent=indent)
 
@@ -390,18 +491,23 @@ def zlib_text_make(data_raw: str):
     comresesed = zlib_compress(data_enc)
     return comresesed
 
-@running_time
-def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
+# @running_time
+# def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
+#     path = add_extention(path, '.zlib')
+#     zlib_text = zlib_text_make(data_raw)
+#     if not check_exists:
+#         bytes_write(path, zlib_text)
+#         return
+#     old_data = bytes_read(path)
+#     exists = old_data == zlib_text
+#     if not exists:
+#         bytes_write(path, zlib_text)
+#     return exists
+
+def zlib_text_write(data_raw: str, path: str):
     path = add_extention(path, '.zlib')
     zlib_text = zlib_text_make(data_raw)
-    if not check_exists:
-        bytes_write(path, zlib_text)
-        return
-    old_data = bytes_read(path)
-    exists = old_data == zlib_text
-    if not exists:
-        bytes_write(path, zlib_text)
-    return exists
+    bytes_write(path, zlib_text)
 
 
 @running_time
@@ -426,36 +532,51 @@ def get_now():
     return datetime.now()
 
 # Z = re.compile('(\d{1,2})/(\d{1,2}) (\d\d):(\d\d):(\d\d).(\d\d\d)')
-def to_dt_closure():
+def to_dt_closure(year=None):
     Z = re.compile('(\d+)')
     current = get_now()
-    year = current.year
-    month = current.month
     day = current.day
-    def inner(s: str):
-        q = list(map(int, Z.findall(s, endpos=18)))
-        q[-1] *= 1000
-        if q[0] > month or q[0] == month and q[1] > day:
-            return datetime(year-1, *q)
-        return datetime(year, *q)
+    month = current.month
+    find_all = Z.findall
+    if year is None:
+        year = current.year
+        def inner(s: str):
+            q = list(map(int, find_all(s[:18])))
+            q[-1] *= 1000
+            if q[0] > month or q[0] == month and q[1] > day:
+                return datetime(year-1, *q)
+            return datetime(year, *q)
+    else:
+        def inner(s: str):
+            q = list(map(int, find_all(s[:18])))
+            q[-1] *= 1000
+            return datetime(year, *q)
+        
     return inner
 
 to_dt = to_dt_closure()
 
-def get_time_delta(s: str, f: str):
-    return to_dt(f) - to_dt(s)
+def get_time_delta(s: str, f: str, _to_dt=to_dt):
+    return _to_dt(f) - _to_dt(s)
+
+def get_time_delta_wrap(_to_dt=to_dt):
+    def inner(s: str, f: str):
+        return _to_dt(f) - _to_dt(s)
+    return inner
 
 def get_fight_duration(s, f):
     return get_time_delta(s, f).total_seconds()
 
 def convert_duration(t):
-    milliseconds = int(t % 1 * 1000)
+    milliseconds = int(t * 1000 % 1000)
     t = int(t)
     seconds = t % 60
     minutes = t // 60 % 60
     hours = t // 3600
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
 
+def convert_duration(t):
+    return str(timedelta(seconds=t))
 
 def get_folders(path) -> list[str]:
     return next(os.walk(path))[1]
@@ -471,19 +592,23 @@ def get_all_files(path=None, ext=None):
         return files
     ext = fix_extention(ext)
     return [file for file in files if file.endswith(ext)]
-
     
-def redo_data(redo_func, multi=True, startfrom=None, end=None):
+def redo_data(redo_func, multi=True, startfrom=None, end=None, proccesses=4):
+    def get_index(z):
+        return z if type(z) == int else folders.index(z)
+    
     folders = get_folders('LogsDir')
 
     if startfrom:
-        folders = folders[folders.index(startfrom):]
+        i = get_index(startfrom)
+        folders = folders[i:]
     if end:
-        folders = folders[:folders.index(end)]
-    
-    if multi:
+        i = get_index(end)
+        folders = folders[:i]
+
+    if multi and proccesses > 0:
         from multiprocessing import Pool
-        with Pool(6) as p:
+        with Pool(proccesses) as p:
             p.map(redo_func, folders)
     else:
         for x in folders:
@@ -608,3 +733,49 @@ def find_date(report_id: int) -> str:
 def add_new_numeric_data(data_total: defaultdict, data_new: dict):
     for source, amount in data_new.items():
         data_total[source] += amount
+
+
+def get_last_line(filename):
+    with open(filename, 'rb') as f:
+        try:  # catch OSError in case of a one line file 
+            f.seek(-2, os.SEEK_END)
+            while f.read(1) != b'\n':
+                f.seek(-2, os.SEEK_CUR)
+        except OSError:
+            f.seek(0)
+        return f.readline().decode()
+
+def get_last_mod(file_name):
+    return datetime.fromtimestamp(os.path.getmtime(file_name))
+
+@running_time
+def logs_edit_time(file_name):
+    dt_last_edit = get_last_mod(file_name)
+    _to_dt = to_dt_closure(dt_last_edit.year)
+    last_line = get_last_line(file_name)
+    dt_last_line = _to_dt(last_line)
+    return abs(dt_last_edit-dt_last_line).total_seconds()
+
+
+REPORTS_FILTER_FILES = {
+    'allowed': os.path.join(DIR_PATH, "__allowed.txt"),
+    'private': os.path.join(DIR_PATH, "__private.txt"),
+}
+
+FILTERED_LOGS = {}
+
+def get_logs_filter(filter_type: str):
+    if filter_type in FILTERED_LOGS:
+        return FILTERED_LOGS[filter_type]
+
+    data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).split('\n')
+    return data
+
+
+UPLOADED_JSON = os.path.join(DIR_PATH, '_uploaded_data.json')
+UPLOADED = json_read(UPLOADED_JSON)
+
+def exit_handler():
+    json_write(UPLOADED_JSON, UPLOADED)
+
+atexit.register(exit_handler)

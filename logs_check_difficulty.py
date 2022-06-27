@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import constants
+from constants import BOSSES_GUIDS
 
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 DEFAULT_DIFFICULTY = "TBD"
@@ -74,14 +75,15 @@ def is_kill(last_line: str):
         # return last_line.split(',')[10] != '0'
     # return False
     try:
-        return last_line.split(',')[10] != '0'
+        line = last_line.split(',', 11)
+        return line[10] != '0' and line[4][6:-6] in BOSSES_GUIDS
     except IndexError:
         return False
 
 def has_fury_of_frostmourne(logs_slice: list[str]):
     return any(
         '72350' in line
-        and '8EF5' in line
+        and '008EF5' in line
         and 'SPELL' in line
         and '_CAST' not in line
         for line in logs_slice
@@ -89,33 +91,7 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
 
 def get_slice_duration(logs_slice):
     s, f = logs_slice[0], logs_slice[-1]
-    dur = constants.get_fight_duration(s, f)
-    return constants.convert_duration(dur)
-
-def make_line(logs, s, f, boss_name):
-    logs_slice = logs[s:f+1]
-    diff = get_diff(logs_slice, boss_name)
-    kill = is_kill(logs_slice[-1])
-    if not kill and boss_name == "The Lich King":
-        kill = has_fury_of_frostmourne(logs[f:f+20])
-    slice_duration = get_slice_duration(logs_slice)
-    return diff, kill, slice_duration
-
-
-def diff_gen(logs: list[str], enc_data: dict[str, list[tuple[int]]]):
-    _diff = defaultdict(list)
-    for boss_name, attempts in enc_data.items():
-        for s, f in attempts:
-            logs_slice = logs[s:f+1]
-            diff = get_diff(logs_slice, boss_name)
-            kill = is_kill(logs_slice[-1])
-            if not kill and boss_name == "The Lich King":
-                kill = has_fury_of_frostmourne(logs[f:f+20])
-            
-            slice_duration = get_slice_duration(logs_slice)
-            # v = make_line(logs, s, f, boss_name)
-            _diff[boss_name].append((diff, kill, slice_duration))
-    return _diff
+    return constants.get_fight_duration(s, f)
 
 def convert_to_html_name(name: str):
     return name.lower().replace(' ', '-').replace("'", '')
@@ -123,14 +99,16 @@ def convert_to_html_name(name: str):
 def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, attempt: int, shift: int):
     s, f = segment
     
-    logs_slice = logs[s:f+1]
+    logs_slice = logs[s:f]
     diff = get_diff(logs_slice, boss_name)
     
     slice_duration = get_slice_duration(logs_slice)
+    slice_duration_str = constants.convert_duration(slice_duration)
+    slice_duration_str = slice_duration_str[2:-3]
 
     kill = is_kill(logs_slice[-1])
     if not kill and boss_name == "The Lich King":
-        kill = has_fury_of_frostmourne(logs[f:f+20])
+        kill = has_fury_of_frostmourne(logs[f-10:f+20])
     if kill:
         attempt_type = "kill"
         segment_type = "Kill"
@@ -147,7 +125,8 @@ def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, at
         "attempt": attempt,
         "attempt_type": attempt_type,
         "segment_type": segment_type,
-        "slice_duration": slice_duration,
+        "duration": slice_duration,
+        "duration_str": slice_duration_str,
     }
 
 
@@ -205,9 +184,9 @@ def ggygiogigio(data):
                 print(a)
 
 def __test():
-    import _main
+    import logs_main
     report_id = "22-03-24--20-36--Inia"
-    report = _main.THE_LOGS(report_id)
+    report = logs_main.THE_LOGS(report_id)
     logs = report.get_logs()
     enc_data = report.get_enc_data()
     data = diff_gen(logs, enc_data, report_id)
@@ -251,9 +230,9 @@ def separate_modes(data):
 
 
 def __test():
-    import _main
+    import logs_main
     report_id = "22-03-24--20-36--Inia"
-    report = _main.THE_LOGS(report_id)
+    report = logs_main.THE_LOGS(report_id)
     logs = report.get_logs()
     enc_data = report.get_enc_data()
     data = get_segments2(logs, enc_data)
@@ -263,5 +242,5 @@ def __test():
     # print(data['segments'])
 
 if __name__ == "__main__":
-    import _main
+    import logs_main
     __test()

@@ -1,176 +1,398 @@
 import constants
+from constants import running_time, sort_dict_by_value, is_player
+from collections import defaultdict
 
-DMG_FLAGS = {'SPELL_PERIODIC_DAMAGE', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE'}
-HEAL_FLAGS = {'SPELL_PERIODIC_HEAL', 'SPELL_HEAL'}
-MISS_FLAGS = {'RANGE_MISSED', 'SPELL_MISSED', 'SPELL_PERIODIC_MISSED', 'SWING_MISSED', }#'DAMAGE_SHIELD_MISSED'
 
-def quick_sum(q) -> int:
-    return sum(x[0] for x in q)
-
-def get_only_spells(data: dict, source_filter=None):
-    all_spells = {}
-    for source_guid, targets in data.items():
-        if source_filter is not None and source_guid not in source_filter:
-            continue
-        for spells in targets.values():
-            for spell_name, values in spells.items():
-                _spells = all_spells.setdefault(source_guid, {})
-                _spells[spell_name] = _spells.get(spell_name, 0) + sum(values)
-    spells_list = []
-    for source_guid, spells in all_spells.items():
-        __d = [(value, name) for name, value in spells.items()]
-        __d = sorted(__d, reverse=True)
-        spells_list.append((quick_sum(__d), source_guid, __d))
-    # if not spells_list:
-    #     spells_list = [("", "")]
-    return sorted(spells_list, reverse=True)
-###################################
-def get_only_spells2(data: dict, source_filter=None):
-    newshitfuck = {}
-    if source_filter is not None:
-        for source_guid in source_filter:
-            if source_guid in data:
-                _spells = {}
-                for spells in data[source_guid].values():
-                    for spell_name, values in spells.items():
-                        _spells[spell_name] = _spells.get(spell_name, 0) + sum(values)
-                ttl = sum(_spells.values())
-                zzzzzzz = [
-                    [v, v / ttl * 1000 // 1 / 10, spell_name]
-                    for spell_name, v in _spells.items()
-                ]
-                zzzzzzz = sorted(zzzzzzz, reverse=True)
-                zzzzzzz.append([ttl, 100.0, 'Total'])
-                newshitfuck[source_guid] = zzzzzzz
-
-    return newshitfuck
-###################################
-def make_spell_list(spells: dict):
-    spell_list = [(sum(values), spell_name) for spell_name, values in spells.items()]
-    return sorted(spell_list, reverse=True)
-
-def make_target_list(targets: dict, target_filter, ignore_targets):
-    target_list = []
-    for target_guid, spells in targets.items():
-        if target_filter is not None and \
-            target_guid not in target_filter or \
-            target_guid in ignore_targets:
-            continue
-        spell_list = make_spell_list(spells)
-        s = quick_sum(spell_list)
-        if s:
-            target_list.append((s, target_guid, spell_list))
-    return sorted(target_list, reverse=True)
-
-def get_everything(data: dict, players=None, source_filter=None, target_filter=None):
-    data_sorted = []
-    if players is None:
-        players = {}
-    ignore_targets = set(players)
-    for source_guid, targets in data.items():
-        if source_filter is not None and source_guid not in source_filter:
-            continue
-        target_list = make_target_list(targets, target_filter, ignore_targets)
-        s = quick_sum(target_list)
-        if s:
-            data_sorted.append((s, source_guid, target_list))
-    return sorted(data_sorted, reverse=True)
-
-###################################
-
-@constants.running_time
-def parse_dmg_heals(logs: list, guids: dict):
-    ALL_FLAGS = DMG_FLAGS | HEAL_FLAGS
-    dmg_heals = [{}, {}]
+def dmg_gen(logs: list[str]):
     for line in logs:
-        timestamp, flag, source_guid, source_name, target_guid, target_name, *other = line.split(',')
-        if flag in ALL_FLAGS:
-            if flag == 'SWING_DAMAGE':
-                spell_name = 'Melee'
-                value = int(other[0]) - int(other[1])
-            else:
-                spell_name = other[1]
-                value = int(other[3]) - int(other[4])
+        if "_DAMAGE" not in line:
+            continue
+        _, _, guid, _, _, _, _, _, _, d, ok, _ = line.split(',', 11)
+        yield guid, int(d) - int(ok)
+
+def dmg_gen_no_friendly(logs: list[str], players_and_pets: set[str]):
+    for line in logs:
+        if "_DAMAGE" not in line:
+            continue
+        _, _, guid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+        if tguid in players_and_pets:
+                continue
+        yield guid, int(d) - int(ok)
+
+def dmg_gen_targets(logs: list[str], targets: set[str]):
+    for line in logs:
+        if "_DAMAGE" not in line:
+            continue
+        _, _, guid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+        if tguid[:-6] not in targets:
+                continue
+        yield guid, int(d) - int(ok)
+
+def heal_gen(logs: list[str]):
+    for line in logs:
+        if "_H" not in line:
+            continue
+        _, _, guid, _, _, _, _, _, _, d, ok, _ = line.split(',', 11)
+        if d != ok:
+            yield guid, int(d) - int(ok)
+
+DATA_GEN = {
+    "damage": dmg_gen,
+    "heal": heal_gen,
+    "damage_no_friendly": dmg_gen_no_friendly,
+    "damage_targets": dmg_gen_targets,
+}
+
+def parse_data(gen):
+    data = defaultdict(int)
+    for guid, amount in gen:
+        data[guid] += amount
+    return data
+
+@running_time
+def parse_only_dmg(logs):
+    gen_func = DATA_GEN["damage"]
+    gen = gen_func(logs)
+    return parse_data(gen)
+
+@running_time
+def parse_only_dmg_no_friendly(logs, players_and_pets):
+    gen_func = DATA_GEN["damage_no_friendly"]
+    gen = gen_func(logs, players_and_pets)
+    return parse_data(gen)
+
+@running_time
+def parse_dmg_targets(logs, targets):
+    gen_func = DATA_GEN["damage_targets"]
+    gen = gen_func(logs, targets)
+    return parse_data(gen)
+
+@running_time
+def parse_only_heal(logs):
+    gen_func = DATA_GEN["heal"]
+    gen = gen_func(logs)
+    return parse_data(gen)
+
+
+@running_time
+def parse_both(logs: list[str], players_and_pets: set[str]):
+    dmg: defaultdict[str, int] = defaultdict(int)
+    heal: defaultdict[str, int] = defaultdict(int)
+    for line in logs:
+        if "_DAMAGE" in line:
+            _, _, guid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+            if tguid in players_and_pets:
+                continue
+            dmg[guid] += int(d) - int(ok)
+        
+        elif "_H" in line:
+            _, _, guid, _, _, _, _, _, _, d, ok, _ = line.split(',', 11)
+            if d != ok:
+                heal[guid] += int(d) - int(ok)
+    
+    return {
+        "damage": dmg,
+        "heal": heal,
+    }
+
+CUSTOM_UNITS = {"00958D"}
+
+def add_pets_guids(data: dict[str, int], guids: dict[str, dict[str, str]]):
+    players: defaultdict[str, int] = defaultdict(int)
+    custom: defaultdict[str, int] = defaultdict(int)
+    other: defaultdict[str, int] = defaultdict(int)
+
+    for sGUID, value in data.items():
+        if sGUID not in guids:
+            print(f"[ERROR] {sGUID} not in GUIDS!")
+            continue
+
+        masterGUID = guids[sGUID].get('master_guid', sGUID)
+        if sGUID[6:-6] in CUSTOM_UNITS:
+            custom[masterGUID] += value
+        elif is_player(masterGUID):
+            players[masterGUID] += value
+        else:
+            other[masterGUID] += value
+
+    return {
+        "players": players,
+        "custom": custom,
+        "other": other,
+    }
+
+def add_pets(data: dict[str, int], guids: dict[str, dict[str, str]]):
+    combined_data = add_pets_guids(data, guids)
+    players_dmg: dict[str, int] = {}
+    
+    for sGUID, value in combined_data["players"].items():
+        name = guids[sGUID]["name"]
+        players_dmg[name] = value
+    
+    for sGUID, value in combined_data["custom"].items():
+        name = guids[sGUID]["name"]
+        players_dmg[f"{name}-A"] = players_dmg.get(name, 0) + value
+    
+    return players_dmg
+
+
+@running_time
+def dmg_taken_no_source(logs: list[str]):
+    dmg = {}
+    for line in logs:
+        if "_DAMAGE," not in line:
+            continue
+        # if '_M' in line:
+        #     continue
+        _, _, _, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+        value = int(d) - int(ok)
+        try:
+            dmg[tguid] += value
+        except KeyError:
+            dmg[tguid] = value
+    return dmg
+
+
+
+def add_pets_no_spells(data, guids):
+    new_data = {}
+    for guid, value in data.items():
+        # guid = check_master(guid, guids)
+        guid = guids[guid].get('master_guid', guid)
+        new_data[guid] = new_data.get(guid, 0) + value
+    return new_data
+
+def uno_reverse(data, guids):
+    new_data = {}
+    for sname, targets in dict(data).items():
+        for tguid, value in targets.items():
+            try:
+                tname = guids[tguid]["name"]
+                q = new_data.setdefault(tname, {})
+                q[sname] = q.get(sname, 0) + value
+            except KeyError:
+                # irrelevant
+                pass
+    return new_data
+
+def sort_dmg_taken(data: dict[str, dict[str, int]]):
+    for tname, sources in data.items():
+        data[tname] = sort_dict_by_value(sources)
+    return data
+
+@running_time
+def parse_dmg_by_src(logs: list[str]):
+    '''damage_taken = {source_guid: {target_guid: value}}'''
+    dmg = {}
+    for line in logs:
+        if "_DAMAGE," in line:
+            _, _, sguid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+            value = int(d) - int(ok)
+            try:
+                q = dmg[sguid]
+            except KeyError:
+                q = dmg[sguid] = {}
+            try:
+                q[tguid] += value
+            except KeyError:
+                q[tguid] = value
+    return dmg
+
+
+def add_pets2(data: dict[str, dict[str, int]], guids):
+    new_data = {}
+    for tguid, sources in data.items():
+        name = guids[tguid]["name"]
+        q = new_data.setdefault(name, {})
+        for sguid, value in sources.items():
+            # sguid = check_master(sguid, guids)
+            sguid = guids[sguid].get('master_guid', sguid)
+            q[sguid] = q.get(sguid, 0) + value
+    return new_data
+
+@running_time
+def parse_dmg_taken_single(logs: list[str], filter_guid) -> dict[str, dict[str, int]]:
+    '''damage_taken = {source_guid: {target_guid: value}}'''
+    dmg = {}
+    for line in logs:
+        if "_DAMAGE," in line:
+        # if "_DAMAGE," in line and filter_guid in line:
+            _, _, sguid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
+            if filter_guid not in tguid:
+                continue
+            value = int(d) - int(ok)
+            try:
+                q = dmg[tguid]
+            except KeyError:
+                q = dmg[tguid] = {}
+            try:
+                q[sguid] += value
+            except KeyError:
+                q[sguid] = value
+    return dmg
+
+@running_time
+def parse_dmg_taken(logs: list[str], filter_guids):
+    '''damage_taken = {source_guid: {target_guid: value}}'''
+    dmg: dict[str, dict[str, dict[str, int]]] = {}
+    for line in logs:
+        if "_DAMAGE" not in line:
+            continue
+        _, _, sguid, _, tguid, _, s_id, _, _, d, ok, _ = line.split(',', 11)
+        if tguid not in filter_guids:
+            continue
+        try:
+            tar = dmg[tguid]
+        except KeyError:
+            tar = dmg[tguid] = {}
+        try:
+            src = tar[sguid]
+        except KeyError:
+            src = tar[sguid] = {}
+        value = int(d) - int(ok)
+        try:
+            src[s_id] += value
+        except KeyError:
+            src[s_id] = value
+    return dmg
+
+@running_time
+def dmg_taken_fast(logs: list[str], filter_guid: str) -> dict[str, int]:
+    dmg_hit = 0
+    dmg_ok = 0
+    dmg_res = 0
+    dmg_blk = 0
+    dmg_abs = 0
+    for line in logs:
+        if filter_guid not in line:
+            continue
+        if "_DAMAGE" not in line:
+            continue
+        _, _, _, _, tguid, _, _, _, _, d, ok, _, res, blk, absrb, _ = line.split(',', 15)
+        if filter_guid not in tguid:
+            continue
+        if res!="0":
+            print(line)
+        dmg_hit += int(d)
+        dmg_ok += int(ok)
+        dmg_res += int(res)
+        dmg_blk += int(blk)
+        dmg_abs += int(absrb)
+    return dmg_hit-dmg_ok, dmg_ok, dmg_res, dmg_blk, dmg_abs
+
+
+def main_dmg_taken_test_add_pets(data, guids):
+    new_dmg = {}
+    for guid, value in data:
+        name = guids[guid]['name']
+        try:
+            new_dmg[name] += value
+        except KeyError:
+            new_dmg[name] = value
+
+    return sort_dict_by_value(new_dmg)
+
+def combine_pet2(
+    data: dict[str, dict[str, int]],
+    guids: dict[str, dict[str, str]],
+):
+    new_data: dict[str, dict[int, int]] = {}
+
+    for source_guid, spells in data.items():
+        new_source_guid = guids[source_guid].get('master_guid', source_guid)
+        if new_source_guid != source_guid:
+            spells = {f"-{x}":y for x,y in spells.items()}
+        src = new_data.setdefault(new_source_guid, {})
+        for s_id, value in spells.items():
+            s_id = int(s_id)
+            src[s_id] = src.get(s_id, 0) + value
+
+    for source_guid, spells in new_data.items():
+        new_data[source_guid] = dict(sort_dict_by_value(spells))
+
+    return new_data
+
+def parse_dmg_taken_add_pets(data: dict[str, dict], guids):
+    """
+    new_dmg = {
+        target_guid: {
+            source_guid:{
+                spell_id: dmg,
+            }
+        }
+    }
+    new_dmg = {
+        target_guid: {
+            source_guid:[
+                (spell_id, dmg),
+            ]
+        }
+    }
+    """
+    # new_sources: dict[str, dict[str, int]]
+    new_dmg: dict[str, dict[str, dict[int, int]]] = {}
+    for target_guid, sources in data.items():
+        new_dmg[target_guid] = combine_pet2(sources, guids)
+        # new_sources = {}
+        # for source_guid, spells in sources.items():
+        #     new_source_guid = guids[source_guid].get('master_guid', source_guid)
+        #     if new_source_guid != source_guid:
+        #         spells = {f"-{x}":y for x,y in spells.items()}
+        #     src = new_sources.setdefault(new_source_guid, {})
+        #     for s_id, value in spells.items():
+        #         src[s_id] = src.get(s_id, 0) + value
+        # new_dmg[target_guid] = new_sources
+
+    _ttl_tar: dict[str, int] = {}
+    _ttl_src: dict[str, dict[str, int]] = {}
+    for target_guid, sources in new_dmg.items():
+        src = _ttl_src[target_guid] = {}
+        for source_guid, spells in sources.items():
+            src[source_guid] = sum(spells.values())
+        _ttl_tar[target_guid] = sum(src.values())
             
-            if value > 1:
-                master_guid = guids[source_guid].get('master_guid')
-                if master_guid:
-                    pet_name = guids[source_guid]['name']
-                    source_guid = guids.get(master_guid, {}).get('master_guid') or master_guid
-                    spell_name = f'{spell_name} (Pet - {pet_name})'
-                dmg_heals[flag in HEAL_FLAGS].setdefault(source_guid, {}).setdefault(target_guid, {}).setdefault(spell_name, []).append(value)
-    return dmg_heals
-#####################################
-if 1:
-    def pretty_print_everything(data, guids):
-        for source_total, source_guid, targets in data:
-            source_name = guids[source_guid]['name']
-            print(f'{source_name:<50}{source_total:>10,}')
-            for target_total, target_guid, spells in targets:
-                target_name = guids[target_guid]['name']
-                print(f'    {target_name:<46}{target_total:>10,}')
-                for value, spell_name in spells:
-                    print(f'        {spell_name:<42}{value:>10,}')
+    return new_dmg, _ttl_tar, _ttl_src
 
-    def pretty_print_only_spells(data, guids):
-        for source_total, source_guid, spells in data:
-            name = guids[source_guid]['name']
-            print(f'{name:<50}{source_total:>10,} {source_guid}')
-            for value, spell_name in spells:
-                print(f'    {spell_name:<46}{value:>10,}')
 
-    def pretty_print_only_players(data, players):
-        for source_total, source_guid, _ in data:
-            player_name = players.get(source_guid)
-            if player_name:
-                print(f'{player_name:<13}{source_total:>10,}')
-#####################################
+def add_space(v):
+    return f"{v:,}".replace(',', ' ')
 
-@constants.running_time
-def find_tanks(logs):
-    dmg_taken = {}
-    for line in logs:
-        if 'SWING_DAMAGE' in line and '0xF130008EF5' in line:
-            line = line.split(',')
-            dmg_taken[line[4]] = dmg_taken.get(line[4], 0) + int(line[6])
-    return sorted(dmg_taken.items(), key= lambda x: x[1], reverse=True)
+def __test1():
+    name = '21-10-29--21-05--Nomadra'
+    report = logs_main.THE_LOGS(name)
+    logs = report.get_logs()
+    guids = report.get_all_guids()
+    spells = report.get_spells()
+    f = set()
+    n = 'Shoggoth'
+    filter_guid = report.name_to_guid(n)
+    f.add(filter_guid)
+    n = 'Nomadra'
+    filter_guid = report.name_to_guid(n)
+    f.add(filter_guid)
+    n = 'Festergut'
+    filter_guid = report.name_to_guid(n)
+    f.add(filter_guid)
+    assert filter_guid is not None
+    d = parse_dmg_taken(logs, filter_guid)
+    print(d[filter_guid])
+    q,w,e = parse_dmg_taken_add_pets(d, guids)
+    print(q[filter_guid])
+    print(w[filter_guid])
+    print(e[filter_guid])
+    e = sort_dict_by_value(e[filter_guid])
+    for guid, dmg in e:
+        print(f"{guids[guid]['name']:<25}{add_space(dmg):>15}")
 
-if __name__ == '__main__':
-    import _main
-    name = '210624-Passionne'
-    LOGS = _main.THE_LOGS(name)
-    logs = LOGS.get_logs()
-    enc_data = LOGS.get_enc_data()
-    s,f = enc_data["the_lich_king"][0]
-    logs = logs[s:f]
-    guids, players = LOGS.get_guids()
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    q = find_tanks(logs)
-    # for x, v in q:
-    #     print(f'{guids[x]["name"]:<12} {v:>10,}')
-    # s,f = enc_data['the_lich_kings'][0]
-    # logs = logs[s:f]
-    # print(s,f)
-    # filter_guid = '0xF130008EF50009E8'
-    # print(filter_guid=='0x060000000040F817')
-    # dmg, _ = parse_dmg_heals(logs,guids)
-    # print('0x060000000040F817' in dmg)
-    # q = get_everything(dmg, source_filter={filter_guid, })
-    # pretty_print_everything(q, guids)
-    # filter_guids = {constants.get_guid(player_name, guids)}
-    # damage, heal = parse_dmg_heals(logs, guids)
-    # damage = get_only_spells(damage, source_filter=filter_guids)
-    # pretty_print_only_spells(damage, guids)
-    # for source_total, source_guid, spells in only_spells(heal):
-    #     name = GUIDS[source_guid]['name']
-    #     print(f'{name:<50}{source_total:>9}')
-    #     for value, spell_name in spells:
-    #         print(f'    {spell_name:<46}{value:>9}')
+def __test2():
+    name = '22-04-27--21-02--Safiyah'
+    report = logs_main.THE_LOGS(name)
+    logs = report.get_logs()
+    all_guids = report.get_all_guids()
+    player_pets = report.get_players_and_pets_guids()
+    h1 = parse_both(logs, player_pets)
+    h2 = parse_only_dmg(logs)
+
+if __name__ == "__main__":
+    import logs_main
+    __test2()

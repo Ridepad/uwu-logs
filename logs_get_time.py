@@ -1,4 +1,4 @@
-import _main
+import logs_main
 import constants
 
 @constants.running_time
@@ -60,7 +60,7 @@ def check_if_same_length(logs, times):
 
 def __redo(name):
     print(name)
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     data = ujiowfuiwefhuiwe(logs)
     path = report.relative_path('TIMESTAMP_DATA')

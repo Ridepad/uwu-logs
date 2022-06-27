@@ -37,7 +37,7 @@ submitButton.addEventListener('click', () => {
   }
   const new_params = new URLSearchParams(parsed).toString();
   console.log(new_params);
-  xhttp.open("POST", "/reports/{{ report_id }}/custom_search_post", true);
+  xhttp.open("GET", "/reports/{{ report_id }}/custom_search_post", true);
   xhttp.send(new_params)
   // loc.replace(`${loc.origin}${loc.pathname}?${new_params}`);
 });

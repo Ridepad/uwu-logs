@@ -1,6 +1,6 @@
 
 from constants import running_time
-import _main
+import logs_main
 
 FLAGS = {'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'SWING_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD'}
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     def sort_dict_by_value(d):
         return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
     name = '21-09-30--21-06--Inia'
-    LOGS = _main.THE_LOGS(name)
+    LOGS = logs_main.THE_LOGS(name)
     guids, _ = LOGS.get_guids()
     logs = LOGS.get_logs()
     enc_data = LOGS.get_enc_data()

@@ -7,23 +7,27 @@
       <caption>damage to target</caption>
 
       <tr>
-      {% for _th in _ths %}
+      {% for _th in HEADS %}
         <th>{{ _th }}</th>
       {% endfor %}
       </tr>
-      {% for player_name, player_total in _total.items() %}
+      {% for player_name, player_total in TOTAL.items() %}
       <tr>
         <td class="player-cell">
-          <a class="{{ class_data[player_name] }}" href="/reports/{{ report_id }}/player/{{ player_name }}/{{ query }}">{{ player_name }}</a>
+          <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
         </td>
         <td class="total-cell">{{ player_total }}</td>
-        {% for tguid, _t in _all_shit.items() %}
+        {% for tguid, _t in FORMATTED.items() %}
         <td class="total-cell">{{ _t.get(player_name, 0) }}</td>
         {% endfor %}
       </tr>
       {% endfor %}
     </table>
   </div>
+  <section id="class-filter">
+    <h2>CLASS FILTER ▲</h2>
+    <div id="class-filter-wrap"></div>
+  </section>
 </main>
 {% endblock the_main %}
 {% block the_scripts %}
@@ -37,5 +41,51 @@
          .sort(comparer(th.cellIndex))
          .forEach(tr => tbody.appendChild(tr));
   })));
+
+  const CLASSES_TO_LOW = {
+    "Death Knight": "death-knight",
+    "Druid": "druid",
+    "Hunter": "hunter",
+    "Mage": "mage",
+    "Paladin": "paladin",
+    "Priest": "priest",
+    "Rogue": "rogue",
+    "Shaman": "shaman",
+    "Warlock": "warlock",
+    "Warrior": "warrior"
+  }
+
+  const ourStorage = window.localStorage;
+
+  const classFilter = document.getElementById('class-filter-wrap')
+  function addInput(class_name) {
+    const class_name_low = CLASSES_TO_LOW[class_name]
+    const cb_id = `${class_name_low}-cb`
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.id = cb_id;
+    input.checked = ourStorage.getItem(cb_id) == "true" ? true : false;
+    classFilter.appendChild(input);
+
+    const label = document.createElement('label');
+    label.innerText = class_name;
+    label.setAttribute('for', cb_id);
+    classFilter.appendChild(label);
+    return input
+  }
+  function cb_checked(cb) {
+    const checked = cb.checked;
+    ourStorage.setItem(cb.id, checked);
+    const class_low = cb.id.replace("-cb", "");
+    const display = checked ? 'table-row' : 'none';
+    document.querySelectorAll(`.${class_low}`).forEach(a => a.parentNode.parentNode.style.display = display);
+  }
+
+  for (let c_n in CLASSES_TO_LOW) {
+    const input = addInput(c_n);
+    cb_checked(input)
+    input.addEventListener('change', () => cb_checked(input))
+  }
 </script>
 {% endblock the_scripts %}

@@ -1,0 +1,51 @@
+{% extends "layout_report.html" %}
+
+{% block scripts_head %}
+<script defer src="/static/compare.js"></script>
+{% endblock scripts_head %}
+
+{% block the_main %}
+<main id="dmg-done">
+  <section id="compare-inputs">
+    <select id="select-class">
+      <option>Select class:</option>
+      <option value="Mage">Mage</option>
+      <option value="Warrior">Warrior</option>
+    </select>
+    <select id="select-spell">
+    </select>
+  </section>
+  <section id="dmg-done-main">
+    <table id="compare-field-table" style="display: none;">
+      <tbody id="compare-field-table-tbody">
+        <tr>
+          <th class="player-cell">-</th>
+          <th colspan="2">Damage</th>
+          <th colspan="6">Direct hits</th>
+          <th colspan="6">Damage over time</th>
+        </tr>
+        <tr>
+          <th class="player-cell">Spell</th>
+          <th>Total</th>
+          <th>Resisted</th>
+          <th>Hits</th>
+          <th>Avg</th>
+          <th>Crits</th>
+          <th>Avg</th>
+          <th>%</th>
+          <th>Total</th>
+          <th>Hits</th>
+          <th>Avg</th>
+          <th>Crits</th>
+          <th>Avg</th>
+          <th>%</th>
+          <th>Total</th>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+{% endblock the_scripts %}

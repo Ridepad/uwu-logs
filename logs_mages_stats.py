@@ -70,13 +70,13 @@ def get_all_spell_data(logs: list[str], spell_id: str):
     return sorted(__data, reverse=True, key=lambda x: x['chance'])
 
 def main():
-    import _main
+    import logs_main
 
     name = "22-03-12--21-04--Nomadra"
     name = "22-03-05--20-56--Nomadra"
     name = "22-03-26--22-02--Nomadra"
     name = "22-04-09--21-05--Nomadra"
-    report = _main.THE_LOGS(name)
+    report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     enc_data = report.get_enc_data()
     players = report.get_players_guids()
