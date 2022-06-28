@@ -33,15 +33,17 @@
 {% block the_scripts %}
 <script>
   const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
-  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
 
-  document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+  document.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
     const tbody = th.closest('tbody');
     Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
          .sort(comparer(th.cellIndex))
          .forEach(tr => tbody.appendChild(tr));
-  })));
+  }));
 
+  const _storage = window.localStorage;
+  const classFilter = document.getElementById('class-filter-wrap')
   const CLASSES_TO_LOW = {
     "Death Knight": "death-knight",
     "Druid": "druid",
@@ -55,17 +57,14 @@
     "Warrior": "warrior"
   }
 
-  const ourStorage = window.localStorage;
-
-  const classFilter = document.getElementById('class-filter-wrap')
   function addInput(class_name) {
-    const class_name_low = CLASSES_TO_LOW[class_name]
-    const cb_id = `${class_name_low}-cb`
+    const class_name_low = CLASSES_TO_LOW[class_name];
+    const cb_id = `${class_name_low}-cb`;
 
     const input = document.createElement('input');
     input.type = 'checkbox';
     input.id = cb_id;
-    input.checked = ourStorage.getItem(cb_id) == "true" ? true : false;
+    input.checked = _storage.getItem(cb_id) == "true" ? true : false;
     classFilter.appendChild(input);
 
     const label = document.createElement('label');
@@ -76,16 +75,17 @@
   }
   function cb_checked(cb) {
     const checked = cb.checked;
-    ourStorage.setItem(cb.id, checked);
+    _storage.setItem(cb.id, checked);
     const class_low = cb.id.replace("-cb", "");
     const display = checked ? 'table-row' : 'none';
     document.querySelectorAll(`.${class_low}`).forEach(a => a.parentNode.parentNode.style.display = display);
   }
 
-  for (let c_n in CLASSES_TO_LOW) {
-    const input = addInput(c_n);
-    cb_checked(input)
-    input.addEventListener('change', () => cb_checked(input))
+  for (let class_name in CLASSES_TO_LOW) {
+    const cb = addInput(class_name);
+    cb.checked = _storage.getItem(cb.id) != "false" ? true : false;
+    cb_checked(cb);
+    cb.addEventListener('change', () => cb_checked(cb));
   }
 </script>
 {% endblock the_scripts %}

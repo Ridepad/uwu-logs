@@ -38,7 +38,7 @@ def extract(full_path, upload_dir):
     elif platform == "win32":
         file_path = "7za.exe"
     else:
-        print('wtf', platform)
+        print('[wtf] platform:', platform)
         return
     cmd = [file_path, 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
     code = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -59,7 +59,7 @@ def new_archive(full_path, upload_dir):
     archive_id = f"{epoch}_{size}"
 
     if archive_id in UPLOADED:
-        return
+        return UPLOADED[archive_id]
     
     code = extract(full_path, upload_dir)
     if code == 0:

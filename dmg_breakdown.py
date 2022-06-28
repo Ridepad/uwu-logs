@@ -1,8 +1,7 @@
 from collections import defaultdict
-from typing import Any
-import constants
 
 HIT_TYPE = ["spells_hit", "spells_crit", "dot_hit", "dot_crit"]
+PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_ENERGIZE', 'SPELL_PERIODIC_HEAL', 'SPELL_PERIODIC_LEECH', 'SPELL_PERIODIC_MISSED'}
 
 def group_targets(targets: set[str]):
     target_ids = {guid[:-6] for guid in targets}
@@ -11,10 +10,7 @@ def group_targets(targets: set[str]):
         for target_id in target_ids
     }
 
-PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_ENERGIZE', 'SPELL_PERIODIC_HEAL', 'SPELL_PERIODIC_LEECH', 'SPELL_PERIODIC_MISSED'}
-
-@constants.running_time
-def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None) -> dict[str, Any]:
+def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
     '''absolute = { spell_id: sum }
     useful = { spell_id: {
         "spells_hit": [],
@@ -27,13 +23,10 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
     reduced = defaultdict(int)
     actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
 
-    # print(f"[parse_logs] {mainGUID=} {target_filter=}")
-
     for line in logs_slice:
         if "DAMAGE" not in line:
             continue
         try:
-            # 4047,0,1,0,0,0,1,nil,nil
             _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, glanc, _ = line.split(',', 17)
         except ValueError:
             # DAMAGE_SHIELD_MISSED
@@ -118,6 +111,7 @@ def format_hits(hits: dict[str, list[int]]):
 
 def hits_data(data: dict[int, dict[str, list[int]]]):
     return {spell_id: format_hits(hits) for spell_id, hits in data.items()}
+
 
 def __test():
     import logs_main

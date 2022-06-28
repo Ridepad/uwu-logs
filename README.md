@@ -1,5 +1,7 @@
 # UwU Logs
 
+WotLK logs parser.
+
 ## TODO
 
 1st footer for mobile with back button to report - report name - expand button

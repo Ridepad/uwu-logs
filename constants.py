@@ -22,9 +22,9 @@ def new_folder_path(root, name):
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
-UPLOADS_DIR = new_folder_path(DIR_PATH, "uploads")
-RAW_DIR = new_folder_path(DIR_PATH, "LogsRaw")
 LOGS_DIR = new_folder_path(DIR_PATH, "LogsDir")
+LOGS_RAW = new_folder_path(DIR_PATH, "LogsRaw")
+UPLOADS_DIR = new_folder_path(DIR_PATH, "uploads")
 PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
 
 LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
@@ -384,7 +384,6 @@ def save_backup(path):
             os.remove(old)
         os.rename(path, old)
 
-@running_time
 def json_read(path: str):
     path = add_extention(path, '.json')
     try:
@@ -394,7 +393,6 @@ def json_read(path: str):
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         return {}
 
-@running_time
 def json_read_no_exception(path: str):
     path = add_extention(path, '.json')
     with open(path) as file:
@@ -407,7 +405,6 @@ def json_write(path: str, data, indent=2):
         json.dump(data, file, default=sorted, indent=indent)
 
 
-@running_time
 def bytes_read(path: str, ext=None):
     path = add_extention(path, ext)
     try:
@@ -444,7 +441,6 @@ def file_write(path: str, data: str, ext=None):
         f.write(data)
 
 
-@running_time
 def zlib_decompress(data: bytes):
     return zlib.decompress(data)
 

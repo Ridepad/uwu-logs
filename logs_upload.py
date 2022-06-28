@@ -12,16 +12,9 @@ import constants
 import logs_cut
 import logs_main
 import logs_unzip
-from constants import (DIR_PATH, LOGS_CUT_NAME, T_DELTA_15MIN, UPLOADED,
-                       new_folder_path, running_time, zlib_text_write)
-
-RAW_DIR = new_folder_path(DIR_PATH, "LogsRaw")
-LOGS_DIR = new_folder_path(DIR_PATH, "LogsDir")
-
-UPLOADS_DIR = new_folder_path(DIR_PATH, "uploads")
-PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
-PARSED_LOGS_DIR = new_folder_path(PARSED_DIR, "logs")
-LEGACY_UPLOAD = new_folder_path(UPLOADS_DIR, 'legacy')
+from constants import (LOGS_CUT_NAME, LOGS_DIR, LOGS_RAW, T_DELTA_15MIN,
+                       UPLOADED, UPLOADS_DIR, new_folder_path, running_time,
+                       zlib_text_write)
 
 UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
 UPLOAD_LOGGER = constants.setup_logger('upload_logger', UPLOAD_LOGGER_FILE)
@@ -30,7 +23,7 @@ BUGGED_NAMES = {"nil", "Unknown"}
 
 def write_new_logs(logs_id: str, new_logs: str):
     file_name = f"{logs_id}.txt"
-    archive_path = os.path.join(RAW_DIR, f"{logs_id}.zip")
+    archive_path = os.path.join(LOGS_RAW, f"{logs_id}.zip")
     with zipfile.ZipFile(archive_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
         archive.writestr(file_name, new_logs)
     print('write_new_logs', logs_id)
@@ -56,42 +49,10 @@ def prepare_logs(file_name):
     logs_raw_decoded = logs_raw.decode()
     return constants.logs_splitlines(logs_raw_decoded)
 
-def find_start(logs, to_dt):
-    for line in logs:
-        if not line:
-            continue
-        
-        try:
-            return to_dt(line)
-        except Exception:
-            UPLOAD_LOGGER.debug(f'[SLICE LOGS] Skipped scuffed line {line[:200]}')
-
-def slice_logs(logs: list[str], to_dt):
-    last_dt = find_start(logs, to_dt)
-
-    max_delta = T_DELTA_15MIN
-    current_segment = []
-    for line in logs:
-        try:
-            dt = to_dt(line)
-        except Exception:
-            UPLOAD_LOGGER.debug(f'[SLICE LOGS] Skipped scuffed line {line[:200]}')
-            continue
-
-        if dt - last_dt > max_delta:
-            yield current_segment
-
-            current_segment = []
-
-        current_segment.append(line)
-        last_dt = dt
-
-    yield current_segment
-
 def to_int(line: str):
     return int(line.split(' ', 1)[1][:8].replace(':', ''))
 
-def find_start2(logs: list[str]):
+def find_start(logs: list[str]):
     for line in logs:
         try:
             return to_int(line), line
@@ -99,7 +60,7 @@ def find_start2(logs: list[str]):
             pass
 
 def slice_logs(logs_raw: list[str], to_dt):
-    _last = find_start2(logs_raw)
+    _last = find_start(logs_raw)
     if _last is None:
         return []
     
@@ -126,19 +87,13 @@ def slice_logs(logs_raw: list[str], to_dt):
 
 
 class NewUpload(Thread):
-    # def __init__(self, logs_raw_name: str, upload_dir: str) -> None:
     def __init__(self, archive_data: dict) -> None:
         super().__init__()
         self.archive_data = archive_data
-        self.upload_dir = archive_data["upload_dir"]
-        self.logs_raw_name = archive_data["file"]
-        self.logs_list = []
-        self.to_dt = constants.to_dt_closure(archive_data['year'])
-
         self.processes: list[Process] = []
-        
         self.status_json = ""
         self.status_dict = {}
+        self.logs_list = []
         self.change_status("Preparing...", True)
 
     def change_status(self, message: str, slice_done=False):
@@ -146,7 +101,6 @@ class NewUpload(Thread):
         if slice_done:
             self.status_dict["links"] = self.logs_list
         self.status_json = json.dumps(self.status_dict)
-        # print(self.status_json)
 
     def parsed_new_logs_status(self, logs_id):
         self.logs_list.append(logs_id)
@@ -188,14 +142,6 @@ class NewUpload(Thread):
         new_report.get_spells(rewrite=True)
         
         self.parsed_new_logs_status(logs_id)
-    
-    # def new_thread(self, func, args=None, process=False):
-    #     if process:
-    #         t = Process(target=func, args=args)
-    #     else:
-    #         t = Thread(target=func, args=args)
-    #     t.start()
-    #     self.processes.append(t)
 
     @running_time
     def eval_slice(self, logs_slice: list[str], logs_id: str):
@@ -217,10 +163,20 @@ class NewUpload(Thread):
             _process.join()
 
     def run(self):
-        if "logs_list" in self.archive_data:
-            print('file has been uploaded already')
-            self.change_status("Done! Select 1 of the reports below.", True)
+        if self.archive_data is None:
+            self.status_dict["done"] = 1
+            self.change_status("Error unziping file, check and try again.", True)
             return
+        if "logs_list" in self.archive_data:
+            self.logs_list = self.archive_data['logs_list']
+            self.status_dict["done"] = 1
+            self.change_status("File has been uploaded already! Select 1 of the reports below.", True)
+            return
+
+        self.archive_data['logs_list'] = self.logs_list
+        self.upload_dir = self.archive_data["upload_dir"]
+        self.logs_raw_name = self.archive_data["file"]
+        self.to_dt = constants.to_dt_closure(self.archive_data['year'])
 
         try:
             logs_raw = prepare_logs(self.logs_raw_name)
@@ -296,28 +252,11 @@ def main_local_text(logs_path, move=False):
     data = UPLOADED[archive_id] = {"mod_time": mod_time, "file": logs_path, "upload_dir": new_upload_dir, "year": dt.year}
     return NewUpload(data)
 
-def main_legacy(full_path, redo=False):
-    file = File(full_path)
-    new_upload_dir = os.path.join(LEGACY_UPLOAD, file.name)
-    if not redo and os.path.exists(new_upload_dir):
-        print(f"[LOGS UPLOAD] main_legacy {file.name} exists")
-        return
-    
-    print(f"[LOGS UPLOAD] main_legacy {full_path}")
-    
-    constants.create_folder(new_upload_dir)
-    full_path = os.path.join(new_upload_dir, file.filename)
-    file.save(full_path)
-
-    logs_raw_name = unzip_shit(full_path, new_upload_dir)
-    logs_raw_name_path = os.path.join(new_upload_dir, logs_raw_name)
-    
-    return NewUpload(logs_raw_name_path, new_upload_dir)
     
 @running_time
 def __test2(logs):
     to_dt = constants.to_dt
-    q = [len(x) for x in slice_logs2(logs, to_dt)]
+    q = [len(x) for x in slice_logs(logs, to_dt)]
     # q = [x for x in slice_logs2(logs, to_dt)]
     ans = [346097, 57172, 362806, 50978, 1930853, 181319, 211, 201048, 1788567]
     print(q)
