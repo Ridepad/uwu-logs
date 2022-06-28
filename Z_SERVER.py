@@ -509,4 +509,5 @@ def test3():
 
 if __name__ == "__main__":
     # SERVER.run(host="0.0.0.0", port=5000, debug=True)
-    serve(SERVER, listen='0.0.0.0:80')
+    SERVER.run(host="0.0.0.0", port=8000, ssl_context=('domain.cert.pem', 'private.key.pem'))
+    # serve(SERVER, listen='0.0.0.0:8000')

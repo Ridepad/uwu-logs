@@ -49,7 +49,6 @@ logging.basicConfig(
     format=LOGGING_FORMAT,
     datefmt="%d/%m/%Y %H:%M:%S",
     level=logging.DEBUG,
-    
 )
 
 T_DELTA_2MIN = timedelta(minutes=2)

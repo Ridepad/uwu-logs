@@ -10,6 +10,7 @@ all_*.json
 *.old
 _*.*
 db_*
+*.pem
 
 WarmaneBossFights/
 trash/
