@@ -44,7 +44,6 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
     return logger
 
 LOGFILE = os.path.join(DIR_PATH,'_log.log')
-# MAIN_LOGGER = setup_logger('main_logger', LOGFILE)
 logging.basicConfig(
     filename=LOGFILE,
     format=LOGGING_FORMAT,
@@ -757,21 +756,31 @@ REPORTS_FILTER_FILES = {
     'allowed': os.path.join(DIR_PATH, "__allowed.txt"),
     'private': os.path.join(DIR_PATH, "__private.txt"),
 }
-
 FILTERED_LOGS = {}
-
 def get_logs_filter(filter_type: str):
     if filter_type in FILTERED_LOGS:
         return FILTERED_LOGS[filter_type]
-
     data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).split('\n')
     return data
 
 
 UPLOADED_JSON = os.path.join(DIR_PATH, '_uploaded_data.json')
 UPLOADED = json_read(UPLOADED_JSON)
-
-def exit_handler():
+def save_upload_cache():
     json_write(UPLOADED_JSON, UPLOADED)
 
-atexit.register(exit_handler)
+
+MAX_PW_ATTEMPTS = 5
+WRONG_PW_FILE = os.path.join(DIR_PATH, '_wrong_pw.json')
+WRONG_PW = json_read(WRONG_PW_FILE)
+
+def wrong_pw(ip):
+    attempt = WRONG_PW.get(ip, 0) + 1
+    WRONG_PW[ip] = attempt
+    if attempt > MAX_PW_ATTEMPTS:
+        json_write(WRONG_PW_FILE, WRONG_PW)
+
+def banned(ip):
+    return WRONG_PW.get(ip, 0) > MAX_PW_ATTEMPTS
+
+

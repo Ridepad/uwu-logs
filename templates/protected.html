@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block the_main %}
+<main>
+  <section id="psw-form" style="padding-left: 10vw;">
+      <p><h3>Logs are private, enter password:</h3></p>
+      <p><input id="password-field" type="text" maxlength="64"/></p>
+      <button id="submit-button">Submit</button>
+      <p id="error-field"></p>
+  </section>
+</main>
+{% endblock the_main %}
+{% block main_scripts %}
+<script>
+const pwField = document.getElementById("password-field");
+const errorField = document.getElementById("error-field");
+const submitButton = document.getElementById("submit-button");
+
+const xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = () => {
+  if (xhttp.readyState != 4) return;
+  if (xhttp.status == 200) {
+    pwField.value = "";
+    window.location.reload();
+  } else if (xhttp.status == 401) {
+    errorField.innerText = "Wrong password, buddy";
+  }
+}
+
+async function digestMessage(message) {
+  const msgUint8 = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+submitButton.addEventListener('click', () => {
+  digestMessage(pwField.value).then(_hash => {
+    xhttp.open("POST", "/pw_validate", true);
+    xhttp.send(_hash)
+  })
+})
+</script>
+{% endblock main_scripts %}

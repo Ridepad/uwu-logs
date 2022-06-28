@@ -14,7 +14,7 @@ import logs_main
 import logs_unzip
 from constants import (LOGS_CUT_NAME, LOGS_DIR, LOGS_RAW, T_DELTA_15MIN,
                        UPLOADED, UPLOADS_DIR, new_folder_path, running_time,
-                       zlib_text_write)
+                       save_upload_cache, zlib_text_write)
 
 UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
 UPLOAD_LOGGER = constants.setup_logger('upload_logger', UPLOAD_LOGGER_FILE)
@@ -200,6 +200,7 @@ class NewUpload(Thread):
         
         finally:
             self.wait_for_processes()
+            save_upload_cache()
 
 
 class File:
@@ -231,8 +232,7 @@ def main(file: File, ip='localhost'):
     
     return NewUpload(data)
 
-# def main_local_text(logs_path, move=True):
-def main_local_text(logs_path, move=False):
+def main_local_text(logs_path, move=True):
     ctime = int(os.path.getctime(logs_path))
     size = os.path.getsize(logs_path)
     archive_id = f"{ctime}_{size}"
@@ -252,42 +252,20 @@ def main_local_text(logs_path, move=False):
     data = UPLOADED[archive_id] = {"mod_time": mod_time, "file": logs_path, "upload_dir": new_upload_dir, "year": dt.year}
     return NewUpload(data)
 
-    
-@running_time
-def __test2(logs):
-    to_dt = constants.to_dt
-    q = [len(x) for x in slice_logs(logs, to_dt)]
-    # q = [x for x in slice_logs2(logs, to_dt)]
-    ans = [346097, 57172, 362806, 50978, 1930853, 181319, 211, 201048, 1788567]
-    print(q)
-    assert q == ans
-    # for x in slice_logs2(logs, to_dt):
-        # print(x)
-
-# if __name__ == "__main__":
-#     name = r"F:\World of Warcraft 3.3.5a HD\Logs\WoWCombatLog1.txt"
-#     logs = prepare_logs(name)
-#     sdfiaksiofjksdifjaof(logs)
-#     sdfiaksiofjksdifjaof(logs)
-#     sdfiaksiofjksdifjaof(logs)
-#     sdfiaksiofjksdifjaof(logs)
-#     sdfiaksiofjksdifjaof(logs)
 
 if __name__ == "__main__":
     import sys
-    print(sys.argv)
     try:
         name = sys.argv[1]
     except IndexError as e:
-        # name = r"F:\Python\wow_logs\LogsRaw\legacy\upload_12062.zip"
         name = r"F:\World of Warcraft 3.3.5a HD\Logs\WoWCombatLog.txt"
         print(e)
-        # input()
     if name.endswith('.txt'):
         _main_thread = main_local_text(name)
     else:
         new_file = File(name)
         _main_thread = main(new_file)
+    
     if _main_thread is not None:
         _main_thread.start()
         _main_thread.join()

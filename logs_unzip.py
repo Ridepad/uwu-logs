@@ -6,8 +6,7 @@ from sys import platform
 
 import py7zr
 
-import constants
-from constants import UPLOADED
+from constants import UPLOADED, logs_edit_time
 
 
 def get_7z_info(full_path) -> tuple[datetime, int]:
@@ -64,7 +63,7 @@ def new_archive(full_path, upload_dir):
     code = extract(full_path, upload_dir)
     if code == 0:
         extracted_file = get_extracted_file(upload_dir)
-        mod_time = constants.logs_edit_time(extracted_file)
+        mod_time = logs_edit_time(extracted_file)
         extracted_file_full = os.path.join(upload_dir, extracted_file)
         data = UPLOADED[archive_id] = {"mod_time": mod_time, "file": extracted_file_full, "upload_dir": upload_dir, "year": dt.year}
         return data

@@ -1,23 +1,19 @@
 import json
-import os
 import logging
+import os
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from flask import Flask, render_template, request, send_from_directory
-from flask.helpers import url_for
-from flask import Response
+from flask import (Flask, Response, make_response, render_template, request,
+                   )
 from waitress import serve
-from werkzeug.utils import redirect
 
-import logs_main
-import constants
+import _validate
 import deaths
 import logs_calendar
+import logs_main
 import logs_upload
-
-from constants import get_logs_filter, T_DELTA_5MIN
-
+from constants import T_DELTA_5MIN, banned, get_logs_filter, wrong_pw
 
 real_path = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(real_path)
@@ -28,7 +24,7 @@ SERVER = Flask(__name__)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 SERVER.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_5MIN
-SERVER.config['USE_FILTER'] = False
+SERVER.config['USE_FILTER'] = True
 SERVER.config['FILTER_TYPE'] = 'private'
 
 ALLOWED_EXTENSIONS = {'zip', '7z', }
@@ -96,18 +92,6 @@ def default_params(report_id, request, shift=0):
         # "boss_links": boss_links,
     }
 
-
-
-@SERVER.route('/favicon.ico')
-def favicon():
-    pth = os.path.join(SERVER.root_path, 'static')
-    return send_from_directory(pth, 'favicon.ico')
-
-# @SERVER.route('/static/style.css')
-# def stylesheet():
-#     pth = os.path.join(SERVER.root_path, 'static')
-#     return send_from_directory(pth, 'style.css')
-
 @SERVER.errorhandler(404)
 def method404(e):
     return render_template('no_page.html')
@@ -139,21 +123,39 @@ def after_request(response):
         CLEANER.append(t)
     return response
 
+@SERVER.route("/pw_validate", methods=["POST"])
+def pw_validate():
+    if _validate.pw(request):
+        resp = make_response('Success')
+        _validate.set_cookie(resp)
+        return resp
+    
+    wrong_pw(request.remote_addr)
+    return ('', 401)
+
 @SERVER.before_request
 def before_request():
-    logging.info(f"[{request.remote_addr}] [{request.method}] {request.path}{request.query_string.decode()} {request.args} {request.headers}")
+    if banned(request.remote_addr):
+        return ('', 429)
+    
+    req = f"[{request.remote_addr}] {request.method:>4} | {request.path}{request.query_string.decode()} | {request.headers.get('User-Agent')}"
+    print(req)
+    logging.info(req)
+
     if request.path.startswith('/reports/'):
         url_comp = request.path.split('/')
         report_id = url_comp[2]
         report_path = os.path.join(LOGS_DIR, report_id)
         if not os.path.isdir(report_path):
             return render_template('no_page.html')
+        
         elif SERVER.config['USE_FILTER']:
             _filter_type = SERVER.config['FILTER_TYPE']
             _filter = get_logs_filter(_filter_type)
-            if (_filter_type == "private" and report_id in _filter
-            or _filter_type == "allowed" and report_id not in _filter):
-                return render_template('no_page.html')
+            # or _filter_type == "allowed" and report_id not in _filter):
+                # return render_template('no_page.html')
+            if _filter_type == "private" and report_id in _filter and not _validate.cookie(request):
+                return render_template('protected.html')
 
         shift = get_shift(url_comp)
         request.default_params = default_params(report_id, request, shift)
@@ -216,9 +218,6 @@ def check_progress():
     if not t:
         return '{"f": 0, "m": "Session ended or file uploaded"}'
     
-    new_name = getattr(t, 'new_name', None)
-    if new_name and new_name not in OPENED_LOGS and t.new_logs:
-        OPENED_LOGS[new_name] = t.new_logs
     return t.status_json
 
 
@@ -509,5 +508,5 @@ def test3():
 
 
 if __name__ == "__main__":
-    # SERVER.run(host="0.0.0.0", port=5000, debug=True)
-    serve(SERVER, listen='0.0.0.0:80')
+    SERVER.run(host="0.0.0.0", port=5000, debug=True)
+    # serve(SERVER, listen='0.0.0.0:80')
