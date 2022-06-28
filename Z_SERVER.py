@@ -141,7 +141,7 @@ def after_request(response):
 
 @SERVER.before_request
 def before_request():
-    logging.info(f"[{request.remote_addr}] [{request.method}] {request.path}{request.query_string} {request.args}")
+    logging.info(f"[{request.remote_addr}] [{request.method}] {request.path}{request.query_string.decode()} {request.args} {request.headers}")
     if request.path.startswith('/reports/'):
         url_comp = request.path.split('/')
         report_id = url_comp[2]
