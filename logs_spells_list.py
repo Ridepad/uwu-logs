@@ -1,9 +1,16 @@
 import logging
 
-import logs_main
 import constants
+import logs_main
 from constants import SPELLS_SCHOOLS, UNUSUAL_SPELLS
 
+CUSTOM_SPELLS = {
+    "42925": "Flamestrike (Rank 8)",
+    "49240": "Lightning Bolt (Proc)",
+    "49269": "Chain Lightning (Proc)",
+    "53190": "Starfall (AoE)",
+    "55360": "Living Bomb (DoT)",
+}
 
 def unusual_spells(v, spell_id):
     _n = v['name'].replace(' ', '-')
@@ -27,14 +34,6 @@ def finish_spells(spells: dict[str, dict]):
             unusual_spells(v, spell_id)
         new_spells[int(spell_id)] = v
     return new_spells
-
-CUSTOM_SPELLS = {
-    "42925": "Flamestrike (Rank 8)",
-    "49240": "Lightning Bolt (Proc)",
-    "49269": "Chain Lightning (Proc)",
-    "53190": "Starfall (AoE)",
-    "55360": "Living Bomb (DoT)",
-}
 
 @constants.running_time
 def get_all_spells(logs: list[str]):

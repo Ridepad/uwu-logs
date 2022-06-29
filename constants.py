@@ -21,10 +21,10 @@ def new_folder_path(root, name):
     return new_folder
 
 real_path = os.path.realpath(__file__)
-DIR_PATH = os.path.dirname(real_path)
-LOGS_DIR = new_folder_path(DIR_PATH, "LogsDir")
-LOGS_RAW = new_folder_path(DIR_PATH, "LogsRaw")
-UPLOADS_DIR = new_folder_path(DIR_PATH, "uploads")
+PATH_DIR = os.path.dirname(real_path)
+LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
+LOGS_RAW = new_folder_path(PATH_DIR, "LogsRaw")
+UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
 
 LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
@@ -43,7 +43,7 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
     logger.addHandler(streamHandler)
     return logger
 
-LOGFILE = os.path.join(DIR_PATH,'_log.log')
+LOGFILE = os.path.join(PATH_DIR,'_log.log')
 logging.basicConfig(
     filename=LOGFILE,
     format=LOGGING_FORMAT,
@@ -752,8 +752,8 @@ def logs_edit_time(file_name):
 
 
 REPORTS_FILTER_FILES = {
-    'allowed': os.path.join(DIR_PATH, "__allowed.txt"),
-    'private': os.path.join(DIR_PATH, "__private.txt"),
+    'allowed': os.path.join(PATH_DIR, "__allowed.txt"),
+    'private': os.path.join(PATH_DIR, "__private.txt"),
 }
 FILTERED_LOGS = {}
 def get_logs_filter(filter_type: str):
@@ -763,14 +763,14 @@ def get_logs_filter(filter_type: str):
     return data
 
 
-UPLOADED_JSON = os.path.join(DIR_PATH, '_uploaded_data.json')
+UPLOADED_JSON = os.path.join(PATH_DIR, '_uploaded_data.json')
 UPLOADED = json_read(UPLOADED_JSON)
 def save_upload_cache():
     json_write(UPLOADED_JSON, UPLOADED)
 
 
 MAX_PW_ATTEMPTS = 5
-WRONG_PW_FILE = os.path.join(DIR_PATH, '_wrong_pw.json')
+WRONG_PW_FILE = os.path.join(PATH_DIR, '_wrong_pw.json')
 WRONG_PW = json_read(WRONG_PW_FILE)
 
 def wrong_pw(ip):

@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 
-import auras
+import logs_auras
 import logs_check_difficulty
 import constants
 import dmg_breakdown
@@ -20,8 +20,8 @@ import logs_valks3
 from constants import is_player, running_time, sort_dict_by_value, add_new_numeric_data, add_space
 
 real_path = os.path.realpath(__file__)
-DIR_PATH = os.path.dirname(real_path)
-LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
+PATH_DIR = os.path.dirname(real_path)
+LOGS_DIR = os.path.join(PATH_DIR, "LogsDir")
 
 IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
 PLAYER = "0x0"
@@ -1274,7 +1274,7 @@ class THE_LOGS:
 
     def get_auras(self, s, f, filter_guid):
         logs_slice = self.get_logs(s, f)
-        a = auras.AurasMain(logs_slice)
+        a = logs_auras.AurasMain(logs_slice)
         data = a.main(filter_guid)
         spell_colors = self.get_spells_colors(data['spells'])
         all_spells = self.get_spells()

@@ -4,28 +4,25 @@ import os
 import threading
 from datetime import datetime
 
-from flask import (Flask, Response, make_response, render_template, request,
-                   )
-from waitress import serve
+from flask import (Flask, Request, Response, make_response, render_template,
+                   request, send_from_directory)
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import _validate
 import deaths
 import logs_calendar
 import logs_main
 import logs_upload
-from constants import T_DELTA_5MIN, banned, get_logs_filter, wrong_pw
-
-real_path = os.path.realpath(__file__)
-DIR_PATH = os.path.dirname(real_path)
-UPLOAD_FOLDER = os.path.join(DIR_PATH, "uploads")
-LOGS_DIR = os.path.join(DIR_PATH, "LogsDir")
+from constants import (LOGS_DIR, PATH_DIR, T_DELTA_5MIN, UPLOADS_DIR, banned,
+                       get_logs_filter, wrong_pw)
 
 SERVER = Flask(__name__)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
-SERVER.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+SERVER.config['UPLOAD_FOLDER'] = UPLOADS_DIR
 SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_5MIN
 SERVER.config['USE_FILTER'] = True
 SERVER.config['FILTER_TYPE'] = 'private'
+SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 NEW_FILES: dict[str, logs_upload.NewUpload] = {}
@@ -36,7 +33,6 @@ MONTHS = ["January", "February", "March", "April", "May", "June", "July", "Augus
 SHIFT = {
     'spell': 10,
     'consumables': 10,
-    # 'damage': 10,
     'player_auras': 10,
 }
 
@@ -45,6 +41,11 @@ def get_shift(url_comp: list[str]):
         return SHIFT.get(url_comp[3], 0)
     except IndexError:
         return 0
+
+# def get_ip(request: Request):
+#     if request.remote_addr != "127.0.0.1":
+#         return request.remote_addr
+#     return request.headers.get("X-Forwarded-For") or request.headers.get("X-Real-Ip")
 
 def load_report(name: str):
     if name in OPENED_LOGS:
@@ -91,6 +92,11 @@ def default_params(report_id, request, shift=0):
         # "diff_links": diff_links,
         # "boss_links": boss_links,
     }
+    
+@SERVER.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(PATH_DIR, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @SERVER.errorhandler(404)
 def method404(e):
@@ -102,7 +108,7 @@ def method405(e):
 
 @SERVER.errorhandler(413)
 def method413(e):
-    status = 'Files <64mb only, learn to compress, scrub'
+    status = 'Files <128mb only, learn to compress, scrub'
     return render_template('upload.html', status=status)
 
 CLEANER = []
@@ -365,8 +371,6 @@ def compare(report_id):
         return Response(report.get_comp_data(segments, class_name), mimetype='arraybuffer')
 
 
-
-
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):
     s, f, query = parse_first(request)
@@ -394,9 +398,6 @@ def valks(report_id):
         valk_grabs=valk_grabs, valk_grabs_details=valk_grabs_details)
 
 
-
-
-
 @SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
 def custom_search_post(report_id):
     data = request.get_json(force=True)
@@ -415,7 +416,6 @@ def custom_search(report_id):
         'custom_search.html', **_default,
     )
         
-
 
 @SERVER.route("/test2")
 def test2():
@@ -505,9 +505,6 @@ def test3():
     return render_template('dmg_taken_test.html', dmg=dmg, players=players)
 
 
-
-
 if __name__ == "__main__":
-    # SERVER.run(host="0.0.0.0", port=5000, debug=True)
-    SERVER.run(host="0.0.0.0", port=8000, ssl_context=('domain.cert.pem', 'private.key.pem'))
-    # serve(SERVER, listen='0.0.0.0:8000')
+    # serve(SERVER, listen='0.0.0.0:5000')
+    SERVER.run(host="0.0.0.0", port=8000)

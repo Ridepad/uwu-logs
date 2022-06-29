@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <head>
-	<title>UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}</title>
-	<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'>
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	{% block add_css_file %}{% endblock add_css_file %}
+  <title>UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  {% block add_css_file %}{% endblock add_css_file %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
-	{% block head_meta %}{% endblock head_meta %}
-	
-	{% block scripts_head %}{% endblock scripts_head %}
+  {% block head_meta %}{% endblock head_meta %}
 
-	<style>
+  {% block scripts_head %}{% endblock scripts_head %}
+
+  <style>
     * {
       color:gainsboro;
       font-family: Ubuntu;
@@ -35,22 +35,21 @@
     html::-webkit-scrollbar {
       display: none; /*Chrome Safari Opera*/
     }
-	</style>
-	{% block add_style %}{% endblock add_style %}
+  </style>
+  {% block add_style %}{% endblock add_style %}
 </head>
 <body>
-	<nav>
-    <a id="home-button">UwU LOGS</a>
-    <!-- <a id="home-button" href="/" >UwU LOGS</a> -->
+  <nav>
+    <a id="home-button" href="/" >UwU LOGS</a>
     <input id="open-top" type="checkbox"></button>
     <label id="top-chkbox" for="open-top">v</label>
-		<div id="top-nav">
-			<a href="/logs_list">LOGS LIST</a>
-			<a href="/upload">UPLOAD LOGS</a>
-			<!-- <a href="/test">TEST</a> -->
-			<!-- <a>ABOUT</a> -->
-	  </div>
-	</nav>
+    <div id="top-nav">
+      <a href="/logs_list">LOGS LIST</a>
+      <a href="/upload">UPLOAD LOGS</a>
+      <!-- <a href="/test">TEST</a> -->
+      <!-- <a>ABOUT</a> -->
+    </div>
+  </nav>
   {% block the_main %}{% endblock the_main %}
   {% block fight_aside %}{% endblock fight_aside %}
   {% block main_foot %}{% endblock main_foot %}

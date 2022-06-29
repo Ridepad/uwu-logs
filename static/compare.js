@@ -102,27 +102,6 @@ function addTableRow(data) {
   tbody.append(row);
 }
 
-// let last_resp = "";
-// const xhttp_compare = new XMLHttpRequest();
-// xhttp_compare.onreadystatechange = () => {
-//   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
-//   const response = xhttp_compare.response;
-//   const resp23 = response.replace(last_resp, "");
-//   const resp_split = resp23.split("\n");
-
-//   const a = CACHE_COMP[selectClass.value]
-//   for (let i = 0; i<resp_split.length-1;i++) {
-//     try {
-//       const split_json = JSON.parse(resp_split[i]);
-//       addTableRow(split_json);
-//       a.push(split_json);
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   }
-//   last_resp = response;
-// }
-
 const xhttp_compare = new XMLHttpRequest();
 xhttp_compare.onreadystatechange = () => {
   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
