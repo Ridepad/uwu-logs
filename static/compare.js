@@ -102,20 +102,32 @@ function addTableRow(data) {
   tbody.append(row);
 }
 
+// const xhttp_compare = new XMLHttpRequest();
+// xhttp_compare.onreadystatechange = () => {
+//   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
+//   const resp_split = xhttp_compare.response.split("\n");
+
+//   const a = CACHE_COMP[selectClass.value]
+//   for (let i = 0; i<resp_split.length;i++) {
+//     try {
+//       const split_json = JSON.parse(resp_split[i]);
+//       addTableRow(split_json);
+//       a.push(split_json);
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   }
+// }
+
 const xhttp_compare = new XMLHttpRequest();
 xhttp_compare.onreadystatechange = () => {
   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
-  const resp_split = xhttp_compare.response.split("\n");
-
+  console.log(xhttp_compare.response);
+  const parsed_json = JSON.parse(xhttp_compare.response);
   const a = CACHE_COMP[selectClass.value]
-  for (let i = 0; i<resp_split.length;i++) {
-    try {
-      const split_json = JSON.parse(resp_split[i]);
-      addTableRow(split_json);
-      a.push(split_json);
-    } catch (error) {
-      console.error(error);
-    }
+  for (let i = 0; i<parsed_json.length; i++) {
+    addTableRow(parsed_json[i]);
+    a.push(parsed_json[i]);
   }
 }
 

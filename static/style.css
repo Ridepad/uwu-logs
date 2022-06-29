@@ -89,40 +89,58 @@ html::-webkit-scrollbar {
 }
 
 
-/* #home-page {
+/* HOME PAGE */
+#home-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#home-page h1 {
+  font-size: 300%;
+  color: var(--primary-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+}
+#home-page h2 {
+  font-size: 200%;
+}
+#home-page h2 span {
+  font-size: 40%;
+  bottom: 1em;
+  position: relative;
+}
+
+
+/* UPLOAD */
+.upload {
   display: grid;
-  grid-auto-flow: row;
-  text-align: center;
+  justify-content: center;
+}
+
+#upload-error {
+  margin-top: 1rem;
+  color: crimson;
+}
+#upload-status {
+  width: 20vw;
+}
+
+
+/* NO PAGE */
+#no-page {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 94vh;
 }
-#home-page a {
-  font-size: 14vmin;
-  width: 12ch;
-  text-shadow: 0 0 .1em dimgray;
+#no-page > img {
+  width: clamp(112px, 95vw, 60vh);
+  height: clamp(112px, 95vw, 60vh);
 }
-#home-page a:hover,
-.row:hover {
-  color: var(--primary-color);
-  text-shadow: 0 0 .5em var(--primary-color);
-} */
-
-
-
-input[type="text"] {
-  background: none;
-  color: dimgray;
-  border: none;
-  border-bottom: 3px solid currentColor;
-  outline: none;
+#no-page p {
+  margin: 1rem;
 }
-input[type="text"]:focus {
-  color: var(--primary-color);
-}
-input[type="submit"] {
-  color: black;
-} 
 
 #home-button {
   /* position: fixed; */
@@ -150,14 +168,6 @@ input[type="submit"] {
   /* box-shadow: inset 0 0 .65em currentColor, 0 0 1em currentColor; */
   text-shadow: 0 0 2em silver, 0 0 .5em currentColor;
 }
-
-
-
-.logs-list > a {
-  font-size: 3vh;
-  display: block;
-}
-
 
 
 nav {
@@ -265,20 +275,32 @@ footer > ul {
   gap: 3rem;
 }
 
+#bot-nav > li > a {
+
+}
+
+footer a text {
+  fill: white;
+}
+
 footer a {
-  font-size: 3vh;
+  /* font-size: 3vh; */
   text-shadow: .1em .1em .5em var(--link-text-shadow);
 }
-footer a:hover {
-  color: var(--primary-color);
+footer a:hover  {
+  /* color: var(--primary-color); */
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
 }
 
+footer svg {
+  width: 100%;
+}
+
 footer > ul > li {
-  min-width: fit-content;
+  width: fit-content;
   text-align: center;
   /* padding: 0 1rem; */
-  /* min-width: 20ch; */
+  /* min-width: min(100vw, 40ch); */
 }
 
 /* FILTERED SPELLS */
@@ -585,7 +607,21 @@ td > img {
 }
 
 
-/* LABELS */
+/* INPUTS */
+
+input[type="text"] {
+  background: none;
+  color: dimgray;
+  border: none;
+  border-bottom: 3px solid currentColor;
+  outline: none;
+}
+input[type="text"]:focus {
+  color: var(--primary-color);
+}
+input[type="submit"] {
+  color: black;
+}
 
 label,
 select {
@@ -620,8 +656,6 @@ select:hover {
   box-shadow: inset 0 0 .6em currentColor, 0 .1em 1em currentColor;
 }
 
-
-
 button,
 .swap-button {
   cursor: pointer;
@@ -651,7 +685,6 @@ input[type="checkbox"],
   display: none;
 }
 
-
 input:checked + label + div {
   display: block;
   position: fixed;
@@ -659,9 +692,6 @@ input:checked + label + div {
   top: 20vh;
 }
 
-/* input:checked ~ div ~ div {
-  display: none;
-} */
 
 
 .target-checkbox-label {
@@ -905,36 +935,6 @@ td:hover > table {
 
 
 
-/* UPLOAD */
-.upload {
-  display: grid;
-  justify-content: center;
-}
-
-#upload-error {
-  margin-top: 1rem;
-  color: crimson;
-}
-#upload-status {
-  width: 20vw;
-}
-
-
-/* NO PAGE */
-#no-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-#no-page > img {
-  width: clamp(112px, 95vw, 60vh);
-  height: clamp(112px, 95vw, 60vh);
-}
-#no-page p {
-  margin: 1rem;
-}
-
 
 /* SELECTION */
 :is(div, label, #home-button)::-moz-selection {
@@ -1103,7 +1103,7 @@ td:hover > table {
 } */
 
 
-/* CALENDAR */
+/* LOGS LIST */
 #calendar * {
   font-size: clamp(10pt, calc(100vw / 17), 40pt);
 }
@@ -1142,6 +1142,11 @@ td:hover > table {
 #footer-date {
   min-width: 14ch;
   text-align: center;
+}
+
+.logs-list > a {
+  font-size: 3vh;
+  display: block;
 }
 
 
@@ -1276,8 +1281,6 @@ td:hover > table {
 #auras-table td:not(.player-cell, :empty)::after {
   content: "%";
 }
-
-
 
 
 #class-filter {

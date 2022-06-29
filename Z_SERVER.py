@@ -4,7 +4,7 @@ import os
 import threading
 from datetime import datetime
 
-from flask import (Flask, Request, Response, make_response, render_template,
+from flask import (Flask, Response, make_response, render_template,
                    request, send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -76,6 +76,7 @@ def default_params(report_id, request, shift=0):
     # SEGMENTS_QUERIES = report.SEGMENTS_SEPARATED
     _data = report.SEGMENTS_QUERIES
     segm_links = _data['segm_links']
+    duration = report.get_fight_duration_total_str(parsed["segments"])
     # diff_links = _data['diff_links']
     # boss_links = _data['boss_links']
     return {
@@ -85,6 +86,7 @@ def default_params(report_id, request, shift=0):
         "BOSS_NAME_ID": parsed["boss_name_id"],
         "SEGMENTS_LINKS": segm_links,
         "CLASS_DATA": classes_names,
+        "DURATION": duration,
         "boss_name": parsed["boss_name"],
         "segments": parsed["segments"],
         # "attempts_list": attempts_list,
@@ -169,7 +171,7 @@ def before_request():
 
 @SERVER.route("/")
 def home():
-    return render_template('layout.html')
+    return render_template('home.html')
 
 @SERVER.route("/logs_list")
 def show_logs_list():
@@ -363,12 +365,12 @@ def compare(report_id):
             request_data = request.form
         class_name = request_data.get('class')
         if not class_name:
-            return {}
+            return "{}"
         
         _default = request.default_params
         segments = _default.pop('segments')
         report = load_report(report_id)
-        return Response(report.get_comp_data(segments, class_name), mimetype='arraybuffer')
+        return report.get_comp_data(segments, class_name)
 
 
 @SERVER.route("/reports/<report_id>/valks/")
@@ -400,7 +402,13 @@ def valks(report_id):
 
 @SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
 def custom_search_post(report_id):
-    data = request.get_json(force=True)
+    data = None
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        pass
+    if not data:
+        return ('', 204)
     report = load_report(report_id)
     return report.logs_custom_search(data)
 
@@ -409,8 +417,6 @@ def custom_search(report_id):
     _default = default_params(report_id, request)
     report = load_report(report_id)
     segments = _default.pop('segments')
-
-
 
     return render_template(
         'custom_search.html', **_default,
@@ -463,23 +469,6 @@ def test22():
         class_data=class_data,
         )
 
-@SERVER.route("/testspells/<player_name>/")
-def testspells(player_name):
-    name = '21-07-16--21-10--Nomadra'
-    name = '21-06-05--23-50--Zmed'
-    report = load_report(name)
-    if not player_name:
-        player_guid = '0x060000000040F817' #Nomadra
-    else:
-        player_guid = report.name_to_guid(player_name)
-    s, f, query = parse_first(request)
-    spell_names, hits_data, raw_total, act_total = report.spell_info(player_guid, s, f)
-    spell_colors = report.get_spells_colors(spell_names)
-    return render_template(
-        'dmg_done2.html', spell_colors=spell_colors,
-        spell_names=spell_names, hits_data=hits_data,
-        raw_total=raw_total, act_total=act_total)
-
 @SERVER.route("/test3")
 def test3():
     # new dmg done test
@@ -506,5 +495,5 @@ def test3():
 
 
 if __name__ == "__main__":
-    # serve(SERVER, listen='0.0.0.0:5000')
-    SERVER.run(host="0.0.0.0", port=8000)
+    SERVER.run(host="0.0.0.0", port=5000, debug=True)
+    # SERVER.run(host="0.0.0.0", port=8000)

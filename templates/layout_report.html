@@ -55,7 +55,9 @@
   <ul id="bot-nav">
     <li>
       <a href="/reports/{{ REPORT_ID }}/{{ QUERY }}">
-        {{ DURATION }} | {% if BOSS_NAME_ID %}{{ BOSS_NAME_ID }}{% else %}Custom slice{% endif %}
+        <svg viewBox="0 -0 400 25">
+          <text x="0" y="20"> {{ DURATION }} | {% if BOSS_NAME_ID %}{{ BOSS_NAME_ID }}{% else %}Custom slice{% endif %}</text>
+        </svg>
       </a>
     </li>
     <li>

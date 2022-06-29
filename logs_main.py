@@ -3,12 +3,12 @@ import os
 from collections import defaultdict
 from datetime import datetime
 
-import logs_auras
-import logs_check_difficulty
 import constants
 import dmg_breakdown
 import dmg_heals
 import dmg_useful
+import logs_auras
+import logs_check_difficulty
 import logs_fight_separator
 import logs_get_time
 import logs_player_class
@@ -16,8 +16,8 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valks3
-
-from constants import is_player, running_time, sort_dict_by_value, add_new_numeric_data, add_space
+from constants import (add_new_numeric_data, add_space, is_player,
+                       running_time, sort_dict_by_value)
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
@@ -112,9 +112,6 @@ def convert_duration(t):
     minutes = t // 60 % 60
     hours = t // 3600
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
-
-def combine_durations(durations: list):
-    return convert_duration(sum(durations))
     
 @constants.running_time
 def get_targets(logs_slice: list[str], source=PLAYER, target="0xF1"):
@@ -159,9 +156,6 @@ def slice_apply_shift(p):
 
 
 class THE_LOGS:
-    # GUIDS: dict[str, dict[str, str]]
-    # PLAYERS: dict[str, str]
-    
     def __init__(self, logs_name: str) -> None:
         self.NAME = logs_name
         self.PATH = os.path.join(LOGS_DIR, logs_name)
@@ -221,6 +215,15 @@ class THE_LOGS:
         dur = constants.get_fight_duration(first_line, last_line)
         self.DURATIONS[slice_ID] = dur
         return dur
+
+    def get_fight_duration_total(self, segments):
+        durations = []
+        for s, f in segments:
+            durations.append(self.get_fight_duration(s, f))
+        return sum(durations)
+
+    def get_fight_duration_total_str(self, segments):
+        return convert_duration(self.get_fight_duration_total(segments))
         
     def get_enc_data(self, rewrite=False):
         try:
@@ -887,14 +890,11 @@ class THE_LOGS:
 
     def get_report_page_all(self, segments):
         return_dict = {}
-        durations = []
         damage = defaultdict(int)
         heal = defaultdict(int)
         specs = {}
 
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
-
             _data = self.report_page(s, f)
             add_new_numeric_data(damage, _data["damage"])
             add_new_numeric_data(heal, _data["heal"])
@@ -902,8 +902,7 @@ class THE_LOGS:
             return_dict["FIRST_HIT"] = _data['first_hit']
             return_dict["LAST_HIT"] = _data['last_hit']
 
-        total_duration = sum(durations)
-        total_duration_str = convert_duration(total_duration)
+        total_duration = self.get_fight_duration_total(segments)
 
         damage = self.dry_data(damage, total_duration)
         heal = self.dry_data(heal, total_duration)
@@ -913,7 +912,6 @@ class THE_LOGS:
         return return_dict | {
             "DAMAGE": damage,
             "HEAL": heal,
-            "DURATION": total_duration_str,
             "SPECS": specs,
         }
 
@@ -932,16 +930,12 @@ class THE_LOGS:
 
     def player_info_all_add(self, segments, sGUID, tGUID=None):
         info_data = defaultdict(lambda: defaultdict(int))
-        durations: list[int] = []
-        info_data['durations'] = durations
         targets: set[str] = set()
         info_data['targets'] = targets
         actual = defaultdict(lambda: defaultdict(list))
         info_data['actual'] = actual
 
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
-
             data = self.player_info(s, f, sGUID, tGUID)
 
             for k, v in data.items():
@@ -969,8 +963,6 @@ class THE_LOGS:
                 return spell_id
 
         _data = self.player_info_all_add(segments, sGUID, tGUID)
-
-        slice_duration = combine_durations(_data['durations'])
 
         targets_set = regroup_targets(_data['targets'])
         targets = {self.guid_to_name(gid): gid for gid in sorted(targets_set)}
@@ -1002,7 +994,6 @@ class THE_LOGS:
         }
 
         return {
-            "DURATION": slice_duration,
             "TARGETS": targets,
             "NAMES": spell_names,
             "COLORS": spell_colors,
@@ -1015,7 +1006,7 @@ class THE_LOGS:
     
     def get_comp_data(self, segments, class_filter: str, tGUID=None):
         class_filter = class_filter.lower()
-        response = {}
+        response = []
         for guid, class_name in self.get_classes().items():
             if class_name != class_filter:
                 continue
@@ -1024,9 +1015,10 @@ class THE_LOGS:
                 "name": name,
                 "data": self.player_info_all(segments, guid, tGUID)
             }
-            yield f"{json.dumps(data, separators=(',', ':'))}\n"
-            # response[name] = self.player_info_all(segments, guid, tGUID)
+            # yield f"{json.dumps(data, separators=(',', ':'))}\n"
+            response.append(data)
             # yield json.dumps(response)
+        return json.dumps(response)
 
     
     # POTIONS
@@ -1053,17 +1045,13 @@ class THE_LOGS:
         return data
     
     def potions_all(self, segments):
-        durations = []
         potions = defaultdict(lambda: defaultdict(int))
 
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
-
             _potions = self.potions_info(s, f)
             for spell_id, sources in _potions.items():
                 add_new_numeric_data(potions[spell_id], sources)
         
-        slice_duration = combine_durations(durations)
 
         pots = {x: self.convert_dict_guids_to_name(y) for x,y in potions.items()}
         
@@ -1073,7 +1061,6 @@ class THE_LOGS:
         p_total = self.convert_dict_guids_to_name(p_total)
 
         return {
-            "DURATION": slice_duration,
             "ITEM_INFO": logs_spell_info.ITEM_INFO,
             "ITEMS_TOTAL": p_total,
             "ITEMS": pots,
@@ -1094,13 +1081,10 @@ class THE_LOGS:
         return data
 
     def auras_info_all(self, segments, trim_non_players=True):
-        durations = []
         auras_uptime = defaultdict(lambda: defaultdict(list))
         auras_count = defaultdict(lambda: defaultdict(int))
 
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
-
             _auras = self.auras_info(s, f)
             for guid, aura_data in _auras.items():
                 if trim_non_players and not is_player(guid):
@@ -1108,8 +1092,6 @@ class THE_LOGS:
                 for spell_id, (count, uptime) in aura_data.items():
                     auras_count[guid][spell_id] += count
                     auras_uptime[guid][spell_id].append(uptime)
-
-        slice_duration = combine_durations(durations)
 
         aura_info_set = set()
         auras_uptime_formatted = defaultdict(lambda: defaultdict(float))
@@ -1128,7 +1110,6 @@ class THE_LOGS:
         filtered_aura_info = logs_spell_info.get_filtered_info(aura_info_set)
 
         return {
-            "DURATION": slice_duration,
             "AURA_UPTIME": auras_uptime_with_names,
             "AURA_COUNT": auras_count_with_names,
             "AURA_INFO": filtered_aura_info,
@@ -1154,17 +1135,14 @@ class THE_LOGS:
         if int(spell_id) not in all_spells:
             print('ERROR: spell_id not in spells:', spell_id)
             return {
-                "DURATION": "",
                 "SPELLS": {},
                 "TABS": {},
             }
         
-        durations = []
         spells: dict[str, dict[str, dict[str, int]]] = {}
 
         for s, f in segments:
             _spells = self.spell_count(s, f, spell_id)
-            durations.append(self.get_fight_duration(s, f))
             for flag, _types in _spells.items():
                 _flag = spells.setdefault(flag, {})
                 for _type, names in _types.items():
@@ -1172,8 +1150,6 @@ class THE_LOGS:
                     for name, value in names.items():
                         _t[name] = _t.get(name, 0) + value
         
-        slice_duration = combine_durations(durations)
-
         spells = {x: spells[x] for x in constants.FLAG_ORDER if x in spells}
 
         for flag_info in spells.values():
@@ -1188,7 +1164,6 @@ class THE_LOGS:
         spell_name = f"{spell_id} {spell_name}"
 
         return {
-            "DURATION": slice_duration,
             "SPELLS": spells,
             "TABS": tabs,
             "SPELL_NAME": spell_name,
@@ -1229,20 +1204,15 @@ class THE_LOGS:
 
     @running_time
     def useful_damage_all(self, segments, boss_name):
-        durations = []
         all_data = defaultdict(lambda: defaultdict(int))
 
         boss_guid_id = self.name_to_guid(boss_name)
         targets_useful, targets_all = dmg_useful.get_all_targets(boss_name, boss_guid_id)
 
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
-
             data = self.useful_damage(s, f, targets_all, boss_name)
             for guid_id, _dmg_new in data.items():
                 add_new_numeric_data(all_data[guid_id], _dmg_new)
-
-        slice_duration = combine_durations(durations)
 
         guids = self.get_all_guids()
         all_data = dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
@@ -1265,7 +1235,6 @@ class THE_LOGS:
         table_heads.extend([targets_all[guid_id] for guid_id in _formatted_dmg if guid_id in targets_all])
 
         return {
-            "DURATION": slice_duration,
             "HEADS": table_heads,
             "TOTAL": targets_useful_dmg,
             "FORMATTED": _formatted_dmg,
@@ -1278,9 +1247,7 @@ class THE_LOGS:
         data = a.main(filter_guid)
         spell_colors = self.get_spells_colors(data['spells'])
         all_spells = self.get_spells()
-        segment_duration = self.get_fight_duration(s, f)
         return {
-            'DURATION': convert_duration(segment_duration),
             'BUFFS': data['buffs'],
             'DEBUFFS': data['debuffs'],
             'COLORS': spell_colors,
