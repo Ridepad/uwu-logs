@@ -21,10 +21,41 @@ const SPELLS = {
     "Whirlwind",
     "Deep Wounds",
     "Bloodthirst",
-    "Melee",
     "Heroic Strike",
     "Whirlwind",
     "Slam",
+  ],
+  "Priest": [
+    "Mind Flay",
+    "Mind Sear",
+    "Vampiric Touch",
+    "Devouring Plague",
+    "Shadow Word: Pain",
+    "Improved Devouring Plague",
+    "Mind Blast",
+    "Shadow Word: Death",
+  ],
+  "Hunter": [
+    "Auto Shot",
+    "Steady Shot",
+    "Piercing Shots",
+    "Kill Shot",
+    "Chimera Shot",
+    "Aimed Shot",
+    "Chimera Shot - Serpent",
+    "Serpent Sting",
+  ],
+  "Paladin": [
+    "Seal of Corruption",
+    "Divine Storm",
+    "Judgement of Corruption",
+    "Righteous Vengeance",
+    "Seal of Command",
+    "Consecration",
+    "Crusader Strike",
+    "Blood Corruption",
+    "Exorcism",
+    "Seal of Command",
   ]
 }
 const CLASSES_TO_LOW = {
@@ -102,23 +133,6 @@ function addTableRow(data) {
   tbody.append(row);
 }
 
-// const xhttp_compare = new XMLHttpRequest();
-// xhttp_compare.onreadystatechange = () => {
-//   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
-//   const resp_split = xhttp_compare.response.split("\n");
-
-//   const a = CACHE_COMP[selectClass.value]
-//   for (let i = 0; i<resp_split.length;i++) {
-//     try {
-//       const split_json = JSON.parse(resp_split[i]);
-//       addTableRow(split_json);
-//       a.push(split_json);
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   }
-// }
-
 const xhttp_compare = new XMLHttpRequest();
 xhttp_compare.onreadystatechange = () => {
   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
@@ -165,6 +179,7 @@ function onSelectClass() {
   table.style.display = "table";
   selectSpell.innerHTML = "";
   spells.forEach(spellsName => selectSpell.appendChild(newOption(spellsName)));
+  selectSpell.appendChild(newOption("Melee"));
 
   if (CACHE_COMP[selectClass.value]) {
     onSelectSpell();

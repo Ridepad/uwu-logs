@@ -32,7 +32,10 @@ def ujiowfuiwefhuiwe(logs: list[str]) -> list[int]:
         return ujiowfuiwefhuiwe_back_up(logs)
     last_minutes, last_seconds = int(l0[i-5:i-3]), int(l0[i-2:i])
     for n, line in enumerate(logs):
-        minutes, seconds = int(line[i-5:i-3]), int(line[i-2:i])
+        try:
+            minutes, seconds = int(line[i-5:i-3]), int(line[i-2:i])
+        except ValueError:
+            continue
         sec_diff = seconds - last_seconds
         min_diff = minutes - last_minutes
 
@@ -63,9 +66,10 @@ def __redo(name):
     report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
     data = ujiowfuiwefhuiwe(logs)
+    # print(data)
     path = report.relative_path('TIMESTAMP_DATA')
     constants.json_write(path, data, indent=None)
 
 if __name__ == '__main__':
-    __redo("22-04-14--20-27--Inia")
+    __redo("21-05-20--23-39--Eleanorr--Lordaeron")
     # constants.redo_data(__redo)

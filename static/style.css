@@ -25,7 +25,7 @@
   margin: 0;
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   * {
     font-size: 2vh;
   }
@@ -43,40 +43,40 @@ html::-webkit-scrollbar {
 }
 
 /* class colors */
-.death-knight {color: crimson;}
-.mage {color:lightskyblue;}
-.shaman {color:rgb(0, 80, 255);}
-.rogue {color:gold;}
-.hunter {color:yellowgreen;}
-.paladin {color:violet;}
-.priest {color:whitesmoke;}
-.warrior {color:sienna;}
-.druid {color:darkorange;}
-.warlock {color:slateblue;}
+.death-knight {color:crimson}
+.mage {color:lightskyblue}
+.shaman {color:hsl(221, 100%, 50%)}
+.rogue {color:gold}
+.hunter {color:yellowgreen}
+.paladin {color:violet}
+.priest {color:whitesmoke}
+.warrior {color:sienna}
+.druid {color:darkorange}
+.warlock {color:slateblue}
 /* spell colors */
-.holy {color:goldenrod;}
-.fire {color:orangered;}
-.nature {color:green;}
-.frost {color:skyblue;}
-.shadow {color:darkslateblue;}
-.arcane {color:mediumpurple;}
-.froststrike {color:lightgray;}
-.frostfire {color:indianred;}
-.shadowstrike {color:rebeccapurple;} /* shadow + physical */
-.shadowstorm {color:teal;} /*(plague) shadow + nature */
-.shadowfrost {color:slateblue;} /* shadow + frost */
-.divine {color:violet;} /* arcane + holy */
-.spellshadow {color:purple;} /* arcane + shadow */
-.firestorm {color:hsl(86, 100%, 40%);}
-.shadowlight {color:hsl(43, 75%, 30%);}
-.chaos {color:hsl(263, 100%, 30%);}
+.holy {color:goldenrod}
+.fire {color:orangered}
+.nature {color:green}
+.frost {color:skyblue}
+.shadow {color:darkslateblue}
+.arcane {color:mediumpurple}
+.froststrike {color:lightgray}
+.frostfire {color:indianred}
+.shadowstrike {color:rebeccapurple}
+.shadowstorm {color:teal}
+.shadowfrost {color:slateblue}
+.divine {color:violet}
+.spellshadow {color:purple}
+.firestorm {color:hsl(85, 100%, 40%)}
+.shadowlight {color:hsl(40, 75%, 30%)}
+.chaos {color:hsl(263, 100%, 30%)}
+.holyfire {color:hsl(50, 100%, 80%)}
+.froststorm {color:hsl(200, 100%, 85%)}
 
 .flamestrike,
-.holyfire,
 .stormstrike,
 .holystorm,
 .holyfrost,
-.froststorm,
 .shadowflame,
 .spellstrike,
 .spellfire,
@@ -192,7 +192,7 @@ nav {
   padding: 0 5vw;
   position: absolute;
 }
-#open-top:checked ~ #top-nav {
+:is(#open-top:checked, #open-top:hover) ~ #top-nav {
   display: grid;
 }
 
@@ -236,7 +236,7 @@ nav a:hover {
   font-size: 5vh;
   text-shadow: 0 0 .1em dimgray;
 }
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   nav,
   #top-nav {
     display: inline-block;
@@ -266,17 +266,17 @@ ul {
 footer > ul {
   /* max-height: var(--footer-height); */
   height: 100%;
-  /* padding: 0; */
-  /* margin: 0; */
+  padding: 0;
+  margin: 0;
   /* padding-top: .5em; */
   display: flex;
   align-items: center;
   flex-direction: row;
-  gap: 3rem;
+  gap: 1rem;
 }
 
 #bot-nav > li > a {
-
+  font-size: 150%;
 }
 
 footer a text {
@@ -288,13 +288,18 @@ footer a {
   text-shadow: .1em .1em .5em var(--link-text-shadow);
 }
 footer a:hover  {
-  /* color: var(--primary-color); */
+  color: var(--primary-color);
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
 }
 
-footer svg {
+/* footer svg {
   width: 100%;
+} */
+
+footer #report-slice {
+  min-width: 40ch;
 }
+
 
 footer > ul > li {
   width: fit-content;
@@ -369,7 +374,6 @@ footer > ul > li {
   width: 100%;
   height: 5em;
   background-color: rgba(0, 0, 0, 0);
-
 }
 #fights-container:hover::after,
 #fights-container:hover > ul,
@@ -379,20 +383,23 @@ footer > ul > li {
 
 #fights-container > h1 {
   z-index: 2;
+  min-width: calc(100vw - 2em);
   font-size: 150%;
-  padding: .1em;
-  padding-left: 1ch;
+  padding-inline: .5em;
   border: .1em solid var(--primary-color);
   border-radius: .3em;
-  background-color: var(--background)
+  background-color: var(--background);
+}
+
+@media (min-width: 1000px) {
+  #fights-container > h1 {
+    min-width: unset;
+  }
 }
 
 #fights-container > h1::after {
   content: '▼';
-  /* padding-left: 1em;
-  padding-right: 1em; */
-  padding-left: 2ch;
-  padding-right: 2ch;
+  padding-inline: 2ch;
 }
 
 #fights-container > h1 > a {
@@ -410,7 +417,7 @@ footer > ul > li {
   left: 75%;
   top: 0;
 }
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   #fights-container .segments {
     left: 100%;
   }
@@ -468,7 +475,7 @@ main {
 #report-main-tables > section {
   padding-top: 2rem;
 }
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   #report-main-tables {
     grid-auto-flow: column;
   }
@@ -842,7 +849,7 @@ input:checked + label + div {
   left: 0;
   z-index: 1;
 }
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   #dmg-done #dmg-done-main {
     margin: unset;
   }
@@ -1218,7 +1225,7 @@ td:hover > table {
   
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   #ladder #instance,
   #ladder #boss {
     min-width: 25ch;

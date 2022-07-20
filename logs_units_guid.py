@@ -1,12 +1,8 @@
 from collections import defaultdict
-import os
-import logging
 
 import logs_main
-import constants
 import logs_udk_bullshit2
-from logs_player_class import SPELL_BOOK
-from constants import CLASS_FROM_HTML, running_time
+from constants import CLASS_FROM_HTML, LOGGER_LOGS, SPELL_BOOK, running_time, json_write, redo_data
 
 CLASSES = list(CLASS_FROM_HTML)
 _prefix = [
@@ -16,10 +12,14 @@ _suffix = [
     'basher', 'breaker', 'catcher', 'chewer', 'chomp', 'cruncher', 'drinker', 'feeder', 'flayer', 'gnaw', 'gobbler', 'grinder',
     'keeper', 'leaper', 'masher', 'muncher', 'ravager', 'rawler', 'ripper', 'rumbler', 'slicer', 'stalker', 'stealer', 'thief']
 GHOUL_NAMES = {f"{x}{y}" for x in _prefix for y in _suffix}
-BASE_DK_PETS = {'Army of the Dead Ghoul', 'Risen Ghoul', 'Risen Ally'}
+TEMP_DK_PETS = {
+    "005E8F", # Army of the Dead Ghoul
+    "00660D", # Risen Ghoul
+    "007616", # Risen Ally
+}
 
 NIL_GUID = '0x0000000000000000'
-SKIP = {'PARTY_KILL', 'UNIT_DIED'}
+FLAG_SKIP = {'PARTY_KILL', 'UNIT_DIED'}
 NAMES_SKIP = {'nil', 'Unknown'}
 PET_FILTER_SPELLS = {
     '34952', # Go for the Throat
@@ -81,22 +81,7 @@ def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, 
         for pet_guid in pet_guids:
             everything[pet_guid] = _pet
 
-def finishplayers(p, players_names, everything):
-    p.pop(NIL_GUID, None)
-
-    players: dict[str, str] = {}
-    for guid, v in p.items():
-        name = players_names[guid]
-        everything[guid] = {'name': name}
-        print(f"{name:<20}", v)
-        if v > 200: #  or guid not in everything:
-            players[guid] = name
-        # else:
-            # print(name, v)
-    
-    return dict(sorted(players.items()))
-
-@constants.running_time
+@running_time
 def logs_parser(logs: list[str]): # sourcery no-metrics
     everything: dict[str, dict[str, str]] = {}
     pets_perma: dict[str, dict[str, str]] = {}
@@ -111,13 +96,16 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     players_classes = {}
     players = {}
     players_skip = set()
+    _spells = set()
+    # _players_spells = {}
 
     for line in logs:
         _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 8)
 
-        if flag in SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
+        if flag in FLAG_SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
             continue
-
+        # if sGUID == "0x06000000004F9A9C":
+        #     print(line)
         if sGUID not in everything:
             everything[sGUID] = {'name': sName}
         elif tGUID not in everything:
@@ -134,18 +122,23 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
             else:
                 # print(other)
                 # spellname = other[1].split(',', 1)[0]
-                if other[1] in SPELL_BOOK:
+                if other[0] in SPELL_BOOK:
+                    # if sGUID == "0x060000000004B154":
+                    #     print(sName, other)
                     players[sGUID] = sName
-                    players_classes[sGUID] = CLASSES[SPELL_BOOK[other[1]]]
+                    spell_info = SPELL_BOOK[other[0]]
+                    players_classes[sGUID] = CLASSES[spell_info[0]]
                     players_skip.add(sGUID)
-        # if (sName in GHOUL_NAMES and is_perma_pet(sGUID)
-        # or spell_id == '47468' and sName not in BASE_DK_PETS):
+                if sGUID == "0x06000000004F8377":
+                    _spells.add((other[0], other[1]))
+                    # _players_spells[other[0]] = other[1]
 
-        if spell_id == '47468' and sName not in BASE_DK_PETS:
-            if tGUID[:4] == "0xF1":
+        if spell_id == '47468':
+            if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
+            # if sName not in BASE_DK_PETS and tGUID[:4] == "0xF1":
                 unholy_DK_pets[sGUID].add(tGUID)
                 if sName not in GHOUL_NAMES:
-                    logging.debug(f'sName not in GHOUL_NAMES {sName}')
+                    LOGGER_LOGS.debug(f'sName not in GHOUL_NAMES {sName}')
 
         elif spell_id == '43771':
             if sGUID != tGUID and tGUID not in pets_perma:
@@ -180,7 +173,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         everything[guid] = {'name': name}
 
     add_missing_pets(everything, pets_perma, pets_raw)
-
+    print(_spells)
     return {
         "everything": everything,
         "players": dict(sorted(players.items())),
@@ -211,7 +204,7 @@ def guids_main(logs, enc_data):
     convert_nested_masters(everything)
     return parsed
 
-def __redo(name):
+def __redo(name, rewrite=True):
     print(name)
     report = logs_main.THE_LOGS(name)
     logs = report.get_logs()
@@ -223,21 +216,30 @@ def __redo(name):
     _guids = parsed['everything']
     _players = parsed['players']
     _classes = parsed['classes']
+    # print(_players)
+    # print(_guids)
     # print(guids_data_file_name)
-    constants.json_write(guids_data_file_name, _guids)
-    constants.json_write(players_data_file_name, _players)
-    constants.json_write(classes_data_file_name, _classes)
+    if rewrite:
+        json_write(guids_data_file_name, _guids)
+        json_write(players_data_file_name, _players)
+        json_write(classes_data_file_name, _classes)
 
 def __redo_wrapped(name):
     try:
         __redo(name)
     except Exception:
-        logging.exception(f'units_guid __redo {name}')
+        LOGGER_LOGS.exception(f'units_guid __redo {name}')
 
 if __name__ == "__main__":
+    a = [
+        "21-06-01--20-05--Snowinfury--Icecrown",
+        "22-03-14--18-53--Sandragosa--Icecrown",
+        "22-06-26--19-56--Deydraenna--Icecrown",
+        "22-06-29--15-43--Deydraenna--Icecrown",
+    ]
     # start = "22-05-21--21-30--Piscolita"
-    constants.redo_data(__redo_wrapped)
-    # __redo_wrapped('21-08-16--18-19--Napnap')
-    # __redo_wrapped('22-06-19--04-15--Lismee')
-    # __redo('21-04-30--21-02--Nomadra')
-    # __redo('22-06-17--20-57--Nomadra')
+    # redo_data(__redo_wrapped)
+    # for x in a:
+        # __redo(x)
+    __redo("22-06-02--18-03--Gotfire--Lordaeron", 0)
+    # __redo('21-06-17--08-44--Dethia--Lordaeron', rewrite=False)

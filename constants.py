@@ -1,13 +1,12 @@
 import json
-import os
 import logging
+import os
 import pickle
 import re
 import zlib
 from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
-import atexit
 
 
 def create_folder(path):
@@ -23,14 +22,12 @@ def new_folder_path(root, name):
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
 LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
-LOGS_RAW = new_folder_path(PATH_DIR, "LogsRaw")
+LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
 UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
-PARSED_DIR = new_folder_path(UPLOADS_DIR, "__parsed__")
 
-LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
-LOGGING_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s():%(lineno)s] %(message)s"
-
-def setup_logger(logger_name, log_file, level=logging.DEBUG):
+LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "{PATH_DIR}\%(filename)s:%(lineno)s" | %(message)s'
+LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'
+def setup_logger(logger_name, log_file):
     logger = logging.getLogger(logger_name)
     formatter = logging.Formatter(LOGGING_FORMAT)
     fileHandler = logging.FileHandler(log_file)
@@ -38,30 +35,29 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
 
-    logger.setLevel(level)
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(fileHandler)
     logger.addHandler(streamHandler)
     return logger
 
-LOGFILE = os.path.join(PATH_DIR,'_log.log')
-logging.basicConfig(
-    filename=LOGFILE,
-    format=LOGGING_FORMAT,
-    datefmt="%d/%m/%Y %H:%M:%S",
-    level=logging.DEBUG,
-)
+LOGGER_MAIN_FILE = os.path.join(PATH_DIR,'_main.log')
+LOGGER_MAIN = setup_logger('logger_main', LOGGER_MAIN_FILE)
+LOGGER_LOGS_FILE = os.path.join(PATH_DIR,'_logs.log')
+LOGGER_LOGS = setup_logger('logger_logs', LOGGER_LOGS_FILE)
+UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
+UPLOAD_LOGGER = setup_logger('logger_upload', UPLOAD_LOGGER_FILE)
 
+T_DELTA_1MIN = timedelta(minutes=1)
 T_DELTA_2MIN = timedelta(minutes=2)
 T_DELTA_5MIN = timedelta(minutes=5)
 T_DELTA_10MIN = timedelta(minutes=10)
 T_DELTA_15MIN = timedelta(minutes=15)
 T_DELTA_20MIN = timedelta(minutes=20)
-T_DELTA = timedelta(seconds=100)
-T_DELTA_SHORT = timedelta(seconds=15)
-T_DELTA_SEP = timedelta(minutes=20)
-T_DELTA_ONE_SECOND = timedelta(seconds=1)
+T_DELTA_30MIN = timedelta(minutes=30)
+T_DELTA_15SEC = timedelta(seconds=15)
 
 LOGS_CUT_NAME = "LOGS_CUT"
+UPLOAD_STATUS_INFO = {}
 
 FLAG_ORDER = [
     "SPELL_DISPEL", "SPELL_CAST_SUCCESS", "SPELL_EXTRA_ATTACKS",  "SPELL_ENERGIZE",
@@ -152,7 +148,6 @@ BOSSES_GUIDS = {
     "009452": "Prince Valanar",
     "009443": "Blood-Queen Lana'thel",
     "008FB5": "Valithria Dreamwalker",
-    # "0093EC": "Risen Archmage",
     "008FF5": "Sindragosa",
     "008EF5": "The Lich King",
     
@@ -194,7 +189,6 @@ BOSSES_GUIDS = {
     "003E38": "Thaddius",
     "003E75": "Sapphiron",
     "003E76": "Kel'Thuzad",
-
     
     "008159": "Flame Leviathan",
     "00808A": "Freya",
@@ -279,7 +273,6 @@ MUTLIBOSSES = {
     "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
     "Mimiron": ["008246", "008208", "008373", "008386"],
     "Assembly of Iron": ["008063", "00809F", "008059"],
-
 }
 
 SPELLS_SCHOOLS = {
@@ -293,14 +286,14 @@ SPELLS_SCHOOLS = {
     64: "arcane", ##FF80FF   255, 128, 255
     3: "holystrike", #Holy + Physical
     5: "flamestrike", #-- Fire + Physical
-    # 6: "holyfire", #-- Fire + Holy (Radiant)
+    6: "holyfire", #-- Fire + Holy (Radiant)
     # 9: "stormstrike", #-- Nature + Physical
     # 10: "holystorm", #-- Nature + Holy
     12: "firestorm", #Nature + Fire
     17: "froststrike", #Frost + Physical
     # 18: "holyfrost", #-- Frost + Holy
     20: "frostfire", #Frost + Fire
-    # 24: "froststorm", #-- Frost + Nature
+    24: "froststorm", #-- Frost + Nature
     33: "shadowstrike", #Shadow + Physical
     34: "shadowlight", #Shadow + Holy
     # 36: "shadowflame", #-- Shadow + Fire
@@ -319,11 +312,9 @@ SPELLS_SCHOOLS = {
 }
 
 UNUSUAL_SPELLS = {
-    6: "holyfire", #-- Fire + Holy (Radiant)
     9: "stormstrike", #-- Nature + Physical
     10: "holystorm", #-- Nature + Holy
     18: "holyfrost", #-- Frost + Holy
-    24: "froststorm", #-- Frost + Nature
     36: "shadowflame", #-- Shadow + Fire
     65: "spellstrike", #-- Arcane + Physical
     72: "spellstorm", #-- Arcane + Nature
@@ -333,281 +324,324 @@ UNUSUAL_SPELLS = {
 }
 
 ENV_DAMAGE = {
-    'FALLING': "90001",
-    'LAVA': "90002",
-    'DROWNING': "90003",
-    'FIRE': "90004",
-    'FATIGUE': "90005",
-    'SLIME': "90006",
+    "FALLING":  "90001",
+    "LAVA":     "90002",
+    "DROWNING": "90003",
+    "FIRE":     "90004",
+    "FATIGUE":  "90005",
+    "SLIME":    "90006",
 }
 
-def running_time(f):
-    def running_time_inner(*args, **kwargs):
-        st = perf_counter()
-        q = f(*args, **kwargs)
-        fin = int((perf_counter() - st) * 1000)
-        print(f'[PERFOMANCE] Done in {fin:>6,} ms with {f.__module__}.{f.__name__}')
-        return q
-    return running_time_inner
+SPELL_BOOK = {
+    "49222": [0, "Bone Shield"],
+    "49560": [0, "Death Grip"],
+    "51735": [0, "Ebon Plague"],
+    "55095": [0, "Frost Fever"],
+    "57623": [0, "Horn of Winter"],
+    "49016": [0, "Hysteria"],
+    "49909": [0, "Icy Touch"],
+    "51124": [0, "Killing Machine"],
+    "66992": [0, "Plague Strike"],
+    "50526": [0, "Wandering Plague"],
+    "48468": [1, "Insect Swarm"],
+    "24932": [1, "Leader of the Pack"],
+    "48566": [1, "Mangle (Cat)"],
+    "48422": [1, "Master Shapeshifter"],
+    "48463": [1, "Moonfire"],
+    "48574": [1, "Rake"],
+    "48443": [1, "Regrowth"],
+    "70691": [1, "Rejuvenation"],
+    "52610": [1, "Savage Roar"],
+    "48572": [1, "Shred"],
+    "48465": [1, "Starfire"],
+    "48562": [1, "Swipe (Bear)"],
+    "62078": [1, "Swipe (Cat)"],
+    "48438": [1, "Wild Growth"],
+    "48461": [1, "Wrath"],
+    "48466": [1, "Hurricane"],
+    "33831": [1, "Force of Nature"],
+    "48391": [1, "Owlkin Frenzy"],
+    "22812": [1, "Barkskin"],
+    "49050": [2, "Aimed Shot"],
+    "53209": [2, "Chimera Shot"],
+    "35079": [2, "Misdirection"],
+    "49001": [2, "Serpent Sting"],
+    "58433": [2, "Volley"],
+    "36032": [3, "Arcane Blast"],
+    "42921": [3, "Arcane Explosion"],
+    "12042": [3, "Arcane Power"],
+    "42938": [3, "Blizzard"],
+    "42833": [3, "Fireball"],
+    "12472": [3, "Icy Veins"],
+    "12654": [3, "Ignite"],
+    "44401": [3, "Missile Barrage"],
+    "48827": [4, "Avenger\'s Shield"],
+    "53654": [4, "Beacon of Light"],
+    "48819": [4, "Consecration"],
+    "642": [4, "Divine Shield"],
+    "66922": [4, "Flash of Light"],
+    "25898": [4, "Greater Blessing of Kings"],
+    "25899": [4, "Greater Blessing of Sanctuary"],
+    "48938": [4, "Greater Blessing of Wisdom"],
+    "10308": [4, "Hammer of Justice"],
+    "53595": [4, "Hammer of the Righteous"],
+    "67485": [4, "Hand of Reckoning"],
+    "48823": [4, "Holy Shock"],
+    "20272": [4, "Illumination"],
+    "58597": [4, "Sacred Shield"],
+    "26017": [4, "Vindication"],
+    "21084": [4, "Seal of Righteousness"],
+    "25780": [4, "Righteous Fury"],
+    "31884": [4, "Avenging Wrath"],
+    "54172": [4, "Divine Storm"],
+    "59578": [4, "The Art of War"],
+    "35395": [4, "Crusader Strike"],
+    "48089": [5, "Circle of Healing"],
+    "47753": [5, "Divine Aegis"],
+    "58381": [5, "Mind Flay"],
+    "53000": [5, "Penance"],
+    "25217": [5, "Power Word: Shield"],
+    "25392": [5, "Prayer of Fortitude"],
+    "48170": [5, "Prayer of Shadow Protection"],
+    "32999": [5, "Prayer of Spirit"],
+    "48068": [5, "Renew"],
+    "48125": [5, "Shadow Word: Pain"],
+    "15473": [5, "Shadowform"],
+    "64085": [5, "Vampiric Touch"],
+    "6788": [5, "Weakened Soul"],
+    "22482": [6, "Blade Flurry"],
+    "35548": [6, "Combat Potency"],
+    "57993": [6, "Envenom"],
+    "48668": [6, "Eviscerate"],
+    "52874": [6, "Fan of Knives"],
+    "48659": [6, "Feint"],
+    "51637": [6, "Focused Attacks"],
+    "8643": [6, "Kidney Shot"],
+    "57842": [6, "Killing Spree"],
+    "48638": [6, "Sinister Strike"],
+    "1784": [6, "Stealth"],
+    "57933": [6, "Tricks of the Trade"],
+    "52759": [7, "Ancestral Awakening"],
+    "51886": [7, "Cleanse Spirit"],
+    "16246": [7, "Clearcasting"],
+    "379": [7, "Earth Shield"],
+    "16166": [7, "Elemental Mastery"],
+    "51533": [7, "Feral Spirit"],
+    "60043": [7, "Lava Burst"],
+    "49238": [7, "Lightning Bolt"],
+    "49279": [7, "Lightning Shield"],
+    "16190": [7, "Mana Tide Totem"],
+    "70806": [7, "Rapid Currents"],
+    "61301": [7, "Riptide"],
+    "32176": [7, "Stormstrike"],
+    "53390": [7, "Tidal Waves"],
+    "57961": [7, "Water Shield"],
+    "25504": [7, "Windfury Attack"],
+    "47813": [8, "Corruption"],
+    "47893": [8, "Fel Armor"],
+    "63321": [8, "Life Tap"],
+    "47241": [8, "Metamorphosis"],
+    "686": [8, "Shadow Bolt"],
+    "25228": [8, "Soul Link"],
+    "47843": [8, "Unstable Affliction"],
+    "2457": [9, "Battle Stance"],
+    "2458": [9, "Berserker Stance"],
+    "29131": [9, "Bloodrage"],
+    "23880": [9, "Bloodthirst"],
+    "47440": [9, "Commanding Shout"],
+    "59653": [9, "Damage Shield"],
+    "12292": [9, "Death Wish"],
+    "12721": [9, "Deep Wounds"],
+    "71": [9, "Defensive Stance"],
+    "47450": [9, "Heroic Strike"],
+    "44949": [9, "Whirlwind"]
+}
 
-def sort_dict_by_value(d: dict):
-    return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
+SPELL_BOOK_SPEC = {
+    "death-knight": {
+        "49016": 1, # Hysteria
+        "55233": 1, # Vampiric Blood
+        "49005": 1, # Mark of Blood
+        "48982": 1, # Rune Tap
+        "50449": 1, # Bloody Vengeance
+        "70654": 1, # Blood Armor
 
-
-NIL_GUID = '0x0000000000000000'
-def is_player(guid: str):
-    return guid.startswith('0x0') and guid != NIL_GUID
-
-def add_space(v):
-    return f"{v:,}".replace(',', ' ')
-
-
-def fix_extention(ext: str):
-    if ext[0] == '.':
-        return ext
-    return f".{ext}"
-
-def add_extention(path: str, ext=None):
-    if ext is not None:
-        ext = fix_extention(ext)
-        if not path.endswith(ext):
-            path = path.split('.')[0]
-            return f"{path}{ext}"
-    return path
-
-def save_backup(path):
-    if os.path.isfile(path):
-        old = f"{path}.old"
-        if os.path.isfile(old):
-            os.remove(old)
-        os.rename(path, old)
-
-def json_read(path: str):
-    path = add_extention(path, '.json')
-    try:
-        with open(path) as file:
-            j: dict = json.load(file)
-            return j
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return {}
-
-def json_read_no_exception(path: str):
-    path = add_extention(path, '.json')
-    with open(path) as file:
-        return json.load(file)
-
-def json_write(path: str, data, indent=2):
-    path = add_extention(path, '.json')
-    save_backup(path)
-    with open(path, 'w') as file:
-        json.dump(data, file, default=sorted, indent=indent)
-
-
-def bytes_read(path: str, ext=None):
-    path = add_extention(path, ext)
-    try:
-        with open(path, 'rb') as file:
-            return file.read()
-    except FileNotFoundError:
-        return b''
-
-@running_time
-def bytes_write(path: str, data: bytes, ext=None):
-    path = add_extention(path, ext)
-    with open(path, 'wb') as file:
-        file.write(data)
-
-@running_time
-def file_read(path: str, ext=None):
-    path = add_extention(path, ext)
-    # try:
-    #     raw = bytes_read(path, ext)
-    #     return raw.decode()
-    # except Exception as e:
-    #     print(f"[file_read] {e}")
-
-    try:
-        with open(path, 'r') as f:
-            return f.read()
-    except FileNotFoundError:
-        return ""
-
-@running_time
-def file_write(path: str, data: str, ext=None):
-    path = add_extention(path, ext)
-    with open(path, 'w') as f:
-        f.write(data)
-
-
-def zlib_decompress(data: bytes):
-    return zlib.decompress(data)
-
-@running_time
-def pickle_from_bytes(data: bytes):
-    return pickle.loads(data)
-
-@running_time
-def zlib_pickle_read(path: str):
-    path = add_extention(path, '.pickle.zlib')
-    data_raw = bytes_read(path)
-    data = zlib_decompress(data_raw)
-    return pickle_from_bytes(data)
-
-@running_time
-def zlib_text_read(path: str):
-    path = add_extention(path, '.zlib')
-    data_raw = bytes_read(path)
-    data = zlib_decompress(data_raw)
-    return data.decode()
-
-
-@running_time
-def pickle_dumps(data):
-    return pickle.dumps(data)
-
-@running_time
-def zlib_compress(__data, level=7):
-    return zlib.compress(__data, level=level)
-
-def zlib_pickle_make(data_raw):
-    data_pickle = pickle_dumps(data_raw)
-    comresesed = zlib_compress(data_pickle)
-    return comresesed
-
-@running_time
-def zlib_pickle_write(data_raw, path: str):
-    path = add_extention(path, '.pickle.zlib')
-    zlib_pickle = zlib_pickle_make(data_raw)
-    bytes_write(path, zlib_pickle)
-
-def zlib_text_make(data_raw: str):
-    data_enc = data_raw.encode()
-    comresesed = zlib_compress(data_enc)
-    return comresesed
-
-# @running_time
-# def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
-#     path = add_extention(path, '.zlib')
-#     zlib_text = zlib_text_make(data_raw)
-#     if not check_exists:
-#         bytes_write(path, zlib_text)
-#         return
-#     old_data = bytes_read(path)
-#     exists = old_data == zlib_text
-#     if not exists:
-#         bytes_write(path, zlib_text)
-#     return exists
-
-def zlib_text_write(data_raw: str, path: str):
-    path = add_extention(path, '.zlib')
-    zlib_text = zlib_text_make(data_raw)
-    bytes_write(path, zlib_text)
-
-
-@running_time
-def logs_splitlines(logs: str):
-    return logs.splitlines()
-
-def pickle_read(path: str):
-    path = add_extention(path, '.pickle')
-    try:
-        with open(path, 'rb') as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        print('[ERROR] FILE DOESNT EXISTS:', path)
-
-def pickle_write(path: str, data):
-    path = add_extention(path, '.pickle')
-    with open(path, 'wb') as f:
-        pickle.dump(data, f)
-
-
-def get_now():
-    return datetime.now()
-
-# Z = re.compile('(\d{1,2})/(\d{1,2}) (\d\d):(\d\d):(\d\d).(\d\d\d)')
-def to_dt_closure(year=None):
-    Z = re.compile('(\d+)')
-    current = get_now()
-    day = current.day
-    month = current.month
-    find_all = Z.findall
-    if year is None:
-        year = current.year
-        def inner(s: str):
-            q = list(map(int, find_all(s[:18])))
-            q[-1] *= 1000
-            if q[0] > month or q[0] == month and q[1] > day:
-                return datetime(year-1, *q)
-            return datetime(year, *q)
-    else:
-        def inner(s: str):
-            q = list(map(int, find_all(s[:18])))
-            q[-1] *= 1000
-            return datetime(year, *q)
+        "55268": 2, # Frost Strike
+        "51271": 2, # Unbreakable Armor
+        "51411": 2, # Howling Blast
+        "50401": 2, # Razor Frost
+        "51714": 2, # Frost Vulnerability
         
-    return inner
+        "49206": 3, # Summon Gargoyle
+        "55271": 3, # Scourge Strike
+        "50526": 3, # Wandering Plague
+        "51735": 3, # Ebon Plague
+        "66803": 3, # Desolation
+    },
+    "druid": {
+        "60433": 1, # Earth and Moon
+        "48468": 1, # Insect Swarm
+        "48518": 1, # Eclipse (Lunar)
+        "48517": 1, # Eclipse (Solar)
+        "33831": 1, # Force of Nature
+        "71023": 1, # Languish
+        "70721": 1, # Omen of Doom
+        "53195": 1, # Starfall
+        "53227": 1, # Typhoon
 
-to_dt = to_dt_closure()
+        "50213": 2, # Tiger's Fury
+        "62078": 2, # Swipe (Cat)
+        "48572": 2, # Shred
+        "52610": 2, # Savage Roar
+        "62606": 2, # Savage Defense
+        "49800": 2, # Rip
+        "48574": 2, # Rake
+        "48566": 2, # Mangle (Cat)
+        "51178": 2, # King of the Jungle
+        "17099": 2, # Furor
+        "48577": 2, # Ferocious Bite
+        "49376": 2, # Feral Charge - Cat
+        "16857": 2, # Faerie Fire (Feral)
+        "47468": 2, # Claw
 
-def get_time_delta(s: str, f: str, _to_dt=to_dt):
-    return _to_dt(f) - _to_dt(s)
+        "53251": 3, # Wild Growth
+        "48542": 3, # Revitalize
+        "34123": 3, # Tree of Life
+        "18562": 3, # Swiftmend
+        "48504": 3, # Living Seed
+    },
+    "hunter": {
+        "19574": 1, # Bestial Wrath
+        "19577": 1, # Intimidation
+        "53209": 2, # Chimera Shot
+        "60053": 3, # Explosive Shot
+    },
+    "mage": {
+        "44781": 1, # Arcane Barrage
+        "12042": 1, # Arcane Power
+        "55360": 2, # Living Bomb
+        "48108": 2, # Hot Streak
+        "28682": 2, # Combustion
+        "11958": 3, # Cold Snap
+        "12579": 3, # Winter's Chill
+        "31687": 3, # Summon Water Elemental
+        "44572": 3, # Deep Freeze
+    },
+    "paladin": {
+        "53654": 1, # Beacon of Light
+        "48825": 1, # Holy Shock
+        "54149": 1, # Infusion of Light
+        "31842": 1, # Divine Illumination
 
-def get_time_delta_wrap(_to_dt=to_dt):
-    def inner(s: str, f: str):
-        return _to_dt(f) - _to_dt(s)
-    return inner
+        "53595": 2, # Hammer of the Righteous
+        "66233": 2, # Ardent Defender
+        "48827": 2, # Avenger's Shield
+        "20132": 2, # Redoubt
+        "48952": 2, # Holy Shield
+        "57319": 2, # Blessing of Sanctuary
+        "70760": 2, # Deliverance
+        
+        "59578": 3, # The Art of War
+        "35395": 3, # Crusader Strike
+        "53385": 3, # Divine Storm
+    },
+    "priest": {
+        "63944": 1, # Renewed Hope
+        "47755": 1, # Rapture
+        "52985": 1, # Penance
+        "47753": 1, # Divine Aegis
+        "59891": 1, # Borrowed Time
+        "15359": 1, # Inspiration
+        
+        "63734": 2, # Serendipity
+        "63544": 2, # Empowered Renew
+        "63725": 2, # Holy Concentration
+        "48089": 2, # Circle of Healing
+        "47788": 2, # Guardian Spirit
 
-def get_fight_duration(s, f):
-    return get_time_delta(s, f).total_seconds()
+        "48160": 3, # Vampiric Touch
+        "63675": 3, # Improved Devouring Plague
+        "59000": 3, # Improved Spirit Tap
+        "48156": 3, # Mind Flay
+        "33198": 3, # Misery
+        "61792": 3, # Shadowy Insight
+        "15290": 3, # Vampiric Embrace
+        "15473": 3, # Shadowform
+        "47585": 3, # Dispersion
+    },
+    "rogue": {
+        "57993": 1, # Envenom
+        "48666": 1, # Mutilate
+        "14177": 1, # Cold Blood
 
-def convert_duration(t):
-    milliseconds = int(t * 1000 % 1000)
-    t = int(t)
-    seconds = t % 60
-    minutes = t // 60 % 60
-    hours = t // 3600
-    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
+        "48638": 2, # Sinister Strike
+        "13750": 2, # Adrenaline Rush
+        "13877": 2, # Blade Flurry
+        "51690": 2, # Killing Spree
 
-def convert_duration(t):
-    return str(timedelta(seconds=t))
+        "51713": 3, # Shadow Dance
+        "36554": 3, # Shadowstep
+        "14183": 3, # Premeditation
+        "14185": 3, # Preparation
+        "48660": 3, # Hemorrhage
+    },
+    "shaman": {
+        "57722": 1, # Totem of Wrath
+        "59159": 1, # Thunderstorm
+        "16166": 1, # Elemental Mastery
+        "60043": 1, # Lava Burst
+        "49240": 1, # Lightning Bolt (Proc)
+        "49269": 1, # Chain Lightning (Proc)
 
-def get_folders(path) -> list[str]:
-    return next(os.walk(path))[1]
+        "60103": 2, # Lava Lash
+        "51533": 2, # Feral Spirit
+        "30823": 2, # Shamanistic Rage
+        "17364": 2, # Stormstrike
+        "70829": 2, # Elemental Rage
 
-def get_files(path) -> list[str]:
-    return next(os.walk(path))[2]
+        "379": 3, # Earth Shield
+        "53390": 3, # Tidal Waves
+        "52752": 3, # Ancestral Awakening
+        "61301": 3, # Riptide
+        "16190": 3, # Mana Tide Totem
+        "51886": 3, # Cleanse Spirit
+    },
+    "warlock": {
+        "59164": 1, # Haunt
+        "47843": 1, # Unstable Affliction
+        "64371": 1, # Eradication
 
-def get_all_files(path=None, ext=None):
-    if path is None:
-        path = '.'
-    files = get_files(path)
-    if ext is None:
-        return files
-    ext = fix_extention(ext)
-    return [file for file in files if file.endswith(ext)]
-    
-def redo_data(redo_func, multi=True, startfrom=None, end=None, proccesses=4):
-    def get_index(z):
-        return z if type(z) == int else folders.index(z)
-    
-    folders = get_folders('LogsDir')
+        "71165": 2, # Molten Core
+        "47241": 2, # Metamorphosis
+        "63167": 2, # Decimation
+        "47193": 2, # Demonic Empowerment
 
-    if startfrom:
-        i = get_index(startfrom)
-        folders = folders[i:]
-    if end:
-        i = get_index(end)
-        folders = folders[:i]
+        "59172": 3, # Chaos Bolt
+        "47847": 3, # Shadowfury
+        "17962": 3, # Conflagrate
+    },
+    "warrior": {
+        "7384": 1, # Overpower
+        "47486": 1, # Mortal Strike
+        "12328": 1, # Sweeping Strikes
+        "52437": 1, # Sudden Death
+        "60503": 1, # Taste for Blood
 
-    if multi and proccesses > 0:
-        from multiprocessing import Pool
-        with Pool(proccesses) as p:
-            p.map(redo_func, folders)
-    else:
-        for x in folders:
-            redo_func(x)
+        "23881": 2, # Bloodthirst
+        "12292": 2, # Death Wish
 
+        "46968": 3, # Shockwave
+        "47498": 3, # Devastate
+    },
+}
+
+SERVERS = {
+    "0x06": "Lordaeron",
+    "0x07": "Icecrown",
+    "0x0D": "Frostmourne3",
+    "0x0C": "Frostmourne2",
+    "0x0A": "Blackrock",
+}
 
 CLASSES = {
   "Death Knight": {
@@ -672,6 +706,9 @@ CLASSES = {
   }
 }
 
+CLASSES_LIST = list(CLASSES)
+SPECS_LIST = [(sname or cname, icon) for cname, v in CLASSES.items() for sname, icon in v.items()]
+
 CLASS_TO_HTML = {
     'Death Knight': 'death-knight',
     'Druid': 'druid',
@@ -698,30 +735,319 @@ CLASS_FROM_HTML = {
     "warrior": "Warrior"
 }
 
+def get_ms(pc):
+    if pc is None:
+        return -1
+    return int((perf_counter()-pc)*1000)
 
-CLASSES_LIST = list(CLASSES)
-# SPECS_LIST = {name: list(v) for name, v in CLASSES.items()}
-# SPECS_LIST = [icon for v in CLASSES.values() for icon in v.values()]
-SPECS_LIST = [(sname or cname, icon) for cname, v in CLASSES.items() for sname, icon in v.items()]
+def running_time(f):
+    def running_time_inner(*args, **kwargs):
+        pc = perf_counter()
+        q = f(*args, **kwargs)
+        msg = f"[PERFOMANCE] Done in {get_ms(pc):>6,} ms with {f.__module__}.{f.__name__}"
+        LOGGER_LOGS.debug(msg)
+        return q
+    return running_time_inner
+
+def sort_dict_by_value(d: dict):
+    return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
 
 
+NIL_GUID = '0x0000000000000000'
+def is_player(guid: str):
+    return guid.startswith('0x0') and guid != NIL_GUID
+
+def add_space(v):
+    return f"{v:,}".replace(',', ' ')
 
 
-DATES_CACHE = {}
+def fix_extention(ext: str):
+    if ext[0] == '.':
+        return ext
+    return f".{ext}"
 
-def get_dates():
-    if not DATES_CACHE:
-        dates = json_read("WarmaneBossFights/__dates")
-        DATES_CACHE["DATES"] = dates
-        DATES_CACHE["REVERSED"] = list(reversed(dates.items()))
-    return DATES_CACHE
+def add_extention(path: str, ext=None):
+    if ext is not None:
+        ext = fix_extention(ext)
+        if not path.endswith(ext):
+            path = path.split('.')[0]
+            return f"{path}{ext}"
+    return path
 
-def find_date(report_id: int) -> str:
-    dates: list[tuple[str, int]] = get_dates()["REVERSED"]
-    for date, date_report_id in dates:
-        if report_id > date_report_id:
-            return date
+def save_backup(path):
+    if os.path.isfile(path):
+        old = f"{path}.old"
+        if os.path.isfile(old):
+            os.remove(old)
+        os.rename(path, old)
 
+def json_read(path: str) -> dict:
+    path = add_extention(path, '.json')
+    try:
+        with open(path) as file:
+            return json.load(file)
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
+        return {}
+
+def json_read_no_exception(path: str):
+    path = add_extention(path, '.json')
+    with open(path) as file:
+        return json.load(file)
+
+def json_write(path: str, data, indent=2, sep=None):
+    path = add_extention(path, '.json')
+    save_backup(path)
+    with open(path, 'w') as file:
+        json.dump(data, file, ensure_ascii=False, default=sorted, indent=indent, separators=sep)
+
+
+def bytes_read(path: str, ext=None):
+    path = add_extention(path, ext)
+    try:
+        with open(path, 'rb') as file:
+            return file.read()
+    except FileNotFoundError:
+        return b''
+
+def bytes_write(path: str, data: bytes, ext=None):
+    path = add_extention(path, ext)
+    with open(path, 'wb') as file:
+        file.write(data)
+
+@running_time
+def file_read(path: str, ext=None):
+    path = add_extention(path, ext)
+    # try:
+    #     raw = bytes_read(path, ext)
+    #     return raw.decode()
+    # except Exception as e:
+    #     print(f"[file_read] {e}")
+
+    try:
+        with open(path, 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+
+@running_time
+def file_write(path: str, data: str, ext=None):
+    path = add_extention(path, ext)
+    with open(path, 'w') as f:
+        f.write(data)
+
+
+def zlib_decompress(data: bytes):
+    return zlib.decompress(data)
+
+@running_time
+def pickle_from_bytes(data: bytes):
+    return pickle.loads(data)
+
+@running_time
+def zlib_pickle_read(path: str):
+    path = add_extention(path, '.pickle.zlib')
+    data_raw = bytes_read(path)
+    data = zlib_decompress(data_raw)
+    return pickle_from_bytes(data)
+
+@running_time
+def zlib_text_read(path: str):
+    path = add_extention(path, '.zlib')
+    data_raw = bytes_read(path)
+    data = zlib_decompress(data_raw)
+    return data.decode()
+
+
+@running_time
+def pickle_dumps(data):
+    return pickle.dumps(data)
+
+@running_time
+def zlib_compress(__data: bytes, level=7):
+    return zlib.compress(__data, level=level)
+
+def zlib_pickle_make(data_raw, level=7):
+    data_pickle = pickle_dumps(data_raw)
+    comresesed = zlib_compress(data_pickle, level)
+    return comresesed
+
+@running_time
+def zlib_pickle_write(data_raw, path: str, level=7):
+    path = add_extention(path, '.pickle.zlib')
+    zlib_pickle = zlib_pickle_make(data_raw, level)
+    bytes_write(path, zlib_pickle)
+
+def zlib_text_make(data_raw: str, level=7):
+    data_enc = data_raw.encode()
+    comresesed = zlib_compress(data_enc, level)
+    return comresesed
+
+# @running_time
+# def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
+#     path = add_extention(path, '.zlib')
+#     zlib_text = zlib_text_make(data_raw)
+#     if not check_exists:
+#         bytes_write(path, zlib_text)
+#         return
+#     old_data = bytes_read(path)
+#     exists = old_data == zlib_text
+#     if not exists:
+#         bytes_write(path, zlib_text)
+#     return exists
+
+def zlib_text_write(data_raw: str, path: str):
+    path = add_extention(path, '.zlib')
+    zlib_text = zlib_text_make(data_raw)
+    bytes_write(path, zlib_text)
+
+def zlib_text_bytes_write(data_raw: bytes, path: str, level=7):
+    path = add_extention(path, '.zlib')
+    zlib_text = zlib_compress(data_raw, level)
+    bytes_write(path, zlib_text)
+
+
+@running_time
+def logs_splitlines(logs: str):
+    return logs.splitlines()
+
+@running_time
+def prepare_logs(file_name):
+    logs_raw = bytes_read(file_name)
+    logs_raw_decoded = logs_raw.decode()
+    return logs_splitlines(logs_raw_decoded)
+
+def pickle_read(path: str):
+    path = add_extention(path, '.pickle')
+    try:
+        with open(path, 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        print('[ERROR] FILE DOESNT EXISTS:', path)
+
+def pickle_write(path: str, data):
+    path = add_extention(path, '.pickle')
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def get_now():
+    return datetime.now()
+
+# Z = re.compile('(\d{1,2})/(\d{1,2}) (\d\d):(\d\d):(\d\d).(\d\d\d)')
+def to_dt_closure(year=None):
+    Z = re.compile('(\d+)')
+    current = get_now()
+    day = current.day
+    month = current.month
+    find_all = Z.findall
+    if year is None:
+        year = current.year
+        def inner(s: str):
+            q = list(map(int, find_all(s[:18])))
+            q[-1] *= 1000
+            if q[0] > month or q[0] == month and q[1] > day:
+                return datetime(year-1, *q)
+            return datetime(year, *q)
+    else:
+        def inner(s: str):
+            q = list(map(int, find_all(s[:18])))
+            q[-1] *= 1000
+            return datetime(year, *q)
+        
+    return inner
+
+to_dt = to_dt_closure()
+
+__year = get_now().year
+__p_bytes_fa = re.compile(b'(\d+)').findall
+def to_dt_bytes(s, year=__year):
+    q = list(map(int, __p_bytes_fa(s[:18])))
+    dt = datetime(year, *q)
+    if dt > get_now():
+        return dt.replace(year=dt.year-1)
+    return dt
+
+def to_dt_bytes_wrap(year=None):
+    if year is None:
+        year = get_now().year
+    findall = re.compile(b'(\d+)').findall
+    def inner(s):
+        q = list(map(int, findall(s[:18])))
+        return datetime(year, *q)
+    return inner
+
+def get_time_delta(s: str, f: str, _to_dt=to_dt):
+    return _to_dt(f) - _to_dt(s)
+
+def get_time_delta_wrap(_to_dt=to_dt):
+    def inner(s: str, f: str):
+        return _to_dt(f) - _to_dt(s)
+    return inner
+
+def get_fight_duration(s, f):
+    return get_time_delta(s, f).total_seconds()
+
+def convert_duration(t):
+    milliseconds = int(t * 1000 % 1000)
+    t = int(t)
+    seconds = t % 60
+    minutes = t // 60 % 60
+    hours = t // 3600
+    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
+
+def convert_duration(t):
+    return str(timedelta(seconds=t))
+
+def get_folders(path) -> list[str]:
+    return next(os.walk(path))[1]
+
+def get_files(path) -> list[str]:
+    return next(os.walk(path))[2]
+
+def get_all_files(path=None, ext=None):
+    if path is None:
+        path = '.'
+    files = get_files(path)
+    if ext is None:
+        return files
+    ext = fix_extention(ext)
+    return [file for file in files if file.endswith(ext)]
+
+def get_folders_filter(filter=None):
+    folders = get_folders('LogsDir')
+    if filter is not None:
+        folders = [name for name in folders if filter in name]
+    filter_list = get_logs_filter('private')
+    folders = [name for name in folders if name not in filter_list]
+    return folders
+
+def redo_data(redo_func, multi=True, startfrom=None, end=None, proccesses=4, filter=None):
+    def get_index(z):
+        return z if type(z) == int else folders.index(z)
+    
+    folders = get_folders_filter(filter)
+
+    if startfrom:
+        folders = folders[get_index(startfrom):]
+    if end:
+        folders = folders[:get_index(end)]
+
+    if multi and proccesses > 0:
+        from multiprocessing import Pool
+        with Pool(proccesses) as p:
+            p.map(redo_func, folders)
+    else:
+        for x in folders:
+            redo_func(x)
+
+def get_report_name_info(name: str):
+    info = name.split('--')
+    return {
+        "date": info[0],
+        "time": info[1],
+        "name": info[2],
+        "server": info[3],
+    }
 
 
 def add_new_numeric_data(data_total: defaultdict, data_new: dict):
@@ -729,12 +1055,16 @@ def add_new_numeric_data(data_total: defaultdict, data_new: dict):
         data_total[source] += amount
 
 
-def get_last_line(filename):
+def get_last_line(filename, skip_lines=0):
     with open(filename, 'rb') as f:
         try:  # catch OSError in case of a one line file 
             f.seek(-2, os.SEEK_END)
-            while f.read(1) != b'\n':
+            for _ in range(10000):
                 f.seek(-2, os.SEEK_CUR)
+                if f.read(1) == b'\n':
+                    if skip_lines < 1:
+                        break
+                    skip_lines -= 1
         except OSError:
             f.seek(0)
         return f.readline().decode()
@@ -742,12 +1072,15 @@ def get_last_line(filename):
 def get_last_mod(file_name):
     return datetime.fromtimestamp(os.path.getmtime(file_name))
 
-@running_time
 def logs_edit_time(file_name):
     dt_last_edit = get_last_mod(file_name)
     _to_dt = to_dt_closure(dt_last_edit.year)
-    last_line = get_last_line(file_name)
-    dt_last_line = _to_dt(last_line)
+    try:
+        last_line = get_last_line(file_name)
+        dt_last_line = _to_dt(last_line)
+    except Exception:
+        last_line = get_last_line(file_name, skip_lines=1)
+        dt_last_line = _to_dt(last_line)
     return abs(dt_last_edit-dt_last_line).total_seconds()
 
 
@@ -761,12 +1094,6 @@ def get_logs_filter(filter_type: str):
         return FILTERED_LOGS[filter_type]
     data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).split('\n')
     return data
-
-
-UPLOADED_JSON = os.path.join(PATH_DIR, '_uploaded_data.json')
-UPLOADED = json_read(UPLOADED_JSON)
-def save_upload_cache():
-    json_write(UPLOADED_JSON, UPLOADED)
 
 
 MAX_PW_ATTEMPTS = 5

@@ -1,7 +1,7 @@
 import json
 import os
 from collections import defaultdict
-from datetime import datetime
+import pickle
 
 import constants
 import dmg_breakdown
@@ -11,13 +11,14 @@ import logs_auras
 import logs_check_difficulty
 import logs_fight_separator
 import logs_get_time
-import logs_player_class
+import logs_player_spec
 import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valks3
-from constants import (add_new_numeric_data, add_space, is_player,
-                       running_time, sort_dict_by_value)
+from constants import (
+    add_new_numeric_data, add_space, is_player, running_time, sort_dict_by_value, get_now,
+    zlib_text_read)
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
@@ -131,7 +132,6 @@ def get_targets(logs_slice: list[str], source=PLAYER, target="0xF1"):
         for target_id in target_ids
     }
 
-
 def group_targets(targets: set[str]):
     target_ids = {guid[:-6] for guid in targets}
     return {
@@ -151,9 +151,6 @@ def regroup_targets(data):
 def convert_to_html_name(name: str):
     return name.lower().replace(' ', '-').replace("'", '')
 
-def slice_apply_shift(p):
-    return
-
 
 class THE_LOGS:
     def __init__(self, logs_name: str) -> None:
@@ -163,7 +160,7 @@ class THE_LOGS:
             os.makedirs(self.PATH, exist_ok=True)
             print('LOG: Created folder:', self.PATH)
 
-        self.last_access = datetime.now()
+        self.last_access = get_now()
 
         self.bosses_convert: dict[str, str] = {}
         self.DURATIONS: dict[str, float] = {}
@@ -176,11 +173,11 @@ class THE_LOGS:
 
     def get_logger(self):
         try:
-            return self.LOGGER
+            return self.LOGGER_LOGS
         except AttributeError:
             log_file = self.relative_path('log.log')
             logger = constants.setup_logger(f"{self.NAME}_logger", log_file)
-            self.LOGGER = logger
+            self.LOGGER_LOGS = logger
             return logger
     
     def cache_files_missing(self, files):
@@ -197,8 +194,7 @@ class THE_LOGS:
             logs = self.LOGS
         except AttributeError:
             logs_cut_file_name = self.relative_path("LOGS_CUT")
-            logs_raw = constants.zlib_text_read(logs_cut_file_name)
-            logs = constants.logs_splitlines(logs_raw)
+            logs = zlib_text_read(logs_cut_file_name).splitlines()
             self.LOGS = logs
         
         return logs[s:f]
@@ -235,7 +231,9 @@ class THE_LOGS:
                 self.ENCOUNTER_DATA = logs_fight_separator.main(logs)
                 constants.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
             else:
-                self.ENCOUNTER_DATA: dict[str, list[tuple[int, int]]] = constants.json_read(enc_data_file_name)
+                enc_data: dict[str, list[tuple[int, int]]]
+                enc_data = constants.json_read(enc_data_file_name)
+                self.ENCOUNTER_DATA = enc_data
             return self.ENCOUNTER_DATA
     
     def new_guids(self, guids_data_file_name, players_data_file_name, classes_data_file_name):
@@ -318,20 +316,6 @@ class THE_LOGS:
             pets = self.get_all_players_pets()
             self.PLAYERS_AND_PETS = players | pets
             return self.PLAYERS_AND_PETS
-        
-    # def get_classes(self, rewrite=False):
-    #     try:
-    #         return self.CLASSES
-    #     except AttributeError:
-    #         classes_data_file_name = self.relative_path("CLASSES_DATA.json")
-    #         if rewrite or self.cache_files_missing(classes_data_file_name):
-    #             logs = self.get_logs()
-    #             players = self.get_players_guids()
-    #             self.CLASSES = logs_player_class.get_classes(logs, players)
-    #             constants.json_write(classes_data_file_name, self.CLASSES)
-    #         else:
-    #             self.CLASSES: dict[str, str] = constants.json_read(classes_data_file_name)
-    #         return self.CLASSES
             
     def get_classes_with_names(self):
         try:
@@ -368,18 +352,6 @@ class THE_LOGS:
             else:
                 self.TIMESTAMP: list[int] = constants.json_read(timestamp_data_file_name)
             return self.TIMESTAMP
-        
-    # @constants.running_time
-    # def get_difficulty(self):
-    #     try:
-    #         return self.SEGMENTS
-    #     except AttributeError:
-    #         logs = self.get_logs()
-    #         enc_data = self.get_enc_data()
-    #         report_id = self.NAME
-    #         data = check_difficulty.diff_gen(logs, enc_data, report_id)
-    #         self.SEGMENTS = data['segments']
-    #         return self.SEGMENTS
 
     def get_spells_colors(self, spells) -> dict[int, str]:
         if not spells:
@@ -414,107 +386,6 @@ class THE_LOGS:
         s = self.find_index(s, 2+shift)
         f = self.find_index(f, 1)
         return s, f
-
-    # def format_attempt(self, boss_name: str, attempt: int, shift: int, _stats: list[str, bool, str]):
-    #     diff, kill, slice_duration = _stats
-    #     boss_name_html = boss_name.lower().replace(' ', '-')
-    #     self.bosses_convert[boss_name_html] = boss_name
-        
-    #     s, f = self.attempt_time(boss_name, attempt)
-    #     link = f'/reports/{self.NAME}/?s={s}&f={f}&boss={boss_name_html}&attempt={attempt}'
-        
-    #     segment_name = f"{slice_duration[2:]} | {diff} {boss_name}"
-    #     is_kill = "kill"
-    #     if not kill:
-    #         segment_name = f"{segment_name} | Try {attempt-shift+1}"
-    #         is_kill = "try"
-    #     return {
-    #         "segment_name": segment_name,
-    #         "link": link,
-    #         "is_kill": is_kill,
-    #     }
-    
-    # def format_attempts(self) -> dict[str, list[tuple[str]]]:
-    #     try:
-    #         return self.FORMATED_DIFFICULTY
-    #     except AttributeError:
-    #         difficulty_data = self.get_difficulty()
-    #         diffs = self.FORMATED_DIFFICULTY = {}
-    #         _bosses = self.BOSSES_HTML = {}
-    #         for boss_name, d in difficulty_data.items():
-    #             boss_html = convert_to_html_name(boss_name)
-    #             _bosses[boss_name] = f'/reports/{self.NAME}/?boss={boss_html}'
-                
-    #             q = diffs[boss_name] = []
-    #             shift = 0
-    #             for attempt, _stats in enumerate(d):
-    #                 if _stats[1]:
-    #                     shift = attempt+1
-    #                 formatted = self.format_attempt(boss_name, attempt, shift, _stats)
-    #                 q.append(list(formatted.values()))
-    #         return diffs
-        
-    # def make_segment_queries(self, data):
-    #     boss_links = {}
-    #     diff_links = {}
-    #     segm_links = []
-    #     segm_links2 = {}
-    #     report_id = self.NAME
-    #     boss_html = self.BOSSES_TO_HTML
-    #     for boss_name, diffs in data.items():
-    #         href1 = f"?boss={boss_html[boss_name]}"
-    #         # href1 = f"/reports/{report_id}/?boss={boss_html[boss_name]}"
-    #         a = f'<a href="{href1}" class="boss-link">All {boss_name} segments</a>'
-    #         boss_links[boss_name] = a
-    #         diff_links_boss = diff_links[boss_name] = {}
-    #         for diff, segments in diffs.items():
-    #             href2 = f'''{href1}&mode={diff}'''
-    #             a = f'''<a href="{href2}" class="boss-link">{diff} {boss_name}</a>'''
-    #             # a = f'''<a href="{href2}" class="boss-link">{diff} {boss_name} segments</a>'''
-    #             diff_links_boss[diff] = a
-    #             for seg_info in segments:
-    #                 attempt = seg_info['attempt']
-    #                 s, f = self.attempt_time(boss_name, attempt)
-    #                 href3 = f'''{href2}&s={s}&f={f}&attempt={attempt}'''
-    #                 segment_str = f"{seg_info['slice_duration'][2:]} | {seg_info['segment_type']}"
-    #                 # segment_str = f"{seg_info['slice_duration']} | {boss_name} | {seg_info['segment_type']}"
-    #                 a = f'''<a href="{href3}" class="{seg_info['attempt_type']}-link">{segment_str}</a>'''
-    #                 segm_links.append(a)
-    #                 segm_links2.setdefault(boss_name, {}).setdefault(diff, []).append(a)
-    #     return {
-    #         "boss_links": boss_links,
-    #         "diff_links": diff_links,
-    #         "segm_links": segm_links2,
-    #     }
-        
-    # def make_segment_queries(self, data):
-    #     segm_links = {}
-    #     # report_id = self.NAME
-    #     boss_html = self.BOSSES_TO_HTML
-    #     for boss_name, diffs in data.items():
-    #         href1 = f"?boss={boss_html[boss_name]}"
-    #         # href1 = f"/reports/{report_id}/?boss={boss_html[boss_name]}"
-    #         a = f'<a href="{href1}" class="boss-link">All {boss_name} segments</a>'
-    #         boss_data = segm_links[boss_name] = {'link': a}
-    #         boss_links = boss_data['links'] = {}
-    #         for diff_id, segments in diffs.items():
-    #             href2 = f"{href1}&mode={diff_id}"
-    #             a = f'''<a href="{href2}" class="boss-link">{diff_id} {boss_name}</a>'''
-    #             # a = f'''<a href="{href2}" class="boss-link">{diff} {boss_name} segments</a>'''
-    #             diff_data = boss_links[diff_id] = {'link': a}
-    #             diff_links = diff_data['links'] = []
-    #             for seg_info in segments:
-    #                 attempt = seg_info['attempt']
-    #                 s, f = self.attempt_time(boss_name, attempt)
-    #                 href3 = f"{href2}&s={s}&f={f}&attempt={attempt}"
-    #                 segment_str = f"{seg_info['slice_duration'][2:]} | {seg_info['segment_type']}"
-    #                 # segment_str = f"{seg_info['slice_duration']} | {boss_name} | {seg_info['segment_type']}"
-    #                 a = f'''<a href="{href3}" class="{seg_info['attempt_type']}-link">{segment_str}</a>'''
-    #                 diff_links.append(a)
-    #                 # diff_links.setdefault(boss_name, {}).setdefault(diff_id, []).append(a)
-    #     return {
-    #         "segm_links": segm_links,
-    #     }
         
     def make_segment_query_segment(self, seg_info, boss_name, href2):
         attempt = seg_info['attempt']
@@ -625,39 +496,6 @@ class THE_LOGS:
             for spell_id, spell_v in _spells.items()
             if INPUT in spell_v
         }
-
-    # @running_time
-    # def filtered_spell_list(self, data: dict[str, str]):
-    #     INPUT = data['filter'].lower()
-    #     QUERY = data['query']
-    #     SPELL_LINK_BASE = f'/reports/{self.NAME}/spell'
-    #     SPELLS = self.get_spells()
-    #     SPELLS_LOWER = self.get_spells_lower()
-
-    #     def make_spell_html(spell_id):
-    #         spell_name = SPELLS[int(spell_id)]['name']
-    #         url = f'{SPELL_LINK_BASE}/{spell_id}/{QUERY}'
-    #         return f'<a href="{url}"><span>{spell_id}</span><span>{spell_name}</span></a>'
-
-    #     z = []
-
-    #     if INPUT.isdigit():
-    #         z = [
-    #             make_spell_html(spell_id)
-    #             for spell_id in map(str, SPELLS)
-    #             if INPUT in spell_id
-    #         ]
-    #     else:
-    #         z = [
-    #             make_spell_html(spell_id)
-    #             for spell_id, spell_name in SPELLS_LOWER.items()
-    #             if INPUT in spell_name
-    #         ]
-    #     if not z:
-    #         return 'Spell not found'
-        
-    #     return ''.join(sorted(z))
-
     
     def convert_slice_to_time(self, s=None, f=None):
         ts = self.get_timestamp()
@@ -720,34 +558,6 @@ class THE_LOGS:
             "boss_name": boss_name,
         }
 
-    @constants.running_time
-    def get_spell_count(self, spell_id_str: str, logs_slice):
-        # add another dict with timestamps
-        spells = self.get_spells()
-        spell_id = int(spell_id_str)
-        if spell_id not in spells:
-            print('ERROR: spell_id not in spells:', spell_id)
-            return {}
-        spells: dict[str, dict[str, int]] = {}
-        SPELL = "SWING_" if spell_id == 1 else "SPELL_"
-        for line in logs_slice:
-            if spell_id_str not in line:
-                continue
-            if SPELL not in line:
-                continue
-            line = line.split(',')
-            flag, source_name, target_name = line[1], line[3], line[5]
-            _spell_id = line[9] if flag == "SPELL_DISPEL" else line[6]
-            if _spell_id == spell_id_str:
-                flag_info = spells.setdefault(flag, {"sources": {}, "targets": {}})
-                flag_info["sources"][source_name] = flag_info["sources"].get(source_name, 0) + 1
-                flag_info["targets"][target_name] = flag_info["targets"].get(target_name, 0) + 1
-        for flag_info in spells.values():
-            for sources, sources_info in flag_info.items():
-                flag_info[sources] = sort_dict_by_value(sources_info)
-        spells = {x: spells[x] for x in constants.FLAG_ORDER if x in spells}
-        return spells
-    
     def name_to_guid(self, name: str) -> str:
         guids = self.get_all_guids()
         players_names = self.guid_to_player_name()
@@ -854,7 +664,7 @@ class THE_LOGS:
         classes = self.get_classes()
         if s is None and f is None:
             logs_slice = self.get_logs(None, 50000)
-        data['specs'] = logs_player_class.get_specs(logs_slice, players, classes)
+        data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
 
         data['first_hit'] = logs_slice[0]
         data['last_hit'] = logs_slice[-1]
@@ -882,7 +692,7 @@ class THE_LOGS:
                 specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
             elif unit_name not in specs and unit_name in classes_names:
                 player_class = classes_names[unit_name]
-                specs[unit_name] = logs_player_class.get_spec_info(player_class)
+                specs[unit_name] = logs_player_spec.get_spec_info(player_class)
                 print(f"{unit_name} doenstt have spec!")
             # elif unit_name not in classes_names:
             #     print(f"{unit_name} not in classes_names!")
@@ -1117,15 +927,14 @@ class THE_LOGS:
 
 
     @constants.running_time
-    def spell_count(self, s, f, spell_id_str) -> dict[str, dict[str, int]]:
+    def get_spell_count(self, s, f, spell_id_str) -> dict[str, dict[str, int]]:
         slice_ID = f"{s}_{f}"
-        cached_data = self.CACHE['spell_count'].setdefault(spell_id_str, {})
+        cached_data = self.CACHE['get_spell_count'].setdefault(spell_id_str, {})
         if slice_ID in cached_data:
             return cached_data[slice_ID]
             
         logs_slice = self.get_logs(s, f)
         spells = logs_spell_info.get_spell_count(logs_slice, spell_id_str)
-
         cached_data[slice_ID] = spells
         return spells
     
@@ -1142,7 +951,7 @@ class THE_LOGS:
         spells: dict[str, dict[str, dict[str, int]]] = {}
 
         for s, f in segments:
-            _spells = self.spell_count(s, f, spell_id)
+            _spells = self.get_spell_count(s, f, spell_id)
             for flag, _types in _spells.items():
                 _flag = spells.setdefault(flag, {})
                 for _type, names in _types.items():
@@ -1207,7 +1016,9 @@ class THE_LOGS:
         all_data = defaultdict(lambda: defaultdict(int))
 
         boss_guid_id = self.name_to_guid(boss_name)
-        targets_useful, targets_all = dmg_useful.get_all_targets(boss_name, boss_guid_id)
+        targets = dmg_useful.get_all_targets(boss_name, boss_guid_id)
+        targets_useful = targets["useful"]
+        targets_all = targets["all"]
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
@@ -1284,4 +1095,4 @@ class THE_LOGS:
         logs_slice = self.get_logs(s, f)
         players = self.get_players_guids()
         classes = self.get_classes()
-        return logs_player_class.get_specs_no_names(logs_slice, players, classes)
+        return logs_player_spec.get_specs_no_names(logs_slice, players, classes)

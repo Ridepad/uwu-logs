@@ -1,40 +1,40 @@
 from collections import defaultdict
-import logging
 import logs_main
 import constants
-MUTLIBOSSES = constants.MUTLIBOSSES
+
+from constants import MUTLIBOSSES, BOSSES_GUIDS, LOGGER_LOGS, T_DELTA_15SEC, T_DELTA_1MIN, T_DELTA_2MIN, get_time_delta
+
 ANOTHER_BOSSES = {y:x[0] for x in MUTLIBOSSES.values() for y in x[1:]}
-BOSSES_GUIDS = set(ANOTHER_BOSSES) | set(ANOTHER_BOSSES.values()) | set(constants.BOSSES_GUIDS)
+BOSSES_GUIDS_ALL = set(ANOTHER_BOSSES) | set(ANOTHER_BOSSES.values()) | set(BOSSES_GUIDS)
 FLAGS = {'UNIT_DIED', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_HEAL'}
 IGNORED_IDS = {
     '56190', '56191', '55346', #Lens
     '60122', # Baby Spice
     '53338', '1130', '14323', '14324', '14325', '19421', '19422', '19423', # Hunter's Mark
-    '70861', '72550', '72273', '72371', '70952', '72443', '72410',
+    '70861', # Sindragosa's Lair Teleport
+    '72550', # Malleable Goo
+    '72273', # Vile Gas
+    '72371', # Blood Power
+    '70952', # Invocation of Blood
+    '72443', # Boiling Blood
+    '72410', # Rune of Blood
 }
 
 def convert_to_names(data: dict):
     B = {guids[0]:name for name, guids in MUTLIBOSSES.items()}
-    return {B.get(x, constants.BOSSES_GUIDS[x]): y for x,y in data.items()}
+    return {B.get(x, BOSSES_GUIDS[x]): y for x,y in data.items()}
 
 @constants.running_time
 def dump_all_boss_lines(logs: list[str]):
-    # _bosses: dict[str, list[tuple[int, list[str]]]] = {}
-    _bosses: dict[str, list[tuple[int, list[str]]]] = defaultdict(list)
+    _bosses: defaultdict[str, list[tuple[int, list[str]]]] = defaultdict(list)
     for n, line in enumerate(logs):
         line = line.split(',')
         if line[1] not in FLAGS:
             continue
         if line[2] == line[4]:
             continue
-        # if "BUFF" in line:
         if line[-1] == "BUFF":
             continue
-        # if "72350" in line:
-        #     s_guid = line[2][6:-6]
-        #     if s_guid == "008EF5":
-        #         _bosses[s_guid].append((n, line))
-        #         continue
         
         try:
             if line[6] in IGNORED_IDS:
@@ -43,9 +43,9 @@ def dump_all_boss_lines(logs: list[str]):
             pass
         
         _guid = line[4][6:-6]
-        if _guid not in BOSSES_GUIDS:
+        if _guid not in BOSSES_GUIDS_ALL:
             _guid = line[2][6:-6]
-            if _guid not in BOSSES_GUIDS:
+            if _guid not in BOSSES_GUIDS_ALL:
                 continue
         _guid = ANOTHER_BOSSES.get(_guid, _guid)
         _bosses[_guid].append((n, line))
@@ -59,7 +59,7 @@ def dump_all_boss_lines2(logs: list[str]):
             continue
         line = line.split(',')
         target_guid = line[4][6:-6]
-        if target_guid not in BOSSES_GUIDS:
+        if target_guid not in BOSSES_GUIDS_ALL:
             continue
         if line[1] not in FLAGS:
             continue
@@ -82,7 +82,7 @@ def dump_all_boss_lines3(logs: list[str]):
             continue
         _, flag, sGUID, _, tGUID, _, *a = line.split(',', 7)
         tGUID_id = tGUID[6:-6]
-        if tGUID_id not in BOSSES_GUIDS:
+        if tGUID_id not in BOSSES_GUIDS_ALL:
             continue
         if flag not in FLAGS:
             continue
@@ -114,81 +114,47 @@ def get_more_precise(times: list[tuple[int, list[str]]], limit: int):
     
     return times
 
-def time_pairs(times: tuple[int, list[str]], boss_name):
-    # if boss_name == "Sindragosa":
-    #     print(times[:100])
-    # 1st + last line and if delta between lines > 100 sec separate to tries
-    last_index, line = times[0]
-    indexes: set[int] = {last_index-1, }
-    last_time_dt = constants.to_dt(line[0])
-
-    times = get_more_precise(times, 20)
-    last_index = times[-1][0]
-    indexes.add(last_index)
-
-    for line_index, line in times:
-        _now = constants.to_dt(line[0])
-        if _now - last_time_dt > constants.T_DELTA:
-            indexes.add(last_index)
-            indexes.add(line_index-1)
-        last_time_dt = _now
-        last_index = line_index
-
-    sorted_indexes = sorted(indexes)
-
-    # if len(sorted_indexes) % 2:
-    #     print(boss_name)
-    #     print(times[0])
-    #     print(times[-1])
-    #     print(f"indexes: {sorted_indexes}\n")
-
-    return list(zip(sorted_indexes[::2], sorted_indexes[1::2]))
-
-
-def time_pairs(times: tuple[int, list[str]], boss_name):
-    # if boss_name == "Sindragosa":
-    #     print(times[:100])
-    # 1st + last line and if delta between lines > 100 sec separate to tries
+def time_pairs(times: tuple[int, list[str]]):
     last_index, line = times[0]
     indexes: set[int] = {last_index, }
     last_time_dt = constants.to_dt(line[0])
-
     times = get_more_precise(times, 20)
     _index = times[-1][0]
     indexes.add(_index+1)
-    _last_line = ""
     for line_index, line in times:
         _now = constants.to_dt(line[0])
-        # if '72350' in line and '0008EF5' in line[2] and line[1] != 'SPELL_CAST_START':
-        #     #  and '0008EF5' in line and 'SPELL_CAST_START' not in line):
-        #     print(_last_line)
-        #     indexes.add(last_index+1)
-        #     indexes.add(line_index)
-        # el
-        if _now - last_time_dt > constants.T_DELTA:
+        if _now - last_time_dt > T_DELTA_1MIN:
             indexes.add(last_index+1)
             indexes.add(line_index)
-        _last_line = line
         last_time_dt = _now
         last_index = line_index
 
     sorted_indexes = sorted(indexes)
-
-    # if len(sorted_indexes) % 2:
-    #     print(boss_name)
-    #     print(times[0])
-    #     print(times[-1])
-    #     print(f"indexes: {sorted_indexes}\n")
-
     return list(zip(sorted_indexes[::2], sorted_indexes[1::2]))
 
 @constants.running_time
 def filter_bosses(filtered_logs: dict[str, tuple]):
     return {
-        boss_name: time_pairs(times, boss_name)
+        boss_name: time_pairs(times)
         for boss_name, times in filtered_logs.items()
-        if times
+        if len(times) > 250
     }
+
+# def to_int(line: str):
+#     return int(line.split(' ', 1)[1][:8].replace(':', ''))
+
+# def dump_all_boss_lines_test(logs: list[str]):
+#     _bosses: dict[str, list[tuple[int, int]]] = defaultdict(list)
+#     last_line = logs[0]
+#     last_timestamp = to_int(logs[0])
+#     for n, _line in enumerate(logs):
+#         try:
+#             timestamp = to_int(_line)
+#         except Exception:
+#             continue
+#         _delta = timestamp - last_timestamp
+#         if (_delta > 100 or _delta < 0):
+#             _now = constants.to_dt(_line)
 
 def find_fof(logs_slice):
     for n, line in enumerate(logs_slice):
@@ -223,12 +189,12 @@ def refine_lk(data, logs): # precise LK split at FOF
 
 def remove_short_tries(data: dict[str, list[tuple[int, int]]], logs):
     for pairs in data.values():
-        for pair in list(pairs):
-            s = logs[pair[0]]
-            f = logs[pair[1]]
-            if constants.get_time_delta(s, f) < constants.T_DELTA_SHORT:
-                pairs.remove(pair)
-                print('REMOVED:', pair)
+        for n, (s, f) in enumerate(list(pairs)):
+            # on time change this is awkward
+            if get_time_delta(s, f) < T_DELTA_15SEC:
+                print(f"REMOVED: {s:>8} {f:>8}")
+                del pairs[n]
+                # pairs.remove(pair)
 
 @constants.running_time
 def main(logs):
@@ -244,7 +210,7 @@ def main(logs):
     _all_boss_lines_names = convert_to_names(_all_boss_lines)
     data = filter_bosses(_all_boss_lines_names)
     refine_lk(data, logs)
-    remove_short_tries(data, logs)
+    # remove_short_tries(data, logs)
     return data
 
 
@@ -254,16 +220,28 @@ def __redo(name):
     logs = report.get_logs()
     path = report.relative_path("ENCOUNTER_DATA")
     data = main(logs)
+    print(data)
     constants.json_write(path, data, indent=None)
 
 def __redo_wrapped(name):
     try:
         __redo(name)
     except Exception:
-        logging.exception(f'logs_fight_sep __redo {name}')
+        LOGGER_LOGS.exception(f'logs_fight_sep __redo {name}')
 
 if __name__ == '__main__':
-    # __redo("22-06-17--20-57--Nomadra")
+    a = [
+        "21-07-28--20-29--Napnap--Lordaeron",
+        "21-10-04--21-27--Upmyplug--Lordaeron",
+        "22-01-03--20-05--Fregion--Lordaeron",
+        "21-10-14--20-29--Volken--Lordaeron",
+        "21-05-27--17-27--Sanelyidle--Lordaeron",
+        "22-01-12--20-01--Napnap--Lordaeron",
+        "22-05-19--20-38--Inia--Lordaeron",
+    ]
+    # for x in a:
+        # __redo(x)
+    __redo("22-07-13--21-08--Meownya--Lordaeron")
     # print()
     # constants.redo_data(__redo_wrapped, startfrom="22-03-12--04-16--Katianei", end="22-03-12--23-44--Plugr")
-    constants.redo_data(__redo_wrapped)
+    # constants.redo_data(__redo_wrapped)

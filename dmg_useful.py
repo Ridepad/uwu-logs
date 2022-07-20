@@ -1,7 +1,6 @@
 from collections import defaultdict
 
-import constants
-from constants import is_player, TOC_CHAMPIONS
+from constants import TOC_CHAMPIONS, is_player, running_time
 
 VALK_HALF_HP = 2992500 // 2
 TOC_CHAMPIONS_USEFUL = {f"0xF130{guid}": name for guid, name in TOC_CHAMPIONS.items()}
@@ -10,7 +9,6 @@ TOC_PETS = {
     "0xF130008A89": "Demon",
     "0xF130008CE6": "Treants",
 }
-TOC_CHAMPIONS_ALL = TOC_CHAMPIONS_USEFUL | TOC_PETS
 
 USEFUL = {
     "Lord Marrowgar": {
@@ -26,12 +24,16 @@ USEFUL = {
     "Gunship": {
         "0xF1300090FC": "Skybreaker Sorcerer",
         "0xF1300090FD": "Kor'kron Battle-Mage",
-        # "0xF130009069": "Skybreaker Rifleman",
-        # "0xF130009068": "Kor'kron Axethrower",
     },
     "Deathbringer Saurfang": {
         "0xF1500093B5": "Deathbringer Saurfang",
         "0xF13000966C": "Blood Beast",
+    },
+    "Festergut": {
+        "0xF130008F12": "Festergut",
+    },
+    "Rotface": {
+        "0xF130008F13": "Rotface",
     },
     "Professor Putricide": {
         "0xF150008F46": "Professor Putricide",
@@ -42,6 +44,9 @@ USEFUL = {
         "0xF130009455": "Prince Taldaram",
         "0xF130009452": "Prince Valanar",
         "0xF130009454": "Prince Keleseth",
+    },
+    "Blood-Queen Lana'thel": {
+        "0xF130009443": "Blood-Queen Lana'thel",
     },
     "Valithria Dreamwalker": {
         "0xF130009413": "Rot Worm",
@@ -60,6 +65,15 @@ USEFUL = {
         "0xF130008F19": "Ice Sphere",
         "0xF130008F5D": "Raging Spirit",
         "0xF130009916": "Wicked Spirit",
+    },
+    "Baltharus the Warborn": {
+        "0xF130009B47": "Baltharus the Warborn",
+    },
+    "Saviana Ragefire": {
+        "0xF130009B43": "Saviana Ragefire",
+    },
+    "General Zarithrian": {
+        "0xF130009B42": "General Zarithrian",
     },
     "Halion": {
         "0xF130009BB7": "Halion",
@@ -85,11 +99,22 @@ USEFUL = {
     "Anub'arak": {
         "0xF130008704": "Anub'arak",
         "0xF13000872D": "Swarm Scarab",
-        "0xF13000872F": "Nerubian Burrower",
     },
     "Toravon the Ice Watcher": {
         "0xF130009621": "Toravon the Ice Watcher",
         "0xF130009638": "Frozen Orb",
+    },
+    "Onyxia": {
+        "0xF1300027C8": "Onyxia",
+    },
+    "Malygos": {
+        "0xF1300070BB": "Malygos",
+    },
+    "Sartharion": {
+        '0xF1300070BC': "Sartharion",
+        '0xF1300076F4': "Tenebron",
+        '0xF1300076F3': "Shadron",
+        '0xF1300076F1': "Vesperon",
     },
 }
 
@@ -154,7 +179,7 @@ ALL_GUIDS = {
         "0xF15000880A": "Mistress of Pain",
         "0xF1300087FF": "Felflame Infernal",
     },
-    "Faction Champions": TOC_CHAMPIONS_ALL,
+    "Faction Champions": TOC_CHAMPIONS_USEFUL | TOC_PETS,
     "Anub'arak": {
         "0xF130008704": "Anub'arak",
         "0xF13000872D": "Swarm Scarab",
@@ -163,7 +188,7 @@ ALL_GUIDS = {
     },
     "Baltharus the Warborn": {
         "0xF130009B47": "Baltharus the Warborn",
-        "0xF130009BDB": "Baltharus the Warborn",
+        "0xF130009BDB": "Baltharus the Copyborn",
     },
     "General Zarithrian": {
         "0xF130009B42": "General Zarithrian",
@@ -198,7 +223,10 @@ ALL_GUIDS = {
 
 def get_all_targets(boss_name: str, boss_guid_id: str=None):
     if not boss_name:
-        return {}, {}
+        return {
+            "useful": {},
+            "all": {},
+        }
     
     if boss_name in USEFUL:
         targets_useful = USEFUL[boss_name]
@@ -208,9 +236,11 @@ def get_all_targets(boss_name: str, boss_guid_id: str=None):
         targets_useful = {}
 
     targets_all = ALL_GUIDS.get(boss_name, targets_useful)
-    return targets_useful, targets_all
+    return {
+        "useful": targets_useful,
+        "all": targets_all,
+    }
 
-@constants.running_time
 def get_dmg(logs_slice: list[str], targets: dict):
     all_dmg: dict[str, dict[str, int]] = {x: defaultdict(int) for x in targets}
     for line in logs_slice:
@@ -233,7 +263,7 @@ def dmg_gen_valk(logs: list[str]):
         if tGUID[5:-6] == '0008F01':
             yield sGUID, tGUID, int(dmg)
 
-@constants.running_time
+@running_time
 def get_valks_dmg(logs: list[str]):
     valks_useful: defaultdict[str, int] = defaultdict(int)
     valks_overkill: defaultdict[str, int] = defaultdict(int)
@@ -310,47 +340,3 @@ def specific_useful_combined(logs_slice, boss_name):
         for guid, d in _data.items():
             new_data[guid] += d
     return new_data
-
-
-
-def add_space(v):
-    return f"{v:,}".replace(',', ' ')
-
-def __test():
-    import logs_main
-    name = '21-10-04--19-54--Cedrist'
-    name = '21-10-06--20-51--Safiyah'
-    name = '21-10-07--21-06--Inia'
-    name = '21-10-08--20-57--Nomadra'
-    name = '22-03-25--22-02--Nomadra'
-
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    guids = report.get_all_guids()
-    enc_data = report.get_enc_data()
-
-    boss_name = "Blood Prince Council"
-    boss_name = "The Lich King"
-    boss_name = "Professor Putricide"
-    boss_name = "Rotface"
-    attempt = -1
-    s, f = None, None
-    # s = enc_data[boss_name][0][0]
-    # f = enc_data[boss_name][-1][-1]
-    s, f = enc_data[boss_name][attempt]
-    logs_slice = logs[s:f]
-    targets_useful, targets_all = get_all_targets(report, boss_name)
-    _all_dmg = get_dmg(logs_slice, targets_all)
-
-    if boss_name == "The Lich King":
-        valks_dmg = get_valks_dmg(logs_slice, guids)
-        _all_dmg['0xF150008F01'] = valks_dmg['useful']
-
-    _all_dmg = combine_pets_all(_all_dmg, guids, trim_non_players=True)
-    _total1 = combine_targets(_all_dmg, targets_useful)
-    _total1 = sorted(_total1.items(), key=lambda x: x[1], reverse=True)
-    for x,y in _total1:
-        print(f"{guids[x]['name']:<12} {add_space(y):>10}")
-
-if __name__ == "__main__":
-    __test()

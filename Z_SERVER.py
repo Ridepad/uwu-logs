@@ -1,5 +1,3 @@
-import json
-import logging
 import os
 import threading
 from datetime import datetime
@@ -13,19 +11,20 @@ import deaths
 import logs_calendar
 import logs_main
 import logs_upload
-from constants import (LOGS_DIR, PATH_DIR, T_DELTA_5MIN, UPLOADS_DIR, banned,
-                       get_logs_filter, wrong_pw)
+from constants import (
+    LOGGER_MAIN, LOGS_DIR, PATH_DIR, T_DELTA_15SEC, T_DELTA_5MIN, UPLOADS_DIR,
+    banned, get_logs_filter, get_report_name_info, wrong_pw)
 
 SERVER = Flask(__name__)
+SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 SERVER.config['UPLOAD_FOLDER'] = UPLOADS_DIR
-SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_5MIN
+SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_15SEC
 SERVER.config['USE_FILTER'] = True
 SERVER.config['FILTER_TYPE'] = 'private'
-SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 ALLOWED_EXTENSIONS = {'zip', '7z', }
-NEW_FILES: dict[str, logs_upload.NewUpload] = {}
+NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 
 ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
@@ -59,11 +58,12 @@ def load_report(name: str):
     return report
 
 def format_report_name(report_id: str):
-    date, time, name = report_id.split('--')
-    time = time.replace('-', ':')
-    year, month, day = date.split("-")
+    report_name_info = get_report_name_info(report_id)
+    time = report_name_info['time'].replace('-', ':')
+    year, month, day = report_name_info['date'].split("-")
     month = MONTHS[int(month)-1][:3]
     date = f"{day} {month} {year}"
+    name = report_name_info['name']
     return f"{date}, {time} - {name}"
 
 def default_params(report_id, request, shift=0):
@@ -117,7 +117,12 @@ CLEANER = []
 def _cleaner():
     now = datetime.now()
     for name, report in dict(OPENED_LOGS).items():
+        d = now - report.last_access
+        print(report.NAME)
+        print(d)
+        print(d > SERVER.config['MAX_SURVIVE_LOGS'])
         if now - report.last_access > SERVER.config['MAX_SURVIVE_LOGS']:
+            report.save_self()
             del OPENED_LOGS[name]
             print('[SERVER] CLEANED:', name, now - report.last_access)
     
@@ -148,7 +153,7 @@ def before_request():
     
     req = f"[{request.remote_addr}] {request.method:>4} | {request.path}{request.query_string.decode()} | {request.headers.get('User-Agent')}"
     print(req)
-    logging.info(req)
+    LOGGER_MAIN.info(req)
 
     if request.path.startswith('/reports/'):
         url_comp = request.path.split('/')
@@ -190,10 +195,10 @@ def allowed_file(filename: str):
         return filename.lower().rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def file_is_proccessing(ip):
-    if ip in NEW_FILES:
-        if NEW_FILES[ip].is_alive():
+    if ip in NEW_UPLOADS:
+        if NEW_UPLOADS[ip].is_alive():
             return True
-        del NEW_FILES[ip]
+        del NEW_UPLOADS[ip]
     return False
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
@@ -215,19 +220,18 @@ def upload():
         status = 'Supported file formats are .7z and .zip only'
         return render_template('upload.html', status=status)
     
-    t = NEW_FILES[ip] = logs_upload.main(file, ip)
-    t.start()
+    new_upload = logs_upload.main(file, ip)
+    NEW_UPLOADS[ip] = new_upload
+    new_upload.start()
     return render_template('upload_progress.html')
 
 @SERVER.route("/upload/check_progress")
 def check_progress():
     ip = request.remote_addr
-    t = NEW_FILES.get(ip)
-    if not t:
-        return '{"f": 0, "m": "Session ended or file uploaded"}'
-    
-    return t.status_json
-
+    new_upload = NEW_UPLOADS.get(ip)
+    if not new_upload:
+        return '{"done": 1, "status": "Session ended or file uploaded", "slices": {}}'
+    return new_upload.status_json
 
 
 @SERVER.route("/reports/<report_id>/")
