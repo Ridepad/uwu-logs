@@ -1013,6 +1013,17 @@ def get_all_files(path=None, ext=None):
     ext = fix_extention(ext)
     return [file for file in files if file.endswith(ext)]
 
+REPORTS_FILTER_FILES = {
+    'allowed': os.path.join(PATH_DIR, "__allowed.txt"),
+    'private': os.path.join(PATH_DIR, "__private.txt"),
+}
+FILTERED_LOGS = {}
+def get_logs_filter(filter_type: str):
+    if filter_type in FILTERED_LOGS:
+        return FILTERED_LOGS[filter_type]
+    data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).splitlines()
+    return data
+
 def get_folders_filter(filter=None):
     folders = get_folders('LogsDir')
     if filter is not None:
@@ -1082,18 +1093,6 @@ def logs_edit_time(file_name):
         last_line = get_last_line(file_name, skip_lines=1)
         dt_last_line = _to_dt(last_line)
     return abs(dt_last_edit-dt_last_line).total_seconds()
-
-
-REPORTS_FILTER_FILES = {
-    'allowed': os.path.join(PATH_DIR, "__allowed.txt"),
-    'private': os.path.join(PATH_DIR, "__private.txt"),
-}
-FILTERED_LOGS = {}
-def get_logs_filter(filter_type: str):
-    if filter_type in FILTERED_LOGS:
-        return FILTERED_LOGS[filter_type]
-    data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).split('\n')
-    return data
 
 
 MAX_PW_ATTEMPTS = 5
