@@ -23,7 +23,7 @@ xhttp.onreadystatechange = () => {
     pwField.value = "";
     window.location.reload();
   } else if (xhttp.status == 401) {
-    errorField.innerText = "Wrong password, buddy";
+    errorField.innerText = `Attempts left: ${xhttp.response}`;
   }
 }
 

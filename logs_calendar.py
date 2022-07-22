@@ -1,7 +1,8 @@
 import calendar
-import os
 from collections import defaultdict
 from datetime import datetime
+
+from constants import get_folders_filter
 
 HTMLC = calendar.HTMLCalendar()
 
@@ -26,7 +27,7 @@ def formal_cell(day_n, reports_list):
 
 def logs_db_gen(year, month):
     _correct_month = f"{year%100:>02}-{month:>02}"
-    folders = next(os.walk('LogsDir'))[1]
+    folders = get_folders_filter()
     for folder in folders:
         if folder.count('--') < 3:
             continue

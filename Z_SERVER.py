@@ -122,8 +122,8 @@ def pw_validate():
         _validate.set_cookie(resp)
         return resp
     
-    wrong_pw(request.remote_addr)
-    return ('', 401)
+    attempts_left = wrong_pw(request.remote_addr)
+    return (f'{attempts_left}', 401)
 
 @SERVER.before_request
 def before_request():

@@ -999,10 +999,10 @@ def convert_duration(t):
     return str(timedelta(seconds=t))
 
 def get_folders(path) -> list[str]:
-    return next(os.walk(path))[1]
+    return sorted(next(os.walk(path))[1])
 
 def get_files(path) -> list[str]:
-    return next(os.walk(path))[2]
+    return sorted(next(os.walk(path))[2])
 
 def get_all_files(path=None, ext=None):
     if path is None:
@@ -1021,7 +1021,9 @@ FILTERED_LOGS = {}
 def get_logs_filter(filter_type: str):
     if filter_type in FILTERED_LOGS:
         return FILTERED_LOGS[filter_type]
-    data = FILTERED_LOGS[filter_type] = file_read(REPORTS_FILTER_FILES[filter_type]).splitlines()
+    data = file_read(REPORTS_FILTER_FILES[filter_type])
+    data = data.splitlines()
+    FILTERED_LOGS[filter_type] = data
     return data
 
 def get_folders_filter(filter=None):
@@ -1102,10 +1104,11 @@ WRONG_PW = json_read(WRONG_PW_FILE)
 def wrong_pw(ip):
     attempt = WRONG_PW.get(ip, 0) + 1
     WRONG_PW[ip] = attempt
-    if attempt > MAX_PW_ATTEMPTS:
+    if attempt >= MAX_PW_ATTEMPTS:
         json_write(WRONG_PW_FILE, WRONG_PW)
+    return MAX_PW_ATTEMPTS - attempt
 
 def banned(ip):
-    return WRONG_PW.get(ip, 0) > MAX_PW_ATTEMPTS
+    return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS
 
 
