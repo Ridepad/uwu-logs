@@ -14,10 +14,9 @@ import logs_archive
 import logs_fix
 from constants import (
     LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR, SERVERS,
-    bytes_write, get_files, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
+    bytes_write, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
 
 p_join = os.path.join
-LEGACY = os.path.join(PATH_DIR, '__legacy')
 ARCHIVE_ID_ERROR = "Bad archive."
 ARCHIVE_ERROR = "Error unziping file."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
@@ -434,56 +433,6 @@ def main_local_text(logs_path, move=False, forced=False):
     return NewUpload(upload_data, forced=forced)
 
 
-def __main_text():
-    fname = r"F:\Python\uwulogs\uploads\21-05-20--03-09--Safiyah--Lordaeron.txt"
-    c = main_local_text(fname, forced=True)
-    c.start()
-    c.join()
-
-def __main_archive():
-    fname = p_join(LEGACY, "upload_432.zip")
-    file = File(fname)
-    c = main(file, forced=True)
-    # c = main(file, forced=False)
-    c.start()
-    c.join()
-
-def __find_legacy():
-    files = get_files(LEGACY)
-    for n, fname in enumerate(files):
-        fname = os.path.join(LEGACY, fname)
-        logs_id = logs_archive.get_archive_id(fname)
-        if logs_id == "1640205506_24241703":
-            print(n, fname)
-            return
-def __test5():
-    folder = os.path.join(UPLOADS_DIR, 't1')
-    files = get_files(folder)
-    _len = len(files)
-    for n, fname in enumerate(files, 1):
-        file_name_full = os.path.join(folder, fname)
-        UPLOAD_LOGGER.debug(f'{n:>4} /{_len:>4} | New file: {fname}')
-        file = File(file_name_full)
-        c = main(file, forced=1)
-        c.start()
-        c.join()
-
-def __sort(x:str):
-    return int(x.split('.')[0].split('_')[1])
-def __test6():
-    folder = os.path.join(PATH_DIR, '__legacy')
-    files = get_files(folder)
-    files = sorted(files, key=__sort)
-    files = files[files.index('upload_14964.zip'):]
-    _len = len(files)
-    for n, fname in enumerate(files, 1):
-        file_name_full = os.path.join(folder, fname)
-        UPLOAD_LOGGER.debug(f'{n:>4} /{_len:>4} | New file: {fname}')
-        file = File(file_name_full)
-        c = main(file, forced=1)
-        c.start()
-        c.join()
-
 def __main():
     import sys
     try:
@@ -504,4 +453,4 @@ def __main():
 
 
 if __name__ == "__main__":
-    __find_legacy()
+    __main()

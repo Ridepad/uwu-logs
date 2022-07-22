@@ -12,16 +12,17 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    LOGGER_MAIN, LOGS_DIR, PATH_DIR, T_DELTA_15SEC, T_DELTA_5MIN, UPLOADS_DIR,
+    LOGGER_MAIN, LOGS_DIR, PATH_DIR, T_DELTA_1MIN, UPLOADS_DIR,
     banned, get_logs_filter, get_report_name_info, wrong_pw)
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 SERVER.config['UPLOAD_FOLDER'] = UPLOADS_DIR
-SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_15SEC
+SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_1MIN
 SERVER.config['USE_FILTER'] = True
 SERVER.config['FILTER_TYPE'] = 'private'
+CLEANER = []
 
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
@@ -40,11 +41,6 @@ def get_shift(url_comp: list[str]):
         return SHIFT.get(url_comp[3], 0)
     except IndexError:
         return 0
-
-# def get_ip(request: Request):
-#     if request.remote_addr != "127.0.0.1":
-#         return request.remote_addr
-#     return request.headers.get("X-Forwarded-For") or request.headers.get("X-Real-Ip")
 
 def load_report(name: str):
     if name in OPENED_LOGS:
@@ -69,16 +65,11 @@ def format_report_name(report_id: str):
 def default_params(report_id, request, shift=0):
     report = load_report(report_id)
     report_name = format_report_name(report_id)
-    attempts_list = report.format_attempts()
     parsed = report.parse_request(request, shift)
-    # class_data = report.get_classes()
     classes_names = report.get_classes_with_names()
-    # SEGMENTS_QUERIES = report.SEGMENTS_SEPARATED
     _data = report.SEGMENTS_QUERIES
     segm_links = _data['segm_links']
     duration = report.get_fight_duration_total_str(parsed["segments"])
-    # diff_links = _data['diff_links']
-    # boss_links = _data['boss_links']
     return {
         "REPORT_ID": report_id,
         "REPORT_NAME": report_name,
@@ -89,16 +80,11 @@ def default_params(report_id, request, shift=0):
         "DURATION": duration,
         "boss_name": parsed["boss_name"],
         "segments": parsed["segments"],
-        # "attempts_list": attempts_list,
-        # "SEGMENTS_QUERIES": SEGMENTS_QUERIES,
-        # "diff_links": diff_links,
-        # "boss_links": boss_links,
     }
     
 @SERVER.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(PATH_DIR, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @SERVER.errorhandler(404)
 def method404(e):
@@ -113,27 +99,20 @@ def method413(e):
     status = 'Files <128mb only, learn to compress, scrub'
     return render_template('upload.html', status=status)
 
-CLEANER = []
 def _cleaner():
     now = datetime.now()
     for name, report in dict(OPENED_LOGS).items():
-        d = now - report.last_access
-        print(report.NAME)
-        print(d)
-        print(d > SERVER.config['MAX_SURVIVE_LOGS'])
         if now - report.last_access > SERVER.config['MAX_SURVIVE_LOGS']:
-            report.save_self()
             del OPENED_LOGS[name]
-            print('[SERVER] CLEANED:', name, now - report.last_access)
     
-    CLEANER.clear()
-
-@SERVER.after_request
-def after_request(response):
+@SERVER.teardown_request
+def after_request_callback(response):
     if not CLEANER:
         t = threading.Thread(target=_cleaner)
         t.start()
         CLEANER.append(t)
+    elif not CLEANER[0].is_alive():
+        CLEANER.clear()
     return response
 
 @SERVER.route("/pw_validate", methods=["POST"])
