@@ -8,27 +8,27 @@ WotLK logs parser.
 
 <https://uwu-logs-top.web.app>
 
-![Showcase top](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/top.png)
+![Showcase top](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/top.png)
 
 ### Player total and per target spell info
 
-![Showcase player spell info](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/spell_info.png)
+![Showcase player spell info](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/spell_info.png)
 
 ### Damage to targets + useful
 
-![Showcase useful](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/useful.png)
+![Showcase useful](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/useful.png)
 
 ### Player comparison
 
-![Showcase comparison](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/compare.png)
+![Showcase comparison](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/compare.png)
 
 ### Spell search and overall info
 
-![Showcase spell search](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/spells.png)
+![Showcase spell search](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/spells.png)
 
 ### Consumables
 
-![Showcase consumables](https://raw.githubusercontent.com/Ridepad/TrinketCDs/main/showcase/consume.png)
+![Showcase consumables](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/consume.png)
 
 ## TODO
 
