@@ -1,6 +1,6 @@
 # UwU Logs
 
-WotLK logs parser.
+<https://uwu-logs.xyz/> WotLK logs parser.
 
 ## Showcase
 
