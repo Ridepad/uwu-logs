@@ -1,4 +1,3 @@
-import constants
 from constants import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC
 
 CLASSES = list(CLASS_FROM_HTML)
@@ -32,7 +31,6 @@ def get_spec_info(player_class, spec_index=0):
     classi = CLASSES.index(player_class)
     return SPECS_LIST[classi*4+spec_index]
 
-@constants.running_time
 def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str]):
     specs = get_specs_guids(logs, players, classes)
     

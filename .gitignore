@@ -15,4 +15,5 @@ db*.*
 bkup/
 LogsDir/
 LogsRaw/
+top/
 uploads/

@@ -88,6 +88,13 @@ html::-webkit-scrollbar {
   color:hsla(0, 0%, 50%, 0.5);
 }
 
+a:not([class]):hover {
+  color: var(--link-hover);
+  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+}
+:is(#top-nav, #bot-nav) a:hover {
+  color: var(--primary-color);
+}
 
 /* HOME PAGE */
 #home-page {
@@ -117,15 +124,27 @@ html::-webkit-scrollbar {
   display: grid;
   justify-content: center;
 }
-
 #upload-error {
   margin-top: 1rem;
   color: crimson;
 }
 #upload-status {
-  width: 20vw;
+  min-width: 20ch;
+  width: 50vw;
+}
+.upload h2 {
+  font-size: 150%;
+}
+.upload a {
+  color: var(--third-color);
+}
+.upload td {
+  padding-inline: 1em;
 }
 
+.upload span {
+  color:bisque;
+}
 
 /* NO PAGE */
 #no-page {
@@ -204,7 +223,6 @@ footer {
   left: 0;
   width: 100%;
   background-color: var(--background);
-
 }
 nav {
   top: 0;
@@ -1133,10 +1151,6 @@ td:hover > table {
   text-align: left;
 }
 
-#calendar section a:hover {
-  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
-}
-
 #calendar section {
   position: fixed;
   bottom: 10%;
@@ -1155,7 +1169,6 @@ td:hover > table {
   font-size: 3vh;
   display: block;
 }
-
 
 
 

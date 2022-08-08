@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UwU Logs - Top</title>
+
+    <meta name="title" content="UwU Logs - Top">
+    <meta name="description" content="Players Top for UwU Logs.">
+    <link rel="shortcut icon" href="https://uwu-logs-top.web.app/favicon.ico">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://uwu-logs-top.web.app/">
+    <meta property="og:title" content="UwU Logs - Top">
+    <meta property="og:description" content="Players Top for UwU Logs.">
+    <meta property="og:image" content="https://uwu-logs-top.web.app/static/thumb.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://uwu-logs-top.web.app/">
+    <meta property="twitter:title" content="UwU Logs - Top">
+    <meta property="twitter:description" content="Players Top for UwU Logs.">
+    <meta property="twitter:image" content="https://uwu-logs-top.web.app/static/thumb.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" type="text/css" href="/static/style_top.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
+    
+    <script type="module" src="static/top.js"></script>
+  </head>
+  <body>
+    <main id="ladder">
+      <section id="controls">
+        <!-- <input id="server-input" placeholder="Type in any server name (no limits)" type="text" list="server-list"> -->
+        <select id="server-select">
+          <option value="Lordaeron">Lordaeron</option>
+          <option value="Icecrown">Icecrown</option>
+          <option value="Frosmourne3">Frosmourne3</option>
+          <option value="Frosmourne2">Frosmourne2</option>
+          <option value="Algalon">Algalon</option>
+          <option value="ChromieCraft">ChromieCraft</option>
+          <option value="Crystalsong">Crystalsong</option>
+          <option value="Sindragosa">Sindragosa</option>
+          <option value="Rising Gods">Rising Gods</option>
+        </select>
+        <select id="instance-select"></select>
+        <select id="boss-select"></select>
+        <input id="combine-checkbox" type="checkbox" checked>
+        <label id="combine-label" for="combine-checkbox">Best</label>
+        <select id="size-select"><option value="25">25</option><option value="10">10</option></select>
+        <input id="difficulty-checkbox" type="checkbox" checked>
+        <label id="difficulty-label" for="difficulty-checkbox">Heroic</label>
+        <select id="class-select"><option value="-1">All classes</option></select>
+        <select id="spec-select"></select>
+      </section>
+      <section id="table-section">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th id="head-name">Name</th>
+              <th id="head-useful-dps" class="sortable">uDPS</th>
+              <th id="head-useful-amount" class="sortable">Useful</th>
+              <th id="head-total-dps" class="sortable">tDPS</th>
+              <th id="head-total-amount" class="sortable">Total</th>
+              <th id="head-duration" class="sortable">Dur</th>
+              <th id="head-external" class="sortable">Ext</th>
+              <th id="head-self" class="sortable">Self</th>
+              <th id="head-rekt" class="sortable">Rekt</th>
+              <th id="head-date" class="sortable">Date</th>
+            </tr>
+          </thead>
+          <tbody id="main-table-body"></tbody>
+        </table>
+      </section>
+      <footer>
+        <p id="loading-info"></p>
+      </footer>
+    </main>
+  </body>
+</html>

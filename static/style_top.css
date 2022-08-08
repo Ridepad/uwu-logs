@@ -1,0 +1,341 @@
+:root {
+  --highlight-color: rgb(24, 24, 24);
+  --footer-height: 4.5vh;
+  --primary-color: blueviolet;
+  --secondary-color: darkviolet;
+  --third-color: darkorchid;
+  --link-text-shadow: burlywood;
+  --link-text-shadow-hover: brown;
+  --background: black;
+  --unfocused: hsl(271, 100%, 20%);
+  --hover: hsl(271, 100%, 35%);
+  --main-white: gainsboro;
+}
+
+* {
+  color: var(--main-white);
+  font-family: Ubuntu;
+  font-size: 1.6vh;
+  text-decoration: none;
+  font-weight: 500;
+  margin: 0;
+}
+
+@media (min-width: 1100px) {
+  * {
+    font-size: 2vh;
+  }
+}
+
+#no-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#no-page > img {
+  width: clamp(112px, 95vw, 60vh);
+  height: clamp(112px, 95vw, 60vh);
+}
+#no-page p {
+  margin: 1rem;
+}
+
+/* Hide scrollbar */
+html {
+  background-color: var(--background);
+  overflow: none;
+  -ms-overflow-style: none; /*IE Edge*/
+  scrollbar-width: none;  /*Firefox*/
+}
+html::-webkit-scrollbar {
+  display: none; /*Chrome Safari Opera*/
+}
+
+
+.death-knight {color: crimson;}
+.mage {color:lightskyblue;}
+.shaman {color:rgb(0, 80, 255);}
+.rogue {color:gold;}
+.hunter {color:yellowgreen;}
+.paladin {color:violet;}
+.priest {color:whitesmoke;}
+.warrior {color:sienna;}
+.druid {color:darkorange;}
+.warlock {color:slateblue;}
+
+footer {
+  z-index: 3;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  background-color: var(--background);
+  bottom: 0;
+  height: var(--footer-height);
+  box-shadow: inset 0 .5rem 1rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color);
+  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
+}
+
+
+caption {
+  text-transform: uppercase;
+  font-weight: 700;
+}
+table, th, td {
+  border-spacing: 0;
+}
+th, td {
+  border: 1px solid dimgray;
+}
+@media (min-width: 1100px) {
+  table, th, td {
+    border-collapse: collapse;
+  }
+}
+th {
+  font-weight: 700;
+  background-color: var(--highlight-color);
+}
+tbody > tr:nth-child(odd) > td {
+  background-color: hsl(0, 0%, 5%);
+}
+tbody > tr:hover > td {
+  background-color: hsl(285, 100%, 5%);
+}
+td {
+  min-width: 3.5ch;
+  background-color: var(--background);
+  background-clip: padding-box;
+}
+td > a {
+  text-shadow: 0 0 3rem currentColor;
+}
+td > a:hover {
+  text-shadow: 0 0 3rem currentColor, 0 0 .3em currentColor;
+}
+
+
+/* LABELS */
+
+label,
+select {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.2rem;
+  padding-bottom: 0;
+  border: none;
+  background-color: unset;
+  color: var(--secondary-color);
+  border-bottom: .2rem solid var(--primary-color);
+}
+
+select * {
+  background-color: var(--background);
+}
+
+input:not(:checked) + label {
+  color: var(--unfocused);
+  border-bottom: .2rem solid currentColor;
+}
+
+input:not(:checked) + label:hover {
+  color: var(--hover);
+}
+
+label:hover {
+  text-shadow: 0 0 .5em currentColor;
+}
+label:hover,
+select:hover {
+  box-shadow: inset 0 0 .6em currentColor, 0 .1em 1em currentColor;
+}
+
+input[type=checkbox] {
+  display: none;
+}
+
+
+button {
+  cursor: pointer;
+  min-width: 7ch;
+  font-size: 3ch;
+  background: var(--background);
+  border: .1rem solid var(--primary-color);
+  border-radius: .2rem;
+}
+button:hover {
+  color: var(--primary-color);
+  box-shadow: inset 0 0 .4em currentColor, 0 .1em .7em currentColor;
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+
+#ladder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+#server-select,
+#instance-select,
+#boss-select {
+  grid-column: span 6;
+}
+#combine-label,
+#size-select,
+#difficulty-label {
+  grid-column: span 2;
+}
+#class-select,
+#spec-select {
+  grid-column: span 3;
+}
+
+#controls > * {
+  font-size: clamp(10pt, 3vh, 7vw);
+  text-align: center;
+}
+
+
+#table-section {
+  margin-top: 1vh;
+}
+#main-table * {
+  border: 0;
+}
+#main-table th {
+  border-bottom: .2em solid var(--primary-color);
+}
+
+#main-table-body td {
+  padding: 0;
+  padding-inline: 1px;
+  text-align: center;
+}
+
+@media (min-width: 1100px) {
+  
+  #main-table-body td {
+    padding-inline: 2vw;
+    padding-inline: 2px;
+  }
+  #ladder #instance-select,
+  #ladder #boss-select {
+    min-width: 25ch;
+    margin-left: 0;
+  }
+  #ladder table {
+    width: unset;
+  }
+  #controls {
+    width: 100%;
+    min-width: 20ch;
+    max-width: 50ch;
+  }
+  abbr span {
+    display: none;
+  }
+  abbr::before {
+    content: attr(title);
+  }
+}
+
+
+#main-table > thead th.sortable {
+  cursor: pointer;
+}
+
+#main-table > tbody tr {
+  counter-increment: rowNumber;
+}
+#main-table > tbody tr td.table-n::before {
+  display: inline-block;
+  content: counter(rowNumber);
+  min-width: 2ch;
+  width: 5ch;
+  text-align: center;
+  color: var(--main-white);
+}
+
+
+#main-table > tbody img {
+  min-height: 1em;
+  min-width: 1em;
+  max-width: 1em;
+  vertical-align: middle;
+  margin-bottom: 1px;
+}
+
+#main-table > tbody .table-n {
+  width: 21ch;
+  min-width: max-content;
+  text-align: left;
+}
+
+#main-table > tbody :is(.table-ud, .table-td) {
+  min-width: 7.5ch;
+  text-align: right;
+}
+
+#main-table > tbody :is(.table-ua, .table-ta) {
+  min-width: 9ch;
+  text-align: right;
+}
+
+#main-table > tbody tr td.table-r {
+  min-width: 9ch;
+  width: 14ch;
+}
+
+#main-table > tbody tr td.table-t {
+  min-width: 6ch;
+}
+
+
+.table-ext, 
+.table-self,
+.table-rekt {
+  position: relative;
+}
+td:hover > ul {
+  display: block;
+  list-style-type: none;
+  padding: 0;
+}
+td > ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 95%;
+    z-index: 2;
+    background-color: black;
+    box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
+}
+
+li {
+  display: table-row;
+}
+
+li span {
+  display: table-cell;
+  padding-inline: 1ch;
+  min-width: max-content;
+}
+#head-useful,
+.table-u {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  #head-useful,
+  .table-u {
+    display: table-cell;
+    font-size: 2vh;
+  }
+}

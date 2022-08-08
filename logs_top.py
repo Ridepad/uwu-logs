@@ -1,11 +1,11 @@
 from time import perf_counter
-import dmg_useful
+import dmg_heals
+import logs_dmg_useful
 import logs_main
 import constants
-from logs_spell_info import AURAS_EXTERNAL, AURAS_CONSUME, AURAS_EVENT
+from logs_spell_info import AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS, MULTISPELLS_D
 
-z_spells = [AURAS_EXTERNAL, AURAS_CONSUME]
-z_names = ["e", "c", "o"]
+z_spells = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
 
 def f_auras(auras, spec):
@@ -16,6 +16,7 @@ def f_auras(auras, spec):
     
     zz = {}
     for spell_id, (count, uptime) in auras.items():
+        spell_id = MULTISPELLS_D.get(spell_id, spell_id)
         for n, a in enumerate(z_spells):
             if spell_id in a:
                 uptime = round(uptime*100, 1)
@@ -23,63 +24,64 @@ def f_auras(auras, spec):
                 break
     return zz
 
-def make_top_dict(report: logs_main.THE_LOGS, dmg, specs, duration, auras):
-    players = report.get_players_guids()
-    report_name = report.NAME
-    return [
-        {
-            'i': guid,
-            'n': players[guid],
-            'r': report_name,
-            'u': value,
-            'd': round(value/duration, 2),
-            't': duration,
-            's': specs[guid],
-            'a': f_auras(auras[guid], specs[guid])
-        }
-        for guid, value in dmg.items()
-    ]
-
 def find_kill(segments):
     for segment_info in segments:
         if segment_info['attempt_type'] == 'kill':
             yield segment_info
 
 def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
-    s, f = kill_segment['start'], kill_segment['end']
+    S, F = kill_segment['start'], kill_segment['end']
+    GUIDS = report.get_all_guids()
+
     boss_guid_id = report.name_to_guid(boss_name)
-    targets = dmg_useful.get_all_targets(boss_name, boss_guid_id)
+    targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
     
-    all_data = report.useful_damage(s, f, targets["all"], boss_name)
-
-    # print(all_data)
-    if "Valks Useful" in all_data:
+    useful_data = report.useful_damage(S, F, targets["all"], boss_name)
+    if "Valks Useful" in useful_data:
         targets["useful"]["Valks Useful"] = "Valks Useful"
+    useful_data = logs_dmg_useful.combine_pets_all(useful_data, GUIDS, trim_non_players=True, ignore_abom=True)
+    targets_useful_dmg = logs_dmg_useful.combine_targets(useful_data, targets["useful"])
+
+    logs_slice = report.get_logs(S, F)
+    players_and_pets = report.get_players_and_pets_guids()
+    total_dmg = dmg_heals.parse_only_dmg_no_friendly(logs_slice, players_and_pets)
+    # print(total_dmg)
+    data_with_pets_d = dmg_heals.add_pets_guids(total_dmg, GUIDS)
+    data_with_pets = data_with_pets_d["players"]
+    # print(data_with_pets)
+
+    specs = report.get_players_specs_in_segments(S, F)
+
+    duration = report.get_fight_duration(S, F)
+    auras = report.auras_info(S, F)
     
-    guids = report.get_all_guids()
-    all_data = dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True, ignore_abom=True)
-    # print(json.dumps(all_data))
-    # for q,w in all_data.items():
-    #     print(q, w)
-    #     report.pretty_print_players_data(w)
-    #     print(q)
-    #     break
+    players = report.get_players_guids()
+    report_name = report.NAME
+    return [
+        {
+            'i': guid[-7:],
+            'n': players[guid],
+            'r': report_name,
+            'ua': useful,
+            'ud': round(useful/duration, 2),
+            'ta': data_with_pets[guid],
+            'td': round(data_with_pets[guid]/duration, 2),
+            't': duration,
+            's': specs[guid],
+            'a': f_auras(auras[guid], specs[guid])
+        }
+        for guid, useful in targets_useful_dmg.items()
+    ]
 
-    targets_useful_dmg = dmg_useful.combine_targets(all_data, targets["useful"])
-    # print(json.dumps(targets_useful_dmg))
-    # print('targets_useful_dmg')
-    # report.pretty_print_players_data(targets_useful_dmg)
-
-
-    specs = report.get_players_specs_in_segments(s, f)
-    # print('specs')
-    # print(specs)
-    dur = report.get_fight_duration(s, f)
-    auras = report.auras_info(s, f)
-    top = make_top_dict(report, targets_useful_dmg, specs, dur, auras)
-    # targets_useful_dmg = report.add_total_and_names(targets_useful_dmg)
-    
-    return top
+BOSSES = ['The Lich King',
+    'Lord Marrowgar', 'Lady Deathwhisper', 'Deathbringer Saurfang',
+    'Festergut', 'Rotface', 'Professor Putricide',
+    'Blood Prince Council', "Blood-Queen Lana'thel",
+    'Sindragosa',
+    'Halion', 'Baltharus the Warborn', 'General Zarithrian', 'Saviana Ragefire',
+    "Anub'arak", 'Northrend Beasts', 'Lord Jaraxxus', 'Faction Champions', "Twin Val'kyr",
+    'Toravon the Ice Watcher', 'Archavon the Stone Watcher', 'Emalon the Storm Watcher', 'Koralon the Flame Watcher',
+    'Onyxia']
 
 def make_report_top(name: str):
     report = logs_main.THE_LOGS(name)
@@ -89,8 +91,10 @@ def make_report_top(name: str):
     print(name)
     pc = perf_counter()
     top = {}
-    segments = report.format_attempts()
+    segments = report.get_segments_data()
     for boss_name, boss_segments in segments.items():
+        if boss_name not in BOSSES:
+            continue
         boss_top = top.setdefault(boss_name, {})
         for kill_segment in find_kill(boss_segments):
             diff = kill_segment['diff']
@@ -111,5 +115,7 @@ def main_wrap(name):
 
 
 if __name__ == "__main__":
-    # make_report_top('22-07-15--21-01--Safiyah--Lordaeron')
-    constants.redo_data(main_wrap, filter="Lordaeron")
+    # make_report_top('22-07-29--21-00--Safiyah--Lordaeron')
+    import _redo
+    _redo.redo_data(main_wrap, proccesses=4)
+    # _redo.redo_data(main_wrap, filter="Lordaeron", startfrom=-50, proccesses=4)

@@ -3,7 +3,7 @@
 {% block the_main %}
 <main>
 <section class="upload">
-  <h1>Upload progress:</h1>
+  <h2>Upload progress:</h2>
   <div id="upload-status">Preparing...</div>
   <section>
     <table id="upload-table" style="display: none;">
@@ -25,7 +25,6 @@
   const table = document.getElementById("upload-table");
   const tbody = document.getElementById("upload-table-tbody");
   const request = new XMLHttpRequest();
-  const EMPTY_OBJECT = {};
   
   function newRow(report_name, report_data) {
     const tr = document.createElement("tr");
@@ -49,7 +48,7 @@
       request.open("GET", "/upload/check_progress", true);
       request.send();
     }
-  }, 500)
+  }, 250)
 
   request.onreadystatechange = () => {
     if (request.readyState != 4 || request.status != 200) return;

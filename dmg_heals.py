@@ -1,6 +1,6 @@
-import constants
-from constants import running_time, sort_dict_by_value, is_player
 from collections import defaultdict
+
+from constants import is_player, running_time, sort_dict_by_value
 
 
 def dmg_gen(logs: list[str]):
@@ -49,25 +49,21 @@ def parse_data(gen):
         data[guid] += amount
     return data
 
-@running_time
 def parse_only_dmg(logs):
     gen_func = DATA_GEN["damage"]
     gen = gen_func(logs)
     return parse_data(gen)
 
-@running_time
 def parse_only_dmg_no_friendly(logs, players_and_pets):
     gen_func = DATA_GEN["damage_no_friendly"]
     gen = gen_func(logs, players_and_pets)
     return parse_data(gen)
 
-@running_time
 def parse_dmg_targets(logs, targets):
     gen_func = DATA_GEN["damage_targets"]
     gen = gen_func(logs, targets)
     return parse_data(gen)
 
-@running_time
 def parse_only_heal(logs):
     gen_func = DATA_GEN["heal"]
     gen = gen_func(logs)
@@ -352,47 +348,3 @@ def parse_dmg_taken_add_pets(data: dict[str, dict], guids):
         _ttl_tar[target_guid] = sum(src.values())
             
     return new_dmg, _ttl_tar, _ttl_src
-
-
-def add_space(v):
-    return f"{v:,}".replace(',', ' ')
-
-def __test1():
-    name = '21-10-29--21-05--Nomadra'
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    guids = report.get_all_guids()
-    spells = report.get_spells()
-    f = set()
-    n = 'Shoggoth'
-    filter_guid = report.name_to_guid(n)
-    f.add(filter_guid)
-    n = 'Nomadra'
-    filter_guid = report.name_to_guid(n)
-    f.add(filter_guid)
-    n = 'Festergut'
-    filter_guid = report.name_to_guid(n)
-    f.add(filter_guid)
-    assert filter_guid is not None
-    d = parse_dmg_taken(logs, filter_guid)
-    print(d[filter_guid])
-    q,w,e = parse_dmg_taken_add_pets(d, guids)
-    print(q[filter_guid])
-    print(w[filter_guid])
-    print(e[filter_guid])
-    e = sort_dict_by_value(e[filter_guid])
-    for guid, dmg in e:
-        print(f"{guids[guid]['name']:<25}{add_space(dmg):>15}")
-
-def __test2():
-    name = '22-04-27--21-02--Safiyah'
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    all_guids = report.get_all_guids()
-    player_pets = report.get_players_and_pets_guids()
-    h1 = parse_both(logs, player_pets)
-    h2 = parse_only_dmg(logs)
-
-if __name__ == "__main__":
-    import logs_main
-    __test2()

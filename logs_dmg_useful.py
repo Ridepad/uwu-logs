@@ -85,6 +85,7 @@ USEFUL = {
         "0xF1300087EF": "Dreadscale",
         "0xF130008948": "Acidmaw",
         "0xF1300087ED": "Icehowl",
+        "0xF1300087F0": "Snobold Vassal",
     },
     "Lord Jaraxxus": {
         "0xF1300087DC": "Lord Jaraxxus",
@@ -164,13 +165,6 @@ ALL_GUIDS = {
         "0xF13000933F": "Drudge Ghoul",
         "0xF130009342": "Shambling Horror",
         "0xF1300093A7": "Vile Spirit",
-    },
-    "Northrend Beasts": {
-        "0xF1500087EC": "Gormok the Impaler",
-        "0xF1300087EF": "Dreadscale",
-        "0xF130008948": "Acidmaw",
-        "0xF1300087ED": "Icehowl",
-        "0xF1300087F0": "Snobold Vassal",
     },
     "Lord Jaraxxus": {
         "0xF1300087DC": "Lord Jaraxxus",

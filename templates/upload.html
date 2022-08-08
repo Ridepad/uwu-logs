@@ -3,13 +3,36 @@
 {% block the_main %}
 <main>
 <section class="upload">
-  <h1>Upload new File</h1>
-  <form method=post enctype=multipart/form-data>
-    <input type=file name=file accept=".7z, .zip" multiple>
-    <input type=submit value=Upload>
-    <p>Logs are public by default, private soon TM</p>
+  <h2>Upload new file</h2>
+  <form id="upload-form" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".7z, .zip">
+    <input type="submit" value="Upload">
   </form>
-  <div id="upload-error">{{status}}</div>
+  <p>Optional: (Warmane is parsed automatically)</p>
+  <input placeholder="Type in any server name (no limits)" type="text" id="server" list="server-list">
+  <datalist id="server-list">
+    <option value="Algalon"></option>
+    <option value="ChromieCraft"></option>
+    <option value="Crystalsong"></option>
+    <option value="Sindragosa"></option>
+    <option value="Rising Gods"></option>
+  </datalist>
+  <div id="upload-error">{{ status }}</div>
+</section>
+<section class="upload">
+  <h2>How to start logging</h2>
+  <ul>
+    <li>Type <span>/combatlog</span> in game (before anything happens, not after)</li>
+    <li>Find logs file in game's folder: <span>World of Warcraft/Logs/WoWCombatLog.txt</span></li>
+    <li>Archive it</li>
+    <li>Upload above</li>
+  </ul>
+  <h2>Additional info</h2>
+  <ul>
+    <li>Use <a href="https://wago.io/9Okfx9zrS" target="_blank">weakauras</a> to never forget to start logging</li>
+    <li>If the file size is above 2GB, use 7zip with PPMd compression</li>
+    <li>Logs are public by default, private soon TM</li>
+  </ul>
 </section>
 </main>
 {% endblock the_main %}

@@ -1,8 +1,4 @@
-import logging
-
-import constants
-import logs_main
-from constants import SPELLS_SCHOOLS, UNUSUAL_SPELLS
+from constants import SPELLS_SCHOOLS, UNUSUAL_SPELLS, running_time
 
 CUSTOM_SPELLS = {
     "42925": "Flamestrike (Rank 8)",
@@ -35,7 +31,7 @@ def finish_spells(spells: dict[str, dict]):
         new_spells[int(spell_id)] = v
     return new_spells
 
-@constants.running_time
+@running_time
 def get_all_spells(logs: list[str]):
     '''spells[id] = {"name": line[7], 'school': line[8]}'''
     spells = {
@@ -49,27 +45,3 @@ def get_all_spells(logs: list[str]):
         except IndexError:
             pass
     return finish_spells(spells)
-
-def __redo(name):
-    print(name)
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    spells = get_all_spells(logs)
-    # spells = get_all_spells(logs)
-    # spells = get_all_spells(logs)
-    # spells = get_all_spells(logs)
-    # spells = get_all_spells(logs)
-    pth = report.relative_path('SPELLS_DATA.json')
-    constants.json_write(pth, spells)
-
-def __redo_wrapped(name):
-    try:
-        __redo(name)
-    except Exception:
-        logging.exception(f'spells_list __redo {name}')
-
-if __name__ == '__main__':
-    __redo("22-06-24--21-13--Nomadra")
-    # __redo("22-06-17--20-57--Nomadra")
-    # constants.redo_data(inner)
-    # constants.redo_data(__redo_wrapped)

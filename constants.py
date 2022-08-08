@@ -24,6 +24,7 @@ PATH_DIR = os.path.dirname(real_path)
 LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
 LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
 UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
+UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
 
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "{PATH_DIR}\%(filename)s:%(lineno)s" | %(message)s'
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'
@@ -55,9 +56,12 @@ T_DELTA_15MIN = timedelta(minutes=15)
 T_DELTA_20MIN = timedelta(minutes=20)
 T_DELTA_30MIN = timedelta(minutes=30)
 T_DELTA_15SEC = timedelta(seconds=15)
+T_DELTA_2SEC = timedelta(seconds=2)
 
 LOGS_CUT_NAME = "LOGS_CUT"
 UPLOAD_STATUS_INFO = {}
+ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 FLAG_ORDER = [
     "SPELL_DISPEL", "SPELL_CAST_SUCCESS", "SPELL_EXTRA_ATTACKS",  "SPELL_ENERGIZE",
@@ -781,7 +785,7 @@ def save_backup(path):
             os.remove(old)
         os.rename(path, old)
 
-def json_read(path: str) -> dict:
+def json_read(path: str):
     path = add_extention(path, '.json')
     try:
         with open(path) as file:
@@ -794,9 +798,10 @@ def json_read_no_exception(path: str):
     with open(path) as file:
         return json.load(file)
 
-def json_write(path: str, data, indent=2, sep=None):
+def json_write(path: str, data, backup=False, indent=2, sep=None):
     path = add_extention(path, '.json')
-    save_backup(path)
+    if backup:
+        save_backup(path)
     with open(path, 'w') as file:
         json.dump(data, file, ensure_ascii=False, default=sorted, indent=indent, separators=sep)
 
@@ -988,15 +993,12 @@ def get_fight_duration(s, f):
     return get_time_delta(s, f).total_seconds()
 
 def convert_duration(t):
-    milliseconds = int(t * 1000 % 1000)
+    milliseconds = int(t % 1 * 1000)
     t = int(t)
     seconds = t % 60
     minutes = t // 60 % 60
     hours = t // 3600
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
-
-def convert_duration(t):
-    return str(timedelta(seconds=t))
 
 def get_folders(path) -> list[str]:
     return sorted(next(os.walk(path))[1])
@@ -1033,25 +1035,6 @@ def get_folders_filter(filter=None):
     filter_list = get_logs_filter('private')
     folders = [name for name in folders if name not in filter_list]
     return folders
-
-def redo_data(redo_func, multi=True, startfrom=None, end=None, proccesses=4, filter=None):
-    def get_index(z):
-        return z if type(z) == int else folders.index(z)
-    
-    folders = get_folders_filter(filter)
-
-    if startfrom:
-        folders = folders[get_index(startfrom):]
-    if end:
-        folders = folders[:get_index(end)]
-
-    if multi and proccesses > 0:
-        from multiprocessing import Pool
-        with Pool(proccesses) as p:
-            p.map(redo_func, folders)
-    else:
-        for x in folders:
-            redo_func(x)
 
 def get_report_name_info(name: str):
     info = name.split('--')
@@ -1105,7 +1088,7 @@ def wrong_pw(ip):
     attempt = WRONG_PW.get(ip, 0) + 1
     WRONG_PW[ip] = attempt
     if attempt >= MAX_PW_ATTEMPTS:
-        json_write(WRONG_PW_FILE, WRONG_PW)
+        json_write(WRONG_PW_FILE, WRONG_PW, backup=True)
     return MAX_PW_ATTEMPTS - attempt
 
 def banned(ip):

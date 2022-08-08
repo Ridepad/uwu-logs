@@ -1,7 +1,4 @@
-from collections import defaultdict
-
-import constants
-from constants import BOSSES_GUIDS, running_time
+from constants import BOSSES_GUIDS, convert_duration, get_fight_duration
 
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 DEFAULT_DIFFICULTY = "TBD"
@@ -16,7 +13,7 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Rotface": ("69674", "73022", "71224", "73023"), # Mutated Infection
     "Professor Putricide": ("70402", "72512", "72511", "72513"), # Mutated Transformation
     "Professor Putricide2": ("70351", "71967", "71966", "71968"), # Unstable Experiment
-    "Blood Prince Council": ("71405", "72804", "72805", "72806"), # Shadow Lance
+    "Blood Prince Council": ("71405", "72805", "72804", "72806"), # Shadow Lance
     # "Blood Prince Council": ("Empowered Shock Vortex", ("72039", "73038", "73037", "73039")),
     "Blood-Queen Lana'thel": ("70985", "71699", "71698", "71700"), # Shroud of Sorrow
     "Valithria Dreamwalker": ("70759", "72015", "71889", "72016"), # Frostbolt Volley
@@ -51,11 +48,21 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Emalon the Storm Watcher": ("64213", "", "64215", ""), # Chain Lightning
 }
 
-
+def imagine_playing_shit_expansion(logs_slice):
+    players = set()
+    for line in logs_slice[:2000]:
+        if "SPELL_DAMAGE" not in line:
+            continue
+        sGUID = line.split(',', 3)[2]
+        if sGUID[:3] == '0x0':
+            players.add(sGUID)
+            if len(players) > 10:
+                return DIFFICULTY[2]
+    return DIFFICULTY[0]
 
 def get_diff(logs_slice: list[str], boss_name: str) -> str:
     if boss_name not in SPELLS:
-        return DEFAULT_DIFFICULTY
+        return imagine_playing_shit_expansion(logs_slice)
     spell_ids = SPELLS[boss_name]
     for line in logs_slice:
         try:
@@ -92,7 +99,7 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
 
 def get_slice_duration(logs_slice):
     s, f = logs_slice[0], logs_slice[-1]
-    return constants.get_fight_duration(s, f)
+    return get_fight_duration(s, f)
 
 def convert_to_html_name(name: str):
     return name.lower().replace(' ', '-').replace("'", '')
@@ -104,8 +111,8 @@ def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, at
     diff = get_diff(logs_slice, boss_name)
     
     slice_duration = get_slice_duration(logs_slice)
-    slice_duration_str = constants.convert_duration(slice_duration)
-    slice_duration_str = slice_duration_str[2:-3]
+    slice_duration_str = convert_duration(slice_duration)
+    slice_duration_str = slice_duration_str[2:]
 
     kill = is_kill(logs_slice[-1])
     if not kill and boss_name == "The Lich King":
@@ -132,50 +139,8 @@ def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, at
     }
 
 
-def sadfksadfopk(logs, segments, boss_name):
-    boss_data: dict[str, list[dict[str, str]]] = {}
-    shift = 0
-    for attempt, segment in enumerate(segments):
-        segment_data = format_attempt(logs, segment, boss_name, attempt, shift)
-        if segment_data["attempt_type"] == "kill":
-            shift = attempt+1
-        diff = segment_data['diff']
-        boss_data.setdefault(diff, []).append(segment_data)
-    return boss_data
 
-def diff_gen(logs: list[str], enc_data: dict[str, list[tuple[int]]], report_id):
-    new_data = {}
-    boss_to_html = {}
-    for boss_name, segments in enc_data.items():
-        boss_html = convert_to_html_name(boss_name)
-        boss_to_html[boss_name] = boss_html
-        link = f"/reports/{report_id}/?boss={boss_html}"
-
-        boss_data = sadfksadfopk(logs, segments, boss_name)
-
-        _data_with_links = {}
-        data_sorted = sorted(boss_data.items())
-        for diff, segments in data_sorted:
-            link2 = f"{link}&diff={diff}"
-            for seg_info in segments:
-                seg_info['link'] = f"{link2}{seg_info['link']}"
-            _data_with_links[diff] = {
-                'link': link2,
-                'data': segments,
-            }
-
-        new_data[boss_name] = {
-            'link': link,
-            'data': _data_with_links,
-        }
-    
-    return {
-        "segments": new_data,
-        "html": boss_to_html,
-    }
-
-
-def get_segments2(logs, enc_data: dict[str, list[tuple[int, int]]]):
+def get_segments(logs, enc_data: dict[str, list[tuple[int, int]]]):
     new_data = {}
     boss_to_html = {}
     for boss_name, segments in enc_data.items():
@@ -205,20 +170,3 @@ def separate_modes(data):
             new_segments.setdefault(diff, []).append(segment)
         separated[boss_name] = new_segments
     return separated
-
-
-def __test():
-    import logs_main
-    report_id = "22-06-17--19-47--Icedruid--Icecrown"
-    report = logs_main.THE_LOGS(report_id)
-    logs = report.get_logs()
-    enc_data = report.get_enc_data()
-    data = get_segments2(logs, enc_data)
-    boss_html = data['boss_html']
-    separated = separate_modes(data['segments'])
-    # ggygiogigio(separated, report_id, boss_html)
-    print(data['segments'])
-
-if __name__ == "__main__":
-    import logs_main
-    __test()

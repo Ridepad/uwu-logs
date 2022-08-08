@@ -1,9 +1,8 @@
 from collections import defaultdict
 
-import constants
-from constants import to_dt
+from constants import to_dt, running_time
 
-@constants.running_time
+@running_time
 def get_spell_count(logs_slice: list[str], spell_id_str: str):
     _default_dict_factory = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
     spells = defaultdict(_default_dict_factory)
@@ -20,6 +19,61 @@ def get_spell_count(logs_slice: list[str], spell_id_str: str):
             spells[flag]["sources"][source_name] += 1
             spells[flag]["targets"][target_name] += 1
     return spells
+
+MULTISPELLS = {
+    # Essence of the Blood Queen
+    "71531": [
+        "70879", "71530", "71525", "71531",
+        "70867", "71532", "71473", "71533",
+        "70871", "70949"
+    ],
+    # Malleable Goo
+    "72550": [
+        "72297", "72549", "72548", "72550",
+        "70853", "72873", "72458", "72874",
+    ],
+    # Vile Gas
+    "73020": [
+        "69240", "73019", "71218", "73020",
+        "72272", "72273",
+        # "69244", "73173", "71288", "73174"
+    ],
+    # Mutated Infection
+    "73023": [
+        "69674", "73022", "71224", "73023"
+    ],
+    # Volatile Ooze Adhesive - Green Target
+    "72838": [
+        "70447", "72837", "72836", "72838"
+    ],
+    # Gaseous Bloat - Red Target
+    "72833": [
+        "70672", "72832", "72455", "72833"
+    ],
+    # Chocking Gas
+    "72620": [
+        "71278", "72619", "72460", "72620",
+        "71279", "72621", "72459", "72622",
+    ],
+    # Unbound Plague
+    "72856": [
+        "70911", "72855", "72854", "72856"
+    ],
+    # Harvest Soul
+    "74297": [
+        "68980", "74296", "74325", "74297"
+    ],
+    # Legion Flame
+    "68125": [
+        "66197", "68124", "68123", "68125"
+    ],
+    # Mistress' Kiss
+    "67907": [
+        "66334", "67906", "67905", "67907"
+    ]
+
+}
+MULTISPELLS_D = {y: x for x, spells in MULTISPELLS.items() for y in spells}
 
 ITEM_INFO = {
     "53908": {
@@ -69,6 +123,10 @@ ITEM_INFO = {
 }
 
 AURAS_EXTERNAL = {
+    "19753": {
+        "name": "Divine Intervention",
+        "icon": "spell_nature_timestop",
+    },
     "57933": {
         "name": "Tricks of the Trade",
         "icon": "ability_rogue_tricksofthetrade",
@@ -101,6 +159,10 @@ AURAS_EXTERNAL = {
         "name": "Innervate",
         "icon": "spell_nature_lightning",
     },
+    # "6346": {
+    #     "name": "Fear Ward",
+    #     "icon": "spell_holy_excorcism",
+    # },
     "63848": {
         "name": "Hunger For Blood",
         "icon": "ability_rogue_hungerforblood",
@@ -112,10 +174,6 @@ AURAS_EXTERNAL = {
     "72553": {
         "name": "Gastric Bloat",
         "icon": "achievement_boss_festergutrotface"
-    },
-    "71533": {
-        "name": "Essence of the Blood Queen",
-        "icon": "ability_warlock_improvedsoulleech"
     },
     "71531": {
         "name": "Essence of the Blood Queen",
@@ -227,7 +285,123 @@ AURAS_EVENT = {
         "icon": "inv_misc_slime_01"
     },
 }
-AURAS = AURAS_EXTERNAL | AURAS_CONSUME | AURAS_EVENT
+
+AURAS_BOSS_MECHANICS = {
+    "1604": {
+        "name": "Dazed",
+        "icon": "spell_frost_stun"
+    },
+    "69065": {
+        "name": "Impaled",
+        "icon": "inv_misc_bone_03"
+    },
+    "71289": {
+        "name": "Dominate Mind",
+        "icon": "inv_belt_18"
+    },
+    "71237": {
+        "name": "Curse of Torpor",
+        "icon": "ability_creature_cursed_03"
+    },
+    "69279": {
+        "name": "Gas Spore",
+        "icon": "spell_shadow_creepingplague"
+    },
+    "72550": {
+        "name": "Malleable Goo",
+        "icon": "inv_misc_herb_evergreenmoss"
+    },
+    "73020": {
+        "name": "Vile Gas",
+        "icon": "ability_creature_cursed_01"
+    },
+    "73023": {
+        "name": "Mutated Infection",
+        "icon": "ability_creature_disease_02"
+    },
+    "74118": {
+        "name": "Ooze Variable",
+        "icon": "inv_inscription_inkgreen03"
+    },
+    "74119": {
+        "name": "Gas Variable",
+        "icon": "inv_inscription_inkorange01"
+    },
+    "72838": {
+        "name": "Volatile Ooze Adhesive",
+        "icon": "ability_warlock_chaosbolt"
+    },
+    "72833": {
+        "name": "Gaseous Bloat",
+        "icon": "spell_holiday_tow_spicecloud"
+    },
+    "72856": {
+        "name": "Unbound Plague",
+        "icon": "spell_shadow_corpseexplode"
+    },
+    "72620": {
+        "name": "Choking Gas",
+        "icon": "ability_creature_cursed_01"
+    },
+    "71265": {
+        "name": "Swarming Shadows",
+        "icon": "ability_rogue_shadowdance"
+    },
+    "71340": {
+        "name": "Pact of the Darkfallen",
+        "icon": "spell_shadow_destructivesoul"
+    },
+    "69762": {
+        "name": "Unchained Magic",
+        "icon": "spell_arcane_focusedpower"
+    },
+    "70157": {
+        "name": "Ice Tomb",
+        "icon": "spell_frost_frozencore"
+    },
+    "74297": {
+        "name": "Harvest Soul",
+        "icon": "spell_deathknight_strangulate"
+    },
+    "74795": {
+        "name": "Mark of Consumption",
+        "icon": "spell_shadow_sealofkings"
+    },
+    "74567": {
+        "name": "Mark of Combustion",
+        "icon": "spell_fire_sealoffire"
+    },
+    "67907": {
+        "name": "Mistress' Kiss",
+        "icon": "spell_shadow_soothingkiss"
+    },
+    "68125": {
+        "name": "Legion Flame",
+        "icon": "spell_fire_felimmolation"
+    },
+    "66283": {
+        "name": "Spinning Pain Spike",
+        "icon": "spell_shadow_shadowmend"
+    },
+    "74509": {
+        "name": "Repelling Wave",
+        "icon": "spell_fire_playingwithfire"
+    },
+    "74456": {
+        "name": "Conflagration",
+        "icon": "inv_misc_orb_05"
+    },
+    "74384": {
+        "name": "Intimidating Roar",
+        "icon": "ability_golemthunderclap"
+    },
+    "74531": {
+        "name": "Tail Lash",
+        "icon": "ability_criticalstrike"
+    },
+}
+
+AURAS = AURAS_EXTERNAL | AURAS_CONSUME | AURAS_BOSS_MECHANICS | MULTISPELLS_D
 
 
 ALL_POTS = set(ITEM_INFO) - {"28714", }
@@ -241,7 +415,7 @@ def count_total(data: dict[str, dict[str, int]]):
                 total[guid] += value
     return total
 
-@constants.running_time
+@running_time
 def get_potions_count(logs_slice: list[str]):
     potions: defaultdict[str, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
     for line in logs_slice:
@@ -279,21 +453,31 @@ def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
             count = 0
             uptime = 0
             last_apply = None
+            last_update = START
             for flag, timestamp in data2:
                 if flag == "SPELL_AURA_REMOVED":
                     if last_apply is None:
-                        last_apply = START
+                        last_apply = last_update
                         count += 1
-                    uptime += (to_dt(timestamp)-last_apply).total_seconds()
+                    last_update = to_dt(timestamp)
+                    new_uptime = (last_update-last_apply).total_seconds()
+                    if new_uptime < 1:
+                        count -= 1
+                    else:
+                        uptime += new_uptime
                     last_apply = None
-                elif last_apply is None:
+                else:
+                    last_update = to_dt(timestamp)
                     count += 1
-                    last_apply = to_dt(timestamp)
-                elif flag == "SPELL_AURA_REFRESH":
-                    count += 1
-
+                    if last_apply is None:
+                        last_apply = last_update
+            
             if last_apply is not None:
-                uptime += (END-last_apply).total_seconds()
+                new_uptime = (END-last_apply).total_seconds()
+                if new_uptime < 1:
+                    count -= 1
+                else:
+                    uptime += new_uptime
 
             new_auras[target_guid][spell_id] = (count, uptime/DUR)
     
@@ -309,10 +493,10 @@ def get_filtered_info(data):
 
 def __test():
     import logs_main
-    report_name = "22-07-15--21-01--Safiyah--Lordaeron"
+    report_name = "21-11-20--22-06--Paletress--Lordaeron"
     report = logs_main.THE_LOGS(report_name)
     enc_data = report.get_enc_data()
-    s, f = enc_data["The Lich King"][4]
+    s, f = enc_data["Blood-Queen Lana'thel"][-1]
     logs = report.get_logs(s, f)
     q = get_raid_buff_count(logs)
     q2 = get_auras_uptime(logs, q)

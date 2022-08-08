@@ -1,7 +1,6 @@
-import logs_main
-import constants
 
-@constants.running_time
+from constants import running_time
+
 def ujiowfuiwefhuiwe_back_up(logs: list[str]) -> list[int]:
     times = []
     l0 = logs[0]
@@ -23,7 +22,7 @@ def ujiowfuiwefhuiwe_back_up(logs: list[str]) -> list[int]:
             last_seconds = seconds
     return times
 
-@constants.running_time
+@running_time
 def ujiowfuiwefhuiwe(logs: list[str]) -> list[int]:
     times = []
     l0 = logs[0]
@@ -51,25 +50,3 @@ def ujiowfuiwefhuiwe(logs: list[str]) -> list[int]:
             last_seconds = seconds
         
     return times
-
-def check_if_same_length(logs, times):
-    l0 = logs[0].split(',')[0]
-    ll = logs[-1].split(',')[0]
-    d0 = constants.to_dt(l0)
-    dd = constants.to_dt(ll)
-    L = (dd-d0).seconds
-    print(f'LEN LOGS:      {L}')
-    print(f'LEN TIMES:     {len(times)}')
-
-def __redo(name):
-    print(name)
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    data = ujiowfuiwefhuiwe(logs)
-    # print(data)
-    path = report.relative_path('TIMESTAMP_DATA')
-    constants.json_write(path, data, indent=None)
-
-if __name__ == '__main__':
-    __redo("21-05-20--23-39--Eleanorr--Lordaeron")
-    # constants.redo_data(__redo)

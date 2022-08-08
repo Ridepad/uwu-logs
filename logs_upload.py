@@ -1,27 +1,27 @@
-from datetime import datetime
 import json
 import os
 import re
 import shutil
 import sys
+import zlib
 from collections import defaultdict
+from datetime import datetime
 from threading import Thread
 from time import perf_counter
-import zlib
 
 import constants
 import logs_archive
 import logs_fix
 from constants import (
-    LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR, SERVERS,
+    LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR,
     bytes_write, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
 
-p_join = os.path.join
 ARCHIVE_ID_ERROR = "Bad archive."
 ARCHIVE_ERROR = "Error unziping file."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
 FULL_DONE = "Done! Select 1 of the reports below."
 SEMI_DONE = "Finishing caching... Select 1 of the reports below."
+BUGGED_NAMES = {"nil", "Unknown"}
 
 UPLOADED_FILES_FILE = os.path.join(PATH_DIR, '_uploaded_files.json')
 UPLOADED_FILES: dict[str, dict] = json_read(UPLOADED_FILES_FILE)
@@ -44,8 +44,6 @@ def save_upload_cache(_data, slices):
     if u_files != u_files_old:
         json_write(UPLOADED_FILES_FILE, u_files)
         UPLOADED_FILES.update(u_files)
-
-BUGGED_NAMES = {"nil", "Unknown"}
 
 def get_logs_author_info(logs: list[bytes]):
     for line in logs:
@@ -79,7 +77,9 @@ class NewUpload(Thread):
         super().__init__()
         self.upload_data = upload_data
         self.upload_dir = upload_data["upload_dir"]
-        self.server = upload_data.get("server", "Unknown")
+        self.server = upload_data.get("server")
+        if self.server is None:
+            self.server = "Unknown"
         self.forced = forced
 
         self.slices: dict[str, dict] = {}
@@ -146,7 +146,7 @@ class NewUpload(Thread):
 
         # add players
         npc_names = list(map(_format_name, sort_dict_by_value(s)))[:5]
-        print(npc_names)
+        # print(npc_names)
         _tdelta = self.get_timedelta(logs_slice[-1], logs_slice[0])
         return {
             'enemies': npc_names,
@@ -275,7 +275,7 @@ class NewUpload(Thread):
         self.mtime = os.path.getmtime(self.extracted_file)
 
         self.slice_logs()
-        # input("break")
+
         self.change_status("Saving log slices...")
         for logs_id in self.slices:
             self.finish_slice(logs_id)

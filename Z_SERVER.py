@@ -11,9 +11,10 @@ import deaths
 import logs_calendar
 import logs_main
 import logs_upload
+import logs_top_server
 from constants import (
-    LOGGER_MAIN, LOGS_DIR, PATH_DIR, T_DELTA_1MIN, UPLOADS_DIR,
-    banned, get_logs_filter, get_report_name_info, wrong_pw)
+    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA_1MIN, UPLOADS_DIR,
+    banned, get_logs_filter, wrong_pw)
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -28,19 +29,6 @@ ALLOWED_EXTENSIONS = {'zip', '7z', }
 NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 
-ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
-MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-SHIFT = {
-    'spell': 10,
-    'consumables': 10,
-    'player_auras': 10,
-}
-
-def get_shift(url_comp: list[str]):
-    try:
-        return SHIFT.get(url_comp[3], 0)
-    except IndexError:
-        return 0
 
 def load_report(name: str):
     if name in OPENED_LOGS:
@@ -53,22 +41,12 @@ def load_report(name: str):
     report.last_access = datetime.now()
     return report
 
-def format_report_name(report_id: str):
-    report_name_info = get_report_name_info(report_id)
-    time = report_name_info['time'].replace('-', ':')
-    year, month, day = report_name_info['date'].split("-")
-    month = MONTHS[int(month)-1][:3]
-    date = f"{day} {month} {year}"
-    name = report_name_info['name']
-    return f"{date}, {time} - {name}"
-
-def default_params(report_id, request, shift=0):
+def default_params(report_id, request):
     report = load_report(report_id)
-    report_name = format_report_name(report_id)
-    parsed = report.parse_request(request, shift)
+    report_name = report.get_formatted_name()
+    parsed = report.parse_request(request)
     classes_names = report.get_classes_with_names()
-    _data = report.SEGMENTS_QUERIES
-    segm_links = _data['segm_links']
+    segm_links = report.get_segment_queries()
     duration = report.get_fight_duration_total_str(parsed["segments"])
     return {
         "REPORT_ID": report_id,
@@ -149,8 +127,7 @@ def before_request():
             if _filter_type == "private" and report_id in _filter and not _validate.cookie(request):
                 return render_template('protected.html')
 
-        shift = get_shift(url_comp)
-        request.default_params = default_params(report_id, request, shift)
+        request.default_params = default_params(report_id, request)
 
 
 @SERVER.route("/")
@@ -199,7 +176,9 @@ def upload():
         status = 'Supported file formats are .7z and .zip only'
         return render_template('upload.html', status=status)
     
-    new_upload = logs_upload.main(file, ip)
+    server = request.form.get('server')
+    print(server)
+    new_upload = logs_upload.main(file, ip=ip, server=server)
     NEW_UPLOADS[ip] = new_upload
     new_upload.start()
     return render_template('upload_progress.html')
@@ -475,6 +454,19 @@ def test3():
     # players_names = {name for name in players_names if any(name in sources for sources in dmg.values())}
     players.extend(players_names - set(players))
     return render_template('dmg_taken_test.html', dmg=dmg, players=players)
+
+
+@SERVER.route('/top', methods=["GET", "POST"])
+def test_top():
+    if request.method == "GET":
+        return render_template('top.html')
+     
+    content = logs_top_server.new_request(request.json)
+    response = make_response(content)
+    response.headers['Content-length'] = len(content)
+    print(len(content))
+    response.headers['Content-Encoding'] = 'gzip'
+    return response
 
 
 if __name__ == "__main__":

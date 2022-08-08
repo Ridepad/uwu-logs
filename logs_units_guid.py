@@ -1,8 +1,7 @@
 from collections import defaultdict
 
-import logs_main
 import logs_udk_bullshit2
-from constants import CLASS_FROM_HTML, LOGGER_LOGS, SPELL_BOOK, running_time, json_write, redo_data
+from constants import CLASS_FROM_HTML, LOGGER_LOGS, SPELL_BOOK, running_time
 
 CLASSES = list(CLASS_FROM_HTML)
 _prefix = [
@@ -203,43 +202,3 @@ def guids_main(logs, enc_data):
 
     convert_nested_masters(everything)
     return parsed
-
-def __redo(name, rewrite=True):
-    print(name)
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    enc_data = report.get_enc_data()
-    parsed = guids_main(logs, enc_data)
-    guids_data_file_name = report.relative_path("GUIDS_DATA.json")
-    players_data_file_name = report.relative_path("PLAYERS_DATA.json")
-    classes_data_file_name = report.relative_path("CLASSES_DATA.json")
-    _guids = parsed['everything']
-    _players = parsed['players']
-    _classes = parsed['classes']
-    # print(_players)
-    # print(_guids)
-    # print(guids_data_file_name)
-    if rewrite:
-        json_write(guids_data_file_name, _guids)
-        json_write(players_data_file_name, _players)
-        json_write(classes_data_file_name, _classes)
-
-def __redo_wrapped(name):
-    try:
-        __redo(name)
-    except Exception:
-        LOGGER_LOGS.exception(f'units_guid __redo {name}')
-
-if __name__ == "__main__":
-    a = [
-        "21-06-01--20-05--Snowinfury--Icecrown",
-        "22-03-14--18-53--Sandragosa--Icecrown",
-        "22-06-26--19-56--Deydraenna--Icecrown",
-        "22-06-29--15-43--Deydraenna--Icecrown",
-    ]
-    # start = "22-05-21--21-30--Piscolita"
-    # redo_data(__redo_wrapped)
-    # for x in a:
-        # __redo(x)
-    __redo("22-06-02--18-03--Gotfire--Lordaeron", 0)
-    # __redo('21-06-17--08-44--Dethia--Lordaeron', rewrite=False)
