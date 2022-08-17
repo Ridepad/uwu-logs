@@ -6,7 +6,7 @@
 
 ### Top
 
-<https://uwu-logs-top.web.app>
+<https://uwu-logs.xyz/top>
 
 ![Showcase top](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/top.png)
 
