@@ -1,6 +1,6 @@
 :root {
   --highlight-color: rgb(24, 24, 24);
-  --footer-height: 4.5vh;
+  --footer-height: 3vh;
   --primary-color: blueviolet;
   --secondary-color: darkviolet;
   --third-color: darkorchid;
@@ -15,7 +15,7 @@
 * {
   color: var(--main-white);
   font-family: Ubuntu;
-  font-size: 1.6vh;
+  font-size: 1.5vh;
   text-decoration: none;
   font-weight: 500;
   margin: 0;
@@ -25,20 +25,6 @@
   * {
     font-size: 2vh;
   }
-}
-
-#no-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-#no-page > img {
-  width: clamp(112px, 95vw, 60vh);
-  height: clamp(112px, 95vw, 60vh);
-}
-#no-page p {
-  margin: 1rem;
 }
 
 /* Hide scrollbar */
@@ -64,7 +50,14 @@ html::-webkit-scrollbar {
 .druid {color:darkorange;}
 .warlock {color:slateblue;}
 
+
 footer {
+  /* -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0); */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   z-index: 3;
   position: fixed;
   left: 0;
@@ -77,10 +70,6 @@ footer {
 }
 
 
-caption {
-  text-transform: uppercase;
-  font-weight: 700;
-}
 table, th, td {
   border-spacing: 0;
 }
@@ -103,7 +92,7 @@ tbody > tr:hover > td {
   background-color: hsl(285, 100%, 5%);
 }
 td {
-  min-width: 3.5ch;
+  min-width: 3ch;
   background-color: var(--background);
   background-clip: padding-box;
 }
@@ -154,96 +143,94 @@ input[type=checkbox] {
   display: none;
 }
 
-
-button {
-  cursor: pointer;
-  min-width: 7ch;
-  font-size: 3ch;
-  background: var(--background);
-  border: .1rem solid var(--primary-color);
-  border-radius: .2rem;
-}
-button:hover {
-  color: var(--primary-color);
-  box-shadow: inset 0 0 .4em currentColor, 0 .1em .7em currentColor;
-  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
-}
-
 #ladder {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 }
 
-#controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-}
+#server-select {grid-area: serv;}
+#instance-select {grid-area: inst;}
+#boss-select {grid-area: boss;}
+#size-select {grid-area: size;}
+#combine-label {grid-area: comb;}
+#difficulty-label {grid-area: diff;}
+#class-select {grid-area: clss;}
+#spec-select {grid-area: spec;}
 
-#server-select,
+#spec-select,
+#class-select {
+  min-width: 13ch;
+}
 #instance-select,
 #boss-select {
-  grid-column: span 6;
-}
-#combine-label,
-#size-select,
-#difficulty-label {
-  grid-column: span 2;
-}
-#class-select,
-#spec-select {
-  grid-column: span 3;
+  min-width: 25ch;
 }
 
+#controls {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  max-width: 100ch;
+  display: grid;
+  grid-template-areas:
+  'serv serv serv serv serv serv'
+  'inst inst inst inst inst inst'
+  'boss boss boss boss boss boss'
+  'comb comb size size diff diff'
+  'clss clss clss spec spec spec';
+  gap: .5rem;
+  background-color: var(--background);
+  z-index: 5;
+  padding-bottom: 1em;
+}
 #controls > * {
   font-size: clamp(10pt, 3vh, 7vw);
   text-align: center;
 }
 
-
-#table-section {
-  margin-top: 1vh;
+@media (min-width: 1100px) {
+  #controls {
+    grid-template-areas:
+    'inst inst boss boss boss boss size diff diff'
+    'serv serv clss clss spec spec spec comb comb';
+  }
+  #main-table-body td {
+    padding-inline: 2px;
+  }
 }
+
+#table-container {
+  padding-bottom: 4vh;
+}
+
 #main-table * {
   border: 0;
 }
 #main-table th {
+  position: sticky;
+  top: 15em;
+  z-index: 40;
+}
+
+@media (min-width: 1100px) {
+  #main-table th {
+    top: 5em;
+  }
+}
+
+#main-table th:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
   border-bottom: .2em solid var(--primary-color);
 }
 
 #main-table-body td {
   padding: 0;
-  padding-inline: 1px;
   text-align: center;
-}
-
-@media (min-width: 1100px) {
-  
-  #main-table-body td {
-    padding-inline: 2vw;
-    padding-inline: 2px;
-  }
-  #ladder #instance-select,
-  #ladder #boss-select {
-    min-width: 25ch;
-    margin-left: 0;
-  }
-  #ladder table {
-    width: unset;
-  }
-  #controls {
-    width: 100%;
-    min-width: 20ch;
-    max-width: 50ch;
-  }
-  abbr span {
-    display: none;
-  }
-  abbr::before {
-    content: attr(title);
-  }
 }
 
 
@@ -280,11 +267,13 @@ button:hover {
 
 #main-table > tbody :is(.table-ud, .table-td) {
   min-width: 7.5ch;
+  width: 9ch;
   text-align: right;
 }
 
 #main-table > tbody :is(.table-ua, .table-ta) {
-  min-width: 9ch;
+  min-width: 9.5ch;
+  width: 10ch;
   text-align: right;
 }
 
@@ -309,13 +298,13 @@ td:hover > ul {
   padding: 0;
 }
 td > ul {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 95%;
-    z-index: 2;
-    background-color: black;
-    box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 95%;
+  z-index: 2;
+  background-color: black;
+  box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
 }
 
 li {
@@ -338,4 +327,18 @@ li span {
     display: table-cell;
     font-size: 2vh;
   }
+}
+
+#loading-info-panel {
+  background-color: var(--background);
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+}
+
+#link-home::before {
+  content: "<<";
 }

@@ -12,15 +12,21 @@ from time import perf_counter
 import constants
 import logs_archive
 import logs_fix
+import logs_top
+import logs_top_server
 from constants import (
-    LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR,
+    BOSSES_GUIDS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA_5MIN, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR, UPLOADED_DIR,
     bytes_write, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
+
 
 ARCHIVE_ID_ERROR = "Bad archive."
 ARCHIVE_ERROR = "Error unziping file."
+LOGS_ERROR = "Error parsing logs."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
 FULL_DONE = "Done! Select 1 of the reports below."
-SEMI_DONE = "Finishing caching... Select 1 of the reports below."
+SAVING_SLICES = "Saving log slices..."
+SEMI_DONE = "Finishing caching..."
+TOP_UPDATE = "Updating top..."
 BUGGED_NAMES = {"nil", "Unknown"}
 
 UPLOADED_FILES_FILE = os.path.join(PATH_DIR, '_uploaded_files.json')
@@ -71,12 +77,11 @@ def slice_fully_processed(logs_id):
     logs_name = os.path.join(logs_folder, f"{LOGS_CUT_NAME}.zlib")
     return slice_exists(logs_name) and logs_archive.valid_raw_logs(logs_id)
 
-
 class NewUpload(Thread):
     def __init__(self, upload_data: dict, forced=False) -> None:
         super().__init__()
         self.upload_data = upload_data
-        self.upload_dir = upload_data["upload_dir"]
+        self.upload_dir: str = upload_data["upload_dir"]
         self.server = upload_data.get("server")
         if self.server is None:
             self.server = "Unknown"
@@ -88,7 +93,7 @@ class NewUpload(Thread):
             'status': 'Determinating log slices...',
             'slices': self.slices
         }
-        self.status_json = '{}'
+        self.status_json = json.dumps(self.status_dict)
 
     def status_to_json(self):
         self.status_json = json.dumps(self.status_dict)
@@ -126,7 +131,12 @@ class NewUpload(Thread):
         return None
         
     def get_logs_id(self, logs_slice: list[bytes]):
-        __date = self.to_dt(logs_slice[0])
+        for _ in range(10):
+            try:
+                __date = self.to_dt(logs_slice[0])
+                break
+            except Exception:
+                del logs_slice[0]
         date = __date.strftime("%y-%m-%d--%H-%M")
 
         logs_author_info = get_logs_author_info(logs_slice)
@@ -139,26 +149,30 @@ class NewUpload(Thread):
     
     def get_slice_info(self, logs_slice: list[bytes]):
         s = defaultdict(int)
+        names = {}
         for line in logs_slice[::250]:
             guid, name = line.split(b',', 6)[4:6]
-            if guid[:5] in {b"0xF13", b"0xF15"}:
-                s[name] += 1
+            names[guid] = name
+            s[guid] += 1
+            # if guid[:5] in {b"0xF13", b"0xF15"}:
 
         # add players
-        npc_names = list(map(_format_name, sort_dict_by_value(s)))[:5]
-        # print(npc_names)
+        s = sort_dict_by_value(s)
+        s2 = [guid[6:-6].decode() for guid in s if guid[:5] in {b"0xF13", b"0xF15"}]
+        npcs = [BOSSES_GUIDS[guid] for guid in s2 if guid in BOSSES_GUIDS]
+        players = [_format_name(names[guid]) for guid in s if guid[:3] == b"0x0"]
+        if "nil" in players:
+            players.remove("nil")
+
         _tdelta = self.get_timedelta(logs_slice[-1], logs_slice[0])
         return {
-            'enemies': npc_names,
+            'players': players[:5],
+            'enemies': npcs[:5],
             'duration': _tdelta.seconds,
         }
 
     def save_slice_cache(self, logs_slice: list):
         if not logs_slice:
-            return
-
-        if len(logs_slice) < 7500:
-            UPLOAD_LOGGER.debug(f"LOGS SLICE IS TOO SMALL: {len(logs_slice):>9,}")
             return
         
         logs_id = self.get_logs_id(logs_slice)
@@ -166,7 +180,11 @@ class NewUpload(Thread):
         _time = get_ms(self.pc)
         UPLOAD_LOGGER.debug(f'{logs_id} | Done in: {_time:>6,} ms | SIZE: {sys.getsizeof(logs_slice):>12,} | LEN: {len(logs_slice):>12,}')
 
-        self.slices[logs_id] = self.get_slice_info(logs_slice)
+        _slice_info = self.get_slice_info(logs_slice)
+        print(_slice_info)
+        if not _slice_info.get('enemies'):
+            return
+        self.slices[logs_id] = _slice_info
 
         if not self.forced and slice_fully_processed(logs_id):
             self.change_slice_status(logs_id, "Done!", slice_done=True)
@@ -199,13 +217,10 @@ class NewUpload(Thread):
         last_segment = []
         last_guid = None
 
-        def same_author():
-            last_segment.extend(current_segment)
-            current_segment.clear()
-        
-        def _save(guid):
-            if guid == last_guid:
-                same_author()
+        def __save_segment(current_guid):
+            if current_guid == last_guid:
+                last_segment.extend(current_segment)
+                current_segment.clear()
                 self.save_slice_cache_wrap(last_segment)
             else:
                 self.save_slice_cache_wrap(last_segment)
@@ -229,22 +244,31 @@ class NewUpload(Thread):
                     guid = get_author_guid(current_segment)
 
                     if _tdelta > T_DELTA_30MIN:
-                        _save(guid)
-                        last_guid = guid
+                        __save_segment(guid)
+                    elif last_guid is None:
+                        if guid is not None or _tdelta < T_DELTA_5MIN:
+                            last_segment.extend(current_segment)
+                        else:
+                            last_segment = current_segment
+                        current_segment = []
                     elif guid == last_guid:
-                        same_author()
+                        last_segment.extend(current_segment)
+                        current_segment.clear()
                     elif guid is not None:
-                        last_guid = guid
                         self.save_slice_cache_wrap(last_segment)
                         last_segment = current_segment
                         current_segment = []
+                    else:
+                        guid = last_guid
+                        
+                    last_guid = guid
 
                 current_segment.append(line)
                 last_timestamp = timestamp
                 last_line = line
                 
         guid = get_author_guid(current_segment)
-        _save(guid)
+        __save_segment(guid)
 
     def finish_slice(self, logs_id):
         logs_folder = os.path.join(LOGS_DIR, logs_id)
@@ -276,13 +300,18 @@ class NewUpload(Thread):
 
         self.slice_logs()
 
-        self.change_status("Saving log slices...")
+        self.change_status(SAVING_SLICES)
         for logs_id in self.slices:
             self.finish_slice(logs_id)
         
         self.change_status(SEMI_DONE)
         for logs_id in self.slices:
             logs_archive.save_raw_logs(logs_id, self.upload_dir, self.forced)
+
+        # self.change_status(TOP_UPDATE)
+        # for logs_id in self.slices:
+        #     logs_top.make_report_top(logs_id)
+        # logs_top_server.main_add_new_reports_wrap(self.slices)
         
         self.change_status(FULL_DONE, 1)
 
@@ -353,6 +382,7 @@ class NewUpload(Thread):
         
         except Exception:
             UPLOAD_LOGGER.exception(f"NewUpload run {self.upload_dir}")
+            self.change_status(LOGS_ERROR, 1)
         
         finally:
             UPLOAD_LOGGER.debug(f'Done in {get_ms(st0)} ms')
@@ -360,8 +390,15 @@ class NewUpload(Thread):
             
     def finish(self):
         save_upload_cache(self.file_data, self.slices)
-        if "uploads" in self.upload_dir:
-            shutil.rmtree(self.upload_dir, ignore_errors=True)
+        if "uploads" not in self.upload_dir:
+            return
+        
+        old = self.upload_data.get("archive") or self.upload_data.get("extracted")
+        _, base1, base2 = self.upload_dir.rsplit('\\', 2)
+        basename = os.path.basename(old)
+        new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
+        os.rename(old, new)
+        shutil.rmtree(self.upload_dir, ignore_errors=True)
 
 
 class File:
@@ -415,16 +452,9 @@ def extracted_id_local(logs_path):
         }
     return data
 
-def main_local_text(logs_path, move=False, forced=False):
-    new_upload_dir = new_upload_folder()
-    if move:
-        logs_raw_name = os.path.basename(logs_path)
-        logs_new_path = os.path.join(new_upload_dir, logs_raw_name)
-        os.rename(logs_path, logs_new_path)
-        logs_path = logs_new_path
-
+def main_local_text(logs_path, forced=False):
     upload_data = {
-        "upload_dir": new_upload_dir,
+        "upload_dir": new_upload_folder(),
         "archive": "",
         "extracted": logs_path,
         "server": None,

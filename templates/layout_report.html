@@ -8,14 +8,14 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://uwulogs.io/">
+<meta property="og:url" content="https://uwu-logs.xyz/">
 <meta property="og:title" content="UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}">
 <meta property="og:description" content="WoTLK Logs. Check out full report via link.">
 <!-- <meta property="og:image" content="/static/123123.png"> -->
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://uwulogs.io/">
+<meta property="twitter:url" content="https://uwu-logs.xyz/">
 <meta property="twitter:title" content="UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}">
 <meta property="twitter:description" content="WoTLK Logs. Check out full report via link.">
 <!-- <meta property="twitter:image" content="/static/123123.png"> -->
@@ -25,7 +25,6 @@
 {% if SEGMENTS_LINKS %}
 <aside id="fights-container">
   <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
-  <!-- <h2>BOSS SEGMENTS ▼</h2> -->
   <ul>
     {% for boss_name, boss_data in SEGMENTS_LINKS.items() %}
     <li>
@@ -60,7 +59,7 @@
       {% if 'boss' in QUERY %}
       <a href="/reports/{{ REPORT_ID }}/damage/{{ QUERY }}">DAMAGE</a>
       {% else %}
-      <a href="#">DAMAGE</a>
+      <a>DAMAGE</a>
       {% endif %}
     </li>
     <!-- <a href="/reports/{{ REPORT_ID }}/heal/{{ QUERY }}">HEAL</a> -->

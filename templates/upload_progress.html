@@ -9,8 +9,8 @@
     <table id="upload-table" style="display: none;">
       <thead>
         <tr>
-          <th>Report name</th>
-          <th>Status</th>
+          <th style="min-width: 40ch;">Slice ID</th>
+          <th style="min-width: 20ch;">Status</th>
         </tr>
       </thead>
       <tbody id="upload-table-tbody"></tbody>
@@ -26,13 +26,18 @@
   const tbody = document.getElementById("upload-table-tbody");
   const request = new XMLHttpRequest();
   
-  function newRow(report_name, report_data) {
+  function newRow(report_name, report_data, done) {
     const tr = document.createElement("tr");
     const report_link_cell = document.createElement("td");
-    const report_link = document.createElement("a");
-    report_link.href = `/reports/${report_name}`;
-    report_link.innerText = report_name;
-    report_link_cell.appendChild(report_link);
+    if (done) {
+      const report_link = document.createElement("a");
+      report_link.href = `/reports/${report_name}`;
+      report_link.target = "_blank";
+      report_link.innerText = report_name;
+      report_link_cell.appendChild(report_link);
+    } else {
+      report_link_cell.innerText = report_name;
+    }
     tr.appendChild(report_link_cell);
     
     const status_cell = document.createElement("td");
@@ -54,7 +59,8 @@
     if (request.readyState != 4 || request.status != 200) return;
     const res = JSON.parse(request.response);
 
-    if (res.done == 1) clearInterval(t);
+    const done = res.done == 1
+    if (done) clearInterval(t);
     gotResponse = true;
 
     uploadStatus.innerText = res.status || "Preparing...";
@@ -62,7 +68,8 @@
       table.style.display = "table";
       tbody.innerHTML = "";
       for (let slice_name in res.slices) {
-        tbody.appendChild(newRow(slice_name, res.slices[slice_name]))
+        const slice = res.slices[slice_name]
+        tbody.appendChild(newRow(slice_name, slice, done))
       }
     }
   }

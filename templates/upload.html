@@ -9,7 +9,7 @@
     <input type="submit" value="Upload">
   </form>
   <p>Optional: (Warmane is parsed automatically)</p>
-  <input placeholder="Type in any server name (no limits)" type="text" id="server" list="server-list">
+  <input placeholder="Type in any server name" type="text" id="server" list="server-list">
   <datalist id="server-list">
     <option value="Algalon"></option>
     <option value="ChromieCraft"></option>
@@ -23,15 +23,21 @@
   <h2>How to start logging</h2>
   <ul>
     <li>Type <span>/combatlog</span> in game (before anything happens, not after)</li>
-    <li>Find logs file in game's folder: <span>World of Warcraft/Logs/WoWCombatLog.txt</span></li>
-    <li>Archive it</li>
+    <li>Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
+    <li>Archive it (supported formates: <span>.7z</span> or <span>.zip</span>)</li>
     <li>Upload above</li>
   </ul>
   <h2>Additional info</h2>
   <ul>
+    <li>Combatlog is logged into 1 file always</li>
+    <li>After upload, don't forget to delete <span>WoWCombatLog.txt</span> to keep it fresh</li>
+    <li>(or rename the file, if you want to keep it)</li>
     <li>Use <a href="https://wago.io/9Okfx9zrS" target="_blank">weakauras</a> to never forget to start logging</li>
-    <li>If the file size is above 2GB, use 7zip with PPMd compression</li>
-    <li>Logs are public by default, private soon TM</li>
+    <li>You can <span>/reload</span> mid pull with this wa and it ll continue logging</li>
+    <li>Use <a href="https://www.7-zip.org/" target="_blank">7zip</a> with <a href="https://i.imgur.com/0xznLXP.png" target="_blank">PPMd</a> compression for lower archiving time and file size</li>
+    <li>1GB Logs archived time: 7z <span>20sec</span> Zip <span>80sec</span></li>
+    <li>1GB Logs archived size: 7z <span>30MB</span> Zip <span>90MB</span></li>
+    <!-- <li>Logs are public by default, private soon TM</li> -->
   </ul>
 </section>
 </main>

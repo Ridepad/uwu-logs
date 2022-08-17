@@ -1,12 +1,12 @@
 from collections import defaultdict
 
-from constants import BOSSES_GUIDS, MUTLIBOSSES, T_DELTA_1MIN, T_DELTA_2MIN, running_time, to_dt
+from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA_1MIN, T_DELTA_2MIN, running_time, to_dt
 
 BOSS_MAX_SEP = {
     "Halion": T_DELTA_2MIN,
     "Anub'arak": T_DELTA_2MIN,
 }
-ANOTHER_BOSSES = {y:x[0] for x in MUTLIBOSSES.values() for y in x[1:]}
+ANOTHER_BOSSES = {y:x[0] for x in MULTIBOSSES.values() for y in x[1:]}
 BOSSES_GUIDS_ALL = set(ANOTHER_BOSSES) | set(ANOTHER_BOSSES.values()) | set(BOSSES_GUIDS)
 FLAGS = {'UNIT_DIED', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_HEAL'}
 IGNORED_IDS = {
@@ -23,7 +23,7 @@ IGNORED_IDS = {
 }
 
 def convert_to_names(data: dict):
-    B = {guids[0]:name for name, guids in MUTLIBOSSES.items()}
+    B = {guids[0]:name for name, guids in MULTIBOSSES.items()}
     return {B.get(x, BOSSES_GUIDS[x]): y for x,y in data.items()}
 
 @running_time

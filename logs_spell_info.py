@@ -287,10 +287,10 @@ AURAS_EVENT = {
 }
 
 AURAS_BOSS_MECHANICS = {
-    "1604": {
-        "name": "Dazed",
-        "icon": "spell_frost_stun"
-    },
+    # "1604": {
+    #     "name": "Dazed",
+    #     "icon": "spell_frost_stun"
+    # },
     "69065": {
         "name": "Impaled",
         "icon": "inv_misc_bone_03"
@@ -441,6 +441,38 @@ def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
 
     return auras
 
+NON_DOSE = {"SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH"}
+def iter_spell(data, last_update, end):
+    count = 0
+    uptime = 0
+    last_apply = None
+    for flag, timestamp in data:
+        if flag == "SPELL_AURA_REMOVED":
+            if last_apply is None:
+                last_apply = last_update
+                count += 1
+            last_update = to_dt(timestamp)
+            new_uptime = (last_update-last_apply).total_seconds()
+            if new_uptime < 1:
+                count -= 1
+            else:
+                uptime += new_uptime
+            last_apply = None
+        elif flag in NON_DOSE:
+            last_update = to_dt(timestamp)
+            count += 1
+            if last_apply is None:
+                last_apply = last_update
+    
+    if last_apply is not None:
+        new_uptime = (end-last_apply).total_seconds()
+        if new_uptime < 1:
+            count -= 1
+        else:
+            uptime += new_uptime
+    
+    return count, uptime
+
 def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
     START = to_dt(logs_slice[0])
     END = to_dt(logs_slice[-1])
@@ -448,37 +480,9 @@ def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
 
     new_auras: defaultdict[str, dict[str, float]] = defaultdict(dict)
 
-    for target_guid, data1 in data.items():
-        for spell_id, data2 in data1.items():
-            count = 0
-            uptime = 0
-            last_apply = None
-            last_update = START
-            for flag, timestamp in data2:
-                if flag == "SPELL_AURA_REMOVED":
-                    if last_apply is None:
-                        last_apply = last_update
-                        count += 1
-                    last_update = to_dt(timestamp)
-                    new_uptime = (last_update-last_apply).total_seconds()
-                    if new_uptime < 1:
-                        count -= 1
-                    else:
-                        uptime += new_uptime
-                    last_apply = None
-                else:
-                    last_update = to_dt(timestamp)
-                    count += 1
-                    if last_apply is None:
-                        last_apply = last_update
-            
-            if last_apply is not None:
-                new_uptime = (END-last_apply).total_seconds()
-                if new_uptime < 1:
-                    count -= 1
-                else:
-                    uptime += new_uptime
-
+    for target_guid, spells in data.items():
+        for spell_id, spell_data in spells.items():
+            count, uptime = iter_spell(spell_data, START, END)
             new_auras[target_guid][spell_id] = (count, uptime/DUR)
     
     return new_auras

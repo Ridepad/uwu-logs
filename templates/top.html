@@ -2,24 +2,24 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
     <title>UwU Logs - Top</title>
 
     <meta name="title" content="UwU Logs - Top">
     <meta name="description" content="Players Top for UwU Logs.">
-    <link rel="shortcut icon" href="https://uwu-logs-top.web.app/favicon.ico">
+    <link rel="shortcut icon" href="/favicon.ico">
 
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://uwu-logs-top.web.app/">
+    <meta property="og:url" content="https://uwu-logs.xyz/top">
     <meta property="og:title" content="UwU Logs - Top">
     <meta property="og:description" content="Players Top for UwU Logs.">
-    <meta property="og:image" content="https://uwu-logs-top.web.app/static/thumb.png">
+    <meta property="og:image" content="static/thumb.png">
 
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://uwu-logs-top.web.app/">
+    <meta property="twitter:url" content="https://uwu-logs.xyz/top">
     <meta property="twitter:title" content="UwU Logs - Top">
     <meta property="twitter:description" content="Players Top for UwU Logs.">
-    <meta property="twitter:image" content="https://uwu-logs-top.web.app/static/thumb.png">
+    <meta property="twitter:image" content="static/thumb.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" type="text/css" href="/static/style_top.css">
@@ -30,12 +30,11 @@
   <body>
     <main id="ladder">
       <section id="controls">
-        <!-- <input id="server-input" placeholder="Type in any server name (no limits)" type="text" list="server-list"> -->
         <select id="server-select">
           <option value="Lordaeron">Lordaeron</option>
           <option value="Icecrown">Icecrown</option>
-          <option value="Frosmourne3">Frosmourne3</option>
-          <option value="Frosmourne2">Frosmourne2</option>
+          <option value="Frostmourne3">Frosmourne3</option>
+          <option value="Frostmourne2">Frosmourne2</option>
           <option value="Algalon">Algalon</option>
           <option value="ChromieCraft">ChromieCraft</option>
           <option value="Crystalsong">Crystalsong</option>
@@ -52,7 +51,7 @@
         <select id="class-select"><option value="-1">All classes</option></select>
         <select id="spec-select"></select>
       </section>
-      <section id="table-section">
+      <section id="table-container">
         <table id="main-table">
           <thead>
             <tr>
@@ -63,8 +62,8 @@
               <th id="head-total-amount" class="sortable">Total</th>
               <th id="head-duration" class="sortable">Dur</th>
               <th id="head-external" class="sortable">Ext</th>
-              <th id="head-self" class="sortable">Self</th>
-              <th id="head-rekt" class="sortable">Rekt</th>
+              <th id="head-self" class="sortable">Slf</th>
+              <th id="head-rekt" class="sortable">Rkt</th>
               <th id="head-date" class="sortable">Date</th>
             </tr>
           </thead>
@@ -72,7 +71,19 @@
         </table>
       </section>
       <footer>
-        <p id="loading-info"></p>
+        <section>
+          <a id="link-home" href="/">Main website</a>
+          <input id="toggle-total-damage" type="checkbox" checked>
+          <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
+          <input id="toggle-useful-damage" type="checkbox" checked>
+          <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
+          <input id="toggle-limit" type="checkbox" checked>
+          <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
+          <aside id="loading-info-panel" style="display: none;">
+            <p id="loading-info"></p>
+            <p id="footer-note">Note: some filters will make your browser beg for mercy</p>
+          </aside>
+        </section>
       </footer>
     </main>
   </body>

@@ -1,6 +1,21 @@
-const ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large";
+// const LOGS_URL = "https://uwu-logs.xyz";
+const LOGS_URL = "http://localhost:5000";
+const ICON_CDN_URL = "https://wotlk.evowow.com/static/images/wow/icons/large";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CLASSES = ['Death Knight', 'Druid', 'Hunter', 'Mage', 'Paladin', 'Priest', 'Rogue', 'Shaman', 'Warlock', 'Warrior']
+const AURAS_COLUMNS = ['ext', 'self', 'rekt'];
+const DATA_KEYS = {
+  guid: 'i',
+  name: 'n',
+  uAmount: 'ua',
+  uDPS: 'ud',
+  tAmount: 'ta',
+  tDPS: 'td',
+  spec: 's',
+  auras: 'a',
+  reportID: 'r',
+  duration: 't',
+}
 
 const BOSSES = {
   'Icecrown Citadel': [
@@ -10,22 +25,22 @@ const BOSSES = {
     'Blood Prince Council', "Blood-Queen Lana'thel",
     'Valithria Dreamwalker', 'Sindragosa'
   ],
-  'The Ruby Sanctum': ['Halion', 'Baltharus the Warborn', 'General Zarithrian', 'Saviana Ragefire'],
+  'The Ruby Sanctum': ['Halion', 'Baltharus the Warborn', 'Saviana Ragefire', 'General Zarithrian'],
   'Trial of the Crusader': ["Anub'arak", 'Northrend Beasts', 'Lord Jaraxxus', 'Faction Champions', "Twin Val'kyr"],
   'Vault of Archavon': ['Toravon the Ice Watcher', 'Archavon the Stone Watcher', 'Emalon the Storm Watcher', 'Koralon the Flame Watcher'],
   "Onyxia's Lair": ['Onyxia'],
   'The Eye of Eternity': ['Malygos'],
   'The Obsidian Sanctum': ['Sartharion'],
-  // 'Naxxramas': [
-  //   "Anub'Rekhan", 'Grand Widow Faerlina', 'Maexxna', 'Noth the Plaguebringer', 'Heigan the Unclean',
-  //   'Loatheb', 'Patchwerk', 'Grobbulus', 'Gluth', 'Thaddius', 'Instructor Razuvious', 'Gothik the Harvester',
-  //   'The Four Horsemen', 'Sapphiron', "Kel'Thuzad"
-  // ],
-  // 'Ulduar': [
-  //   'Flame Leviathan', 'Ignis the Furnace Master', 'Razorscale', 'XT-002 Deconstructor',
-  //   'Assembly of Iron', 'Kologarn', 'Auriaya', 'Hodir', 'Thorim', 'Freya', 'Mimiron',
-  //   'General Vezax', 'Yogg-Saron', 'Algalon the Observer'
-  // ],
+  'Naxxramas': [
+    "Anub'Rekhan", 'Grand Widow Faerlina', 'Maexxna', 'Noth the Plaguebringer', 'Heigan the Unclean',
+    'Loatheb', 'Patchwerk', 'Grobbulus', 'Gluth', 'Thaddius', 'Instructor Razuvious', 'Gothik the Harvester',
+    'The Four Horsemen', 'Sapphiron', "Kel'Thuzad"
+  ],
+  'Ulduar': [
+    'Flame Leviathan', 'Ignis the Furnace Master', 'Razorscale', 'XT-002 Deconstructor',
+    'Assembly of Iron', 'Kologarn', 'Auriaya', 'Hodir', 'Thorim', 'Freya', 'Mimiron',
+    'General Vezax', 'Yogg-Saron', 'Algalon the Observer'
+  ],
 };
 
 const SPECS = [
@@ -141,10 +156,13 @@ const AURAS_ICONS = {
 
 export {
   BOSSES,
-  SPECS,
-  MONTHS,
   CLASSES,
+  SPECS,
   SPECS_SELECT_OPTIONS,
-  ICON_CDN_LINK,
+  AURAS_COLUMNS,
+  DATA_KEYS,
   AURAS_ICONS,
+  LOGS_URL,
+  ICON_CDN_URL,
+  MONTHS,
 }

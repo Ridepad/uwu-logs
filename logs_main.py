@@ -2,7 +2,6 @@ import json
 import os
 from collections import defaultdict
 
-import constants
 import dmg_breakdown
 import dmg_heals
 import logs_dmg_useful
@@ -16,9 +15,10 @@ import logs_spells_list
 import logs_units_guid
 import logs_valks3
 from constants import (
-    MONTHS,
-    add_new_numeric_data, add_space, get_report_name_info, is_player, running_time, sort_dict_by_value, get_now,
-    zlib_text_read)
+    MONTHS, FLAG_ORDER,
+    add_new_numeric_data, add_space, get_fight_duration, get_report_name_info, is_player,
+    json_read, json_read_no_exception, json_write, running_time, setup_logger,
+    sort_dict_by_value, get_now, zlib_text_read)
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
@@ -126,7 +126,7 @@ def convert_duration(t):
     hours = t // 3600
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
     
-@constants.running_time
+@running_time
 def get_targets(logs_slice: list[str], source=PLAYER, target="0xF1"):
     _targets: set[str] = set()
     for line in logs_slice:
@@ -165,7 +165,13 @@ def convert_to_html_name(name: str):
 
 
 class THE_LOGS:
+    GUIDS: dict[str, dict[str, str]]
+    PLAYERS: dict[str, str]
+    CLASSES: dict[str, str]
+    SEGMENTS: dict[str, list[tuple[str]]]
+
     def __init__(self, logs_name: str) -> None:
+        self.loading = False
         self.NAME = logs_name
         self.PATH = os.path.join(LOGS_DIR, logs_name)
         if not os.path.exists(self.PATH):
@@ -201,7 +207,7 @@ class THE_LOGS:
             return self.LOGGER_LOGS
         except AttributeError:
             log_file = self.relative_path('log.log')
-            logger = constants.setup_logger(f"{self.NAME}_logger", log_file)
+            logger = setup_logger(f"{self.NAME}_logger", log_file)
             self.LOGGER_LOGS = logger
             return logger
     
@@ -233,7 +239,7 @@ class THE_LOGS:
         if slice_ID in self.DURATIONS:
             return self.DURATIONS[slice_ID]
         first_line, last_line = self.logs_first_last_line(s, f)
-        dur = constants.get_fight_duration(first_line, last_line)
+        dur = get_fight_duration(first_line, last_line)
         self.DURATIONS[slice_ID] = dur
         return dur
 
@@ -254,10 +260,10 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(enc_data_file_name):
                 logs = self.get_logs()
                 self.ENCOUNTER_DATA = logs_fight_separator.main(logs)
-                constants.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
+                json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
             else:
                 enc_data: dict[str, list[tuple[int, int]]]
-                enc_data = constants.json_read(enc_data_file_name)
+                enc_data = json_read(enc_data_file_name)
                 self.ENCOUNTER_DATA = enc_data
             return self.ENCOUNTER_DATA
     
@@ -268,19 +274,15 @@ class THE_LOGS:
         _guids = parsed['everything']
         _players = parsed['players']
         _classes = parsed['classes']
-        constants.json_write(guids_data_file_name, _guids)
-        constants.json_write(players_data_file_name, _players)
-        constants.json_write(classes_data_file_name, _classes)
+        json_write(guids_data_file_name, _guids)
+        json_write(players_data_file_name, _players)
+        json_write(classes_data_file_name, _classes)
         return _guids, _players, _classes
     
     def get_guids(self, rewrite=False):
         try:
             return self.GUIDS, self.PLAYERS, self.CLASSES
         except AttributeError:
-            _guids: dict[str, dict[str, str]]
-            _players: dict[str, str]
-            _classes: dict[str, str]
-
             files = [
                 self.relative_path("GUIDS_DATA.json"),
                 self.relative_path("PLAYERS_DATA.json"),
@@ -288,14 +290,13 @@ class THE_LOGS:
             ]
             
             if rewrite or self.cache_files_missing(files):
-                _guids, _players, _classes = self.new_guids(*files)
+                self.GUIDS, self.PLAYERS, self.CLASSES = self.new_guids(*files)
             else:
-                _guids, _players, _classes = [
-                    constants.json_read_no_exception(_file_name)
+                self.GUIDS, self.PLAYERS, self.CLASSES = [
+                    json_read_no_exception(_file_name)
                     for _file_name in files
                 ]
             
-            self.GUIDS, self.PLAYERS, self.CLASSES = _guids, _players, _classes
             return self.GUIDS, self.PLAYERS, self.CLASSES
 
     def get_all_guids(self):
@@ -360,10 +361,10 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(timestamp_data_file_name):
                 logs = self.get_logs()
                 self.TIMESTAMP = logs_get_time.ujiowfuiwefhuiwe(logs)
-                constants.json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None)
+                json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None)
             else:
                 timestamp_data: list[int]
-                timestamp_data = constants.json_read(timestamp_data_file_name)
+                timestamp_data = json_read(timestamp_data_file_name)
                 self.TIMESTAMP = timestamp_data
             return self.TIMESTAMP
     
@@ -443,7 +444,7 @@ class THE_LOGS:
             self.SEGMENTS_SEPARATED = logs_check_difficulty.separate_modes(segments)
             return self.SEGMENTS_SEPARATED
 
-    def get_segments_data(self) -> dict[str, list[tuple[str]]]:
+    def get_segments_data(self):
         try:
             return self.SEGMENTS
         except AttributeError:
@@ -466,9 +467,9 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(spells_data_file_name):
                 logs = self.get_logs()
                 self.SPELLS = logs_spells_list.get_all_spells(logs)
-                constants.json_write(spells_data_file_name, self.SPELLS)
+                json_write(spells_data_file_name, self.SPELLS)
             else:
-                _spells = constants.json_read_no_exception(spells_data_file_name)
+                _spells = json_read_no_exception(spells_data_file_name)
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
 
@@ -638,7 +639,7 @@ class THE_LOGS:
         data = sort_dict_by_value(data)
         return [(guids[guid]["name"], separate_thousands(v)) for guid, v in data.items()]
 
-    @constants.running_time
+    @running_time
     def valk_info(self, logs_slice):
         v = logs_valks3.Valks(self)
         all_grabs, details = v.main()
@@ -658,7 +659,7 @@ class THE_LOGS:
 
 
 
-    @constants.running_time
+    @running_time
     def report_page(self, s, f) -> tuple[dict[str, int], dict[str, int]]:
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['report_page']
@@ -678,9 +679,6 @@ class THE_LOGS:
 
         data['first_hit'] = logs_slice[0]
         data['last_hit'] = logs_slice[-1]
-        # print(data['damage'])
-        # print(data['heal'])
-        # print(data['specs'])
 
         cached_data[slice_ID] = data
         return data
@@ -771,7 +769,7 @@ class THE_LOGS:
 
         return info_data
 
-    @constants.running_time
+    @running_time
     def player_info_all(self, segments, sGUID, tGUID=None):
         spell_data = self.get_spells()
         def spell_name(spell_id):
@@ -936,7 +934,7 @@ class THE_LOGS:
         }
 
 
-    @constants.running_time
+    @running_time
     def get_spell_count(self, s, f, spell_id_str) -> dict[str, dict[str, int]]:
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['get_spell_count'].setdefault(spell_id_str, {})
@@ -969,7 +967,7 @@ class THE_LOGS:
                     for name, value in names.items():
                         _t[name] = _t.get(name, 0) + value
         
-        spells = {x: spells[x] for x in constants.FLAG_ORDER if x in spells}
+        spells = {x: spells[x] for x in FLAG_ORDER if x in spells}
 
         for flag_info in spells.values():
             for sources, sources_info in flag_info.items():

@@ -12,7 +12,7 @@ from time import perf_counter
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
-        print('[CREATED FOLDER]', path)
+        # print('[CREATED FOLDER]', path)
 
 def new_folder_path(root, name):
     new_folder = os.path.join(root, name)
@@ -48,6 +48,8 @@ LOGGER_LOGS = setup_logger('logger_logs', LOGGER_LOGS_FILE)
 UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
 UPLOAD_LOGGER = setup_logger('logger_upload', UPLOAD_LOGGER_FILE)
 
+T_DELTA_2SEC = timedelta(seconds=2)
+T_DELTA_15SEC = timedelta(seconds=15)
 T_DELTA_1MIN = timedelta(minutes=1)
 T_DELTA_2MIN = timedelta(minutes=2)
 T_DELTA_5MIN = timedelta(minutes=5)
@@ -55,8 +57,6 @@ T_DELTA_10MIN = timedelta(minutes=10)
 T_DELTA_15MIN = timedelta(minutes=15)
 T_DELTA_20MIN = timedelta(minutes=20)
 T_DELTA_30MIN = timedelta(minutes=30)
-T_DELTA_15SEC = timedelta(seconds=15)
-T_DELTA_2SEC = timedelta(seconds=2)
 
 LOGS_CUT_NAME = "LOGS_CUT"
 UPLOAD_STATUS_INFO = {}
@@ -64,10 +64,12 @@ ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 FLAG_ORDER = [
-    "SPELL_DISPEL", "SPELL_CAST_SUCCESS", "SPELL_EXTRA_ATTACKS",  "SPELL_ENERGIZE",
-    "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "SPELL_HEAL",
+    "SPELL_DISPEL", "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "SPELL_HEAL",
     "SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH", "SPELL_AURA_REMOVED",
-    "SPELL_MISSED", "SPELL_CAST_START", ]
+    "SPELL_CAST_SUCCESS", "SPELL_EXTRA_ATTACKS", "SPELL_ENERGIZE",
+    "SPELL_MISSED", "SPELL_CAST_START",
+    "SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE",
+]
 
 BOSSES_FROM_HTML = {
     "the-lich-king": "The Lich King",
@@ -195,29 +197,21 @@ BOSSES_GUIDS = {
     "003E76": "Kel'Thuzad",
     
     "008159": "Flame Leviathan",
-    "00808A": "Freya",
-    "008061": "Thorim",
-    "0081A2": "Razorscale",
     "00815E": "Ignis the Furnace Master",
+    "0081A2": "Razorscale",
     "00820D": "XT-002 Deconstructor",
-    
     "008063": "Steelbreaker",
     "00809F": "Runemaster Molgeim",
     "008059": "Stormcaller Brundir",
     "0080A2": "Kologarn",
     "0082EB": "Auriaya",
-    "008067": "Algalon the Observer",
+    "00808A": "Freya",
     "00804D": "Hodir",
-    "008208": "Leviathan Mk II",
-    "008373": "VX-001",
-    "008386": "Aerial Command Unit",
     "008246": "Mimiron",
     "008061": "Thorim",
     "0081F7": "General Vezax",
     "008208": "Yogg-Saron",
-
-    # "0080A5": "Left Arm",
-    # "0080A6": "Right Arm",
+    "008067": "Algalon the Observer",
 
     # "008231": "Heart of the Deconstructor",
     # "008242": "XE-321 Boombot",
@@ -267,7 +261,7 @@ TOC_CHAMPIONS = {
 }
 BOSSES_GUIDS.update(TOC_CHAMPIONS)
 
-MUTLIBOSSES = {
+MULTIBOSSES = {
     "Halion": ['009BB7', '009CCE', '009CD2'],
     "Gunship": ['0092A4', '00915F'],
     "Blood Prince Council": ['009454', '009455', '009452'],
@@ -277,6 +271,9 @@ MUTLIBOSSES = {
     "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
     "Mimiron": ["008246", "008208", "008373", "008386"],
     "Assembly of Iron": ["008063", "00809F", "008059"],
+    "Kologarn": ["0080A2", "0080A5", "0080A6"],
+    "XT-002 Deconstructor": ["00820D", "008231"],
+    "Freya": ["00808A", "0081B3", "0081B2", "008096", "0081CC", "008094", "008097"],
 }
 
 SPELLS_SCHOOLS = {
@@ -1028,12 +1025,13 @@ def get_logs_filter(filter_type: str):
     FILTERED_LOGS[filter_type] = data
     return data
 
-def get_folders_filter(filter=None):
+def get_folders_filter(filter=None, public_only=True):
     folders = get_folders('LogsDir')
     if filter is not None:
         folders = [name for name in folders if filter in name]
-    filter_list = get_logs_filter('private')
-    folders = [name for name in folders if name not in filter_list]
+    if public_only:
+        filter_list = get_logs_filter('private')
+        folders = [name for name in folders if name not in filter_list]
     return folders
 
 def get_report_name_info(name: str):

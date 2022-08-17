@@ -1,5 +1,6 @@
-from constants import BOSSES_GUIDS, convert_duration, get_fight_duration
+from constants import BOSSES_GUIDS, MULTIBOSSES, convert_duration, get_fight_duration
 
+ONE_HP_BOSSES = set(MULTIBOSSES['Blood Prince Council'])
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 DEFAULT_DIFFICULTY = "TBD"
 SPELLS: dict[str, tuple[str, tuple[str]]] = {
@@ -84,7 +85,8 @@ def is_kill(last_line: str):
     # return False
     try:
         line = last_line.split(',', 11)
-        return line[10] != '0' and line[4][6:-6] in BOSSES_GUIDS
+        tGUID = line[4][6:-6]
+        return line[10] != '0' and tGUID in BOSSES_GUIDS and tGUID not in ONE_HP_BOSSES
     except IndexError:
         return False
 

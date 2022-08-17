@@ -1,7 +1,12 @@
-import { BOSSES, CLASSES, SPECS, SPECS_SELECT_OPTIONS, MONTHS, ICON_CDN_LINK, AURAS_ICONS } from "./appConstants.js"
+import {
+  BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS,
+  AURAS_ICONS, LOGS_URL, ICON_CDN_URL, MONTHS } from "./appConstants.js"
 
 const LOC = window.location;
 const screenX = window.matchMedia("(min-width: 1100px)");
+
+const mainTableBody = document.getElementById("main-table-body");
+const headDPS = document.getElementById('head-dps');
 
 const serverSelect = document.getElementById('server-select');
 const instanceSelect = document.getElementById('instance-select');
@@ -9,16 +14,9 @@ const bossSelect = document.getElementById('boss-select');
 const sizeSelect = document.getElementById('size-select');
 const difficultyCheckbox = document.getElementById('difficulty-checkbox');
 const combineCheckbox = document.getElementById('combine-checkbox');
-const loading = document.getElementById('loading-info');
-
 const classSelect = document.getElementById('class-select');
 const specSelect = document.getElementById('spec-select');
 
-const mainTableBody = document.getElementById("main-table-body");
-const headDPS = document.getElementById('head-dps');
-
-const LOGS_URL = "https://uwu-logs.xyz";
-const AURAS_COLUMNS = ['ext', 'self', 'rekt'];
 const INTERACTABLES = {
   server: serverSelect,
   raid: instanceSelect,
@@ -30,19 +28,42 @@ const INTERACTABLES = {
   spec: specSelect,
 }
 
-const DATA_KEYS = {
-  guid: 'i',
-  name: 'n',
-  uAmount: 'ua',
-  uDPS: 'ud',
-  tAmount: 'ta',
-  tDPS: 'td',
-  spec: 's',
-  auras: 'a',
-  reportID: 'r',
-  duration: 't',
+const loading = document.getElementById('loading-info');
+const toggleTotalDamage = document.getElementById('toggle-total-damage');
+const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
+const headUsefulDps = document.getElementById('head-useful-dps');
+const headUsefulAmount = document.getElementById('head-useful-amount');
+const headTotalDps = document.getElementById('head-total-dps');
+const headTotalAmount = document.getElementById('head-total-amount');
+const toggleLimit = document.getElementById('toggle-limit');
+const LIMITED_ROWS = 1000;
+
+function toggleColumn(className, display) {
+  document.querySelectorAll(className).forEach(e => e.style.display = display);
 }
 
+function toggleUsefulColumns(first) {
+  if (first && toggleUsefulDamage.checked) return;
+
+  const display = toggleUsefulDamage.checked ? "table-cell" : 'none';
+  headTotalDps.style.display = display;
+  headTotalAmount.style.display = display;
+  toggleColumn(".table-ud", display);
+  toggleColumn(".table-ua", display);
+}
+function toggleTotalColumns(first) {
+  if (first && toggleTotalDamage.checked) return;
+
+  const display = toggleTotalDamage.checked ? "table-cell" : 'none';
+  headUsefulDps.style.display = display;
+  headUsefulAmount.style.display = display;
+  toggleColumn(".table-td", display);
+  toggleColumn(".table-ta", display);
+}
+
+function toggleColumns(event) {
+  event.target == toggleTotalDamage ? toggleTotalColumns() : toggleUsefulColumns();
+}
 
 function newOption(value, index) {
   const _option = document.createElement('option');
@@ -88,7 +109,7 @@ function addNameCell(row, data, key) {
   const data_value = data[key];
 
   const [spec_name, spec_icon, spec_class_id] = SPECS[data[DATA_KEYS.spec]];
-  const imgsrc = `${ICON_CDN_LINK}/${spec_icon}.jpg`;
+  const imgsrc = `${ICON_CDN_URL}/${spec_icon}.jpg`;
   cell.innerHTML = `<img src="${imgsrc}">${data_value}`;
   cell.title = spec_name;
   cell.className = `${spec_class_id} table-n`;
@@ -151,7 +172,7 @@ function addDateCell(row, data, key) {
 
 function new_li(spell_id, count, uptime) {
   const li = document.createElement('li');
-  const imgsrc = `${ICON_CDN_LINK}/${AURAS_ICONS[spell_id]}.jpg`;
+  const imgsrc = `${ICON_CDN_URL}/${AURAS_ICONS[spell_id]}.jpg`;
   li.innerHTML = `<img src="${imgsrc}" alt="${spell_id}"><span>${count}</span><span>${uptime}%</span>`;
   return li
 }
@@ -208,8 +229,8 @@ function newRow(data) {
   return row
 }
 
-const reverseSorted = ["head-useful-dps", "head-duration", "head-external", "head-self", "head-rekt"]
-const SORT_VARS = {column: 1, order: 1}
+const reverseSorted = ["head-duration", "head-external", "head-self", "head-rekt"]
+const SORT_VARS = {column: -1, order: 1}
 const getCellValue = (tr, idx) => tr.children[idx].value;
 const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
 function sort_table_by_column(event) {
@@ -257,25 +278,24 @@ function tableAddNewData(data) {
   data = combineCheckbox.checked ? noDublicates(data) : data;
   if (!data) return;
 
-  SORT_VARS.column = -1;
-  // SORT_VARS.order = 1;
-
   let i = 0;
+  SORT_VARS.column = 1;
+  loading.parentElement.style.display = "block";
+  const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
   (function chunk() {
-    const end = Math.min(i+250, data.length)
+    const end = Math.min(i+250, LIMIT)
     for ( ; i < end; i++) {
-      try {
-        const row = newRow(data[i]);
-        mainTableBody.appendChild(row);
-      } catch {
-        console.log(data[i]);
-      }
+      const row = newRow(data[i]);
+      mainTableBody.appendChild(row);
     }
-    if (i<data.length) {
-      loading.innerText = `Done: ${i}/${data.length}`
+    if (i < LIMIT) {
+      loading.innerText = `Done: ${i}/${LIMIT}`
       mainTimeout = setTimeout(chunk);
     } else {
       loading.innerText = '';
+      loading.parentElement.style.display = "none";
+      toggleUsefulColumns(true);
+      toggleTotalColumns(true);
     }
   })();
 }
@@ -358,6 +378,10 @@ function searchChanged() {
   fetchData();
 }
 
+function isValidParam(elm, par) {
+  return [...elm.options].map(o => o.value).includes(par);
+}
+
 function init() {
   Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(newOption(name)));
   CLASSES.forEach((name, i) => classSelect.appendChild(newOption(name, i)));
@@ -368,21 +392,24 @@ function init() {
     const elm = INTERACTABLES[key];
     if (elm.nodeName == "INPUT") {
       elm.checked = par != 0;
-    } else {
-      const vrf = [...elm.options].map(o => o.value).includes(par);
-      const index = elm.id == 'class-select' ? 2 : elm.id == 'spec-select' ? 1 : 0;
-      vrf && par ? elm.value = par : elm.selectedIndex = index;
+    } else if (!isValidParam(elm, par)) {
+      elm.selectedIndex = elm == classSelect ? 6 : 0;
+    } else if (par) {
+      elm.value = par;
     }
-    if (elm.id == 'instance-select') {
+
+    if (elm == instanceSelect) {
+      elm.addEventListener('change', addBosses);
       addBosses();
-    } else if (elm.id == 'class-select') {
+    } else if (elm == classSelect) {
+      elm.addEventListener('change', addSpecs);
       addSpecs();
     }
-    elm.addEventListener('change', searchChanged)
+    elm.addEventListener('change', searchChanged);
   }
   
-  instanceSelect.addEventListener('change', addBosses);
-  classSelect.addEventListener('change', addSpecs);
+  toggleTotalDamage.addEventListener('change', toggleColumns);
+  toggleUsefulDamage.addEventListener('change', toggleColumns);
   
   searchChanged();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));
