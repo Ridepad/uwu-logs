@@ -590,7 +590,6 @@ SPELL_BOOK_SPEC = {
         "57722": 1, # Totem of Wrath
         "59159": 1, # Thunderstorm
         "16166": 1, # Elemental Mastery
-        "60043": 1, # Lava Burst
         "49240": 1, # Lightning Bolt (Proc)
         "49269": 1, # Chain Lightning (Proc)
 
