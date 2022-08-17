@@ -1,6 +1,4 @@
-import {
-  BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS,
-  AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
+import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
 
 const LOC = window.location;
 const screenX = window.matchMedia("(min-width: 1100px)");
