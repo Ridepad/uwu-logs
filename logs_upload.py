@@ -397,6 +397,8 @@ class NewUpload(Thread):
         _, base1, base2 = self.upload_dir.rsplit('\\', 2)
         basename = os.path.basename(old)
         new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
+        UPLOAD_LOGGER.debug(f'moving old {old}')
+        UPLOAD_LOGGER.debug(f'moving new {new}')
         os.rename(old, new)
         shutil.rmtree(self.upload_dir, ignore_errors=True)
 
