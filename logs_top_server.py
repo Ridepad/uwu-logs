@@ -66,6 +66,7 @@ def main_make_from_zero(server):
 
     TOP_D: dict[str, dict[str, dict]] = {}
     for folder in reports:
+        print(folder)
         top_add(TOP_D, folder)
 
     save_tops(TOP_D, server)
@@ -127,12 +128,12 @@ def main_top_add_new(report_id: str):
 
 
 if __name__ == "__main__":
-    _reports = {
-        "22-08-13--19-57--Sherbet--Lordaeron":"Done!",
-        "22-08-13--20-33--Veriet--Lordaeron":"Done!",
-        "22-08-13--23-02--Sherbet--Lordaeron": "123",
-    }
-    main_add_new_reports_wrap(_reports)
+    # _reports = {
+    #     "22-08-13--19-57--Sherbet--Lordaeron":"Done!",
+    #     "22-08-13--20-33--Veriet--Lordaeron":"Done!",
+    #     "22-08-13--23-02--Sherbet--Lordaeron": "123",
+    # }
+    # main_add_new_reports_wrap(_reports)
     # main_top_add_new("22-08-05--19-43--Jenbrezul--Lordaeron")
-    # main_make_from_zero("Frostmourne2")
+    main_make_from_zero("Lordaeron")
     # main_make("Icecrown")

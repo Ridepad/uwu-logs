@@ -90,21 +90,16 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     pets_raw: set[str] = set()
     last_abom = {}
 
-    # players_seen = defaultdict(int)
-    # players_names = {}
     players_classes = {}
     players = {}
     players_skip = set()
-    _spells = set()
-    # _players_spells = {}
 
     for line in logs:
         _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 8)
 
         if flag in FLAG_SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
             continue
-        # if sGUID == "0x06000000004F9A9C":
-        #     print(line)
+
         if sGUID not in everything:
             everything[sGUID] = {'name': sName}
         elif tGUID not in everything:
@@ -118,19 +113,11 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         if sGUID not in players_skip:
             if not is_player(sGUID):
                 players_skip.add(sGUID)
-            else:
-                # print(other)
-                # spellname = other[1].split(',', 1)[0]
-                if other[0] in SPELL_BOOK:
-                    # if sGUID == "0x060000000004B154":
-                    #     print(sName, other)
-                    players[sGUID] = sName
-                    spell_info = SPELL_BOOK[other[0]]
-                    players_classes[sGUID] = CLASSES[spell_info[0]]
-                    players_skip.add(sGUID)
-                if sGUID == "0x06000000004F8377":
-                    _spells.add((other[0], other[1]))
-                    # _players_spells[other[0]] = other[1]
+            elif other[0] in SPELL_BOOK:
+                players[sGUID] = sName
+                spell_info = SPELL_BOOK[other[0]]
+                players_classes[sGUID] = CLASSES[spell_info[0]]
+                players_skip.add(sGUID)
 
         if spell_id == '47468':
             if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
@@ -172,7 +159,6 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         everything[guid] = {'name': name}
 
     add_missing_pets(everything, pets_perma, pets_raw)
-    print(_spells)
     return {
         "everything": everything,
         "players": dict(sorted(players.items())),
