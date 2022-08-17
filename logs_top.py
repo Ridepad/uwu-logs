@@ -75,7 +75,7 @@ def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
 
 
 @constants.running_time
-def make_report_top(name: str, rewrite=True):
+def make_report_top(name: str, rewrite=False):
     print(name)
     report = logs_main.THE_LOGS(name)
     top_path = report.relative_path('top.json')
@@ -106,9 +106,9 @@ def main_wrap(name):
 
 
 if __name__ == "__main__":
-    make_report_top('22-08-13--23-02--Sherbet--Lordaeron')
-    make_report_top('22-08-13--20-33--Veriet--Lordaeron')
-    make_report_top('22-08-13--19-57--Sherbet--Lordaeron')
-    # import _redo
-    # _redo.redo_data(main_wrap, proccesses=4, filter="Frostmourne2")
+    # make_report_top('22-08-13--23-02--Sherbet--Lordaeron')
+    # make_report_top('22-08-13--20-33--Veriet--Lordaeron')
+    # make_report_top('22-08-13--19-57--Sherbet--Lordaeron')
+    import _redo
+    _redo.redo_data(main_wrap, proccesses=2, filter="Lordaeron")
     # _redo.redo_data(main_wrap, filter="Lordaeron", startfrom=-50, proccesses=4)

@@ -1,5 +1,3 @@
-// const LOGS_URL = "https://uwu-logs.xyz";
-const LOGS_URL = "http://localhost:5000";
 const ICON_CDN_URL = "https://wotlk.evowow.com/static/images/wow/icons/large";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CLASSES = ['Death Knight', 'Druid', 'Hunter', 'Mage', 'Paladin', 'Priest', 'Rogue', 'Shaman', 'Warlock', 'Warrior']

@@ -1,6 +1,6 @@
 import {
   BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS,
-  AURAS_ICONS, LOGS_URL, ICON_CDN_URL, MONTHS } from "./appConstants.js"
+  AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
 
 const LOC = window.location;
 const screenX = window.matchMedia("(min-width: 1100px)");
@@ -89,7 +89,7 @@ function addSpecs() {
 
 function newLink(report_ID) {
   const _a = document.createElement('a');
-  _a.href = `${LOGS_URL}/reports/${report_ID}/`;
+  _a.href = `$/reports/${report_ID}/`;
   _a.target = "_blank";
   return _a
 }
