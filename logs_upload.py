@@ -308,10 +308,10 @@ class NewUpload(Thread):
         for logs_id in self.slices:
             logs_archive.save_raw_logs(logs_id, self.upload_dir, self.forced)
 
-        # self.change_status(TOP_UPDATE)
-        # for logs_id in self.slices:
-        #     logs_top.make_report_top(logs_id)
-        # logs_top_server.main_add_new_reports_wrap(self.slices)
+        self.change_status(TOP_UPDATE)
+        for logs_id in self.slices:
+            logs_top.make_report_top(logs_id)
+        logs_top_server.main_add_new_reports_wrap(self.slices)
         
         self.change_status(FULL_DONE, 1)
 
