@@ -389,9 +389,15 @@ class NewUpload(Thread):
             self.finish()
             
     def finish(self):
-        save_upload_cache(self.file_data, self.slices)
+        UPLOAD_LOGGER.debug(f'finish {self.upload_dir}')
+        try:
+            save_upload_cache(self.file_data, self.slices)
+        except Exception:
+            UPLOAD_LOGGER.exception(f'finish {self.upload_dir} exception')
+
         if "uploads" not in self.upload_dir:
             return
+        UPLOAD_LOGGER.debug('not returned')
         
         old = self.upload_data.get("archive") or self.upload_data.get("extracted")
         _, base1, base2 = self.upload_dir.rsplit('\\', 2)
