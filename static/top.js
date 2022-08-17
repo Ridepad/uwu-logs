@@ -87,7 +87,7 @@ function addSpecs() {
 
 function newLink(report_ID) {
   const _a = document.createElement('a');
-  _a.href = `$/reports/${report_ID}/`;
+  _a.href = `/reports/${report_ID}/`;
   _a.target = "_blank";
   return _a
 }
