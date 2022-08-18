@@ -397,15 +397,12 @@ class NewUpload(Thread):
         if "uploads" not in self.upload_dir:
             return
 
-        UPLOAD_LOGGER.debug(f'finish {self.upload_dir}')
         try:
             old = self.upload_data.get("archive") or self.upload_data.get("extracted")
             sep = '/' if '/' in old else '\\'
-            _, base1, base2 = self.upload_dir.rsplit(sep, 2)
+            _, ip, date = self.upload_dir.rsplit(sep, 2)
             basename = os.path.basename(old)
-            new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
-            UPLOAD_LOGGER.debug(f'moving old {old}')
-            UPLOAD_LOGGER.debug(f'moving new {new}')
+            new = os.path.join(UPLOADED_DIR, f"{ip}--{date}--{basename}")
             os.rename(old, new)
             shutil.rmtree(self.upload_dir, ignore_errors=True)
         except Exception:
