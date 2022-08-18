@@ -389,7 +389,6 @@ class NewUpload(Thread):
             self.finish()
             
     def finish(self):
-        UPLOAD_LOGGER.debug(f'finish {self.upload_dir}')
         try:
             save_upload_cache(self.file_data, self.slices)
         except Exception:
@@ -397,16 +396,20 @@ class NewUpload(Thread):
 
         if "uploads" not in self.upload_dir:
             return
-        UPLOAD_LOGGER.debug('not returned')
-        
-        old = self.upload_data.get("archive") or self.upload_data.get("extracted")
-        _, base1, base2 = self.upload_dir.rsplit('\\', 2)
-        basename = os.path.basename(old)
-        new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
-        UPLOAD_LOGGER.debug(f'moving old {old}')
-        UPLOAD_LOGGER.debug(f'moving new {new}')
-        os.rename(old, new)
-        shutil.rmtree(self.upload_dir, ignore_errors=True)
+
+        UPLOAD_LOGGER.debug(f'finish {self.upload_dir}')
+        try:
+            old = self.upload_data.get("archive") or self.upload_data.get("extracted")
+            _, base1, base2 = self.upload_dir.rsplit('\\', 2)
+            basename = os.path.basename(old)
+            new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
+            UPLOAD_LOGGER.debug(f'moving old {old}')
+            UPLOAD_LOGGER.debug(f'moving new {new}')
+            os.rename(old, new)
+            shutil.rmtree(self.upload_dir, ignore_errors=True)
+        except Exception:
+            UPLOAD_LOGGER.exception(f'finish2 {self.upload_dir} exception')
+
 
 
 class File:
