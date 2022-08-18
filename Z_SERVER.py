@@ -13,8 +13,8 @@ import logs_main
 import logs_upload
 import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA_1MIN, UPLOADS_DIR,
-    banned, get_logs_filter, wrong_pw)
+    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA_1MIN, TOP_DIR, UPLOADS_DIR,
+    banned, get_folders, get_logs_filter, wrong_pw)
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -457,14 +457,14 @@ def test3():
 
 
 @SERVER.route('/top', methods=["GET", "POST"])
-def test_top():
+def top():
     if request.method == "GET":
-        return render_template('top.html')
+        servers = get_folders(TOP_DIR)
+        return render_template('top.html', SERVERS=servers)
      
     content = logs_top_server.new_request(request.json)
     response = make_response(content)
     response.headers['Content-length'] = len(content)
-    print(len(content))
     response.headers['Content-Encoding'] = 'gzip'
     return response
 

@@ -40,27 +40,23 @@ function toggleColumn(className, display) {
   document.querySelectorAll(className).forEach(e => e.style.display = display);
 }
 
-function toggleUsefulColumns(first) {
-  if (first && toggleUsefulDamage.checked) return;
+function toggleUsefulColumns(event) {
+  if (!event && toggleUsefulDamage.checked) return;
 
-  const display = toggleUsefulDamage.checked ? "table-cell" : 'none';
-  headTotalDps.style.display = display;
-  headTotalAmount.style.display = display;
+  const display = toggleUsefulDamage.checked ? "" : 'none';
+  headUsefulDps.style.display = display;
+  headUsefulAmount.style.display = display;
   toggleColumn(".table-ud", display);
   toggleColumn(".table-ua", display);
 }
-function toggleTotalColumns(first) {
-  if (first && toggleTotalDamage.checked) return;
+function toggleTotalColumns(event) {
+  if (!event && toggleTotalDamage.checked) return;
 
-  const display = toggleTotalDamage.checked ? "table-cell" : 'none';
-  headUsefulDps.style.display = display;
-  headUsefulAmount.style.display = display;
+  const display = toggleTotalDamage.checked ? "" : 'none';
+  headTotalDps.style.display = display;
+  headTotalAmount.style.display = display;
   toggleColumn(".table-td", display);
   toggleColumn(".table-ta", display);
-}
-
-function toggleColumns(event) {
-  event.target == toggleTotalDamage ? toggleTotalColumns() : toggleUsefulColumns();
 }
 
 function newOption(value, index) {
@@ -119,6 +115,10 @@ function addDPSCell(row, data, key) {
   const data_value = data[key];
   cell.value = data_value;
   cell.className = `table-${key}`;
+  const _input = key == "td" ? toggleTotalDamage : toggleUsefulDamage;
+  if (!_input.checked) {
+    cell.style.display = "none";
+  }
   const _inside_data = data_value.toFixed(1);
   add_inner_text(cell, _inside_data);
   row.appendChild(cell);
@@ -129,6 +129,10 @@ function addTotalCell(row, data, key) {
   const data_value = data[key];
   cell.value = data_value;
   cell.className = `table-${key}`;
+  const _input = key == "ta" ? toggleTotalDamage : toggleUsefulDamage;
+  if (!_input.checked) {
+    cell.style.display = "none";
+  }
   add_inner_text(cell, data_value);
   row.appendChild(cell);
 }
@@ -160,8 +164,7 @@ function addDateCell(row, data, key) {
   const _link = newLink(data_value);
   const [year, month, day, _, hour, minute] = report_date.split('-');
   const months_str = MONTHS[Number(month) - 1];
-  const date = `${day} ${months_str} ${year}`;
-  _link.innerText = screenX.matches ? `${date} ${hour}:${minute}` : date;
+  _link.innerText = screenX.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
   cell.appendChild(_link);
   
   cell.className = `table-${key}`;
@@ -292,8 +295,8 @@ function tableAddNewData(data) {
     } else {
       loading.innerText = '';
       loading.parentElement.style.display = "none";
-      toggleUsefulColumns(true);
-      toggleTotalColumns(true);
+      toggleUsefulColumns();
+      toggleTotalColumns();
     }
   })();
 }
@@ -380,10 +383,16 @@ function isValidParam(elm, par) {
   return [...elm.options].map(o => o.value).includes(par);
 }
 
+function findValueIndex(select, option_name) {
+  for (let i=0; i < select.childElementCount; i++) {
+    if (select[i].innerText == option_name) return i;
+  }
+}
+
 function init() {
   Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(newOption(name)));
   CLASSES.forEach((name, i) => classSelect.appendChild(newOption(name, i)));
-  
+
   const currentParams = new URLSearchParams(LOC.search);
   for (let key in INTERACTABLES) {
     const par = currentParams.get(key);
@@ -391,7 +400,13 @@ function init() {
     if (elm.nodeName == "INPUT") {
       elm.checked = par != 0;
     } else if (!isValidParam(elm, par)) {
-      elm.selectedIndex = elm == classSelect ? 6 : 0;
+      if (elm == classSelect) {
+        elm.selectedIndex = findValueIndex(elm, "Priest");
+      } else if (elm == serverSelect) {
+        elm.selectedIndex = findValueIndex(elm, "Lordaeron");
+      } else {
+        elm.selectedIndex = 0;
+      }
     } else if (par) {
       elm.value = par;
     }
@@ -405,9 +420,9 @@ function init() {
     }
     elm.addEventListener('change', searchChanged);
   }
-  
-  toggleTotalDamage.addEventListener('change', toggleColumns);
-  toggleUsefulDamage.addEventListener('change', toggleColumns);
+
+  toggleTotalDamage.addEventListener('change', toggleTotalColumns);
+  toggleUsefulDamage.addEventListener('change', toggleUsefulColumns);
   
   searchChanged();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));

@@ -4,18 +4,19 @@ import json
 import os
 
 from constants import (
-    LOGS_DIR, PATH_DIR,
-    bytes_read, bytes_write, get_folders_filter, json_read, json_write, new_folder_path, running_time)
+    LOGS_DIR, TOP_DIR,
+    bytes_read, bytes_write, get_folders_filter, json_read, new_folder_path, running_time)
 
-TOP = new_folder_path(PATH_DIR, 'top')
 TOP_FILE = 'top.json'
 
-def new_request(q):
-    print(q)
-    server = q.get("server", "Lordaeron")
-    server_folder = new_folder_path(TOP, server)
+def new_request(q: dict):
+    server = q.get("server")
+    if not server:
+        return b''
+    
+    server_folder = new_folder_path(TOP_DIR, server)
     fname = f"{q.get('boss')} {q.get('diff')}.gzip"
-    p = os.path.join(server_folder,fname)
+    p = os.path.join(server_folder, fname)
     return bytes_read(p)
 
 # @running_time
@@ -32,7 +33,7 @@ def _sort(data: dict):
 
 @running_time
 def save_tops(top: dict, server):
-    server_folder = new_folder_path(TOP, server)
+    server_folder = new_folder_path(TOP_DIR, server)
     for boss_f_n, data in top.items():
         data = list(data.values())
         data = make_json_bytes(data)
@@ -89,7 +90,7 @@ def main_add_new_reports(server: str, reports: list[str]):
 
     new_top = {}
     
-    server_folder = new_folder_path(TOP, server)
+    server_folder = new_folder_path(TOP_DIR, server)
     for boss_f_n, data in TOP_D.items():
         top_path = os.path.join(server_folder, boss_f_n)
         cached_top = gzip_read(top_path)
@@ -112,7 +113,7 @@ def main_add_new_reports_wrap(reports: list[str]):
 def main_top_add_new(report_id: str):
     TOP_D: dict[str, dict[str, dict]] = {}
     server = report_id.rsplit('--', 1)[-1]
-    server_folder = new_folder_path(TOP, server)
+    server_folder = new_folder_path(TOP_DIR, server)
     
     report_folder = os.path.join(LOGS_DIR, report_id)
     top_file = os.path.join(report_folder, TOP_FILE)

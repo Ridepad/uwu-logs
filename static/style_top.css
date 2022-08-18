@@ -160,18 +160,18 @@ input[type=checkbox] {
 
 #spec-select,
 #class-select {
-  min-width: 13ch;
+  min-width: 14ch;
 }
 #instance-select,
 #boss-select {
-  min-width: 25ch;
+  min-width: 21ch;
 }
 
 #controls {
   width: 100%;
   position: sticky;
   top: 0;
-  max-width: 100ch;
+  max-width: 90ch;
   display: grid;
   grid-template-areas:
   'serv serv serv serv serv serv'
@@ -209,7 +209,7 @@ input[type=checkbox] {
 }
 #main-table th {
   position: sticky;
-  top: 15em;
+  top: 16em;
   z-index: 40;
 }
 
@@ -249,8 +249,6 @@ input[type=checkbox] {
   text-align: center;
   color: var(--main-white);
 }
-
-
 #main-table > tbody img {
   min-height: 1em;
   min-width: 1em;
@@ -258,11 +256,16 @@ input[type=checkbox] {
   vertical-align: middle;
   margin-bottom: 1px;
 }
-
 #main-table > tbody .table-n {
   width: 21ch;
-  min-width: max-content;
   text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  #main-table > tbody .table-n {
+    max-width: 16ch;
+  }
 }
 
 #main-table > tbody :is(.table-ud, .table-td) {
@@ -278,7 +281,7 @@ input[type=checkbox] {
 }
 
 #main-table > tbody tr td.table-r {
-  min-width: 9ch;
+  min-width: 8ch;
   width: 14ch;
 }
 

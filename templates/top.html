@@ -31,15 +31,9 @@
     <main id="ladder">
       <section id="controls">
         <select id="server-select">
-          <option value="Lordaeron">Lordaeron</option>
-          <option value="Icecrown">Icecrown</option>
-          <option value="Frostmourne3">Frosmourne3</option>
-          <option value="Frostmourne2">Frosmourne2</option>
-          <option value="Algalon">Algalon</option>
-          <option value="ChromieCraft">ChromieCraft</option>
-          <option value="Crystalsong">Crystalsong</option>
-          <option value="Sindragosa">Sindragosa</option>
-          <option value="Rising Gods">Rising Gods</option>
+          {% for server_name in SERVERS %}
+          <option value="{{ server_name }}">{{ server_name }}</option>
+          {% endfor %}
         </select>
         <select id="instance-select"></select>
         <select id="boss-select"></select>
@@ -73,7 +67,7 @@
       <footer>
         <section>
           <a id="link-home" href="/">Main website</a>
-          <input id="toggle-total-damage" type="checkbox" checked>
+          <input id="toggle-total-damage" type="checkbox">
           <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
           <input id="toggle-useful-damage" type="checkbox" checked>
           <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>

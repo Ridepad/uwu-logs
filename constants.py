@@ -25,6 +25,7 @@ LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
 LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
 UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
+TOP_DIR = new_folder_path(PATH_DIR, 'top')
 
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "{PATH_DIR}\%(filename)s:%(lineno)s" | %(message)s'
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'
