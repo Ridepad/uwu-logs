@@ -400,7 +400,8 @@ class NewUpload(Thread):
         UPLOAD_LOGGER.debug(f'finish {self.upload_dir}')
         try:
             old = self.upload_data.get("archive") or self.upload_data.get("extracted")
-            _, base1, base2 = self.upload_dir.rsplit('\\', 2)
+            sep = '/' if '/' in old else '\\'
+            _, base1, base2 = self.upload_dir.rsplit(sep, 2)
             basename = os.path.basename(old)
             new = os.path.join(UPLOADED_DIR, f"{base1}--{base2}--{basename}")
             UPLOAD_LOGGER.debug(f'moving old {old}')
