@@ -39,22 +39,13 @@
 - deaths
 - dmg taken
 - site side logs parser - filter forms - guid spell etc
-- valk grabs
-- targeted by ooze on pp like valk grabs
 
 ### Each fight unique summary
 
-- spikes times + seconds
 - spirit explosion - triggered by
-- mage + ship dmg
-- add dmg
-- vile gases
-- oozes dmg + auras transition
-- links shadows
+- beast dmg
 - portal stacks
-- ucm + explosions + tomb
-- valks + necrotic + defile targets
-- mark of consuption
+- valk grabs + necrotic + defile targets
 
 ### Other
 

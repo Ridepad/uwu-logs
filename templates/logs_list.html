@@ -8,12 +8,12 @@
 
 {% block main_foot %}
 <footer>
-  <ul>
+  <ul id="calendar-footer">
     <li>
       <a href="/logs_list?page={{ page-1 }}">&lt;&lt;</a>
     </li>
     <li>
-      <h1 id="footer-date"></h1><a href="/logs_list">{{ month }} {{ year }}</a></h1>
+      <a id="calendar-footer-date" href="/logs_list">{{ month }} {{ year }}</a>
     </li>
     <li>
       <a href="/logs_list?page={{ page+1 }}">&gt;&gt;</a>

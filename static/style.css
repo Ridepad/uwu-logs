@@ -1,23 +1,21 @@
 :root {
-  --highlight-color: rgb(24, 24, 24);
-  --footer-height: 4.5vh;
-  --nav-height: 6vh;
+  --nav-height: 3rem;
+  --background: black;
   --primary-color: blueviolet;
-  --link-hover: hsl(271, 100%, 70%);
   --secondary-color: darkviolet;
   --third-color: darkorchid;
+  --link-color: hsl(271, 40%, 86%);
+  --link-hover: hsl(271, 100%, 70%);
   --link-text-shadow: burlywood;
-  --link-text-shadow-hover: brown;
-  --background: black;
+  --link-text-shadow-hover: hsl(0, 100%, 40%);
   --unfocused: hsl(271, 100%, 20%);
   --hover: hsl(271, 100%, 35%);
-  --margin-top: 8vh;
-  --margin-bottom: 8vh;
+  --highlight-color: rgb(24, 24, 24);
   /* --highlight-alternate-color: rgb(128, 128, 128); */
 }
 
 * {
-  color: gainsboro;
+  color: hsl(0, 0%, 86%);
   font-family: Ubuntu;
   font-size: 1.6vh;
   text-decoration: none;
@@ -25,7 +23,7 @@
   margin: 0;
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   * {
     font-size: 2vh;
   }
@@ -88,12 +86,27 @@ html::-webkit-scrollbar {
   color:hsla(0, 0%, 50%, 0.5);
 }
 
+a:not([class]) {
+  color: var(--link-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow);
+}
 a:not([class]):hover {
   color: var(--link-hover);
-  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+  text-shadow: 0 0 1.5em var(--link-text-shadow), .1em .1em .5em var(--link-text-shadow-hover);
 }
-:is(#top-nav, #bot-nav) a:hover {
-  color: var(--primary-color);
+
+/* SELECTION */
+:is(div, label, #home-button)::-moz-selection {
+  background: none;
+  color:currentColor;
+}
+:is(div, label, #home-button)::-webkit-selection {
+  background: none;
+  color:currentColor;
+}
+:is(div, label, #home-button)::selection {
+  background: none;
+  color:currentColor;
 }
 
 /* HOME PAGE */
@@ -125,15 +138,17 @@ a:not([class]):hover {
   justify-content: center;
 }
 #upload-error {
+  font-size: 200%;
   margin-top: 1rem;
   color: crimson;
 }
 #upload-status {
+  font-size: 200%;
   min-width: 20ch;
   width: 50vw;
 }
 .upload h2 {
-  font-size: 150%;
+  font-size: 300%;
 }
 .upload a {
   color: var(--third-color);
@@ -167,7 +182,7 @@ a:not([class]):hover {
   /* margin-right: 50%;
   margin-left: 50%; */
   text-align: center;
-  font-size: 5vh;
+  font-size: 250%;
   color:var(--third-color);
   /* border: currentColor .08em solid; */
   padding: 0 1em;
@@ -199,7 +214,7 @@ nav {
   width: 100%;
   background-color: var(--background);
   position: absolute;
-  top: 6vh;
+  top: var(--nav-height);
   box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
 }
 #top-nav > a {
@@ -207,12 +222,12 @@ nav {
   width: 100%;
 }
 #top-chkbox {
-  font-size: 5vh;
+  font-size: 250%;
   right: 0;
   padding: 0 5vw;
   position: absolute;
 }
-:is(#open-top:checked, #open-top:hover) ~ #top-nav {
+#open-top:checked ~ #top-nav {
   display: grid;
 }
 
@@ -227,35 +242,31 @@ footer {
 }
 nav {
   top: 0;
+  /* height: 4rem; */
   height: var(--nav-height);
+  /* height: var(--nav-height); */
   box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
   /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
 }
-footer {
-  bottom: 0;
-  height: var(--footer-height);
-  box-shadow: inset 0 .5rem 1rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color);
-  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
-}
 
-nav > a
+/* nav > a
 {
-  font-size: 3vh;
+  font-size: 150%;
   text-shadow: .1em .1em .5em var(--link-text-shadow);
 }
 nav a:hover {
   color: var(--primary-color);
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
-}
+} */
 
 
 
 
 #top-nav > a {
-  font-size: 5vh;
-  text-shadow: 0 0 .1em dimgray;
+  font-size: 250%;
+  /* text-shadow: 0 0 .1em dimgray; */
 }
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   nav,
   #top-nav {
     display: inline-block;
@@ -282,12 +293,15 @@ ul {
 
 
 
+footer {
+  padding-top: .2em;
+  padding-bottom: .1em;
+  bottom: 0;
+  box-shadow: inset 0 .5rem 1rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color);
+  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
+}
 footer > ul {
-  /* max-height: var(--footer-height); */
-  height: 100%;
   padding: 0;
-  margin: 0;
-  /* padding-top: .5em; */
   display: flex;
   align-items: center;
   flex-direction: row;
@@ -298,38 +312,49 @@ footer > ul {
   font-size: 150%;
 }
 
-footer a text {
-  fill: white;
+footer #report-slice a {
+  font-size: 110%;
+  display: grid;
+}
+footer #report-slice a:hover span {
+  color: var(--link-hover);
 }
 
-footer a {
-  /* font-size: 3vh; */
-  text-shadow: .1em .1em .5em var(--link-text-shadow);
+#slice-name {
+  font-size: inherit;
+  text-align: left;
+  grid-column: span 2;
+  min-width: max-content;
 }
-footer a:hover  {
-  color: var(--primary-color);
-  text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
+#slice-dur {
+  font-size: inherit;
+  text-align: left;
+  min-width: 10ch;
+}
+#slice-tries {
+  font-size: inherit;
+  text-align: left;
 }
 
-/* footer svg {
-  width: 100%;
-} */
-
-footer #report-slice {
-  min-width: 40ch;
+@media (min-width: 1100px) {
+  footer #report-slice a {
+    font-size: 150%;
+    grid-auto-flow: column;  
+    gap: 1em;
+  }
+  footer ul {
+    padding-left: 1em;
+  }
 }
-
-
-footer > ul > li {
-  width: fit-content;
-  text-align: center;
-  /* padding: 0 1rem; */
-  /* min-width: min(100vw, 40ch); */
+@media (max-width: 1100px) {
+  footer ul li:nth-child(n+2):not(:last-child) {
+    display: none;
+  }
 }
 
 /* FILTERED SPELLS */
 #spells-search {
-  font-size: 3vh;
+  font-size: 150%;
   padding-left: .2em;
   padding-right: .2em;
   width: 14ch;
@@ -372,19 +397,17 @@ footer > ul > li {
 }
 
 
-/* boss segments */
+/* BOSS SEGMENTS */
 
-.wipe-link {color: crimson;}
-.kill-link {color: aquamarine;}
+#fights-container .wipe-link {color: crimson;}
+#fights-container .kill-link {color: aquamarine;}
 
 #fights-container {
   z-index: 2;
   position: fixed;
   left: 0;
   top: var(--nav-height);
-  padding: .5em;
-  margin: 0;
-  text-align: left;
+  padding: .25rem;
 }
 #fights-container::after {
   content: '';
@@ -402,27 +425,22 @@ footer > ul > li {
 
 #fights-container > h1 {
   z-index: 2;
-  min-width: calc(100vw - 2em);
   font-size: 150%;
   padding-inline: .5em;
   border: .1em solid var(--primary-color);
   border-radius: .3em;
   background-color: var(--background);
 }
-
-@media (min-width: 1000px) {
-  #fights-container > h1 {
-    min-width: unset;
-  }
-}
-
 #fights-container > h1::after {
   content: '▼';
   padding-inline: 2ch;
 }
-
 #fights-container > h1 > a {
+  display: inline-block;
+  max-width: 75vw;
   font-size: inherit;
+  white-space: nowrap;
+  overflow: clip;
 }
 
 
@@ -436,7 +454,7 @@ footer > ul > li {
   left: 75%;
   top: 0;
 }
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   #fights-container .segments {
     left: 100%;
   }
@@ -478,12 +496,9 @@ footer > ul > li {
 
 
 main {
-  margin-top: 12vh;
-  margin-bottom: 8vh;
+  margin-top: calc(var(--nav-height) + 2.5rem);
+  margin-bottom: calc(var(--nav-height) + 1rem);
   position: relative;
-  /* padding-bottom: 8vh; */
-  /* padding-top: 8vh;
-  padding-bottom: 8vh; */
 }
 
 #report-main-tables {
@@ -491,10 +506,7 @@ main {
   grid-auto-flow: row;
   justify-content: center;
 }
-#report-main-tables > section {
-  padding-top: 2rem;
-}
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   #report-main-tables {
     grid-auto-flow: column;
   }
@@ -571,7 +583,7 @@ td > a:hover {
 .spell-name {
   font-weight: 600;
   width: 21vw;
-  text-overflow:clip;
+  text-overflow: clip;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -585,7 +597,6 @@ td > a:hover {
 .buffs {
   display: inline;
   width: 25ch;
-  margin-left: 5em;
 }
 .buff-count {
   width: 6ch;
@@ -630,6 +641,21 @@ td > img {
 #report-damage th {
   min-width: 13ch;
   max-width: 13ch;
+}
+
+/* SPELLS */
+#spells h1 a {
+  font-size: 200%;
+}
+#spells .panel section {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+@media (min-width: 1100px) {
+  #spells .panel section {
+    margin-left: 5rem;
+  }
 }
 
 
@@ -715,7 +741,6 @@ input:checked + label + div {
   display: block;
   position: fixed;
   left: 0;
-  top: 20vh;
 }
 
 
@@ -765,59 +790,6 @@ input:checked + label + div {
   float: left;
 }
 
-
-/* DEATHS */
-#deaths tr * {
-  text-shadow: 0 0 1em var(--background);
-}
-
-#open-tabs + label {
-  position: fixed;
-}
-#deaths .panel {
-  position: fixed;
-  top: 10vh;
-  overflow: scroll;
-  height: 80%;
-}
-#deaths table {
-  position: relative;
-  overflow: scroll;
-}
-#deaths .name {
-  text-overflow:ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-#all-tabs label {
-  position: relative;
-  display: none;
-  z-index: 1;
-  top: -2vh;
-  padding: 0 1rem;
-  background-color: var(--background);
-  box-shadow: inset 0 0 .4rem var(--primary-color);
-}
-#open-tabs:checked ~ div label {
-  display: block;
-}
-#deaths input:checked + label {
-  color: crimson;
-}
-#deaths .damage > td {
-  background-color: hsl(348, 100%, 15%);
-}
-#deaths .buff > td {
-  background-color: hsl(50, 50%, 20%);
-}
-#deaths .debuff > td {
-  background-color: hsl(325, 100%, 15%);
-}
-#deaths .heal > td {
-  background-color: hsl(135, 100%, 15%);
-}
-
 /* DAMAGE */
 
 #dmg-done {
@@ -837,10 +809,6 @@ input:checked + label + div {
   box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
 }
 
-#dmg-done section {
-  margin: 0;
-  /* padding-top: 2rem; */
-}
 #dmg-done-selection {
   position: fixed;
   bottom: 4vh;
@@ -868,7 +836,7 @@ input:checked + label + div {
   left: 0;
   z-index: 1;
 }
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   #dmg-done #dmg-done-main {
     margin: unset;
   }
@@ -930,205 +898,6 @@ td:hover > table {
 .avgs tr:nth-child(6) > td {
   background-color: hsl(20, 100%, 10%);
 }
-
-
-/* VALKS */
-#valks section {
-  position: absolute;
-}
-#valks input:checked ~ section {
-  display: flex;
-}
-#valks input:checked ~ section ~ section {
-  display: none;
-}
-#valks article {
-  margin: 0 5rem;
-}
-
-#grabs .grab {
-  background-color: crimson;
-}
-#grabs .absent {
-  background-color: hsl(271, 67%, 20%);
-}
-#grabs td {
-  min-width: 4ch;
-}
-#grabs .absent {
-  min-width: 1ch;
-}
-
-
-
-
-/* SELECTION */
-:is(div, label, #home-button)::-moz-selection {
-  background: none;
-  color:currentColor;
-}
-:is(div, label, #home-button)::-webkit-selection {
-  background: none;
-  color:currentColor;
-}
-:is(div, label, #home-button)::selection {
-  background: none;
-  color:currentColor;
-}
-
-
-/* FIGHTS */
-
-/* #fights-log-table > tbody > tr:first-child {
-  position: absolute;
-  top: 10vh;
-  left: 0;
-} */
-
-
-#fights-log {
-  padding: 2ch;
-  padding-bottom: 100vh;
-}
-
-#fights-log-table td {
-  padding: 0;
-}
-
-#fights-log-table-header {
-  text-align: center;
-  background-color: var(--background);
-  position: fixed;
-  top: calc(var(--margin-top) - .2vh);
-}
-
-#fights-log-table  #figdts-log-table-header td {
-  text-align: center;
-  position: sticky;
-}
-
-#fights-log-table td {
-  text-align: center;
-}
-
-#fights-log-table td:first-child,
-#fights-log-table td:nth-child(8) {
-  min-width: 8ch;
-}
-
-#fights-log-table td:nth-child(2),
-#fights-log-table td:nth-child(3) {
-  min-width: 24ch;
-}
-
-#fights-log-table td:nth-child(4),
-#fights-log-table td:nth-child(5) {
-  min-width: 2ch;
-}
-
-#fights-log-table td:nth-child(6) {
-  min-width: 4ch;
-  text-align: right;
-}
-#fights-log-table td:nth-child(7) {
-  min-width: 5ch;
-  text-align: right;
-}
-
-#fights-log-table input + label {
-  border-bottom: none;
-  margin: 0;
-  padding: 0;
-}
-
-
-#fights-log .fights-players td:first-child {
-  text-align: left;
-  min-width: 14ch;
-}
-
-#fights-log-table td section {
-  display: none;
-  position: fixed;
-  bottom: 10%;
-  right: 5%;
-}
-
-#fights-log-table input:checked ~ section {
-  display: block;
-}
-
-
-
-#db-search-buttons {
-  padding-top: 2rem;
-  padding-left: 2rem;
-}
-#db-search-field {
-  margin: 1rem;
-}
-#db-search-field > article {
-  margin-top: 1rem;
-}
-#db-search-field > article > * {
-  margin-left: 1rem;
-}
-#db-search-field > article > button {
-  min-width: 2ch;
-}
-#db-search-field > article > .db-search-input {
-  min-width: 30ch;
-  padding: 0;
-}
-
-
-/* PLAYER */
-
-#player section {
-  display: none;
-}
-
-#player #buffs:checked ~ #buffs-panel,
-#player #debuffs:checked ~ #debuffs-panel,
-#player #casts:checked ~ #casts-panel {
-  display: block;
-}
-
-#player label {
-  margin: 0 0;
-  width: 4em;
-  text-align: center;
-  padding: .2rem 1.5rem;
-  background: var(--background);
-  position: fixed;
-  bottom: 4.5vh;
-  left: 0;
-}
-
-#player td:nth-child(2) {
-  min-width: 6ch;
-  text-align: right;
-}
-
-#player label ~ label {
-  margin-left: 7rem;
-}
-
-#player label ~ label  ~ label {
-  margin-left: 14rem;
-}
-
-/* #player section {
-  position: fixed;
-  left: 0;
-  top: 10vh;
-} */
-
-/* #player input:checked + label + section {
-  display: block;
-} */
-
-
 /* LOGS LIST */
 #calendar * {
   font-size: clamp(10pt, calc(100vw / 17), 40pt);
@@ -1161,16 +930,14 @@ td:hover > table {
   color: var(--highlight-color);
 }
 
-#footer-date {
+#calendar-footer a {
+  font-size: 150%;
+}
+#calendar-footer-date {
+  display: inline-block;
   min-width: 14ch;
   text-align: center;
 }
-
-.logs-list > a {
-  font-size: 3vh;
-  display: block;
-}
-
 
 
 #controls > * {
@@ -1239,7 +1006,7 @@ td:hover > table {
   
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   #ladder #instance,
   #ladder #boss {
     min-width: 25ch;
@@ -1331,3 +1098,131 @@ td:hover > table {
   box-shadow: inset 0 0 .5em var(--primary-color);
   border-radius: .5em;
 }
+
+
+/* DEATHS */
+#deaths tr * {
+  text-shadow: 0 0 1em var(--background);
+}
+
+#open-tabs + label {
+  position: fixed;
+}
+#deaths .panel {
+  position: fixed;
+  top: 10vh;
+  overflow: scroll;
+  height: 80%;
+}
+#deaths table {
+  position: relative;
+  overflow: scroll;
+}
+#deaths .name {
+  text-overflow:ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#all-tabs label {
+  position: relative;
+  display: none;
+  z-index: 1;
+  top: -2vh;
+  padding: 0 1rem;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .4rem var(--primary-color);
+}
+#open-tabs:checked ~ div label {
+  display: block;
+}
+#deaths input:checked + label {
+  color: crimson;
+}
+#deaths .damage > td {
+  background-color: hsl(348, 100%, 15%);
+}
+#deaths .buff > td {
+  background-color: hsl(50, 50%, 20%);
+}
+#deaths .debuff > td {
+  background-color: hsl(325, 100%, 15%);
+}
+#deaths .heal > td {
+  background-color: hsl(135, 100%, 15%);
+}
+
+
+/* VALKS */
+#valks section {
+  position: absolute;
+}
+#valks input:checked ~ section {
+  display: flex;
+}
+#valks input:checked ~ section ~ section {
+  display: none;
+}
+#valks article {
+  margin: 0 5rem;
+}
+
+#grabs .grab {
+  background-color: crimson;
+}
+#grabs .absent {
+  background-color: hsl(271, 67%, 20%);
+}
+#grabs td {
+  min-width: 4ch;
+}
+#grabs .absent {
+  min-width: 1ch;
+}
+
+
+/* PLAYER AURAS */
+
+#player section {
+  display: none;
+}
+
+#player #buffs:checked ~ #buffs-panel,
+#player #debuffs:checked ~ #debuffs-panel,
+#player #casts:checked ~ #casts-panel {
+  display: block;
+}
+
+#player label {
+  margin: 0 0;
+  width: 4em;
+  text-align: center;
+  padding: .2rem 1.5rem;
+  background: var(--background);
+  position: fixed;
+  bottom: 4.5vh;
+  left: 0;
+}
+
+#player td:nth-child(2) {
+  min-width: 6ch;
+  text-align: right;
+}
+
+#player label ~ label {
+  margin-left: 7rem;
+}
+
+#player label ~ label  ~ label {
+  margin-left: 14rem;
+}
+
+/* #player section {
+  position: fixed;
+  left: 0;
+  top: 10vh;
+} */
+
+/* #player input:checked + label + section {
+  display: block;
+} */

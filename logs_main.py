@@ -524,18 +524,19 @@ class THE_LOGS:
         segments = self.get_segments_data()
         separated = self.get_segments_separated()
 
-        boss_name_id = "Custom Slice"
+        slice_name = "Custom Slice"
+        slice_tries = ""
         boss_name_html = args.get("boss")
         boss_name = self.BOSSES_FROM_HTML.get(boss_name_html, "")
         segment_difficulty = args.get("mode")
         attempt = args.get("attempt", type=int)
         if boss_name:
-            boss_name_id = self.BOSSES_FROM_HTML[boss_name_html]
+            slice_name = self.BOSSES_FROM_HTML[boss_name_html]
             if attempt is not None:
-                boss_name_id = f"{boss_name_id} | Try {attempt+1}"
+                slice_tries = f"Try {attempt+1}"
                 segments = [enc_data[boss_name][attempt], ]
             elif segment_difficulty:
-                boss_name_id = f"{boss_name_id} | {segment_difficulty}"
+                slice_tries = segment_difficulty
                 segments = [
                     [segment["start"], segment["end"]]
                     for segment in separated[boss_name][segment_difficulty]
@@ -564,7 +565,8 @@ class THE_LOGS:
 
         return {
             "segments": segments,
-            "boss_name_id": boss_name_id,
+            "slice_name": slice_name,
+            "slice_tries": slice_tries,
             "query": query,
             "boss_name": boss_name,
         }
@@ -677,8 +679,15 @@ class THE_LOGS:
             logs_slice = self.get_logs(None, 50000)
         data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
 
-        data['first_hit'] = logs_slice[0]
-        data['last_hit'] = logs_slice[-1]
+        first_line = logs_slice[0].split(',', 8)
+        last_line = logs_slice[-1].split(',', 8)
+        print(first_line)
+        print(last_line)
+        data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]} with {first_line[7]}"
+        if last_line[1] == "UNIT_DIED":
+            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[5]}"
+        else:
+            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]} with {last_line[7]}"
 
         cached_data[slice_ID] = data
         return data
