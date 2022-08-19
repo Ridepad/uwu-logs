@@ -13,21 +13,20 @@ import logs_main
 import logs_upload
 import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA_1MIN, TOP_DIR, UPLOADS_DIR,
+    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR, UPLOADS_DIR,
     banned, get_folders, get_logs_filter, wrong_pw)
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
-SERVER.config['UPLOAD_FOLDER'] = UPLOADS_DIR
-SERVER.config['MAX_SURVIVE_LOGS'] = T_DELTA_1MIN
-SERVER.config['USE_FILTER'] = True
-SERVER.config['FILTER_TYPE'] = 'private'
-CLEANER = []
 
+CLEANER = []
+USE_FILTER = True
+FILTER_TYPE = "private"
+MAX_SURVIVE_LOGS = T_DELTA["1MIN"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
-NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
+NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
 
 
 def load_report(name: str):
@@ -80,7 +79,7 @@ def method413(e):
 def _cleaner():
     now = datetime.now()
     for name, report in dict(OPENED_LOGS).items():
-        if now - report.last_access > SERVER.config['MAX_SURVIVE_LOGS']:
+        if now - report.last_access > MAX_SURVIVE_LOGS:
             del OPENED_LOGS[name]
     
 @SERVER.teardown_request
@@ -119,12 +118,9 @@ def before_request():
         if not os.path.isdir(report_path):
             return render_template('no_page.html')
         
-        elif SERVER.config['USE_FILTER']:
-            _filter_type = SERVER.config['FILTER_TYPE']
-            _filter = get_logs_filter(_filter_type)
-            # or _filter_type == "allowed" and report_id not in _filter):
-                # return render_template('no_page.html')
-            if _filter_type == "private" and report_id in _filter and not _validate.cookie(request):
+        elif USE_FILTER:
+            _filter = get_logs_filter(FILTER_TYPE)
+            if FILTER_TYPE == "private" and report_id in _filter and not _validate.cookie(request):
                 return render_template('protected.html')
 
         request.default_params = default_params(report_id, request)

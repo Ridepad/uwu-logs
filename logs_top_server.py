@@ -72,7 +72,6 @@ def main_make_from_zero(server):
 
     save_tops(TOP_D, server)
 
-@running_time
 def gzip_read(path):
     f = bytes_read(path, ext="gzip")
     if not f:

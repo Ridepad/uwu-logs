@@ -23,9 +23,9 @@ real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
 LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
 LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
+TOP_DIR = new_folder_path(PATH_DIR, 'top')
 UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
-TOP_DIR = new_folder_path(PATH_DIR, 'top')
 
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "{PATH_DIR}\%(filename)s:%(lineno)s" | %(message)s'
 LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'
@@ -49,15 +49,18 @@ LOGGER_LOGS = setup_logger('logger_logs', LOGGER_LOGS_FILE)
 UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
 UPLOAD_LOGGER = setup_logger('logger_upload', UPLOAD_LOGGER_FILE)
 
-T_DELTA_2SEC = timedelta(seconds=2)
-T_DELTA_15SEC = timedelta(seconds=15)
-T_DELTA_1MIN = timedelta(minutes=1)
-T_DELTA_2MIN = timedelta(minutes=2)
-T_DELTA_5MIN = timedelta(minutes=5)
-T_DELTA_10MIN = timedelta(minutes=10)
-T_DELTA_15MIN = timedelta(minutes=15)
-T_DELTA_20MIN = timedelta(minutes=20)
-T_DELTA_30MIN = timedelta(minutes=30)
+
+T_DELTA = {
+    "2SEC": timedelta(seconds=2),
+    "15SEC": timedelta(seconds=15),
+    "1MIN": timedelta(minutes=1),
+    "2MIN": timedelta(minutes=2),
+    "5MIN": timedelta(minutes=5),
+    "10MIN": timedelta(minutes=10),
+    "15MIN": timedelta(minutes=15),
+    "20MIN": timedelta(minutes=20),
+    "30MIN": timedelta(minutes=30),
+}
 
 LOGS_CUT_NAME = "LOGS_CUT"
 UPLOAD_STATUS_INFO = {}
@@ -959,6 +962,19 @@ def to_dt_closure(year=None):
     return inner
 
 to_dt = to_dt_closure()
+
+CURRENT_YEAR = get_now().year
+SIMPLE_TD_FINDALL = re.compile('(\d+)').findall
+def to_dt_simple(s):
+    q = list(map(int, SIMPLE_TD_FINDALL(s[:18])))
+    q[-1] *= 1000
+    return datetime(CURRENT_YEAR, *q)
+
+def to_dt_simple_year(s, year):
+    q = list(map(int, SIMPLE_TD_FINDALL(s[:18])))
+    q[-1] *= 1000
+    return datetime(year, *q)
+
 
 __year = get_now().year
 __p_bytes_fa = re.compile(b'(\d+)').findall

@@ -15,7 +15,7 @@ import logs_fix
 import logs_top
 import logs_top_server
 from constants import (
-    BOSSES_GUIDS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA_5MIN, T_DELTA_30MIN, UPLOAD_LOGGER, UPLOADS_DIR, UPLOADED_DIR,
+    BOSSES_GUIDS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA, UPLOAD_LOGGER, UPLOADS_DIR, UPLOADED_DIR,
     bytes_write, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
 
 
@@ -226,6 +226,9 @@ class NewUpload(Thread):
                 self.save_slice_cache_wrap(last_segment)
                 self.save_slice_cache_wrap(current_segment)
 
+        five_minutes = T_DELTA["5MIN"]
+        thirty_minutes = T_DELTA["30MIN"]
+
         with open(self.extracted_file, 'rb') as f:
             self.pc = perf_counter()
             for line in f:
@@ -243,10 +246,10 @@ class NewUpload(Thread):
 
                     guid = get_author_guid(current_segment)
 
-                    if _tdelta > T_DELTA_30MIN:
+                    if _tdelta > thirty_minutes:
                         __save_segment(guid)
                     elif last_guid is None:
-                        if guid is not None or _tdelta < T_DELTA_5MIN:
+                        if guid is not None or _tdelta < five_minutes:
                             last_segment.extend(current_segment)
                         else:
                             last_segment = current_segment
@@ -382,7 +385,7 @@ class NewUpload(Thread):
         
         except Exception:
             UPLOAD_LOGGER.exception(f"NewUpload run {self.upload_dir}")
-            self.change_status(LOGS_ERROR, 1)
+            self.change_status(LOGS_ERROR)
         
         finally:
             UPLOAD_LOGGER.debug(f'Done in {get_ms(st0)} ms')

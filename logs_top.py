@@ -1,10 +1,11 @@
 import os
 from time import perf_counter
+
+import constants
 import dmg_heals
 import logs_dmg_useful
 import logs_main
-import constants
-from logs_spell_info import AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS, MULTISPELLS_D
+from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 z_spells = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
@@ -51,7 +52,7 @@ def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
 
     specs = report.get_players_specs_in_segments(S, F)
 
-    duration = report.get_fight_duration(S, F)
+    duration = report.get_slice_duration(S, F)
     auras = report.auras_info(S, F)
     
     players = report.get_players_guids()

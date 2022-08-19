@@ -1,10 +1,10 @@
 from collections import defaultdict
 
-from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA_1MIN, T_DELTA_2MIN, running_time, to_dt
+from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA, running_time, to_dt_simple
 
 BOSS_MAX_SEP = {
-    "Halion": T_DELTA_2MIN,
-    "Anub'arak": T_DELTA_2MIN,
+    "Halion": T_DELTA["2MIN"],
+    "Anub'arak": T_DELTA["2MIN"],
 }
 ANOTHER_BOSSES = {y:x[0] for x in MULTIBOSSES.values() for y in x[1:]}
 BOSSES_GUIDS_ALL = set(ANOTHER_BOSSES) | set(ANOTHER_BOSSES.values()) | set(BOSSES_GUIDS)
@@ -62,7 +62,8 @@ def get_more_precise(times: list[tuple[int, list[str]]], limit: int):
             return times[:-n-1]
     
     for n, line in enumerate(lines):
-        if line[1] == 'SPELL_AURA_APPLIED':
+        if line[1] == 'SPELL_AURA_APPLIED' or len(line) < 11:
+            print(line)
             continue
         if line[10] != "0":
             return times[:n-limit+1]
@@ -70,15 +71,15 @@ def get_more_precise(times: list[tuple[int, list[str]]], limit: int):
     return times
 
 def time_pairs(times: tuple[int, list[str]], boss_name):
-    MAX_SEP = BOSS_MAX_SEP.get(boss_name, T_DELTA_1MIN)
+    MAX_SEP = BOSS_MAX_SEP.get(boss_name, T_DELTA["1MIN"])
     last_index, line = times[0]
     indexes: set[int] = {last_index, }
-    last_time_dt = to_dt(line[0])
+    last_time_dt = to_dt_simple(line[0])
     times = get_more_precise(times, 20)
     _index = times[-1][0]
     indexes.add(_index+1)
     for line_index, line in times:
-        _now = to_dt(line[0])
+        _now = to_dt_simple(line[0])
         if _now - last_time_dt > MAX_SEP:
             indexes.add(last_index+1)
             indexes.add(line_index)

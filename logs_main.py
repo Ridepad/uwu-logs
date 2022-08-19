@@ -15,14 +15,10 @@ import logs_spells_list
 import logs_units_guid
 import logs_valks3
 from constants import (
-    MONTHS, FLAG_ORDER,
-    add_new_numeric_data, add_space, get_fight_duration, get_report_name_info, is_player,
+    MONTHS, FLAG_ORDER, LOGS_DIR,
+    add_new_numeric_data, add_space, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
-    sort_dict_by_value, get_now, zlib_text_read)
-
-real_path = os.path.realpath(__file__)
-PATH_DIR = os.path.dirname(real_path)
-LOGS_DIR = os.path.join(PATH_DIR, "LogsDir")
+    sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
 
 IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
 PLAYER = "0x0"
@@ -32,8 +28,8 @@ SHIFT = {
     'player_auras': 10,
 }
 
-def get_shift(request):
-    url_comp = request.path.split('/')
+def get_shift(request_path: str):
+    url_comp = request_path.split('/')
     try:
         return SHIFT.get(url_comp[3], 0)
     except IndexError:
@@ -178,6 +174,8 @@ class THE_LOGS:
             os.makedirs(self.PATH, exist_ok=True)
             print('LOG: Created folder:', self.PATH)
 
+        self.year = int(logs_name[:2]) + 2000
+
         self.last_access = get_now()
 
         self.bosses_convert: dict[str, str] = {}
@@ -229,24 +227,26 @@ class THE_LOGS:
             self.LOGS = logs
         
         return logs[s:f]
+
+    def to_dt(self, last, now):
+        return to_dt_simple_year(now, self.year) - to_dt_simple_year(last, self.year)
     
-    def logs_first_last_line(self, s, f):
-        logs_slice = self.get_logs(s, f)
-        return logs_slice[0], logs_slice[-1]
+    def get_slice_first_last_lines(self, s, f):
+        return self.get_logs()[s], self.get_logs()[f]
     
-    def get_fight_duration(self, s, f):
+    def get_slice_duration(self, s, f):
         slice_ID = f"{s}_{f}"
         if slice_ID in self.DURATIONS:
             return self.DURATIONS[slice_ID]
-        first_line, last_line = self.logs_first_last_line(s, f)
-        dur = get_fight_duration(first_line, last_line)
+        first_line, last_line = self.get_slice_first_last_lines(s, f)
+        dur = self.to_dt(first_line, last_line).total_seconds()
         self.DURATIONS[slice_ID] = dur
         return dur
 
     def get_fight_duration_total(self, segments):
         durations = []
         for s, f in segments:
-            durations.append(self.get_fight_duration(s, f))
+            durations.append(self.get_slice_duration(s, f))
         return sum(durations)
 
     def get_fight_duration_total_str(self, segments):
@@ -518,11 +518,11 @@ class THE_LOGS:
     
     def parse_request(self, request):
         args: dict = request.args
+        shift = get_shift(request.path)
         enc_data = self.get_enc_data()
         ts = self.get_timestamp()
         segments = self.get_segments_data()
         separated = self.get_segments_separated()
-        shift = get_shift(request)
 
         boss_name_id = "Custom Slice"
         boss_name_html = args.get("boss")
@@ -1083,7 +1083,7 @@ class THE_LOGS:
         for s, f in segments:
             data = self.get_auras(s, f, filter_guid)
             buffs = data['buffs']
-            durations.append(self.get_fight_duration(s, f))
+            durations.append(self.get_slice_duration(s, f))
     
 
 
