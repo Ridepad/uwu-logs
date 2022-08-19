@@ -385,7 +385,8 @@ class NewUpload(Thread):
         
         except Exception:
             UPLOAD_LOGGER.exception(f"NewUpload run {self.upload_dir}")
-            self.change_status(LOGS_ERROR)
+            self.status_dict['slices'] = {}
+            self.change_status(LOGS_ERROR, 1)
         
         finally:
             UPLOAD_LOGGER.debug(f'Done in {get_ms(st0)} ms')
