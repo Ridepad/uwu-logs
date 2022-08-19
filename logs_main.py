@@ -232,7 +232,7 @@ class THE_LOGS:
         return to_dt_simple_year(now, self.year) - to_dt_simple_year(last, self.year)
     
     def get_slice_first_last_lines(self, s, f):
-        return self.get_logs()[s], self.get_logs()[f]
+        return self.get_logs()[s or 0], self.get_logs()[f or -1]
     
     def get_slice_duration(self, s, f):
         slice_ID = f"{s}_{f}"
