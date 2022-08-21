@@ -15,7 +15,7 @@
 }
 
 * {
-  color: hsl(0, 0%, 86%);
+  color: gainsboro;
   font-family: Ubuntu;
   font-size: 1.6vh;
   text-decoration: none;
@@ -149,9 +149,6 @@ a:not([class]):hover {
 }
 .upload h2 {
   font-size: 300%;
-}
-.upload a {
-  color: var(--third-color);
 }
 .upload td {
   padding-inline: 1em;
@@ -347,7 +344,7 @@ footer #report-slice a:hover span {
   }
 }
 @media (max-width: 1100px) {
-  footer ul li:nth-child(n+2):not(:last-child) {
+  footer ul:not(#calendar-footer) li:nth-child(n+2):not(:last-child) {
     display: none;
   }
 }
@@ -937,6 +934,11 @@ td:hover > table {
   display: inline-block;
   min-width: 14ch;
   text-align: center;
+}
+@media (max-width: 1100px) {
+  #calendar-footer {
+    justify-content: center;
+  }
 }
 
 

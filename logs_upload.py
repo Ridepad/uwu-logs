@@ -24,6 +24,7 @@ ARCHIVE_ERROR = "Error unziping file."
 LOGS_ERROR = "Error parsing logs."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
 FULL_DONE = "Done! Select 1 of the reports below."
+FULL_DONE_NONE_FOUND = "Done! No boss segments were found! Make sure to use /combatlog"
 SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
 TOP_UPDATE = "Updating top..."
@@ -302,6 +303,10 @@ class NewUpload(Thread):
         self.mtime = os.path.getmtime(self.extracted_file)
 
         self.slice_logs()
+
+        if not self.slices:
+            self.change_status(FULL_DONE_NONE_FOUND, 1)
+            return
 
         self.change_status(SAVING_SLICES)
         for logs_id in self.slices:
