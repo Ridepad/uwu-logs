@@ -7,22 +7,26 @@ import logs_dmg_useful
 import logs_main
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
-z_spells = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
+Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
-def f_auras(auras: dict[str, tuple[int, int]], spec: int):
+def f_auras(auras: dict[str, tuple[int, float]], spec: int):
     if spec == 25 and "63848" in auras:
         del auras["63848"]
     elif spec in range(12,16) and "54646" in auras:
         del auras["54646"]
     
-    zz = {}
+    zz: dict[str, list[int, float, int]] = {}
     for spell_id, (count, uptime) in auras.items():
         spell_id = MULTISPELLS_D.get(spell_id, spell_id)
-        for n, a in enumerate(z_spells):
-            if spell_id in a:
-                uptime = round(uptime*100, 1)
-                zz[spell_id] = [count, uptime, n]
-                break
+        for n, a in enumerate(Z_SPELLS):
+            if spell_id not in a:
+                continue
+            uptime = round(uptime*100, 1)
+            if spell_id in zz:
+                count += zz[spell_id][0]
+                uptime += zz[spell_id][1]
+            zz[spell_id] = [count, uptime, n]
+            break
     return zz
 
 def find_kill(segments):
