@@ -14,6 +14,7 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valks3
+import logs_valk_grabs
 from constants import (
     MONTHS, FLAG_ORDER, LOGS_DIR,
     add_new_numeric_data, add_space, get_report_name_info, is_player,
@@ -641,25 +642,6 @@ class THE_LOGS:
         data = sort_dict_by_value(data)
         return [(guids[guid]["name"], separate_thousands(v)) for guid, v in data.items()]
 
-    @running_time
-    def valk_info(self, logs_slice):
-        v = logs_valks3.Valks(self)
-        all_grabs, details = v.main()
-
-        guids = self.get_all_guids()
-        valks_dmg = logs_dmg_useful.get_valks_dmg(logs_slice)
-        valks_overkill = logs_dmg_useful.combine_pets(valks_dmg['overkill'], guids)
-        valks_overkill = self.convert_data_to_names(valks_overkill)
-        valks_useful = logs_dmg_useful.combine_pets(valks_dmg['useful'], guids)
-        valks_useful = self.convert_data_to_names(valks_useful)
-        valks_damage = {
-            'useful': valks_useful,
-            'overkill': valks_overkill,
-        }
-        return all_grabs, details, valks_damage
-
-
-
 
     @running_time
     def report_page(self, s, f) -> tuple[dict[str, int], dict[str, int]]:
@@ -1113,3 +1095,36 @@ class THE_LOGS:
         players = self.get_players_guids()
         classes = self.get_classes()
         return logs_player_spec.get_specs_no_names(logs_slice, players, classes)
+
+
+    def grabs_info(self, s, f):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['grabs_info']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
+        logs_slice = self.get_logs(s, f)
+        players = self.get_players_guids()
+        grabs = logs_valk_grabs.main(logs_slice, players)
+        cached_data[slice_ID] = grabs
+        return grabs
+
+    def valk_info_all(self, segments):
+        grabs_total = defaultdict(int)
+        all_grabs = []
+        for s, f in segments:
+            grabs = self.grabs_info(s, f)
+            if grabs is None:
+                continue
+            all_grabs.extend(grabs)
+            for g in grabs:
+                for p in g:
+                    grabs_total[p] += 1
+        waves = list(range(1, len(all_grabs)+1))
+        grabs_total = dict(sorted(grabs_total.items()))
+        grabs_total = sort_dict_by_value(grabs_total)
+        return {
+            "ALL_GRABS": all_grabs,
+            "GRABS_TOTAL": grabs_total,
+            "WAVES": waves,
+        }

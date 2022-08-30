@@ -334,30 +334,15 @@ def compare(report_id):
 
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):
-    s, f, query = parse_first(request)
-    report_name = format_report_name(report_id)
-
+    _default = request.default_params
+    segments = _default.pop('segments')
     report = load_report(report_id)
-    class_data = report.get_classes()
-    full_attempts = report.format_difficulty()
-
-    exact, boss_name = report.parse_boss(request)
-    s, f = report.convert_slice_to_time(s, f, exact)
-    if not s and not f:
-        s, f = report.boss_full_slice("The Lich King")
-    logs_slice = report.get_logs(s, f)
-
-    slice_duration = convert_duration(logs_slice)
-
-    valk_grabs, valk_grabs_details, valks_damage = report.valk_info(logs_slice)
+    data = report.valk_info_all(segments)
 
     return render_template(
-        'valks.html', report_name=report_name, report_id=report_id, query=query,
-        boss_name=boss_name, full_attempts=full_attempts, class_data=class_data,
-        slice_duration=slice_duration,
-        valks_damage=valks_damage,
-        valk_grabs=valk_grabs, valk_grabs_details=valk_grabs_details)
-
+        'valks.html', **_default,
+        **data,
+    )
 
 @SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
 def custom_search_post(report_id):
