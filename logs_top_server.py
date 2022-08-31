@@ -45,11 +45,11 @@ def get_player_id(item: dict[str, str]):
     report_id = item['r'].rsplit('--', 3)[0]
     return f"{report_id}-{item['i']}"
 
-def add_to_d(top: dict, data: list[dict[str, str]]):
+def add_to_d(top: dict, data: list[dict[str, str]], forced=False):
     for item in data:
         player_id = get_player_id(item)
         cached_report = top.get(player_id)
-        if not cached_report or cached_report['ud'] < item['ud']:
+        if forced or not cached_report or cached_report['ud'] < item['ud']:
             top[player_id] = item
 
 def top_add(top: dict[str, dict[str, dict]], report_id):
@@ -108,8 +108,9 @@ def main_add_new_reports_wrap(reports: list[str]):
     for server, reports in grouped_reports.items():
         main_add_new_reports(server, reports)
 
+
 @running_time
-def main_top_add_new(report_id: str):
+def main_top_add_new(report_id: str, forced=False):
     TOP_D: dict[str, dict[str, dict]] = {}
     server = report_id.rsplit('--', 1)[-1]
     server_folder = new_folder_path(TOP_DIR, server)
@@ -120,9 +121,32 @@ def main_top_add_new(report_id: str):
     for boss_name, diffs in j.items():
         for diff, data in diffs.items():
             boss_f_n = f"{boss_name} {diff}"
+            print(boss_f_n)
             top_path = os.path.join(server_folder, boss_f_n)
             d_b = TOP_D[boss_f_n] = gzip_read(top_path)
-            add_to_d(d_b, data)
+            add_to_d(d_b, data, forced)
+
+    save_tops(TOP_D, server)
+
+@running_time
+def main_top_delete(report_id: str):
+    TOP_D: dict[str, dict[str, dict]] = {}
+    server = report_id.rsplit('--', 1)[-1]
+    server_folder = new_folder_path(TOP_DIR, server)
+    
+    report_folder = os.path.join(LOGS_DIR, report_id)
+    top_file = os.path.join(report_folder, TOP_FILE)
+    j = json_read(top_file)
+    for boss_name, diffs in j.items():
+        for diff, data in diffs.items():
+            boss_f_n = f"{boss_name} {diff}"
+            print(boss_f_n)
+            top_path = os.path.join(server_folder, boss_f_n)
+            _top = TOP_D[boss_f_n] = gzip_read(top_path)
+            for item in data:
+                player_id = get_player_id(item)
+                if player_id in _top:
+                    del _top[player_id]
 
     save_tops(TOP_D, server)
 
@@ -135,5 +159,10 @@ if __name__ == "__main__":
     # }
     # main_add_new_reports_wrap(_reports)
     # main_top_add_new("22-08-05--19-43--Jenbrezul--Lordaeron")
-    main_make_from_zero("Lordaeron")
+    # main_make_from_zero("Lordaeron")
+    main_top_add_new("21-11-22--20-25--Snowinice--Icecrown", forced=True)
+    main_top_add_new("21-11-29--19-45--Snowstriker--Icecrown", forced=True)
+    main_top_delete("21-10-20--19-42--Xtan--Lordaeron")
+    # main_top_delete("21-11-22--20-25--Snowinice--Icecrown")
+    # main_top_delete("21-11-29--19-45--Snowstriker--Icecrown")
     # main_make("Icecrown")

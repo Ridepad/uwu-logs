@@ -114,6 +114,8 @@ if __name__ == "__main__":
     # make_report_top('22-08-13--23-02--Sherbet--Lordaeron')
     # make_report_top('22-08-13--20-33--Veriet--Lordaeron')
     # make_report_top('22-08-13--19-57--Sherbet--Lordaeron')
-    import _redo
-    _redo.redo_data(main_wrap, proccesses=2, filter="Lordaeron")
+    # import _redo
+    # _redo.redo_data(main_wrap, proccesses=2, filter="Lordaeron")
+    # make_report_top("21-11-22--20-25--Snowinice--Icecrown")
+    make_report_top("21-11-29--19-45--Snowstriker--Icecrown")
     # _redo.redo_data(main_wrap, filter="Lordaeron", startfrom=-50, proccesses=4)
