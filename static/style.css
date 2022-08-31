@@ -1102,6 +1102,21 @@ td:hover > table {
 }
 
 
+/* VALKS */
+#valks-table-tbody td:not(.player-cell) {
+  text-align: right;
+}
+#valks-table-tbody .total-cell {
+  min-width: 5ch;
+}
+#valks-table-tbody .grab {
+  background-color: crimson;
+}
+#valks-table-tbody td:not(.player-cell, .total-cell) {
+  color: transparent;
+}
+
+
 /* DEATHS */
 #deaths tr * {
   text-shadow: 0 0 1em var(--background);
@@ -1152,34 +1167,6 @@ td:hover > table {
 }
 #deaths .heal > td {
   background-color: hsl(135, 100%, 15%);
-}
-
-
-/* VALKS */
-#valks section {
-  position: absolute;
-}
-#valks input:checked ~ section {
-  display: flex;
-}
-#valks input:checked ~ section ~ section {
-  display: none;
-}
-#valks article {
-  margin: 0 5rem;
-}
-
-#grabs .grab {
-  background-color: crimson;
-}
-#grabs .absent {
-  background-color: hsl(271, 67%, 20%);
-}
-#grabs td {
-  min-width: 4ch;
-}
-#grabs .absent {
-  min-width: 1ch;
 }
 
 
