@@ -319,7 +319,7 @@ class NewUpload(Thread):
         self.change_status(TOP_UPDATE)
         for logs_id in self.slices:
             logs_top.make_report_top(logs_id)
-        logs_top_server.main_add_new_reports_wrap(self.slices)
+        logs_top_server.add_new_reports_wrap(self.slices)
         
         self.change_status(FULL_DONE, 1)
 
