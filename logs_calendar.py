@@ -10,17 +10,17 @@ HTMLC = calendar.HTMLCalendar()
 def _split3(folder_name: str):
     date, time, name, server = folder_name.split('--')
     time = time.replace('-', ':')
-    report_link = f'<a href="/reports/{folder_name}/">{time} - {name}</a>'
+    report_link = f'<a href="/reports/{folder_name}/">{time} | {server} | {name}</a>'
     return date, report_link
    
 def formal_cell(day_n, reports_list):
     section = [
         '',
-        f'<input id="day{day_n}" class="radio" name="calend-days" type="radio">',
-        f'<label class="show-reports" for="day{day_n}">{day_n}</label>',
-        '<section>',
+        f'<input id="calendar-day{day_n}" class="radio" name="calendar-days" type="radio">',
+        f'<label class="show-reports" for="calendar-day{day_n}">{day_n}</label>',
+        '<article>',
         *reports_list,
-        '</section>',
+        '</article>',
         '',
     ]
     return '\n'.join(section)

@@ -895,12 +895,17 @@ td:hover > table {
 .avgs tr:nth-child(6) > td {
   background-color: hsl(20, 100%, 10%);
 }
+
+
 /* LOGS LIST */
 #calendar * {
   font-size: clamp(10pt, calc(100vw / 17), 40pt);
 }
-#calendar td > section {
+#calendar td > article {
   display: none;
+  position: fixed;
+  bottom: 5%;
+  right: 2%;
 }
 #calendar td {
   text-align: right;
@@ -909,24 +914,16 @@ td:hover > table {
   padding: 0;
   min-width: 3ch;
 }
-#calendar input:checked ~ section {
+#calendar input:checked ~ article {
   display: grid;
   grid-template-rows: auto;
 }
-#calendar section a {
-  min-width: 19ch;
+#calendar #calendar-table a {
   text-align: left;
-}
-
-#calendar section {
-  position: fixed;
-  bottom: 10%;
-  right: 5%;
 }
 #calendar tr:nth-child(n+2) > td {
   color: var(--highlight-color);
 }
-
 #calendar-footer a {
   font-size: 150%;
 }

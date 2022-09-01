@@ -2,7 +2,15 @@
 
 {% block the_main %}
 <main id="calendar">
+  <!-- <section id="calendar-controls">
+    <select id="calendar-server-select">
+      <option>All servers</option>
+      <option></option>
+    </select>
+  </section> -->
+  <section id="calendar-table">
 {{ new_month | safe }}
+  </section>
 </main>
 {% endblock the_main %}
 
