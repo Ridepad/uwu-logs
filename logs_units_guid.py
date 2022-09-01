@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import logs_udk_bullshit2
-from constants import CLASS_FROM_HTML, LOGGER_LOGS, SPELL_BOOK, running_time
+from constants import CLASS_FROM_HTML, LOGGER_REPORTS, SPELL_BOOK, running_time
 
 CLASSES = list(CLASS_FROM_HTML)
 _prefix = [
@@ -124,7 +124,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
             # if sName not in BASE_DK_PETS and tGUID[:4] == "0xF1":
                 unholy_DK_pets[sGUID].add(tGUID)
                 if sName not in GHOUL_NAMES:
-                    LOGGER_LOGS.debug(f'sName not in GHOUL_NAMES {sName}')
+                    LOGGER_REPORTS.debug(f'sName not in GHOUL_NAMES {sName}')
 
         elif spell_id == '43771':
             if sGUID != tGUID and tGUID not in pets_perma:

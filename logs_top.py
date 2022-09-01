@@ -5,6 +5,7 @@ import constants
 import dmg_heals
 import logs_dmg_useful
 import logs_main
+from constants import LOGGER_REPORTS
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
@@ -100,14 +101,14 @@ def make_report_top(name: str, rewrite=False):
             boss_top[diff] = data
 
     constants.json_write(top_path, top, indent=None)
-    constants.UPLOAD_LOGGER.info(f'{name:<50} | Done in {constants.get_ms(pc):>6} ms')
+    LOGGER_REPORTS.info(f'{name:<50} | Done in {constants.get_ms_str(pc)}')
     return top
 
 def main_wrap(name):
     try:
         make_report_top(name)
     except Exception:
-        constants.LOGGER_MAIN.exception(f'{name}')
+        LOGGER_REPORTS.exception(name)
 
 
 if __name__ == "__main__":

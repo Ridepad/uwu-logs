@@ -15,8 +15,8 @@ import logs_fix
 import logs_top
 import logs_top_server
 from constants import (
-    BOSSES_GUIDS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA, UPLOAD_LOGGER, UPLOADS_DIR, UPLOADED_DIR,
-    bytes_write, get_ms, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
+    BOSSES_GUIDS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA, LOGGER_UPLOADS, UPLOADS_DIR, UPLOADED_DIR,
+    bytes_write, get_ms_str, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
 
 
 ARCHIVE_ID_ERROR = "Bad archive."
@@ -178,8 +178,7 @@ class NewUpload(Thread):
         
         logs_id = self.get_logs_id(logs_slice)
         
-        _time = get_ms(self.pc)
-        UPLOAD_LOGGER.debug(f'{logs_id} | Done in: {_time:>6,} ms | SIZE: {sys.getsizeof(logs_slice):>12,} | LEN: {len(logs_slice):>12,}')
+        LOGGER_UPLOADS.debug(f'{logs_id} | Done in {get_ms_str(self.pc)} | SIZE: {sys.getsizeof(logs_slice):>12,} | LEN: {len(logs_slice):>12,}')
 
         _slice_info = self.get_slice_info(logs_slice)
         print(_slice_info)
@@ -189,7 +188,7 @@ class NewUpload(Thread):
 
         if not self.forced and slice_fully_processed(logs_id):
             self.change_slice_status(logs_id, "Done!", slice_done=True)
-            UPLOAD_LOGGER.debug(f'{logs_id} exists!')
+            LOGGER_UPLOADS.debug(f'{logs_id} | Exists')
             return
         
         if logs_slice[-1][-1] != b'\n':
@@ -201,7 +200,7 @@ class NewUpload(Thread):
         data_joined, _ = b''.join(logs_slice), logs_slice.clear()
         bytes_write(slice_name, data_joined)
         os.utime(slice_name, (self.mtime, self.mtime))
-        UPLOAD_LOGGER.debug(f'{logs_id} Done in: {get_ms(_pc)} ms')
+        LOGGER_UPLOADS.debug(f'{logs_id} | Done in {get_ms_str(_pc)}')
     
     def save_slice_cache_wrap(self, logs_slice: list):
         self.save_slice_cache(logs_slice)
@@ -296,7 +295,7 @@ class NewUpload(Thread):
         bytes_write(logs_name, logs)
         self.change_slice_status(logs_id, "Done!", slice_done=True)
 
-        UPLOAD_LOGGER.debug(f'{logs_id} done in {get_ms(pc)} ms')
+        LOGGER_UPLOADS.debug(f'{logs_id} | Done in {get_ms_str(pc)}')
 
     def main(self):
         self.year = self.file_data["year"]
@@ -347,19 +346,19 @@ class NewUpload(Thread):
         file_id = logs_archive.get_archive_id(archive_path)
         if file_id is None:
             self.change_status(ARCHIVE_ID_ERROR, 1)
-            UPLOAD_LOGGER.error(f"{archive_path} {ARCHIVE_ID_ERROR}")
+            LOGGER_UPLOADS.error(f"{archive_path} {ARCHIVE_ID_ERROR}")
             return
 
         self.file_data = UPLOADED_FILES.get(file_id)
         if self.already_uploaded():
-            UPLOAD_LOGGER.debug(f"{archive_path} already uploaded")
+            LOGGER_UPLOADS.debug(f"{archive_path} already uploaded")
             return
         
         self.change_status("Extracting...")
         _archive_data = logs_archive.new_archive(archive_path, self.upload_dir)
         if not _archive_data:
             self.change_status(ARCHIVE_ERROR, 1)
-            UPLOAD_LOGGER.error(f"{archive_path} {ARCHIVE_ERROR}")
+            LOGGER_UPLOADS.error(f"{archive_path} {ARCHIVE_ERROR}")
             return
         
         data, extracted_file = _archive_data
@@ -368,7 +367,7 @@ class NewUpload(Thread):
 
     def run(self):
         if self.upload_data is None:
-            UPLOAD_LOGGER.error(f"{self.upload_dir} self.upload_data is None")
+            LOGGER_UPLOADS.error(f"{self.upload_dir} self.upload_data is None")
             return
         
         _extracted = self.upload_data["extracted"]
@@ -389,19 +388,19 @@ class NewUpload(Thread):
             self.main()
         
         except Exception:
-            UPLOAD_LOGGER.exception(f"NewUpload run {self.upload_dir}")
+            LOGGER_UPLOADS.exception(f"NewUpload run {self.upload_dir}")
             self.status_dict['slices'] = {}
             self.change_status(LOGS_ERROR, 1)
         
         finally:
-            UPLOAD_LOGGER.debug(f'Done in {get_ms(st0)} ms')
+            LOGGER_UPLOADS.debug(f'Done in {get_ms_str(st0)}')
             self.finish()
             
     def finish(self):
         try:
             save_upload_cache(self.file_data, self.slices)
         except Exception:
-            UPLOAD_LOGGER.exception(f'finish {self.upload_dir} exception')
+            LOGGER_UPLOADS.exception(f'finish {self.upload_dir} exception')
 
         if "uploads" not in self.upload_dir:
             return
@@ -415,7 +414,7 @@ class NewUpload(Thread):
             os.rename(old, new)
             shutil.rmtree(self.upload_dir, ignore_errors=True)
         except Exception:
-            UPLOAD_LOGGER.exception(f'finish2 {self.upload_dir} exception')
+            LOGGER_UPLOADS.exception(f'finish2 {self.upload_dir} exception')
 
 
 

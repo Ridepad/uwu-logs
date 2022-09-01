@@ -7,7 +7,7 @@ from time import perf_counter
 
 import py7zr
 
-from constants import LOGS_RAW_DIR, UPLOAD_LOGGER, logs_edit_time, get_ms
+from constants import LOGS_RAW_DIR, LOGGER_UPLOADS, logs_edit_time, get_ms_str
 
 PATH_7Z = "7z"
 if platform == "linux" or platform == "linux2":
@@ -47,7 +47,7 @@ def extract(full_path, upload_dir):
     pc = perf_counter()
     cmd = [PATH_7Z, 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
     code = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    UPLOAD_LOGGER.debug(f'{full_path} extracted in {get_ms(pc)} ms')
+    LOGGER_UPLOADS.debug(f'{full_path} | Extracted in {get_ms_str(pc)}')
     return code
 
 def get_extracted_file(upload_dir, file_name):
@@ -104,13 +104,13 @@ def valid_raw_logs(logs_id):
 def save_raw_logs(logs_id: str, upload_dir: str, forced=False):
     archive_path = os.path.join(LOGS_RAW_DIR, f"{logs_id}.7z")
     if not forced and get_7z_info(archive_path) is not None:
-        UPLOAD_LOGGER.debug(f'{logs_id} exists!')
+        LOGGER_UPLOADS.debug(f'{logs_id} | Exists')
         return
     
     pc = perf_counter()
     tmp_file_name = os.path.join(upload_dir, f"{logs_id}.txt")
     if not os.path.isfile(tmp_file_name):
-        UPLOAD_LOGGER.error(f'{logs_id} cache txt not found!')
+        LOGGER_UPLOADS.error(f'{logs_id} | Cache txt not found')
         return
     if forced and os.path.isfile(archive_path):
         os.remove(archive_path)
@@ -118,7 +118,7 @@ def save_raw_logs(logs_id: str, upload_dir: str, forced=False):
     cmd = [PATH_7Z, 'a', archive_path, tmp_file_name, '-m0=PPMd', '-mo=11', '-mx=9']
     subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    UPLOAD_LOGGER.debug(f'{logs_id} done in {get_ms(pc)} ms')
+    LOGGER_UPLOADS.debug(f'{logs_id} | Done in {get_ms_str(pc)}')
 
 def __test():
     from multiprocessing import Process

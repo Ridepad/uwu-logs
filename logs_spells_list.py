@@ -1,4 +1,4 @@
-from constants import SPELLS_SCHOOLS, UNUSUAL_SPELLS, running_time
+from constants import LOGGER_UNUSUAL_SPELLS, SPELLS_SCHOOLS, UNUSUAL_SPELLS, running_time
 
 CUSTOM_SPELLS = {
     "42925": "Flamestrike (Rank 8)",
@@ -7,11 +7,6 @@ CUSTOM_SPELLS = {
     "53190": "Starfall (AoE)",
     "55360": "Living Bomb (DoT)",
 }
-
-def unusual_spells(v, spell_id):
-    _n = v['name'].replace(' ', '-')
-    n = f"./unusual_spells/{spell_id}--{_n}--{v['color']}"
-    open(n, 'w').close()
 
 def spell_id_to_int(data: dict[str, dict[str, str]]):
     return {int(k): v for k,v in data.items()}
@@ -27,7 +22,7 @@ def finish_spells(spells: dict[str, dict]):
             v['color'] = SPELLS_SCHOOLS[color_code_int]
         except KeyError:
             v['color'] = UNUSUAL_SPELLS[color_code_int]
-            unusual_spells(v, spell_id)
+            LOGGER_UNUSUAL_SPELLS.debug(f"MISSING SPELL COLOR: {spell_id:>5} | {v['school']:<5} | {v['color']} | {v['name']}")
         new_spells[int(spell_id)] = v
     return new_spells
 

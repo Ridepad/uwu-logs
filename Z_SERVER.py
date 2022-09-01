@@ -13,7 +13,7 @@ import logs_main
 import logs_upload
 import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_MAIN, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR, UPLOADS_DIR,
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR, UPLOADS_DIR,
     banned, get_folders, get_logs_filter, wrong_pw)
 
 SERVER = Flask(__name__)
@@ -107,10 +107,12 @@ def pw_validate():
 def before_request():
     if banned(request.remote_addr):
         return ('', 429)
-    
-    req = f"[{request.remote_addr}] {request.method:>4} | {request.path}{request.query_string.decode()} | {request.headers.get('User-Agent')}"
+    # print(dir(request))
+    # for x in dir(request):
+    #     print(x, getattr(request, x))
+    req = f"{request.remote_addr:>15} | {request.method:<7} | {request.full_path} | {request.headers.get('User-Agent')}"
     print(req)
-    LOGGER_MAIN.info(req)
+    LOGGER_CONNECTIONS.info(req)
 
     if request.path.startswith('/reports/'):
         url_comp = request.path.split('/')

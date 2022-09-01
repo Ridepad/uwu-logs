@@ -26,12 +26,17 @@ LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
 TOP_DIR = new_folder_path(PATH_DIR, 'top')
 UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
+LOGGERS_DIR = new_folder_path(PATH_DIR, "_loggers")
 
-LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "{PATH_DIR}\%(filename)s:%(lineno)s" | %(message)s'
-LOGGING_FORMAT = f'[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'
-def setup_logger(logger_name, log_file):
+LOGGING_FORMAT_DEFAULT = '''[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'''
+LOGGING_FORMAT = {
+    "connections" : '''[%(asctime)s] %(message)s''',
+}
+def setup_logger(logger_name):
+    log_file = os.path.join(LOGGERS_DIR, f'{logger_name}.log')
     logger = logging.getLogger(logger_name)
-    formatter = logging.Formatter(LOGGING_FORMAT)
+    _format = LOGGING_FORMAT.get(logger_name, LOGGING_FORMAT_DEFAULT)
+    formatter = logging.Formatter(_format)
     fileHandler = logging.FileHandler(log_file)
     fileHandler.setFormatter(formatter)
     streamHandler = logging.StreamHandler()
@@ -42,12 +47,10 @@ def setup_logger(logger_name, log_file):
     logger.addHandler(streamHandler)
     return logger
 
-LOGGER_MAIN_FILE = os.path.join(PATH_DIR,'_main.log')
-LOGGER_MAIN = setup_logger('logger_main', LOGGER_MAIN_FILE)
-LOGGER_LOGS_FILE = os.path.join(PATH_DIR,'_logs.log')
-LOGGER_LOGS = setup_logger('logger_logs', LOGGER_LOGS_FILE)
-UPLOAD_LOGGER_FILE = os.path.join(UPLOADS_DIR, 'upload.log')
-UPLOAD_LOGGER = setup_logger('logger_upload', UPLOAD_LOGGER_FILE)
+LOGGER_CONNECTIONS = setup_logger('connections')
+LOGGER_REPORTS = setup_logger('reports')
+LOGGER_UPLOADS = setup_logger('uploads')
+LOGGER_UNUSUAL_SPELLS = setup_logger('unusual_spells')
 
 
 T_DELTA = {
@@ -744,12 +747,15 @@ def get_ms(pc):
         return -1
     return int((perf_counter()-pc)*1000)
 
+def get_ms_str(pc):
+    return f"{get_ms(pc):>6,} ms"
+
 def running_time(f):
     def running_time_inner(*args, **kwargs):
         pc = perf_counter()
         q = f(*args, **kwargs)
-        msg = f"[PERFOMANCE] Done in {get_ms(pc):>6,} ms with {f.__module__}.{f.__name__}"
-        LOGGER_LOGS.debug(msg)
+        msg = f"[PERFOMANCE] Done in {get_ms_str(pc)} with {f.__module__}.{f.__name__}"
+        LOGGER_REPORTS.debug(msg)
         return q
     return running_time_inner
 

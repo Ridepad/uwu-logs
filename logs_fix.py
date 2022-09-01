@@ -1,4 +1,4 @@
-from constants import ENV_DAMAGE, LOGGER_LOGS
+from constants import ENV_DAMAGE, LOGGER_UNUSUAL_SPELLS
 
 SWING_FLAGS = {b"SWING_DAMAGE", b"SWING_MISSED"}
 LOST_SWING = [b"1", b"Melee", b"0x1"]
@@ -16,7 +16,7 @@ def env_f(_line: bytes):
     else:
         spell_id = str(int(max(ENV_DAMAGE.values())) + 1)
         ENV_DAMAGE[spell_id] = spell_name
-        LOGGER_LOGS.error(f"[MISSING ENVIRONMENTAL DAMAGE] Name: {spell_name} | School: {school_hex}")
+        LOGGER_UNUSUAL_SPELLS.debug(f"MISSING ENVIRONMENTAL DAMAGE: {spell_id:>5} | {school_hex:<5} | {spell_name}")
         
     line[6:7] = [spell_id, spell_name, school_hex]
     return [x.encode() for x in line]
@@ -53,15 +53,15 @@ def trim_logs(fname):
 def __test1():
     import zlib
     from time import perf_counter
-    from constants import get_ms, bytes_write
+    from constants import get_ms_str, bytes_write
 
     fname = r"F:\Python\uwulogs\uploads\test3\WoWCombatLog.txt"
     for _ in range(2):
         pc = perf_counter()
         logs = trim_logs(fname)
-        print(f'{get_ms(pc)} ms')
+        print(get_ms_str(pc))
     logs = b'\n'.join(logs)
-    print(f'{get_ms(pc)} ms')
+    print(get_ms_str(pc))
     _len = len(logs)
     print(_len)
     assert _len == 272824032
