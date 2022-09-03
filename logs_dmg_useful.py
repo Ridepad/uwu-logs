@@ -195,6 +195,11 @@ USEFUL = {
         "0xF1300084C1": "Corruptor Tentacle",
         "0xF1300084C4": "Immortal Guardian",
         "0xF1300084AE": "Crusher Tentacle",
+        "0xF130008462": "Brain of Yogg-Saron",
+        "0xF130008170": "Guardian of Yogg-Saron",
+        "0xF1300083B4": "Ruby Consort",
+        "0xF1300083B7": "Emerald Consort",
+        "0xF130008299": "Suit of Armor",
     },
 }
 
