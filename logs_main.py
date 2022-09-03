@@ -1003,9 +1003,6 @@ class THE_LOGS:
             ("Total", separate_thousands(data_sum)),
             *self.convert_data_to_names(data)
         ])
-        # new_data = 
-        # new_data.insert(0, ("Total", num_format(data_sum)))
-        # return dict(new_data)
 
     @running_time
     def useful_damage_all(self, segments, boss_name):
@@ -1019,11 +1016,8 @@ class THE_LOGS:
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
-            
             for target_name in data["specific"]:
                 targets_useful[target_name] = target_name
-                # if target_name not in table_heads:
-                #     table_heads.append(target_name)
             
             _damage: dict[str, dict[str, int]] = data["damage"]
             for guid_id, _dmg_new in _damage.items():

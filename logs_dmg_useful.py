@@ -170,9 +170,6 @@ USEFUL = {
     },
     "Freya": {
         "0xF13000808A": "Freya",
-        "0xF130008091": "Elder Ironbranch",
-        "0xF130008092": "Elder Stonebark",
-        "0xF130008093": "Elder Brightleaf",
         "0xF1300081B3": "Ancient Conservator",
         "0xF1300081B2": "Ancient Water Spirit",
         "0xF130008096": "Detonating Lasher",
@@ -337,8 +334,8 @@ def get_all_targets(boss_name: str, boss_guid_id: str=None):
 
     targets_all = ALL_GUIDS.get(boss_name, targets_useful)
     return {
-        "useful": targets_useful,
-        "all": targets_all,
+        "useful": dict(targets_useful),
+        "all": dict(targets_all),
     }
 
 def get_dmg(logs_slice: list[str], targets: dict):
