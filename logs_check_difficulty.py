@@ -1,6 +1,14 @@
 from constants import BOSSES_GUIDS, MULTIBOSSES, convert_duration, get_fight_duration
 
 ONE_HP_BOSSES = set(MULTIBOSSES['Blood Prince Council'])
+COWARDS = {
+    "0080A2": "Kologarn",
+    "00804D": "Hodir",
+    "008061": "Thorim",
+    "00808A": "Freya",
+    "008067": "Algalon the Observer",
+}
+COWARDS_NAMES = set(COWARDS.values())
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 DEFAULT_DIFFICULTY = "TBD"
 SPELLS: dict[str, tuple[str, tuple[str]]] = {
@@ -47,17 +55,25 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Koralon the Flame Watcher": ("66670", "", "67329", ""), # Burning Breath
     "Archavon the Stone Watcher": ("58696", "", "60884", ""), # Rock Shards
     "Emalon the Storm Watcher": ("64213", "", "64215", ""), # Chain Lightning
-}
 
-def imagine_playing_shit_expansion(logs_slice):
+    # "Thorim": ("", "", "", "")
+}
+# 9/1 20:15:39.038  SPELL_CAST_START,0xF1300081AC00106B,"Sif",0xa48,0x0000000000000000,nil,0x80000000,62583,"Frostbolt",0x10
+# 9/1 20:15:41.063  SPELL_CAST_SUCCESS,0xF1300081AC00106B,"Sif",0xa48,0x0000000000000000,nil,0x80000000,62604,"Frostbolt Volley",0x10
+# 9/1 20:18:46.350  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0x0D000000000029F3,"Laddad",0x512,62130,"Unbalancing Strike",0x1,DEBUFF
+# 9/1 20:18:46.350  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0xF130008061000B07,"Thorim",0x10a48,62279,"Lightning Charge",0x8,BUFF
+# 9/1 20:17:33.146  SPELL_DAMAGE,0xF130008061000B07,"Thorim",0x10a48,0x0D000000000209A7,"Nymphalisa",0x514,62131,"Chain Lightning",0x8,3780,0,8,1619,0,0,nil,nil,nil
+# 9/1 20:17:27.231  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0x0D0000000000607B,"Nickzed",0x512,62130,"Unbalancing Strike",0x1,DEBUFF
+
+def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
     for line in logs_slice[:2000]:
         if "SPELL_DAMAGE" not in line:
             continue
-        sGUID = line.split(',', 3)[2]
-        if sGUID[:3] == '0x0':
-            players.add(sGUID)
-            if len(players) > 10:
+        guid = line.split(',', 3)[2]
+        if guid[:3] == '0x0':
+            players.add(guid)
+            if len(players) > 11:
                 return DIFFICULTY[2]
     return DIFFICULTY[0]
 
@@ -99,6 +115,16 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
         for line in logs_slice
     )
 
+def auras_removed(logs_slice: list[str]):
+    removed = 0
+    for line in logs_slice:
+        line = line.split(',', 5)
+        if line[1] != "SPELL_AURA_REMOVED":
+            continue
+        if line[4][6:-6] in COWARDS:
+            removed += 1
+    return removed > 20
+
 def get_slice_duration(logs_slice):
     s, f = logs_slice[0], logs_slice[-1]
     return get_fight_duration(s, f)
@@ -117,8 +143,11 @@ def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, at
     slice_duration_str = slice_duration_str[2:]
 
     kill = is_kill(logs_slice[-1])
-    if not kill and boss_name == "The Lich King":
-        kill = has_fury_of_frostmourne(logs[f-10:f+20])
+    if not kill:
+        if boss_name == "The Lich King":
+            kill = has_fury_of_frostmourne(logs[f-10:f+20])
+        elif boss_name in COWARDS_NAMES:
+            kill = auras_removed(logs[f-100:f])
     
     if kill:
         attempt_type = "kill"

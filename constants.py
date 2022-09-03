@@ -203,36 +203,31 @@ BOSSES_GUIDS = {
     "003E75": "Sapphiron",
     "003E76": "Kel'Thuzad",
     
-    "008159": "Flame Leviathan",
+    # "008159": "Flame Leviathan",
     "00815E": "Ignis the Furnace Master",
     "0081A2": "Razorscale",
     "00820D": "XT-002 Deconstructor",
-    "008063": "Steelbreaker",
+    "008231": "Heart of the Deconstructor",
     "00809F": "Runemaster Molgeim",
     "008059": "Stormcaller Brundir",
+    "008063": "Steelbreaker",
     "0080A2": "Kologarn",
+    # "0080A5": "Left Arm",
+    # "0080A6": "Right Arm",
     "0082EB": "Auriaya",
     "00808A": "Freya",
+    # "008091": "Elder Ironbranch",
+    # "008092": "Elder Stonebark",
+    # "008093": "Elder Brightleaf",
     "00804D": "Hodir",
     "008246": "Mimiron",
+    "008298": "Leviathan Mk II",
+    "008373": "VX-001",
+    "008386": "Aerial Command Unit",
     "008061": "Thorim",
     "0081F7": "General Vezax",
     "008208": "Yogg-Saron",
     "008067": "Algalon the Observer",
-
-    # "008231": "Heart of the Deconstructor",
-    # "008242": "XE-321 Boombot",
-    # "008240": "XM-024 Pummeller",
-    # "00823F": "XS-013 Scrapbot",
-
-    # "0081B3": "Ancient Conservator",
-    # "0081B2": "Ancient Water Spirit",
-    # "008096": "Detonating Lasher",
-    # "0081CC": "Eonar's Gift",
-    # "008094": "Snaplasher",
-    # "008097": "Storm Lasher",
-    # "008190": "Strengthened Iron Roots",
-
 }
 
 TOC_CHAMPIONS = {
@@ -276,11 +271,11 @@ MULTIBOSSES = {
     "Faction Champions": list(TOC_CHAMPIONS),
     "Twin Val'kyr": ['0086C0', '0086C1'],
     "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
-    "Mimiron": ["008246", "008208", "008373", "008386"],
+    "Mimiron": ["008246", "008298", "008373", "008386"],
     "Assembly of Iron": ["008063", "00809F", "008059"],
     "Kologarn": ["0080A2", "0080A5", "0080A6"],
     "XT-002 Deconstructor": ["00820D", "008231"],
-    "Freya": ["00808A", "0081B3", "0081B2", "008096", "0081CC", "008094", "008097"],
+    # "Freya": ["00808A", "008091", "008092", "008093"],
 }
 
 SPELLS_SCHOOLS = {
@@ -714,7 +709,11 @@ CLASSES = {
 }
 
 CLASSES_LIST = list(CLASSES)
-SPECS_LIST = [(sname or cname, icon) for cname, v in CLASSES.items() for sname, icon in v.items()]
+SPECS_LIST = [
+    (sname or cname, icon)
+    for cname, v in CLASSES.items()
+    for sname, icon in v.items()
+]
 
 CLASS_TO_HTML = {
     'Death Knight': 'death-knight',

@@ -41,20 +41,20 @@ USEFUL = {
         "0xF130009341": "Volatile Ooze",
     },
     "Blood Prince Council": {
-        "0xF130009455": "Prince Taldaram",
         "0xF130009452": "Prince Valanar",
+        "0xF130009455": "Prince Taldaram",
         "0xF130009454": "Prince Keleseth",
     },
     "Blood-Queen Lana'thel": {
         "0xF130009443": "Blood-Queen Lana'thel",
     },
     "Valithria Dreamwalker": {
-        "0xF130009413": "Rot Worm",
-        "0xF1300093FE": "Gluttonous Abomination",
-        "0xF1300093EC": "Risen Archmage",
-        "0xF1300093E7": "Suppresser",
-        "0xF13000942E": "Blistering Zombie",
         "0xF130008FB7": "Blazing Skeleton",
+        "0xF1300093EC": "Risen Archmage",
+        "0xF130009413": "Rot Worm",
+        "0xF1300093E7": "Suppresser",
+        "0xF1300093FE": "Gluttonous Abomination",
+        "0xF13000942E": "Blistering Zombie",
     },
     "Sindragosa": {
         "0xF130008FF5": "Sindragosa",
@@ -112,10 +112,92 @@ USEFUL = {
         "0xF1300070BB": "Malygos",
     },
     "Sartharion": {
-        '0xF1300070BC': "Sartharion",
-        '0xF1300076F4': "Tenebron",
-        '0xF1300076F3': "Shadron",
-        '0xF1300076F1': "Vesperon",
+        "0xF1300070BC": "Sartharion",
+        "0xF1300076F4": "Tenebron",
+        "0xF1300076F3": "Shadron",
+        "0xF1300076F1": "Vesperon",
+    },
+    "Razorscale": {
+        "0xF1300081A2": "Razorscale",
+        "0xF13000826C": "Dark Rune Guardian",
+        "0xF1300082AD": "Dark Rune Watcher",
+        "0xF130008436": "Dark Rune Sentinel",
+    },
+    "Ignis the Furnace Master": {
+        "0xF15000815E": "Ignis the Furnace Master",
+    },
+    "XT-002 Deconstructor": {
+        "0xF15000820D": "XT-002 Deconstructor",
+        "0xF130008231": "Heart of the Deconstructor",
+        "0xF1300084D4": "Life Spark",
+        "0xF130008242": "XE-321 Boombot",
+        "0xF130008240": "XM-024 Pummeller",
+        "0xF13000823F": "XS-013 Scrapbot",
+    },
+    "Assembly of Iron": {
+        "0xF13000809F": "Runemaster Molgeim",
+        "0xF130008059": "Stormcaller Brundir",
+        "0xF130008063": "Steelbreaker",
+    },
+    "Algalon the Observer": {
+        "0xF130008067": "Algalon the Observer",
+        "0xF1300080BB": "Collapsing Star",
+        "0xF13000811C": "Living Constellation",
+        "0xF130008531": "Unleashed Dark Matter",
+    },
+    "Kologarn": {
+        "0xF1500080A2": "Kologarn",
+        "0xF1300080A5": "Left Arm",
+        "0xF1500080A6": "Right Arm",
+        "0xF1300083E8": "Rubble",
+    },
+    "Auriaya": {
+        "0xF1300082EB": "Auriaya",
+        "0xF1300084DE": "Sanctum Sentry",
+    },
+    "Hodir": {
+        "0xF13000804D": "Hodir",
+        "0xF1300080AA": "Flash Freeze",
+    },
+    "Thorim": {
+        "0xF130008061": "Thorim",
+        "0xF130008068": "Runic Colossus",
+        "0xF13000806A": "Iron Ring Guard",
+        "0xF13000806B": "Swarming Guardian",
+        "0xF130008156": "Dark Rune Acolyte",
+        "0xF130008069": "Ancient Rune Giant",
+        "0xF13000806B": "Iron Honor Guard",
+    },
+    "Freya": {
+        "0xF13000808A": "Freya",
+        "0xF130008091": "Elder Ironbranch",
+        "0xF130008092": "Elder Stonebark",
+        "0xF130008093": "Elder Brightleaf",
+        "0xF1300081B3": "Ancient Conservator",
+        "0xF1300081B2": "Ancient Water Spirit",
+        "0xF130008096": "Detonating Lasher",
+        "0xF1300081CC": "Eonar's Gift",
+        "0xF130008094": "Snaplasher",
+        "0xF130008097": "Storm Lasher",
+        "0xF130008190": "Strengthened Iron Roots",
+    },
+    "Mimiron": {
+        "0xF150008298": "Leviathan Mk II",
+        "0xF150008373": "VX-001",
+        "0xF150008386": "Aerial Command Unit",
+        "0xF130008509": "Assault Bot",
+        "0xF13000843F": "Junk Bot",
+        "0xF130008563": "Emergency Fire Bot",
+    },
+    "General Vezax": {
+        "0xF1300081F7": "General Vezax",
+        "0xF1300082F4": "Saronite Animus",
+    },
+    "Yogg-Saron": {
+        "0xF150008208": "Yogg-Saron",
+        "0xF1300084C1": "Corruptor Tentacle",
+        "0xF1300084C4": "Immortal Guardian",
+        "0xF1300084AE": "Crusher Tentacle",
     },
 }
 
@@ -213,7 +295,31 @@ ALL_GUIDS = {
         "0xF130002BFE": "Onyxian Whelp",
         "0xF130008ED1": "Onyxian Lair Guard",
     },
+    "Ignis the Furnace Master": {
+        "0xF15000815E": "Ignis the Furnace Master",
+        "0xF130008161": "Iron Construct",
+    },
+    "Algalon the Observer": {
+        "0xF130008067": "Algalon the Observer",
+        "0xF1300080BB": "Collapsing Star",
+    },
+    "Mimiron": {
+        "0xF150008298": "Leviathan Mk II",
+        "0xF150008373": "VX-001",
+        "0xF150008386": "Aerial Command Unit",
+        "0xF130008509": "Assault Bot",
+        "0xF13000843F": "Junk Bot",
+        "0xF13000842C": "Bomb Bot",
+        "0xF130008563": "Emergency Fire Bot",
+    },
+    "Auriaya": {
+        "0xF1300082EB": "Auriaya",
+        "0xF1300084F3": "Feral Defender",
+        "0xF1300084DE": "Sanctum Sentry",
+        "0xF1300084F2": "Swarming Guardian",
+    },
 }
+
 
 def get_all_targets(boss_name: str, boss_guid_id: str=None):
     if not boss_name:
@@ -319,12 +425,41 @@ def combine_targets(data: dict[str, dict[str, int]], filter_targets=None):
 
     return total
 
+def freya_useful(logs_slice: list[str]):
+    FREYA = "00808A"
+    DAMAGE: defaultdict[str, int] = defaultdict(int)
+    healing = True
+    for line in logs_slice:
+        if FREYA not in line:
+            continue
+
+        if healing:
+            if "SPELL_PERIODIC_HEAL" in line and line.split(',', 11)[10] == '0':
+                healing = False
+            continue
+        
+        if "DAMAGE" not in line:
+            continue
+        try:
+            _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
+            if tGUID[6:-6] == FREYA:
+                DAMAGE[sGUID] += int(dmg)
+        except ValueError:
+            pass
+    
+    return DAMAGE
+
+# 8/31 20:12:36.834  SPELL_PERIODIC_HEAL,0xF13000808A000A6D,"Freya",0x10a48,0xF13000808A000A6D,"Freya",0x10a48,62528,"Touch of Eonar",0x1,42000,14075,0,nil
+# 9/ 1 20:26:43.762  SPELL_PERIODIC_HEAL,0xF13000808A000CC3,"Freya",0x10a48,0xF13000808A000CC3,"Freya",0x10a48,62892,"Touch of Eonar",0x1,218400,143919,0,nil
 def specific_useful(logs_slice, boss_name):
     data = {}
     if boss_name == "The Lich King":
         valks_dmg = get_valks_dmg(logs_slice)
         data['Valks Useful'] = valks_dmg['useful']
         # data['0xF150008F01'] = valks_dmg['useful']
+    elif boss_name == "Freya":
+        data['Freya Useful'] = freya_useful(logs_slice)
+        
     return data
 
 def specific_useful_combined(logs_slice, boss_name):

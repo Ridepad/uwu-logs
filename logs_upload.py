@@ -149,26 +149,24 @@ class NewUpload(Thread):
         return f'{date}--{name}--{server}'
     
     def get_slice_info(self, logs_slice: list[bytes]):
-        s = defaultdict(int)
+        entities = defaultdict(int)
         names = {}
         for line in logs_slice[::250]:
             guid, name = line.split(b',', 6)[4:6]
             names[guid] = name
-            s[guid] += 1
-            # if guid[:5] in {b"0xF13", b"0xF15"}:
+            entities[guid] += 1
 
-        # add players
-        s = sort_dict_by_value(s)
-        s2 = [guid[6:-6].decode() for guid in s if guid[:5] in {b"0xF13", b"0xF15"}]
-        npcs = [BOSSES_GUIDS[guid] for guid in s2 if guid in BOSSES_GUIDS]
-        players = [_format_name(names[guid]) for guid in s if guid[:3] == b"0x0"]
+        entities = sort_dict_by_value(entities)
+        s2 = [guid[6:-6].decode() for guid in entities if guid[:5] in {b"0xF13", b"0xF15"}]
+        bosses = [BOSSES_GUIDS[guid] for guid in s2 if guid in BOSSES_GUIDS]
+        players = [_format_name(names[guid]) for guid, v in entities.items() if guid[:3] == b"0x0" and v > 10]
         if "nil" in players:
             players.remove("nil")
 
         _tdelta = self.get_timedelta(logs_slice[-1], logs_slice[0])
         return {
-            'players': players[:5],
-            'enemies': npcs[:5],
+            'players': players,
+            'bosses': bosses,
             'duration': _tdelta.seconds,
         }
 
@@ -182,7 +180,7 @@ class NewUpload(Thread):
 
         _slice_info = self.get_slice_info(logs_slice)
         print(_slice_info)
-        if not _slice_info.get('enemies'):
+        if not _slice_info.get('bosses'):
             return
         self.slices[logs_id] = _slice_info
 

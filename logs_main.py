@@ -979,12 +979,7 @@ class THE_LOGS:
         }
 
 
-    # def useful_damage_combined(self, s, f, targets, boss_name):
-    #     logs_slice = self.get_logs(s, f)
-    #     data.update(dmg_useful.get_dmg(logs_slice, targets))
-    #     return
-
-    def useful_damage(self, s, f, targets, boss_name) -> dict[str, dict[str, int]]:
+    def useful_damage(self, s, f, targets, boss_name):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['useful_damage']
         if slice_ID in cached_data:
@@ -992,13 +987,15 @@ class THE_LOGS:
 
         logs_slice = self.get_logs(s, f)
 
-        data: dict[str, dict[str, int]] = {}
-        data |= logs_dmg_useful.specific_useful(logs_slice, boss_name)
-        data |= logs_dmg_useful.get_dmg(logs_slice, targets)
-        
+        specific = logs_dmg_useful.specific_useful(logs_slice, boss_name)
+        damage = logs_dmg_useful.get_dmg(logs_slice, targets)
+        data = {
+            "damage": specific | damage,
+            "specific": set(specific),
+        }
         cached_data[slice_ID] = data
         return data
-
+    
     def add_total_and_names(self, data: dict):
         # print(data)
         data_sum = sum(data.values())
@@ -1018,17 +1015,22 @@ class THE_LOGS:
         targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
         targets_useful = targets["useful"]
         targets_all = targets["all"]
+        table_heads = ["", "Total Useful"]
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
-            for guid_id, _dmg_new in data.items():
+            
+            for target_name in data["specific"]:
+                targets_useful[target_name] = target_name
+                # if target_name not in table_heads:
+                #     table_heads.append(target_name)
+            
+            _damage: dict[str, dict[str, int]] = data["damage"]
+            for guid_id, _dmg_new in _damage.items():
                 add_new_numeric_data(all_data[guid_id], _dmg_new)
 
         guids = self.get_all_guids()
         all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
-    
-        if "Valks Useful" in all_data:
-            targets_useful["Valks Useful"] = "Valks Useful"
     
         targets_useful_dmg = logs_dmg_useful.combine_targets(all_data, targets_useful)
         targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
@@ -1039,10 +1041,7 @@ class THE_LOGS:
             if _data
         }
 
-        table_heads = ["", "Total Useful"]
-        if boss_name == "The Lich King":
-            table_heads.append("Valks Useful")
-        table_heads.extend([targets_all[guid_id] for guid_id in _formatted_dmg if guid_id in targets_all])
+        table_heads.extend([targets_all.get(guid_id, guid_id) for guid_id in _formatted_dmg])
 
         return {
             "HEADS": table_heads,

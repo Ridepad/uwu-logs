@@ -6,9 +6,11 @@ BOSS_MAX_SEP = {
     "Halion": T_DELTA["2MIN"],
     "Anub'arak": T_DELTA["2MIN"],
 }
-ANOTHER_BOSSES = {y:x[0] for x in MULTIBOSSES.values() for y in x[1:]}
+ANOTHER_BOSSES = {guid: boss_guids[0] for boss_guids in MULTIBOSSES.values() for guid in boss_guids[1:]}
 BOSSES_GUIDS_ALL = set(ANOTHER_BOSSES) | set(ANOTHER_BOSSES.values()) | set(BOSSES_GUIDS)
-FLAGS = {'UNIT_DIED', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_HEAL'}
+ENCOUNTER_NAMES = {boss_guids[0]: encounter_name for encounter_name, boss_guids in MULTIBOSSES.items()}
+FLAGS = {'UNIT_DIED', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_HEAL', 'SPELL_AURA_REMOVED'}
+FLAGS_NOT_BOSS = {'SPELL_HEAL', 'SPELL_AURA_REMOVED'}
 IGNORED_IDS = {
     '56190', '56191', '55346', # Lens
     '60122', # Baby Spice
@@ -23,8 +25,7 @@ IGNORED_IDS = {
 }
 
 def convert_to_names(data: dict):
-    B = {guids[0]:name for name, guids in MULTIBOSSES.items()}
-    return {B.get(x, BOSSES_GUIDS[x]): y for x,y in data.items()}
+    return {ENCOUNTER_NAMES.get(boss_guid, BOSSES_GUIDS[boss_guid]): lines for boss_guid, lines in data.items()}
 
 @running_time
 def dump_all_boss_lines(logs: list[str]):
@@ -47,7 +48,7 @@ def dump_all_boss_lines(logs: list[str]):
         _guid = line[4][6:-6]
         if _guid not in BOSSES_GUIDS_ALL:
             _guid = line[2][6:-6]
-            if _guid not in BOSSES_GUIDS_ALL:
+            if _guid not in BOSSES_GUIDS_ALL or line[1] in FLAGS_NOT_BOSS:
                 continue
         _guid = ANOTHER_BOSSES.get(_guid, _guid)
         _bosses[_guid].append((n, line))
