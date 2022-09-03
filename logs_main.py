@@ -2,18 +2,17 @@ import json
 import os
 from collections import defaultdict
 
-import dmg_breakdown
 import dmg_heals
-import logs_dmg_useful
 import logs_auras
 import logs_check_difficulty
+import logs_dmg_breakdown
+import logs_dmg_useful
 import logs_fight_separator
 import logs_get_time
 import logs_player_spec
 import logs_spell_info
 import logs_spells_list
 import logs_units_guid
-import logs_valks3
 import logs_valk_grabs
 from constants import (
     MONTHS, FLAG_ORDER, LOGS_DIR,
@@ -733,7 +732,7 @@ class THE_LOGS:
         logs_slice = self.get_logs(s, f)
         controlled_units = self.get_units_controlled_by(sGUID)
         all_player_pets = self.get_players_and_pets_guids()
-        data = dmg_breakdown.parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data = logs_dmg_breakdown.parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
         cached_data[slice_ID] = data
         return data
 
@@ -778,7 +777,7 @@ class THE_LOGS:
         targets = dict(sorted(targets.items()))
         
         actual = _data['actual']
-        hits_data = dmg_breakdown.hits_data(actual)
+        hits_data = logs_dmg_breakdown.hits_data(actual)
         actual_sum = {
             spell_id: sum(sum(x) for x in d.values())
             for spell_id, d in actual.items()
