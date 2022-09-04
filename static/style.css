@@ -630,7 +630,9 @@ td > a:hover {
 }
 
 td > img {
-  height: 1.1em;
+  min-height: 1.1em;
+  max-height: 1.1em;
+  min-width: 1.1em;
   vertical-align: middle;
 }
 
@@ -1050,6 +1052,7 @@ td:hover > table {
 #potions-table th img {
   min-height: 1.5em;
   max-height: 1.5em;
+  min-width: 1.5em;
 }
 
 #potions-table td:not(.player-cell) {
@@ -1059,6 +1062,7 @@ td:hover > table {
 #auras-table th img {
   min-height: 2em;
   max-height: 2em;
+  min-width: 2em;
 }
 #auras-table td:not(.player-cell) {
   min-width: 7.5ch;

@@ -394,17 +394,14 @@ def get_valks_dmg(logs: list[str]):
     }
 
 def combine_pets(data: dict[str, int], guids: dict[str, dict], trim_non_players=False, ignore_abom=False):
-    def check_master(guid: str):
-        return guids[guid].get('master_guid', guid)
-    
     combined: dict[str, int] = defaultdict(int)
     for sGUID, value in data.items():
         if ignore_abom and sGUID[6:-6] == "00958D":
             continue
-        _sGUID = check_master(sGUID)
-        if trim_non_players and not is_player(_sGUID):
+        sGUID = guids[sGUID].get('master_guid', sGUID)
+        if trim_non_players and not is_player(sGUID):
             continue
-        combined[_sGUID] += value
+        combined[sGUID] += value
 
     return combined
 
