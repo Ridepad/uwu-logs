@@ -15,7 +15,7 @@ import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
 from constants import (
-    MONTHS, FLAG_ORDER, LOGS_DIR,
+    LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
     add_new_numeric_data, add_space, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
     sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
@@ -172,7 +172,7 @@ class THE_LOGS:
         self.PATH = os.path.join(LOGS_DIR, logs_name)
         if not os.path.exists(self.PATH):
             os.makedirs(self.PATH, exist_ok=True)
-            print('LOG: Created folder:', self.PATH)
+            LOGGER_REPORTS.debug(f"Created folder: {self.PATH}")
 
         self.year = int(logs_name[:2]) + 2000
 
@@ -271,6 +271,10 @@ class THE_LOGS:
         logs = self.get_logs()
         enc_data = self.get_enc_data()
         parsed = logs_units_guid.guids_main(logs, enc_data)
+
+        if parsed['missing_owner']:
+            LOGGER_REPORTS.error(f"Missing owners: {parsed['missing_owner']}")
+
         _guids = parsed['everything']
         _players = parsed['players']
         _classes = parsed['classes']
@@ -428,11 +432,6 @@ class THE_LOGS:
                         for diff_id, segments in diffs.items()
                     }
                 }
-                # boss_data = segm_links[boss_name] = {'link': a}
-                # boss_data['links'] = {
-                #     diff_id: self.make_segment_query_diff(segments, boss_name, href1, diff_id)
-                #     for diff_id, segments in diffs.items()
-                # }
             self.SEGMENTS_QUERIES = segm_links
             return segm_links
         
@@ -544,9 +543,6 @@ class THE_LOGS:
             else:
                 segments = enc_data[boss_name]
 
-            # print(f"[parse_request] segments {segments}")
-            # print(f"[parse_request] segments {shift}")
-
             if shift:
                 for i, (seg_s, seg_f) in enumerate(segments):
                     seg_s_shifted = self.find_index(seg_s) - shift
@@ -611,31 +607,6 @@ class THE_LOGS:
         self.CONTROLLED_UNITS[master_guid] = controlled_units
         return controlled_units
 
-    def dmg_taken(self, logs_slice, filter_guids=None, players=False):
-        if filter_guids is None:
-            filter_guid = PLAYER if players else '0xF1'
-            dmg = dmg_heals.parse_dmg_taken_single(logs_slice, filter_guid)
-        else:
-            dmg = dmg_heals.parse_dmg_taken(logs_slice, filter_guids)
-        new_data: dict[str, dict[str, int]] = {}
-        for tguid, sources in dmg.items():
-            name = self.guid_to_name(tguid)
-            q = new_data.setdefault(name, {})
-            for sguid, value in sources.items():
-                sguid = self.get_master_guid(sguid)
-                q[sguid] = q.get(sguid, 0) + value
-        b = next(iter(new_data))
-        new_data[b] = sort_dict_by_value(new_data[b])
-        for name in IGNORED_ADDS:
-            new_data.pop(name, None)
-        for d in new_data.values():
-            d.pop('nil', None)
-        players = self.get_players_guids()
-        return {
-            target_name: {players[guid]: separate_thousands(value) for guid, value in sources.items() if guid in players}
-            for target_name, sources in new_data.items()
-        }
-
     def convert_data_to_names(self, data: dict):
         guids = self.get_all_guids()
         data = sort_dict_by_value(data)
@@ -691,7 +662,7 @@ class THE_LOGS:
             elif unit_name not in specs and unit_name in classes_names:
                 player_class = classes_names[unit_name]
                 specs[unit_name] = logs_player_spec.get_spec_info(player_class)
-                print(f"{unit_name} doenstt have spec!")
+                LOGGER_REPORTS.error(f"{unit_name} doesn't have spec")
             # elif unit_name not in classes_names:
             #     print(f"{unit_name} not in classes_names!")
 
@@ -823,9 +794,7 @@ class THE_LOGS:
                 "name": name,
                 "data": self.player_info_all(segments, guid, tGUID)
             }
-            # yield f"{json.dumps(data, separators=(',', ':'))}\n"
             response.append(data)
-            # yield json.dumps(response)
         return json.dumps(response)
 
     
@@ -940,7 +909,7 @@ class THE_LOGS:
         spell_id = spell_id.replace("-", "")
         all_spells = self.get_spells()
         if int(spell_id) not in all_spells:
-            print('ERROR: spell_id not in spells:', spell_id)
+            LOGGER_REPORTS.error(f"{spell_id} not in spells")
             return {
                 "SPELLS": {},
                 "TABS": {},
@@ -996,7 +965,6 @@ class THE_LOGS:
         return data
     
     def add_total_and_names(self, data: dict):
-        # print(data)
         data_sum = sum(data.values())
         return dict([
             ("Total", separate_thousands(data_sum)),
@@ -1119,4 +1087,30 @@ class THE_LOGS:
             "ALL_GRABS": all_grabs,
             "GRABS_TOTAL": grabs_total,
             "WAVES": waves,
+        }
+
+
+    def dmg_taken(self, logs_slice, filter_guids=None, players=False):
+        if filter_guids is None:
+            filter_guid = PLAYER if players else '0xF1'
+            dmg = dmg_heals.parse_dmg_taken_single(logs_slice, filter_guid)
+        else:
+            dmg = dmg_heals.parse_dmg_taken(logs_slice, filter_guids)
+        new_data: dict[str, dict[str, int]] = {}
+        for tguid, sources in dmg.items():
+            name = self.guid_to_name(tguid)
+            q = new_data.setdefault(name, {})
+            for sguid, value in sources.items():
+                sguid = self.get_master_guid(sguid)
+                q[sguid] = q.get(sguid, 0) + value
+        b = next(iter(new_data))
+        new_data[b] = sort_dict_by_value(new_data[b])
+        for name in IGNORED_ADDS:
+            new_data.pop(name, None)
+        for d in new_data.values():
+            d.pop('nil', None)
+        players = self.get_players_guids()
+        return {
+            target_name: {players[guid]: separate_thousands(value) for guid, value in sources.items() if guid in players}
+            for target_name, sources in new_data.items()
         }
