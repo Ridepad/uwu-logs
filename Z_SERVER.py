@@ -60,22 +60,22 @@ def default_params(report_id, request):
         "segments": parsed["segments"],
     }
     
-@SERVER.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+# @SERVER.route('/favicon.ico')
+# def favicon():
+#     return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-@SERVER.errorhandler(404)
-def method404(e):
-    return render_template('no_page.html')
+# @SERVER.errorhandler(404)
+# def method404(e):
+#     return render_template('no_page.html')
 
-@SERVER.errorhandler(405)
-def method405(e):
-    return "POST ON DEEZ NUTZ INSTEAD, DOG"
+# @SERVER.errorhandler(405)
+# def method405(e):
+#     return "POST ON DEEZ NUTZ INSTEAD, DOG"
 
-@SERVER.errorhandler(413)
-def method413(e):
-    status = 'Files <128mb only, learn to compress, scrub'
-    return render_template('upload.html', status=status)
+# @SERVER.errorhandler(413)
+# def method413(e):
+#     status = 'Files <128mb only, learn to compress, scrub'
+#     return render_template('upload.html', status=status)
 
 def _cleaner():
     now = datetime.now()
