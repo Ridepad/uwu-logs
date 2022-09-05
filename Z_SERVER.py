@@ -64,9 +64,10 @@ def default_params(report_id, request):
 # def favicon():
 #     return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-# @SERVER.errorhandler(404)
-# def method404(e):
-#     return render_template('no_page.html')
+@SERVER.errorhandler(404)
+def method404(e):
+    return f"This route does not exist {request.url}", 404
+    # return render_template('404.html')
 
 # @SERVER.errorhandler(405)
 # def method405(e):
