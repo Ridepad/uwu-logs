@@ -8,7 +8,7 @@
 
 <https://uwu-logs.xyz/top>
 
-![Showcase top](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/top.png)
+![Showcase top](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/static/thumb.png)
 
 ### Player total and per target spell info
 
