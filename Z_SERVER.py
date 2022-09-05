@@ -60,23 +60,10 @@ def default_params(report_id, request):
         "segments": parsed["segments"],
     }
     
-# @SERVER.route('/favicon.ico')
-# def favicon():
-#     return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @SERVER.errorhandler(404)
 def method404(e):
-    return f"This route does not exist {request.url}", 404
-    # return render_template('404.html')
-
-# @SERVER.errorhandler(405)
-# def method405(e):
-#     return "POST ON DEEZ NUTZ INSTEAD, DOG"
-
-# @SERVER.errorhandler(413)
-# def method413(e):
-#     status = 'Files <128mb only, learn to compress, scrub'
-#     return render_template('upload.html', status=status)
+    return render_template('404.html')
 
 def _cleaner():
     now = datetime.now()
@@ -221,39 +208,6 @@ def player(report_id, source_name):
         SOURCE_NAME=source_name,
     )
 
-@SERVER.route("/reports/<report_id>/player_auras/<player_name>/")
-def player_auras(report_id, player_name):
-    _default = request.default_params
-    report = load_report(report_id)
-    segments = _default.pop('segments')
-
-    s, f = segments[0]
-
-    filter_guid = report.name_to_guid(player_name)
-
-    data = report.get_auras(s, f, filter_guid)
-
-
-    # checkboxes = []
-    # intable = []
-    # css = []
-    # for n, guid in enumerate(buffs):
-    #     name =  report.guid_to_name(guid)
-    #     name_css = convert_to_html_name(name)
-    #     color_hue = n*48
-    #     zindex = n-1 if n>0 else 10
-    #     checkboxes.append((name, color_hue, name_css))
-    #     intable.append((guid, color_hue, zindex, name_css))
-    #     css.append(f'#tar-{name_css}:checked ~ table .tar-{name_css}')
-    # css = ', '.join(css) + "{display: inline-block;}"
-    
-    return render_template(
-        'player_auras.html', **_default,
-        **data,
-        SOURCE_NAME=player_name,
-        # checkboxes=checkboxes, intable=intable, 
-    )
-
 @SERVER.route("/reports/<report_id>/spellsearch", methods=["POST"])
 def spellsearch(report_id):
     data = request.get_json(force=True, silent=True)
@@ -334,7 +288,6 @@ def compare(report_id):
         report = load_report(report_id)
         return report.get_comp_data(segments, class_name)
 
-
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):
     _default = request.default_params
@@ -346,6 +299,7 @@ def valks(report_id):
         'valks.html', **_default,
         **data,
     )
+
 
 @SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
 def custom_search_post(report_id):
@@ -440,6 +394,39 @@ def test3():
     players.extend(players_names - set(players))
     return render_template('dmg_taken_test.html', dmg=dmg, players=players)
 
+@SERVER.route("/reports/<report_id>/player_auras/<player_name>/")
+def player_auras(report_id, player_name):
+    _default = request.default_params
+    report = load_report(report_id)
+    segments = _default.pop('segments')
+
+    s, f = segments[0]
+
+    filter_guid = report.name_to_guid(player_name)
+
+    data = report.get_auras(s, f, filter_guid)
+
+
+    # checkboxes = []
+    # intable = []
+    # css = []
+    # for n, guid in enumerate(buffs):
+    #     name =  report.guid_to_name(guid)
+    #     name_css = convert_to_html_name(name)
+    #     color_hue = n*48
+    #     zindex = n-1 if n>0 else 10
+    #     checkboxes.append((name, color_hue, name_css))
+    #     intable.append((guid, color_hue, zindex, name_css))
+    #     css.append(f'#tar-{name_css}:checked ~ table .tar-{name_css}')
+    # css = ', '.join(css) + "{display: inline-block;}"
+    
+    return render_template(
+        'player_auras.html', **_default,
+        **data,
+        SOURCE_NAME=player_name,
+        # checkboxes=checkboxes, intable=intable, 
+    )
+
 
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
@@ -455,5 +442,18 @@ def top():
 
 
 if __name__ == "__main__":
+    @SERVER.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+    @SERVER.errorhandler(405)
+    def method405(e):
+        return "POST ON DEEZ NUTZ INSTEAD, DOG"
+
+    @SERVER.errorhandler(413)
+    def method413(e):
+        status = 'Files <128mb only, learn to compress, scrub'
+        return render_template('upload.html', status=status)
+    
     SERVER.run(host="0.0.0.0", port=5000, debug=True)
     # SERVER.run(host="0.0.0.0", port=8000)
