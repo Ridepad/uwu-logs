@@ -119,6 +119,8 @@ def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, 
         if not master_guid:
             missing_owner.append(guid_id)
             continue
+        if master_guid not in everything:
+            continue
         master_name = everything[master_guid]['name']
         pet_name = get_pet_name(guid_id)
         _pet = new_entry(pet_name, master_name, master_guid)

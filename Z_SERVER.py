@@ -2,19 +2,24 @@ import os
 import threading
 from datetime import datetime
 
-from flask import (Flask, Response, make_response, render_template,
-                   request, send_from_directory)
+from flask import (
+    Flask, Response, request,
+    make_response, render_template, send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-import _validate
 import deaths
 import logs_calendar
 import logs_main
 import logs_upload
 import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR, UPLOADS_DIR,
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR,
     banned, get_folders, get_logs_filter, wrong_pw)
+
+try:
+    import _validate
+except ImportError:
+    pass
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -59,11 +64,14 @@ def default_params(report_id, request):
         "boss_name": parsed["boss_name"],
         "segments": parsed["segments"],
     }
-    
 
 @SERVER.errorhandler(404)
 def method404(e):
     return render_template('404.html')
+
+@SERVER.errorhandler(500)
+def method500(e):
+    return render_template('500.html')
 
 def _cleaner():
     now = datetime.now()
@@ -95,11 +103,8 @@ def pw_validate():
 def before_request():
     if banned(request.remote_addr):
         return ('', 429)
-    # print(dir(request))
-    # for x in dir(request):
-    #     print(x, getattr(request, x))
+
     req = f"{request.remote_addr:>15} | {request.method:<7} | {request.full_path} | {request.headers.get('User-Agent')}"
-    print(req)
     LOGGER_CONNECTIONS.info(req)
 
     if request.path.startswith('/reports/'):
@@ -107,7 +112,7 @@ def before_request():
         report_id = url_comp[2]
         report_path = os.path.join(LOGS_DIR, report_id)
         if not os.path.isdir(report_path):
-            return render_template('no_page.html')
+            return render_template('404.html')
         
         elif USE_FILTER:
             _filter = get_logs_filter(FILTER_TYPE)

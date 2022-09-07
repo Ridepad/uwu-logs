@@ -633,14 +633,17 @@ class THE_LOGS:
 
         first_line = logs_slice[0].split(',', 8)
         last_line = logs_slice[-1].split(',', 8)
-        print(first_line)
-        print(last_line)
-        data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]} with {first_line[7]}"
-        if last_line[1] == "UNIT_DIED":
-            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[5]}"
-        else:
-            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]} with {last_line[7]}"
 
+        try:
+            data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]} with {first_line[7]}"
+        except IndexError:
+            data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]}"
+        
+        try:
+            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]} with {last_line[7]}"
+        except IndexError:
+            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]}"
+        
         cached_data[slice_ID] = data
         return data
     
