@@ -26,13 +26,13 @@ const INTERACTABLES = {
   spec: specSelect,
 }
 
-const loading = document.getElementById('loading-info');
-const toggleTotalDamage = document.getElementById('toggle-total-damage');
-const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
+const loadingInfo = document.getElementById('loading-info');
 const headUsefulDps = document.getElementById('head-useful-dps');
 const headUsefulAmount = document.getElementById('head-useful-amount');
 const headTotalDps = document.getElementById('head-total-dps');
 const headTotalAmount = document.getElementById('head-total-amount');
+const toggleTotalDamage = document.getElementById('toggle-total-damage');
+const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
 const toggleLimit = document.getElementById('toggle-limit');
 const LIMITED_ROWS = 1000;
 
@@ -230,18 +230,23 @@ function newRow(data) {
   return row
 }
 
-const reverseSorted = ["head-duration", "head-external", "head-self", "head-rekt"]
-const SORT_VARS = {column: -1, order: 1}
+const SORT_VARS = {column: headUsefulDps, order: 1}
+const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"]
 const getCellValue = (tr, idx) => tr.children[idx].value;
 const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
 function sort_table_by_column(event) {
   const th = event ? event.target : headDPS;
-  const column_n = th.cellIndex;
-  SORT_VARS.order = column_n == SORT_VARS.column ? -SORT_VARS.order : reverseSorted.includes(th.id) ? -1 : 1;
+  SORT_VARS.order = th == SORT_VARS.column ? -SORT_VARS.order : REVERSE_SORTED.includes(th.id) ? -1 : 1;
+  SORT_VARS.column = th;
+  if (DATA_KEYS2[th.id] && (toggleLimit.checked || combineCheckbox.checked)) {
+    const data = CACHE.getCurrent();
+    tableAddNewData(data);
+    return;
+  }
+
   Array.from(mainTableBody.querySelectorAll('tr:nth-child(n+1)'))
-       .sort(tableSort(column_n))
+       .sort(tableSort(th.cellIndex))
        .forEach(tr => mainTableBody.appendChild(tr));
-  SORT_VARS.column = column_n;
 }
 
 const newClassFilter = class_i => x => class_i <= x[DATA_KEYS.spec] && x[DATA_KEYS.spec] < class_i+4;
@@ -255,34 +260,49 @@ function filterDataByClass(data) {
   return data.filter(_filter);
 }
 
+const getbest = () => SORT_VARS.order == 1 ? (a, b) => a > b : (a, b) => a < b;
 function noDublicates(data) {
-  let data2 = {}
+  const getbest_f = getbest()
+  const key = DATA_KEYS2[SORT_VARS.column.id];
+  const best_data = {}
   for (let i=0; i < data.length; i++) {
     const current = data[i];
     const guid = current[DATA_KEYS.guid];
-    const best = data2[guid];
-    if (!best || current[DATA_KEYS.uDPS] > best[DATA_KEYS.uDPS]) {
-      data2[guid] = current;
+    const best = best_data[guid];
+    if (!best || getbest_f(current[key], best[key])) {
+      best_data[guid] = current;
     }
   }
-  return Object.values(data2);
+  return Object.values(best_data);
 }
 
+const DATA_KEYS2 = {
+  "head-useful-amount": 'ua',
+  "head-useful-dps": 'ud',
+  "head-total-amount": 'ta',
+  "head-total-dps": 'td',
+  "head-duration": 't',
+}
 
 let mainTimeout;
+const sortNewData = key => (a, b) => (b[key] - a[key]) * SORT_VARS.order;
 function tableAddNewData(data) {
-  mainTableBody.innerHTML = "";
   clearTimeout(mainTimeout);
+  mainTableBody.innerHTML = "";
   if (!data) return;
   data = filterDataByClass(data)
+  if (!data) return;
+  const key = DATA_KEYS2[SORT_VARS.column.id];
+  const sortFunc = sortNewData(key);
+  data = data.sort(sortFunc)
   if (!data) return;
   data = combineCheckbox.checked ? noDublicates(data) : data;
   if (!data) return;
 
-  let i = 0;
-  SORT_VARS.column = 1;
-  loading.parentElement.style.display = "block";
+  mainTableBody.style.display = "none";
+  loadingInfo.parentElement.style.display = "";
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
+  let i = 0;
   (function chunk() {
     const end = Math.min(i+250, LIMIT)
     for ( ; i < end; i++) {
@@ -290,11 +310,12 @@ function tableAddNewData(data) {
       mainTableBody.appendChild(row);
     }
     if (i < LIMIT) {
-      loading.innerText = `Done: ${i}/${LIMIT}`
+      loadingInfo.innerText = `Done: ${i}/${LIMIT}`
       mainTimeout = setTimeout(chunk);
     } else {
-      loading.innerText = '';
-      loading.parentElement.style.display = "none";
+      loadingInfo.innerText = '';
+      loadingInfo.parentElement.style.display = "none";
+      mainTableBody.style.display = "";
       toggleUsefulColumns();
       toggleTotalColumns();
     }
@@ -320,10 +341,13 @@ const CACHE = {
     if (query == this.lastQuery) {
       this[query] = data;
     }
+  },
+  getCurrent: function() {
+    const query = makeQuery();
+    return this[query];
   }
 };
 
-const sortNewData = (a, b) => b.ud - a.ud;
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
 xrequest.onreadystatechange = () => {
@@ -331,14 +355,14 @@ xrequest.onreadystatechange = () => {
   console.timeEnd("query");
   const parsed_json = xrequest.response ? JSON.parse(xrequest.response) : [];
 
-  console.time("sort");
-  const data = parsed_json.sort(sortNewData);
-  console.timeEnd("sort");
+  // console.time("sort");
+  // const data = parsed_json.sort(sortNewData);
+  // console.timeEnd("sort");
 
-  CACHE.setNewData(data);
+  CACHE.setNewData(parsed_json);
 
   console.time("tableAddNewData");
-  tableAddNewData(data);
+  tableAddNewData(parsed_json);
   console.timeEnd("tableAddNewData");
 }
 
@@ -423,6 +447,10 @@ function init() {
 
   toggleTotalDamage.addEventListener('change', toggleTotalColumns);
   toggleUsefulDamage.addEventListener('change', toggleUsefulColumns);
+  toggleLimit.addEventListener('change', () => {
+    const data = CACHE.getCurrent();
+    tableAddNewData(data);
+  });
   
   searchChanged();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));

@@ -64,19 +64,20 @@
           <tbody id="main-table-body"></tbody>
         </table>
       </section>
+      <section id="loading-info-panel" style="display: none;">
+        <p id="loading-info"></p>
+        <p>You can select any other filter to cancel</p>
+        <p>Some filters will make your browser beg for mercy</p>
+      </section>
       <footer>
         <section>
           <a id="link-home" href="/">Main website</a>
-          <input id="toggle-total-damage" type="checkbox">
+          <input id="toggle-total-damage" type="checkbox" checked>
           <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
           <input id="toggle-useful-damage" type="checkbox" checked>
           <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
           <input id="toggle-limit" type="checkbox" checked>
           <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
-          <aside id="loading-info-panel" style="display: none;">
-            <p id="loading-info"></p>
-            <p id="footer-note">Note: some filters will make your browser beg for mercy</p>
-          </aside>
         </section>
       </footer>
     </main>
