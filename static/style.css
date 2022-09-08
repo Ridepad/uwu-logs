@@ -1064,12 +1064,14 @@ td:hover > table {
   max-height: 2em;
   min-width: 2em;
 }
-#auras-table td:not(.player-cell) {
+#auras-table td:not(.player-cell):nth-child(odd) {
   min-width: 7.5ch;
+}
+#auras-table td:not(.player-cell) {
   text-align: right;
 }
 
-#auras-table td:not(.player-cell, :empty)::after {
+#auras-table td:not(.player-cell, :empty):nth-child(odd)::after {
   content: "%";
 }
 
