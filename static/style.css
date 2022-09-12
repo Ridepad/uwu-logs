@@ -54,7 +54,7 @@ html::-webkit-scrollbar {
 /* spell colors */
 .holy {color:goldenrod}
 .fire {color:orangered}
-.nature {color:green}
+.nature {color:hsl(120, 100%, 35%)}
 .frost {color:skyblue}
 .shadow {color:darkslateblue}
 .arcane {color:mediumpurple}
@@ -70,14 +70,14 @@ html::-webkit-scrollbar {
 .chaos {color:hsl(263, 100%, 30%)}
 .holyfire {color:hsl(50, 100%, 80%)}
 .froststorm {color:hsl(200, 100%, 85%)}
+.spellfire {color:hsl(345, 100%, 50%)}
+.stormstrike {color:hsl(120, 100%, 20%)}
+.flamestrike {color:hsl(345, 100%, 30%)}
 
-.flamestrike,
-.stormstrike,
 .holystorm,
 .holyfrost,
 .shadowflame,
 .spellstrike,
-.spellfire,
 .spellstorm,
 .spellfrost,
 .elemental,
@@ -337,7 +337,7 @@ footer #report-slice a:hover span {
   footer #report-slice a {
     font-size: 150%;
     grid-auto-flow: column;  
-    gap: 1em;
+    gap: .25em;
   }
   footer ul {
     padding-left: 1em;
@@ -814,7 +814,7 @@ input:checked + label + div {
   background-color: var(--background);
   width: 100%;
   z-index: 1;
-  padding: 1rem 0;
+  padding-bottom: 1rem;
 }
 #dmg-done-selection select {
   margin-left: 1rem;
@@ -1121,6 +1121,10 @@ td:hover > table {
 
 
 /* DEATHS */
+#deaths {
+  margin-bottom: calc(var(--nav-height) * 2 + 1rem);
+}
+
 #deaths tr * {
   text-shadow: 0 0 1em var(--background);
 }
@@ -1134,14 +1138,16 @@ td:hover > table {
   overflow: scroll;
   height: 80%;
 }
-#deaths table {
-  position: relative;
-  overflow: scroll;
-}
 #deaths .name {
   text-overflow:ellipsis;
   white-space: nowrap;
   overflow: hidden;
+}
+#deaths td:first-of-type {
+  text-align: right;
+}
+#deaths td {
+  padding-inline: .1em;
 }
 
 #all-tabs label {

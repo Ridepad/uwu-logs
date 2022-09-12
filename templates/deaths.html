@@ -1,46 +1,63 @@
 {% extends "layout_report.html" %}
 
-{% block head_after %}
-<style>
-  {{ customstyle }}
-</style>
-{% endblock head_after %}
-
 {% block the_main %}
-<main>
-<div id="deaths">
-  <input id="open-tabs" type="checkbox">
-  <label for="open-tabs">Select death</label>
-  <div id="all-tabs">
-    {% for name_css, name in tabs %}
-    <input id="{{ name_css }}" type="radio" name="deaths-group" checked>
-    <label id="{{ name_css }}-tab" class="tab" for="{{ name_css }}">{{ name }}</label>
-    {% endfor %}
-    {% for name_css, death in _deaths %}
-    <div id="{{ name_css }}-panel" class="panel">
-      <table>
-        <tr>
-          <th>TIME
-          <th>FLAG
-          <th>SOURCE
-          <th>SPELL
-          <th>VALUE
-          <th>OVER
-        </tr>
-        {% for css, time, suffix, source, spell, v1, v2 in death %}
-        <tr class="{{css}}">
-          <td>{{ time }}</td>
-          <td>{{ suffix }}</td>
-          <td class="name {{ CLASS_DATA[source] }}">{{ source }}</td>
-          <td class="name">{{ spell }}</td>
-          <td>{{ v1 }}</td>
-          <td>{{ v2 }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
-    {% endfor %}
-  </div>
-</div>
+<main id="deaths">
+  <section id="dmg-done-selection">
+    <select id="dmg-done-select">
+      <option>Select specific target:</option>
+      {% for guid, name in PLAYERS.items() %}
+      <option value="{{ guid }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+  </section>
+  {% for timestamp, death in DEATHS.items() %}
+  <section class="panel2">
+    <table>
+      <caption>{{ timestamp }}</caption>
+      <tr>
+        <th>TIME
+        <th>FLAG
+        <th>SOURCE
+        <th>TARGET
+        <th>SPELL
+        <th>VALUE
+        <th>OVER
+      </tr>
+      {% for time, flag, source, target, spell_id, v1, v2 in death %}
+      <tr>
+        <td>{{ time }}</td>
+        <td>{{ flag }}</td>
+        <td class="{{ CLASSES[source] }}">{{ GUIDS[source]["name"] }}</td>
+        <td class="{{ CLASSES[target] }}">{{ GUIDS[target]["name"] }}</td>
+        {% if spell_id %}
+        <td class="spell-name"><a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a></td>
+        {% else %}
+        <td></td>
+        {% endif %}
+        <td>{{ v1 }}</td>
+        <td>{{ v2 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+  {% endfor %}
 </main>
 {% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const loc = window.location;
+  const select = document.getElementById("dmg-done-select");
+
+  const p = new URLSearchParams(loc.search);
+  const target = p.get('target');
+  target ? select.value = target : select.selectedIndex = 0;
+  
+  function redirect(event) {
+    p.set('target', select.value);
+    loc.replace(`${loc.origin}${loc.pathname}?${p}`);
+  };
+
+  select.addEventListener('change', redirect);
+</script>
+{% endblock the_scripts %}

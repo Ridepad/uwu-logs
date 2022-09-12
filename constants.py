@@ -78,66 +78,6 @@ FLAG_ORDER = [
     "SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE",
 ]
 
-BOSSES_FROM_HTML = {
-    "the-lich-king": "The Lich King",
-    "halion": "Halion",
-    "deathbringer-saurfang": "Deathbringer Saurfang",
-    "festergut": "Festergut",
-    "rotface": "Rotface",
-    "professor-putricide": "Professor Putricide",
-    "blood-queen-lanathel": "Blood-Queen Lana'thel",
-    "sindragosa": "Sindragosa",
-    "lord-marrowgar": "Lord Marrowgar",
-    "lady-deathwhisper": "Lady Deathwhisper",
-    "gunship-battle": "Gunship Battle",
-    "blood-prince-council": "Blood Prince Council",
-    "valithria-dreamwalker": "Valithria Dreamwalker",
-    "northrend-beasts": "Northrend Beasts",
-    "lord-jaraxxus": "Lord Jaraxxus",
-    "faction-champions": "Faction Champions",
-    "twin-valkyr": "Twin Val'kyr",
-    "anubarak": "Anub'arak",
-    "onyxia": "Onyxia",
-    "malygos": "Malygos",
-    "sartharion": "Sartharion",
-    "baltharus-the-warborn": "Baltharus the Warborn",
-    "general-zarithrian": "General Zarithrian",
-    "saviana-ragefire": "Saviana Ragefire",
-    "archavon-the-stone-watcher": "Archavon the Stone Watcher",
-    "emalon-the-storm-watcher": "Emalon the Storm Watcher",
-    "koralon-the-flame-watcher": "Koralon the Flame Watcher",
-    "toravon-the-ice-watcher": "Toravon the Ice Watcher",
-    "anubrekhan": "Anub'Rekhan",
-    "grand-widow-faerlina": "Grand Widow Faerlina",
-    "maexxna": "Maexxna",
-    "noth-the-plaguebringer": "Noth the Plaguebringer",
-    "heigan-the-unclean": "Heigan the Unclean",
-    "loatheb": "Loatheb",
-    "patchwerk": "Patchwerk",
-    "grobbulus": "Grobbulus",
-    "gluth": "Gluth",
-    "thaddius": "Thaddius",
-    "instructor-razuvious": "Instructor Razuvious",
-    "gothik-the-harvester": "Gothik the Harvester",
-    "the-four-horsemen": "The Four Horsemen",
-    "sapphiron": "Sapphiron",
-    "kelthuzad": "Kel'Thuzad",
-    "flame-leviathan": "Flame Leviathan",
-    "ignis-the-furnace-master": "Ignis the Furnace Master",
-    "razorscale": "Razorscale",
-    "xt-002-deconstructor": "XT-002 Deconstructor",
-    "assembly-of-iron": "Assembly of Iron",
-    "kologarn": "Kologarn",
-    "auriaya": "Auriaya",
-    "hodir": "Hodir",
-    "thorim": "Thorim",
-    "freya": "Freya",
-    "mimiron": "Mimiron",
-    "general-vezax": "General Vezax",
-    "yogg-saron": "Yogg-Saron",
-    "algalon-the-observer": "Algalon the Observer"
-}
-
 BOSSES_GUIDS = {
     "007995": "Archavon the Stone Watcher",
     "0084C9": "Emalon the Storm Watcher",
@@ -225,6 +165,7 @@ BOSSES_GUIDS = {
     "008067": "Algalon the Observer",
 }
 
+
 TOC_CHAMPIONS = {
     "00869D": "Tyrius Duskblade <DK>",
     "00869C": "Kavina Grovesong <Druid>",
@@ -256,15 +197,14 @@ TOC_CHAMPIONS = {
     "008692": "Harkzog <Warlock>",
     "008695": "Narrhok Steelbreaker <Warrior>",
 }
-BOSSES_GUIDS.update(TOC_CHAMPIONS)
 
 MULTIBOSSES = {
-    "Halion": ['009BB7', '009CCE', '009CD2'],
-    "Gunship": ['0092A4', '00915F'],
-    "Blood Prince Council": ['009454', '009455', '009452'],
-    "Northrend Beasts": ['0087EC', '008948', '0087EF', '0087ED'],
+    "Halion": ["009BB7", "009CCE", "009CD2"],
+    "Gunship": ["0092A4", "00915F"],
+    "Blood Prince Council": ["009454", "009455", "009452"],
+    "Northrend Beasts": ["0087EC", "008948", "0087EF", "0087ED"],
     "Faction Champions": list(TOC_CHAMPIONS),
-    "Twin Val'kyr": ['0086C0', '0086C1'],
+    "Twin Val'kyr": ["0086C0", "0086C1"],
     "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
     "Mimiron": ["008246", "008298", "008373", "008386"],
     "Assembly of Iron": ["008063", "00809F", "008059"],
@@ -272,6 +212,16 @@ MULTIBOSSES = {
     "XT-002 Deconstructor": ["00820D", "008231"],
     "Yogg-Saron": ["008208", "0084C1"],
 }
+
+def convert_to_html_name(name: str):
+    return name.lower().replace(' ', '-').replace("'", '')
+
+BOSSES_FROM_HTML = {
+    convert_to_html_name(name): name
+    for name in set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
+}
+
+BOSSES_GUIDS.update(TOC_CHAMPIONS)
 
 SPELLS_SCHOOLS = {
     0: "",
@@ -285,7 +235,7 @@ SPELLS_SCHOOLS = {
     3: "holystrike", #Holy + Physical
     5: "flamestrike", #-- Fire + Physical
     6: "holyfire", #-- Fire + Holy (Radiant)
-    # 9: "stormstrike", #-- Nature + Physical
+    9: "stormstrike", #-- Nature + Physical
     # 10: "holystorm", #-- Nature + Holy
     12: "firestorm", #Nature + Fire
     17: "froststrike", #Frost + Physical
@@ -310,7 +260,6 @@ SPELLS_SCHOOLS = {
 }
 
 UNUSUAL_SPELLS = {
-    9: "stormstrike", #-- Nature + Physical
     10: "holystorm", #-- Nature + Holy
     18: "holyfrost", #-- Frost + Holy
     36: "shadowflame", #-- Shadow + Fire
@@ -373,7 +322,7 @@ SPELL_BOOK = {
     "12472": [3, "Icy Veins"],
     "12654": [3, "Ignite"],
     "44401": [3, "Missile Barrage"],
-    "48827": [4, "Avenger\'s Shield"],
+    "48827": [4, "Avenger's Shield"],
     "53654": [4, "Beacon of Light"],
     "48819": [4, "Consecration"],
     "642": [4, "Divine Shield"],

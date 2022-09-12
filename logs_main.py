@@ -14,9 +14,10 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
+import test_deaths
 from constants import (
-    LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
-    add_new_numeric_data, add_space, get_report_name_info, is_player,
+    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
+    add_new_numeric_data, add_space, convert_to_html_name, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
     sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
 
@@ -155,9 +156,6 @@ def regroup_targets(data):
             targets_players = grouped_targets.pop(x, set())
             break
     return set(grouped_targets) | targets_players
-
-def convert_to_html_name(name: str):
-    return name.lower().replace(' ', '-').replace("'", '')
 
 
 class THE_LOGS:
@@ -379,15 +377,6 @@ class THE_LOGS:
         for i, line_n in enumerate(ts, -shift):
             if n <= line_n:
                 return max(i, 0)
-    
-    def convert_slice_to_time(self, s=None, f=None):
-        ts = self.get_timestamp()
-        if s is not None:
-            s = ts[s]
-        if f is not None:
-            f = ts[f]
-        return s, f
-
 
     def attempt_time(self, boss_name, attempt, shift=0):
         enc_data = self.get_enc_data()
@@ -420,10 +409,9 @@ class THE_LOGS:
             return self.SEGMENTS_QUERIES
         except AttributeError:
             segm_links: dict[str, dict] = {}
-            boss_html = self.BOSSES_TO_HTML
-            separated = self.SEGMENTS_SEPARATED
+            separated = self.get_segments_separated()
             for boss_name, diffs in separated.items():
-                href1 = f"?boss={boss_html[boss_name]}"
+                href1 = f"?boss={convert_to_html_name(boss_name)}"
                 a = {"href": href1, "class_name": "boss-link", "text": f"All {boss_name} segments"}
                 segm_links[boss_name] = {
                     'link': a,
@@ -514,56 +502,68 @@ class THE_LOGS:
             if INPUT in spell_v
         }
     
+
+    def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
+        if not shift_s and not shift_f:
+            return
+        
+        ts = self.get_timestamp()
+        for i, (seg_s, seg_f) in enumerate(segments):
+            if shift_s:
+                seg_s_shifted = self.find_index(seg_s, shift_s)
+                seg_s = ts[seg_s_shifted]
+            if shift_f:
+                seg_f_shifted = self.find_index(seg_f, shift_f)
+                seg_f = ts[seg_f_shifted]
+            segments[i] = [seg_s, seg_f]
     
     def parse_request(self, request):
         args: dict = request.args
-        shift = get_shift(request.path)
-        enc_data = self.get_enc_data()
-        ts = self.get_timestamp()
-        segments = self.get_segments_data()
-        separated = self.get_segments_separated()
 
-        slice_name = "Custom Slice"
-        slice_tries = ""
-        boss_name_html = args.get("boss")
-        boss_name = self.BOSSES_FROM_HTML.get(boss_name_html, "")
         segment_difficulty = args.get("mode")
         attempt = args.get("attempt", type=int)
-        if boss_name:
-            slice_name = self.BOSSES_FROM_HTML[boss_name_html]
+        boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
+        if not boss_name:
+            ts = self.get_timestamp()
+            slice_name = "Custom Slice"
+            slice_tries = "All"
+            s = args.get("s", type=int)
+            f = args.get("f", type=int)
+            if s and f:
+                segments = [[ts[s], ts[f]]]
+            else:
+                segments =  [[None, None]]
+        
+        else:
+            enc_data = self.get_enc_data()
+            separated = self.get_segments_separated()
+            slice_name = boss_name
             if attempt is not None:
-                slice_tries = f"Try {attempt+1}"
                 segments = [enc_data[boss_name][attempt], ]
+                slice_tries = f"Try {attempt+1}"
+                for diff, segm_data in separated[boss_name].items():
+                    for segm in segm_data:
+                        if segm.get("attempt") == attempt:
+                            segment_type = segm.get("segment_type", "")
+                            slice_tries = f"{diff} {segment_type}"
+                            break
             elif segment_difficulty:
-                slice_tries = segment_difficulty
+                slice_tries = f"{segment_difficulty} All"
                 segments = [
                     [segment["start"], segment["end"]]
                     for segment in separated[boss_name][segment_difficulty]
                 ]
             else:
+                slice_tries = "All"
                 segments = enc_data[boss_name]
-
-            if shift:
-                for i, (seg_s, seg_f) in enumerate(segments):
-                    seg_s_shifted = self.find_index(seg_s) - shift
-                    seg_s_shifted_t = ts[seg_s_shifted]
-                    segments[i] = [seg_s_shifted_t, seg_f]
-
-            s = self.find_index(segments[0][0])
-            f = self.find_index(segments[-1][-1])
+            
+            shift = get_shift(request.path)
+            self.segments_apply_shift(segments, shift_s=shift)
         
-        else:
-            s = args.get("s", type=int)
-            f = args.get("f", type=int)
-            segments = [[ts[s], ts[f]]] if s and f else [[None, None], ]
-        
-        query = build_query(boss_name_html, segment_difficulty, s, f, attempt)
-
         return {
             "segments": segments,
             "slice_name": slice_name,
             "slice_tries": slice_tries,
-            "query": query,
             "boss_name": boss_name,
         }
 
@@ -1117,3 +1117,29 @@ class THE_LOGS:
             target_name: {players[guid]: separate_thousands(value) for guid, value in sources.items() if guid in players}
             for target_name, sources in new_data.items()
         }
+
+    def death_info(self, s, f, guid):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['death_info'].setdefault(guid, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
+        logs_slice = self.get_logs(s, f)
+        deaths = test_deaths.get_deaths(logs_slice, guid)
+        test_deaths.sfjsiojfasiojfiod(deaths)
+        cached_data[slice_ID] = deaths
+        return deaths
+    
+    def get_deaths(self, segments, guid):
+        deaths = {}
+        if guid:
+            for s, f in segments:
+                deaths |= self.death_info(s, f, guid)
+        return {
+            "DEATHS": deaths,
+            "CLASSES": self.get_classes(),
+            "PLAYERS": self.get_players_guids(),
+            "GUIDS": self.get_all_guids(),
+            "SPELLS": self.get_spells(),
+        }
+    

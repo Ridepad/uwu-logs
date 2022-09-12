@@ -7,7 +7,6 @@ from flask import (
     make_response, render_template, send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-import deaths
 import logs_calendar
 import logs_main
 import logs_upload
@@ -28,11 +27,19 @@ SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 CLEANER = []
 USE_FILTER = True
 FILTER_TYPE = "private"
-MAX_SURVIVE_LOGS = T_DELTA["1MIN"]
+MAX_SURVIVE_LOGS = T_DELTA["15SEC"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
+CACHED_PAGES = {}
 
+def render_template_wrap(file: str, **kwargs):
+    # path = kwargs.get("PATH", "")
+    # query = kwargs.get("QUERY", "")
+    # pages = CACHED_PAGES.setdefault(path, {})
+    page = render_template(file, **kwargs)
+    # pages[query] = page
+    return page
 
 def load_report(name: str):
     if name in OPENED_LOGS:
@@ -52,10 +59,14 @@ def default_params(report_id, request):
     classes_names = report.get_classes_with_names()
     segm_links = report.get_segment_queries()
     duration = report.get_fight_duration_total_str(parsed["segments"])
+    query = request.query_string.decode()
+    query = f"?{query}" if query else ""
+
     return {
         "REPORT_ID": report_id,
         "REPORT_NAME": report_name,
-        "QUERY": parsed["query"],
+        "PATH": request.path,
+        "QUERY": query,
         "SLICE_NAME": parsed["slice_name"],
         "SLICE_TRIES": parsed["slice_tries"],
         "SEGMENTS_LINKS": segm_links,
@@ -97,17 +108,23 @@ def pw_validate():
         return resp
     
     attempts_left = wrong_pw(request.remote_addr)
-    return (f'{attempts_left}', 401)
+    return f'{attempts_left}', 401
 
 @SERVER.before_request
 def before_request():
     if banned(request.remote_addr):
-        return ('', 429)
+        return '', 429
 
     req = f"{request.remote_addr:>15} | {request.method:<7} | {request.full_path} | {request.headers.get('User-Agent')}"
     LOGGER_CONNECTIONS.info(req)
 
     if request.path.startswith('/reports/'):
+        pages = CACHED_PAGES.get(request.path, {})
+        query = request.query_string.decode()
+        query = f"?{query}" if query else ""
+        if query in pages:
+            return pages[query]
+
         url_comp = request.path.split('/')
         report_id = url_comp[2]
         report_path = os.path.join(LOGS_DIR, report_id)
@@ -192,7 +209,7 @@ def report_page(report_id):
 
     data = report.get_report_page_all(segments)
 
-    return render_template(
+    return render_template_wrap(
         'report_main.html', **_default,
         **data,
         ICON_CDN_LINK=ICON_CDN_LINK,
@@ -207,7 +224,7 @@ def player(report_id, source_name):
     tGUID = request.args.get('target')
     data = report.player_info_all(segments, sGUID, tGUID)
 
-    return render_template(
+    return render_template_wrap(
         'dmg_done2.html', **_default,
         **data,
         SOURCE_NAME=source_name,
@@ -229,7 +246,7 @@ def spells(report_id, spell_id: str):
 
     data = report.spell_count_all(segments, spell_id)
 
-    return render_template(
+    return render_template_wrap(
         'spells_page.html', **_default,
         **data,
     )
@@ -242,7 +259,7 @@ def consumables(report_id):
 
     data = report.potions_all(segments)
 
-    return render_template(
+    return render_template_wrap(
         'consumables.html', **_default,
         **data,
     )
@@ -255,7 +272,7 @@ def all_auras(report_id):
 
     data = report.auras_info_all(segments)
 
-    return render_template(
+    return render_template_wrap(
         'all_auras.html', **_default,
         **data,
     )
@@ -267,7 +284,7 @@ def damage_targets(report_id):
     report = load_report(report_id)
     data = report.useful_damage_all(segments, _default["boss_name"])
 
-    return render_template(
+    return render_template_wrap(
         'damage_target.html', **_default,
         **data,
     )
@@ -300,8 +317,21 @@ def valks(report_id):
     report = load_report(report_id)
     data = report.valk_info_all(segments)
 
-    return render_template(
+    return render_template_wrap(
         'valks.html', **_default,
+        **data,
+    )
+
+@SERVER.route("/reports/<report_id>/deaths/")
+def deaths(report_id):
+    _default = request.default_params
+    segments = _default.pop('segments')
+    report = load_report(report_id)
+    guid = request.args.get("target")
+    data = report.get_deaths(segments, guid)
+
+    return render_template_wrap(
+        'deaths.html', **_default,
         **data,
     )
 
@@ -425,7 +455,7 @@ def player_auras(report_id, player_name):
     #     css.append(f'#tar-{name_css}:checked ~ table .tar-{name_css}')
     # css = ', '.join(css) + "{display: inline-block;}"
     
-    return render_template(
+    return render_template_wrap(
         'player_auras.html', **_default,
         **data,
         SOURCE_NAME=player_name,
