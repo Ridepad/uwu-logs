@@ -103,18 +103,12 @@ def to_int(line: str):
 def to_int(line: str):
     return int(line[-12:-4].replace(':', ''))
 
-# 9/10 00:11:02.037,SPELL_DAMAGE,0x0600000000509B66,"Bloodhgarm",0xF1300087EF0000D1,"Dreadscale",48461,"Wrath",0x8,14042,11837,8,0,0,0,1,nil,nil
-
 @running_time
 def get_deaths(logs_slice: list[str], guid):
     DEATHS: dict[str, list] = {}
     new_death = []
     DEAD = False
     last_death = 0
-
-    def new_line(line):
-        print(line)
-        new_death.append(line)
 
     for line in reversed(logs_slice):
         if guid not in line:
@@ -125,52 +119,42 @@ def get_deaths(logs_slice: list[str], guid):
             if line[2] != guid or line[1] != "SPELL_CAST_SUCCESS":
                 continue
             if line[6] in SELF_RESSURECT:
-                print("\n\tSELF_RESSURECT")
-                print("\n\tNEW DEATH")
                 DEATHS[line[0]] = new_death = []
                 DEAD = True
                 last_death = to_int(line[0])
-                new_line(line)
+                new_death.append(line)
             else:
                 now = to_int(line[0])
                 if last_death - now < 100:
-                    new_line(line)
+                    new_death.append(line)
 
         elif line[1] in DEATH_FLAGS:
-            print('\n\tDEAD')
             if not DEAD:
-                print("\n\tNEW DEATH")
                 DEATHS[line[0]] = new_death = []
             DEAD = True
             last_death = to_int(line[0])
-            new_line(line)
+            new_death.append(line)
 
         elif line[1] == "SPELL_RESURRECT":
-            print('\n\tRESURRECT')
-            print("\n\tNEW DEATH")
             DEATHS[line[0]] = new_death = []
             DEAD = True
             last_death = to_int(line[0])
-            new_line(line)
+            new_death.append(line)
 
         elif line[1] in FLAGS_OFFENSIVE:
             if line[1] in FLAGS_DMG and line[10] != "0":
-                print("\n\tOVERKILL")
                 if not DEAD:
-                    print("\n\tNEW DEATH")
                     DEATHS[line[0]] = new_death = []
                 DEAD = True
                 last_death = to_int(line[0])
-                new_line(line)
+                new_death.append(line)
             
             elif DEAD:
-                new_line(line)
+                new_death.append(line)
 
         elif line[1] in HEAL_FLAGS:
             if line[6] in ARDENT_DEFENDER:
-                print("\n\tARDENT_DEFENDER")
                 if not DEAD:
-                    print("\n\tNEW DEATH")
                     DEATHS[line[0]] = new_death = []
                 DEAD = True
                 last_death = to_int(line[0])
@@ -179,17 +163,15 @@ def get_deaths(logs_slice: list[str], guid):
                 continue
             
             if line[10] != "0":
-                print()
-                print("\n\tHEALED")
                 DEAD = False
             
-            new_line(line)
+            new_death.append(line)
         
         elif line[1] in AURA_FLAGS:
             if line[6] in SAVE_SPELLS or "DEBUFF" in line:
                 now = to_int(line[0])
                 if last_death - now < 100:
-                    new_line(line)
+                    new_death.append(line)
 
 
     return {t:d for t,d in DEATHS.items() if len(d) > 1}
@@ -204,7 +186,6 @@ def find_last_hit(death):
 
 
 def get_minutes_seconds(line):
-    print(line)
     _, m, s = line.split(':', 3)
     return int(m), float(s)
 
