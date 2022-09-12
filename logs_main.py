@@ -14,7 +14,7 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
-import test_deaths
+import logs_deaths
 from constants import (
     BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
     add_new_numeric_data, add_space, convert_to_html_name, get_report_name_info, is_player,
@@ -1125,8 +1125,8 @@ class THE_LOGS:
             return cached_data[slice_ID]
         
         logs_slice = self.get_logs(s, f)
-        deaths = test_deaths.get_deaths(logs_slice, guid)
-        test_deaths.sfjsiojfasiojfiod(deaths)
+        deaths = logs_deaths.get_deaths(logs_slice, guid)
+        logs_deaths.sfjsiojfasiojfiod(deaths)
         cached_data[slice_ID] = deaths
         return deaths
     
