@@ -364,8 +364,8 @@ class THE_LOGS:
             timestamp_data_file_name = self.relative_path("TIMESTAMP_DATA.json")
             if rewrite or self.cache_files_missing(timestamp_data_file_name):
                 logs = self.get_logs()
-                self.TIMESTAMP = logs_get_time.ujiowfuiwefhuiwe(logs)
-                json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None)
+                self.TIMESTAMP = logs_get_time.get_timestamps(logs)
+                json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None, sep=(",", ""))
             else:
                 timestamp_data: list[int]
                 timestamp_data = json_read(timestamp_data_file_name)
