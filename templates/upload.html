@@ -4,9 +4,9 @@
 <main>
 <section class="upload">
   <h2>Upload new file</h2>
-  <form id="upload-form" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".7z, .zip">
-    <input type="submit" value="Upload">
+  <form id="upload-form" method="post" enctype="multipart/form-data" onsubmit="return mySubmitFunction()">
+    <input id="upload-form-select" onchange="validateSize(this)" type="file" name="file" accept=".7z, .zip">
+    <input id="upload-form-submit" type="submit" value="Upload">
   </form>
   <p>Optional: (Warmane is parsed automatically)</p>
   <input placeholder="Type in any server name" type="text" id="server" list="server-list">
@@ -43,3 +43,32 @@
 </section>
 </main>
 {% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const uploadSelect = document.getElementById("upload-form-select");
+  
+  function mySubmitFunction() {
+    if (uploadSelect.files.length > 0) return true;
+    alert('File was not selected');
+    return false;
+  }
+
+  function validateSize(input) {
+    const file = input.files[0];
+    const ext = file.name.split('.').pop();
+    if (ext != '7z' && ext != "zip" || file.type == "text/plain") {
+      alert('File is not an archive.\nPlease archive the logs first.');
+      uploadSelect.value = "";
+      return false;
+    }
+
+    const fileSize = file.size / 1024 / 1024;
+    if (fileSize < 128) return true;
+  
+    alert('File size exceeds 128MB.\nPlease archive the logs first or use 7zip.');
+    uploadSelect.value = "";
+    return false;
+  }
+</script>
+{% endblock the_scripts %}

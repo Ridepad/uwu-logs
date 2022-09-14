@@ -12,7 +12,6 @@ from time import perf_counter
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
-        # print('[CREATED FOLDER]', path)
 
 def new_folder_path(root, name):
     new_folder = os.path.join(root, name)
@@ -56,6 +55,7 @@ LOGGER_UNUSUAL_SPELLS = setup_logger('unusual_spells')
 T_DELTA = {
     "2SEC": timedelta(seconds=2),
     "15SEC": timedelta(seconds=15),
+    "30SEC": timedelta(seconds=30),
     "1MIN": timedelta(minutes=1),
     "2MIN": timedelta(minutes=2),
     "5MIN": timedelta(minutes=5),

@@ -27,18 +27,18 @@ SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 CLEANER = []
 USE_FILTER = True
 FILTER_TYPE = "private"
-MAX_SURVIVE_LOGS = T_DELTA["15SEC"]
+MAX_SURVIVE_LOGS = T_DELTA["30SEC"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
 CACHED_PAGES = {}
 
 def render_template_wrap(file: str, **kwargs):
-    # path = kwargs.get("PATH", "")
-    # query = kwargs.get("QUERY", "")
-    # pages = CACHED_PAGES.setdefault(path, {})
+    path = kwargs.get("PATH", "")
+    query = kwargs.get("QUERY", "")
+    pages = CACHED_PAGES.setdefault(path, {})
     page = render_template(file, **kwargs)
-    # pages[query] = page
+    pages[query] = page
     return page
 
 def load_report(name: str):

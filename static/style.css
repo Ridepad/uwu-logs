@@ -316,21 +316,19 @@ footer #report-slice a {
 footer #report-slice a:hover span {
   color: var(--link-hover);
 }
-
-#slice-name {
+footer #report-slice a span {
   font-size: inherit;
   text-align: left;
+}
+#slice-name {
   grid-column: span 2;
   min-width: max-content;
 }
 #slice-dur {
-  font-size: inherit;
-  text-align: left;
   min-width: 10ch;
 }
 #slice-tries {
-  font-size: inherit;
-  text-align: left;
+  min-width: max-content;
 }
 
 @media (min-width: 1100px) {
