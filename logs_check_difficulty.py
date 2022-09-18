@@ -1,4 +1,4 @@
-from constants import BOSSES_GUIDS, MULTIBOSSES, convert_duration, get_fight_duration
+from constants import MULTIBOSSES, convert_duration, get_fight_duration
 
 ONE_HP_BOSSES = set(MULTIBOSSES['Blood Prince Council'])
 COWARDS = {
@@ -38,12 +38,12 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Faction Champions": ("65546", "68625", "68624", "68626"), # Dispel Magic
     "Faction Champions2": ("65973", "68101", "68100", "68102"), # Earth Shock
     "Faction Champions22": ("65868", "67989", "67988", "67990"), # Shoot
+    "Faction Champions222": ("65821", "68152", "68151", "68153"), # Shadow Bolt
     # "Faction Champions": ("Frostbolt", ("65807", "68004", "68003", "68005")),
     # "Faction Champions": ("Frost Strike", ("66047", "67936", "67935", "67937")),
     # "Faction Champions": ("Shadowstep", ("66178", "68760", "68759", "68761")),
     # "Faction Champions2": ("Mana Burn", ("66100", "68027", "68026", "68028")),
     # "Faction Champions": ("Fan of Knives", ("65955", "68098", "68097", "68099")),
-    # "Faction Champions2": ("Shadow Bolt", ("65821", "68152", "68151", "68153")),
     "Twin Val'kyr": ("65767", "67275", "67274", "67276"), # Light Surge
     "Anub'arak": ("66013", "68509", "67700", "68510"), # Penetrating Cold
 
@@ -55,15 +55,7 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Koralon the Flame Watcher": ("66670", "", "67329", ""), # Burning Breath
     "Archavon the Stone Watcher": ("58696", "", "60884", ""), # Rock Shards
     "Emalon the Storm Watcher": ("64213", "", "64215", ""), # Chain Lightning
-
-    # "Thorim": ("", "", "", "")
 }
-# 9/1 20:15:39.038  SPELL_CAST_START,0xF1300081AC00106B,"Sif",0xa48,0x0000000000000000,nil,0x80000000,62583,"Frostbolt",0x10
-# 9/1 20:15:41.063  SPELL_CAST_SUCCESS,0xF1300081AC00106B,"Sif",0xa48,0x0000000000000000,nil,0x80000000,62604,"Frostbolt Volley",0x10
-# 9/1 20:18:46.350  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0x0D000000000029F3,"Laddad",0x512,62130,"Unbalancing Strike",0x1,DEBUFF
-# 9/1 20:18:46.350  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0xF130008061000B07,"Thorim",0x10a48,62279,"Lightning Charge",0x8,BUFF
-# 9/1 20:17:33.146  SPELL_DAMAGE,0xF130008061000B07,"Thorim",0x10a48,0x0D000000000209A7,"Nymphalisa",0x514,62131,"Chain Lightning",0x8,3780,0,8,1619,0,0,nil,nil,nil
-# 9/1 20:17:27.231  SPELL_AURA_REMOVED,0xF130008061000B07,"Thorim",0x10a48,0x0D0000000000607B,"Nickzed",0x512,62130,"Unbalancing Strike",0x1,DEBUFF
 
 def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
@@ -94,15 +86,11 @@ def get_diff(logs_slice: list[str], boss_name: str) -> str:
     return DEFAULT_DIFFICULTY
 
 def is_kill(last_line: str):
-    if 'UNIT_DIED' in last_line:
+    line = last_line.split(',', 11)
+    if line[1] == "UNIT_DIED":
         return True
-    # if "008FB5" in last_line or "00915F" in last_line or "0092A4" in last_line:
-        # return last_line.split(',')[10] != '0'
-    # return False
     try:
-        line = last_line.split(',', 11)
-        tGUID = line[4][6:-6]
-        return line[10] != '0' and tGUID in BOSSES_GUIDS and tGUID not in ONE_HP_BOSSES
+        return line[10] != '0' or line[6] == "72350"
     except IndexError:
         return False
 
@@ -115,7 +103,7 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
         for line in logs_slice
     )
 
-def auras_removed(logs_slice: list[str]):
+def auras_removed(logs_slice: list[str], size):
     removed = 0
     for line in logs_slice:
         line = line.split(',', 5)
@@ -123,7 +111,8 @@ def auras_removed(logs_slice: list[str]):
             continue
         if line[4][6:-6] in COWARDS:
             removed += 1
-    return removed > 20
+    print(removed)
+    return removed > size
 
 def get_slice_duration(logs_slice):
     s, f = logs_slice[0], logs_slice[-1]
@@ -147,7 +136,10 @@ def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, at
         if boss_name == "The Lich King":
             kill = has_fury_of_frostmourne(logs[f-10:f+20])
         elif boss_name in COWARDS_NAMES:
-            kill = auras_removed(logs[f-100:f])
+            if diff[:2] == "25":
+                kill = auras_removed(logs[f-100:f], 20)
+            else:
+                kill = auras_removed(logs[f-50:f], 10)
     
     if kill:
         attempt_type = "kill"

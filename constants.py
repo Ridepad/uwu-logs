@@ -208,9 +208,10 @@ MULTIBOSSES = {
     "The Four Horsemen": ["003EBF", "007755", "003EC1", "003EC0"],
     "Mimiron": ["008246", "008298", "008373", "008386"],
     "Assembly of Iron": ["008063", "00809F", "008059"],
-    "Kologarn": ["0080A2", "0080A5", "0080A6"],
+    # "Kologarn": ["0080A2", "0080A5", "0080A6"],
     "XT-002 Deconstructor": ["00820D", "008231"],
     "Yogg-Saron": ["008208", "0084C1"],
+    "Razorscale": ["0081A2", "00826C", "008436", "0082AD"],
 }
 
 def convert_to_html_name(name: str):
