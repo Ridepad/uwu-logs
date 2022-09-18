@@ -23,12 +23,20 @@ NIL_GUID = "0x0000000000000000"
 FLAG_SKIP = {"PARTY_KILL", "UNIT_DIED"}
 NAMES_SKIP = {"nil", "Unknown"}
 PET_FILTER_SPELLS = {
+    "43771", # Well Fed
+
     "34952", # Go for the Throat (Rank 1)
     "34953", # Go for the Throat (Rank 2)
+    "53434", # Call of the Wild
+    "48990", # Mend Pet
+    "70728", # Exploit Weakness
+    "1539", # Feed Pet
+    "70893", # Culling the Herd
+    "64495", # Furious Howl
+    "54216", # Master's Call
+
     "63560", # Ghoul Frenzy
-    "43771", # Well Fed
-}
-WARLOCK_SPELLS = {
+
     "35706", # Master Demonologist
     "35696", # Demonic Knowledge
     "25228", # Soul Link
@@ -56,21 +64,17 @@ BOSS_PETS = {
     "009513": "009443", # Swarming Shadows
     # "008809": "0087DC", # Nether Portal
     # "0087FD": "0087DC", # Infernal Volcano
+    "009EE9": "009BB7", # Living Inferno
+    "009EEB": "009BB7", # Living Ember
+    "008170": "008208", # Guardian of Yogg-Saron
+    "00823F": "00820D", # XS-013 Scrapbot
+    "008242": "00820D", # XE-321 Boombot
+    "008240": "00820D", # XM-024 Pummeller
+    # "0xF1300084D4000832": "00820D", # Life Spark
+    # "0xF1300084D1000833": "00820D", # Void Zone
+    "00826B": "00808A", # Writhing Lasher'
+    "0085E3": "00808A", # Ward of Life'
 }
-
-# PET_SPELLS = {
-#     "47994", # Cleave
-#     "57567", # Fel Intelligence
-#     "54053", # Shadow Bite
-# }
-# WARLOCKS = {
-#     "0x0D000000000057DD": "0xF140006E7B0000F2", # Drnknlock
-#     "0x0D00000000002985": "0xF14000B2280000E4", # Mydotcrits
-#     "0x0D00000000002C47": "0xF140000AB40000FD", # Naamah
-#     "0x0D00000000002428": "0xF140002E1D000148", # Dqt
-#     "0x0D00000000002D0B": "0xF1400044E00000A3", # Dotnrun
-#     # 0xF14000C2E200014A
-# }
 
 
 def is_player(guid):
@@ -146,7 +150,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     for line in logs:
         _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 8)
 
-        if flag in FLAG_SKIP or sName == 'Unknown' or tName in NAMES_SKIP:
+        if sName == 'Unknown' or tName in NAMES_SKIP:
             continue
 
         if sGUID not in everything:
@@ -183,26 +187,27 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 pets_perma_all.add(tGUID)
             elif sGUID != tGUID:
                 temp_pets[tGUID] = new_entry(tName, sName, sGUID)
-        
-        elif spell_id in PET_FILTER_SPELLS:
-            if not is_player(sGUID):
-                continue
-            
-            if is_perma_pet(tGUID):
-                pets_perma[tGUID] = new_entry(tName, sName, sGUID)
-                pets_perma_all.add(tGUID)
-            elif sGUID != tGUID:
-                temp_pets[tGUID] = new_entry(tName, sName, sGUID)
 
-        elif spell_id in WARLOCK_SPELLS:
+        elif spell_id in PET_FILTER_SPELLS:
             if sGUID == tGUID:
-                continue
-            if is_player(sGUID):
-                pets_perma[tGUID] = new_entry(tName, sName, sGUID)
-                pets_perma_all.add(tGUID)
+                if is_perma_pet(sGUID):
+                    pets_perma_all.add(sGUID)
+            
+            elif is_player(sGUID):
+                guids_entry = new_entry(tName, sName, sGUID)
+                if is_perma_pet(tGUID):
+                    pets_perma[tGUID] = guids_entry
+                    pets_perma_all.add(tGUID)
+                else:
+                    temp_pets[tGUID] = guids_entry
+            
             elif is_player(tGUID):
-                pets_perma[sGUID] = new_entry(sName, tName, tGUID)
-                pets_perma_all.add(sGUID)
+                guids_entry = new_entry(sName, tName, tGUID)
+                if is_perma_pet(sGUID):
+                    pets_perma[sGUID] = guids_entry
+                    pets_perma_all.add(sGUID)
+                else:
+                    temp_pets[sGUID] = guids_entry
 
         elif spell_id == "34650":
             # Mana Leech
