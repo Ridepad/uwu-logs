@@ -191,7 +191,11 @@ def upload_progress():
     if new_upload.upload_thread is None:
         return '', 204
     
-    return new_upload.upload_thread.status_json
+    status_str = new_upload.upload_thread.status_json
+    if new_upload.upload_thread.status_dict.get('done') == 1:
+        del NEW_UPLOADS[ip]
+    
+    return status_str
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
 def upload():
