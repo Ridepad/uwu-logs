@@ -1,5 +1,5 @@
 const POST_URL = "/upload";
-const CHUNK_SIZE = 256*1024;
+const CHUNK_SIZE = 512*1024;
 
 const infoSection = document.getElementById('upload-info');
 const fileSection = document.getElementById("upload-section");
