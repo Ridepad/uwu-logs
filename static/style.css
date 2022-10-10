@@ -1,9 +1,9 @@
 :root {
   --nav-height: 3rem;
   --background: black;
-  --primary-color: blueviolet;
-  --secondary-color: darkviolet;
-  --third-color: darkorchid;
+  --primary-color: hsl(271, 76%, 53%);
+  --secondary-color: hsl(271, 100%, 40%);
+  --third-color: hsl(271, 60%, 50%);
   --link-color: hsl(271, 40%, 86%);
   --link-hover: hsl(271, 100%, 70%);
   --link-text-shadow: burlywood;
@@ -920,6 +920,7 @@ td:hover > table {
 }
 #calendar #calendar-table a {
   text-align: left;
+  font-size: 60%;
 }
 #calendar tr:nth-child(n+2) > td {
   color: var(--highlight-color);
@@ -1222,3 +1223,29 @@ td:hover > table {
 /* #player input:checked + label + section {
   display: block;
 } */
+
+#upload-progress-bar-wrapper {
+  box-shadow: inset 0 0 .5em var(--unfocused), 0 0 .5em var(--unfocused);
+  border-radius: .5em;
+  position: relative;
+  height: 1.25em;
+  z-index: initial;
+  margin-top: .25em;
+  margin-bottom: .25em;
+}
+
+#upload-progress-bar {
+  position: relative;
+  z-index: -1;
+  border-radius: .5em;
+  background-color: var(--secondary-color);
+  width: 0%;
+  height: 100%;
+}
+
+#upload-progress-bar-percentage {
+  text-align: right;
+  position: absolute;
+  right: .5em;
+  bottom: 5%;
+}

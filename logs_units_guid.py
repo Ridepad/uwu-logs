@@ -36,6 +36,7 @@ PET_FILTER_SPELLS = {
     "54216", # Master's Call
 
     "63560", # Ghoul Frenzy
+    "48743", # Death Pact
 
     "35706", # Master Demonologist
     "35696", # Demonic Knowledge

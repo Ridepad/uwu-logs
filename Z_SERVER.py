@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 
 from flask import (
-    Flask, Response, request,
+    Flask, request,
     make_response, render_template, send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -30,7 +30,7 @@ FILTER_TYPE = "private"
 MAX_SURVIVE_LOGS = T_DELTA["30SEC"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
-NEW_UPLOADS: dict[str, logs_upload.NewUpload] = {}
+NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 CACHED_PAGES = {}
 
 def render_template_wrap(file: str, **kwargs):
@@ -76,6 +76,10 @@ def default_params(report_id, request):
         "segments": parsed["segments"],
     }
 
+@SERVER.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 @SERVER.errorhandler(404)
 def method404(e):
     return render_template('404.html')
@@ -113,7 +117,7 @@ def pw_validate():
 @SERVER.before_request
 def before_request():
     if banned(request.remote_addr):
-        return '', 429
+        return render_template('home.html')
 
     req = f"{request.remote_addr:>15} | {request.method:<7} | {request.full_path} | {request.headers.get('User-Agent')}"
     LOGGER_CONNECTIONS.info(req)
@@ -127,6 +131,8 @@ def before_request():
 
         url_comp = request.path.split('/')
         report_id = url_comp[2]
+        if not report_id:
+            return
         report_path = os.path.join(LOGS_DIR, report_id)
         if not os.path.isdir(report_path):
             return render_template('404.html')
@@ -144,6 +150,7 @@ def home():
     return render_template('home.html')
 
 @SERVER.route("/logs_list")
+@SERVER.route("/reports/")
 def show_logs_list():
     page = request.args.get("page", default=0, type=int)
     year, month = logs_calendar.new_month(page)
@@ -155,51 +162,60 @@ def show_logs_list():
         page=page, month=month_name, year=year,
     )
 
+NEW_UPLOADS2 = {}
+
 def allowed_file(filename: str):
     if '.' in filename:
         return filename.lower().rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def file_is_proccessing(ip):
-    if ip in NEW_UPLOADS:
-        if NEW_UPLOADS[ip].is_alive():
-            return True
-        del NEW_UPLOADS[ip]
+    if ip not in NEW_UPLOADS:
+        return False
+    
+    new_upload = NEW_UPLOADS[ip]
+    if new_upload.upload_thread is None:
+        return False
+    if new_upload.upload_thread.is_alive():
+        return True
+    
+    del NEW_UPLOADS[ip]
     return False
+
+@SERVER.route("/upload_progress")
+def upload_progress():
+    ip = request.remote_addr
+    if ip not in NEW_UPLOADS:
+        return '', 204
+    
+    new_upload = NEW_UPLOADS[ip]
+    if new_upload.upload_thread is None:
+        return '', 204
+    
+    return new_upload.upload_thread.status_json
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
 def upload():
     ip = request.remote_addr
 
-    if file_is_proccessing(ip):
-        return render_template('upload_progress.html')
-    
     if request.method == 'GET':
         return render_template('upload.html')
 
-    file = request.files.get('file')
-    if not file or file.filename == '':
-        status = 'No file was selected'
-        return render_template('upload.html', status=status)
-    
-    if not allowed_file(file.filename):
-        status = 'Supported file formats are .7z and .zip only'
-        return render_template('upload.html', status=status)
-    
-    server = request.form.get('server')
-    print(server)
-    new_upload = logs_upload.main(file, ip=ip, server=server)
-    NEW_UPLOADS[ip] = new_upload
-    new_upload.start()
-    return render_template('upload_progress.html')
-
-@SERVER.route("/upload/check_progress")
-def check_progress():
-    ip = request.remote_addr
     new_upload = NEW_UPLOADS.get(ip)
-    if not new_upload:
-        return '{"done": 1, "status": "Session ended or file uploaded", "slices": {}}'
-    return new_upload.status_json
+    if new_upload is None:
+        new_upload = NEW_UPLOADS[ip] = logs_upload.FileSave()
+    
+    if request.headers.get("Content-Type") == "application/json":
+        new_upload.done(request)
+        return '', 201
 
+    chunkN = request.headers.get("X-Chunk", type=int)
+    date = request.headers.get("X-Date", type=int)
+    success = new_upload.add_chunk(request.data, chunkN, date)
+    
+    if success:
+        return '', 200
+    
+    return '', 304
 
 @SERVER.route("/reports/<report_id>/")
 def report_page(report_id):
@@ -477,18 +493,4 @@ def top():
 
 
 if __name__ == "__main__":
-    @SERVER.route('/favicon.ico')
-    def favicon():
-        return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-    @SERVER.errorhandler(405)
-    def method405(e):
-        return "POST ON DEEZ NUTZ INSTEAD, DOG"
-
-    @SERVER.errorhandler(413)
-    def method413(e):
-        status = 'Files <128mb only, learn to compress, scrub'
-        return render_template('upload.html', status=status)
-    
     SERVER.run(host="0.0.0.0", port=5000, debug=True)
-    # SERVER.run(host="0.0.0.0", port=8000)

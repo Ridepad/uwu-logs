@@ -7,7 +7,7 @@ import zlib
 from collections import defaultdict
 from datetime import datetime
 from threading import Thread
-from time import perf_counter
+from time import perf_counter, time
 
 import constants
 import logs_archive
@@ -78,14 +78,13 @@ def slice_fully_processed(logs_id):
     logs_name = os.path.join(logs_folder, f"{LOGS_CUT_NAME}.zlib")
     return slice_exists(logs_name) and logs_archive.valid_raw_logs(logs_id)
 
+
 class NewUpload(Thread):
     def __init__(self, upload_data: dict, forced=False) -> None:
         super().__init__()
         self.upload_data = upload_data
         self.upload_dir: str = upload_data["upload_dir"]
-        self.server = upload_data.get("server")
-        if self.server is None:
-            self.server = "Unknown"
+        self.server = upload_data.get("server") or "Unknown"
         self.forced = forced
 
         self.slices: dict[str, dict] = {}
@@ -415,8 +414,8 @@ class NewUpload(Thread):
             LOGGER_UPLOADS.exception(f'finish2 {self.upload_dir} exception')
 
 
-
 class File:
+    # helper class for Flask.File type hints
     def __init__(self, current_path) -> None:
         self.current_path = current_path
         self.filename: str = os.path.basename(current_path)
@@ -448,6 +447,59 @@ def main(file: File, ip='localhost', server=None, forced=False):
         "ip": ip,
     }
     return NewUpload(upload_data, forced=forced)
+
+class FileSave:
+    def __init__(self) -> None:
+        self.date = 0
+        self.chunks = []
+        self.upload_thread = None
+    
+    def done(self, request):
+        IP = request.remote_addr
+        new_upload_dir = new_upload_folder(IP)
+
+        data = getattr(request, "data") or "{}"
+        j: dict[str, str] = json.loads(data)
+        filename = j.get("filename", "archive.7z")
+        if filename:
+            *words, ext = re.findall('([A-Za-z0-9]+)', filename)
+            filename = f"{'_'.join(words)}.{ext}"
+        full_file_path = os.path.join(new_upload_dir, filename)
+
+        with open(full_file_path, 'wb') as f:
+            f.write(b''.join(self.chunks))
+        
+        upload_data = {
+            "upload_dir": new_upload_dir,
+            "archive": full_file_path,
+            "extracted": "",
+            "server": j.get('server'),
+            "ip": IP,
+        }
+        
+        self.upload_thread = NewUpload(upload_data)
+        self.upload_thread.start()
+
+    def add_chunk(self, chunk, chunkN, date):
+        if self.date != date:
+            self.chunks.clear()
+            self.date = date
+
+        if not chunk:
+            print('not chunk')
+            return
+        
+        if chunk in self.chunks[-2:]:
+            print('Already received?')
+            return True
+        
+        if len(self.chunks) + 1 != chunkN:
+            print('not same chunkN')
+            return
+        
+        self.chunks.append(chunk)
+        LOGGER_UPLOADS.info(f"{len(self.chunks):>3} | {chunkN:>3} | {len(chunk):>8}")
+        return True
 
 def extracted_id_local(logs_path):
     mtime = os.path.getmtime(logs_path)

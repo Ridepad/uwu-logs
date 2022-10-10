@@ -1,25 +1,30 @@
 {% extends "layout.html" %}
 
+{% block scripts_head %}
+<script defer src="/static/upload.js"></script>
+{% endblock scripts_head %}
+
 {% block the_main %}
 <main>
-<section class="upload">
+<section id="upload-section" class="upload">
   <h2>Upload new file</h2>
-  <form id="upload-form" method="post" enctype="multipart/form-data" onsubmit="return mySubmitFunction()">
-    <input id="upload-form-select" onchange="validateSize(this)" type="file" name="file" accept=".7z, .zip">
-    <input id="upload-form-submit" type="submit" value="Upload">
+  <form method="post" enctype="multipart/form-data">
+    <input id="upload-form-select" type="file" name="file" accept=".7z, .zip">
+    <button id="upload-form-submit" type="button">Upload File</button>
   </form>
-  <p>Optional: (Warmane is parsed automatically)</p>
-  <input placeholder="Type in any server name" type="text" id="server" list="server-list">
-  <datalist id="server-list">
-    <option value="Algalon"></option>
-    <option value="ChromieCraft"></option>
-    <option value="Crystalsong"></option>
-    <option value="Sindragosa"></option>
-    <option value="Rising Gods"></option>
-  </datalist>
-  <div id="upload-error">{{ status }}</div>
+  <div id="server-select">
+    <p>Optional: (Warmane is parsed automatically)</p>
+    <input id="server-input" type="text" placeholder="Type in any server name" list="server-list">
+    <datalist id="server-list">
+      <option value="Algalon"></option>
+      <option value="ChromieCraft"></option>
+      <option value="Crystalsong"></option>
+      <option value="Sindragosa"></option>
+      <option value="Rising Gods"></option>
+    </datalist>
+  </div>
 </section>
-<section class="upload">
+<section id="upload-info" class="upload">
   <h2>How to start logging</h2>
   <ul>
     <li>Make sure WoW folder isn't read-only</li>
@@ -36,39 +41,43 @@
     <li>Combatlog is logged into the same file always</li>
     <li>After upload, delete/move/rename <span>WoWCombatLog.txt</span> to keep it fresh</li>
     <li>Use <a href="https://www.7-zip.org/" target="_blank">7zip</a> with <a href="https://i.imgur.com/0xznLXP.png" target="_blank">PPMd</a> compression for lower archiving time and file size</li>
-    <li>1GB Logs archived time: 7z <span>20sec</span> Zip <span>80sec</span></li>
-    <li>1GB Logs archived size: 7z <span>30MB</span> Zip <span>90MB</span></li>
-    <!-- <li>Logs are public by default, private soon TM</li> -->
+    <li>
+      <table>
+        <tr style="text-align: center;">
+          <th>1GB Logs</th>
+          <th>7z</th>
+          <th>Zip</th>
+        </tr>
+        <tr>
+          <td>Speed</td>
+          <td>20 sec</td>
+          <td>75 sec</td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>30 MB</td>
+          <td>90 MB</td>
+        </tr>
+      </table>
+    </li>
   </ul>
+</section>
+<section id="upload-progress-section" class="upload" style="display: none;">
+  <h2>Upload progress:</h2>
+  <div id="upload-status">Uploading...</div>
+  <div id="upload-progress-bar-wrapper" class="progress-bar-wrapper">
+    <div id="upload-progress-bar" class="progress-bar"></div>
+    <div id="upload-progress-bar-percentage"></div>
+  </div>
+  <table id="upload-table" style="display: none;">
+    <thead>
+      <tr>
+        <th style="min-width: 40ch;">Slice ID</th>
+        <th style="min-width: 20ch;">Status</th>
+      </tr>
+    </thead>
+    <tbody id="upload-table-tbody"></tbody>
+  </table>
 </section>
 </main>
 {% endblock the_main %}
-
-{% block the_scripts %}
-<script>
-  const uploadSelect = document.getElementById("upload-form-select");
-  
-  function mySubmitFunction() {
-    if (uploadSelect.files.length > 0) return true;
-    alert('File was not selected');
-    return false;
-  }
-
-  function validateSize(input) {
-    const file = input.files[0];
-    const ext = file.name.split('.').pop();
-    if (ext != '7z' && ext != "zip" || file.type == "text/plain") {
-      alert('File is not an archive.\nPlease archive the logs first.');
-      uploadSelect.value = "";
-      return false;
-    }
-
-    const fileSize = file.size / 1024 / 1024;
-    if (fileSize < 128) return true;
-  
-    alert('File size exceeds 128MB.\nPlease archive the logs first or use 7zip.');
-    uploadSelect.value = "";
-    return false;
-  }
-</script>
-{% endblock the_scripts %}
