@@ -21,6 +21,7 @@
         <th class="spell-name">-</th>
         <th colspan="2">Actual</th>
         <th colspan="2">Reduced</th>
+        <th colspan="2"></th>
         <th colspan="5">Direct hits</th>
         <th colspan="5">Damage over time</th>
       </tr>
@@ -30,6 +31,8 @@
         <th>Amount</th>
         <th>%</th>
         <th>Amount</th>
+        <th>Cast</th>
+        <th>Miss</th>
         <th colspan="2">Hit</th>
         <th colspan="3">Crit</th>
         <th colspan="2">Hit</th>
@@ -42,6 +45,8 @@
         <td class="total-cell">{{ ACTUAL[spell_id] }}</td>
         <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
         <td class="total-cell">{{ REDUCED[spell_id] }}</td>
+        <td class="count">{{ CASTS[spell_name] }}</td>
+        <td class="count">{{ MISSES[spell_name] }}</td>
         {% for hits, percent in HITS[spell_id] %}
         {% for _count, _avg in hits %}
         <td class="count">{{ _count }}</td>

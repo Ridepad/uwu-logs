@@ -707,6 +707,13 @@ class THE_LOGS:
         controlled_units = self.get_units_controlled_by(sGUID)
         all_player_pets = self.get_players_and_pets_guids()
         data = logs_dmg_breakdown.parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data['casts'] = logs_dmg_breakdown.casts(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data['misses'] = logs_dmg_breakdown.misses(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data['auras'] = logs_dmg_breakdown.auras(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data['dmg'] = {
+            spell_id: len(_d.get("spells_hit", [])) + len(_d.get("spells_crit", []))
+            for spell_id, _d in data["actual"].items()
+        }
         cached_data[slice_ID] = data
         return data
 
@@ -774,6 +781,12 @@ class THE_LOGS:
             spell_id: f"{(value / actual_total * 100):.1f}%"
             for spell_id, value in actual_sum.items()
         }
+        
+        dmg = {spell_name(spell_id): value for spell_id, value in _data['dmg'].items()}
+        auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
+        casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
+        casts = dmg | auras | casts
+        misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
 
         return {
             "TARGETS": targets,
@@ -784,6 +797,8 @@ class THE_LOGS:
             "REDUCED": reduced_formatted,
             "REDUCED_PERCENT": reduced_percent,
             "HITS": hits_data,
+            "CASTS": casts,
+            "MISSES": misses,
         }
     
     def get_comp_data(self, segments, class_filter: str, tGUID=None):

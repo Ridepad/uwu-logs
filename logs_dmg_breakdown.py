@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 HIT_TYPE = ["spells_hit", "spells_crit", "dot_hit", "dot_crit"]
-PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_ENERGIZE', 'SPELL_PERIODIC_HEAL', 'SPELL_PERIODIC_LEECH', 'SPELL_PERIODIC_MISSED'}
+PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_HEAL'}
+AURA_APPLIED = {"SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH"}
 
 def group_targets(targets: set[str]):
     target_ids = {guid[:-6] for guid in targets}
@@ -52,10 +53,12 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
         _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
         actual[spell_id][HIT_TYPE[_hit_type]].append(dmg_actual)
         
-        if glanc == "1":
-            reduced[spell_id] += int(dmg_raw*.25)
-        elif res != "0":
+        if over != "0":
+            reduced[spell_id] += int(over)
+        if res != "0":
             reduced[spell_id] += int(res)
+        if glanc == "1":
+            reduced[spell_id] += int(dmg_raw/3)
         
     return {
         "targets": targets,
@@ -63,6 +66,89 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
         "overkill": overkill,
         "reduced": reduced,
     }
+
+def casts(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
+    spells = defaultdict(int)
+    for line in logs_slice:
+        if "_SUCCESS" not in line:
+            continue
+
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
+        except ValueError:
+            continue
+
+        if sGUID not in controlled_units:
+            continue
+
+        if target_filter:
+            if target_filter not in tGUID:
+                continue
+        elif tGUID in filter_guids:
+            continue
+
+        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
+        spells[spell_id] += 1
+    
+    return spells
+
+def misses(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
+    spells = defaultdict(int)
+    for line in logs_slice:
+        if player_GUID not in line:
+            continue
+        if "_MISSED" not in line:
+            continue
+
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
+        except ValueError:
+            continue
+
+        if flag == "SPELL_PERIODIC_MISSED":
+            continue
+
+        if sGUID not in controlled_units:
+            continue
+
+        if target_filter:
+            if target_filter not in tGUID:
+                continue
+        elif tGUID in filter_guids:
+            continue
+
+        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
+        spells[spell_id] += 1
+    
+    return spells
+
+def auras(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
+    spells = defaultdict(int)
+    for line in logs_slice:
+        if "_AURA_" not in line:
+            continue
+
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
+        except ValueError:
+            continue
+
+        if flag not in AURA_APPLIED:
+            continue
+
+        if sGUID not in controlled_units:
+            continue
+
+        if target_filter:
+            if target_filter not in tGUID:
+                continue
+        elif tGUID in filter_guids:
+            continue
+
+        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
+        spells[spell_id] += 1
+    
+    return spells
 
 def rounder(num):
     if not num:
@@ -111,16 +197,3 @@ def format_hits(hits: dict[str, list[int]]):
 
 def hits_data(data: dict[int, dict[str, list[int]]]):
     return {spell_id: format_hits(hits) for spell_id, hits in data.items()}
-
-
-def __test():
-    import logs_main
-    name = "22-05-04--21-05--Safiyah"
-    report = logs_main.THE_LOGS(name)
-    logs = report.get_logs()
-    player_guid = '0x06000000004B2086'
-    filter_guids = report.get_pets_of(player_guid)
-    filter_guids.add(player_guid)
-
-if __name__ == "__main__":
-    __test()
