@@ -136,8 +136,8 @@ function onclick() {
     const done = fsize / 1024 / 1024;
     progressBar.style.width = `${percent}%`;
     const timepassed = Date.now() - started;
-    const speed = current / 1024 / timepassed;
-    progressBarPercentage.innerHTML = `${done.toFixed(1)}MB (${speed.toFixed(1)}MB/s | ${percent}%)`;
+    const speed = current / timepassed;
+    progressBarPercentage.innerHTML = `${done.toFixed(1)}MB (${speed.toFixed(1)}KB/s | ${percent}%)`;
 
     if (current < file.size) return sendnewchunk();
 
