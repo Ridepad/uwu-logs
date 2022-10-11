@@ -162,8 +162,6 @@ def show_logs_list():
         page=page, month=month_name, year=year,
     )
 
-NEW_UPLOADS2 = {}
-
 def allowed_file(filename: str):
     if '.' in filename:
         return filename.lower().rsplit('.', 1)[1] in ALLOWED_EXTENSIONS

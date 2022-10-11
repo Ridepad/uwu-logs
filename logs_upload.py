@@ -19,7 +19,7 @@ from constants import (
     bytes_write, get_ms_str, json_read, json_write, new_folder_path, sort_dict_by_value, to_dt_bytes)
 
 
-ARCHIVE_ID_ERROR = "Bad archive."
+ARCHIVE_ID_ERROR = "Bad archive. Don't rename .rar files into .zip, create .zip from 0"
 ARCHIVE_ERROR = "Error unziping file."
 LOGS_ERROR = "Error parsing logs."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
