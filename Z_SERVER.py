@@ -12,7 +12,7 @@ import logs_main
 import logs_upload
 import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR,
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR,
     banned, get_folders, get_logs_filter, wrong_pw)
 
 try:
@@ -133,6 +133,7 @@ def before_request():
         report_id = url_comp[2]
         if not report_id:
             return
+
         report_path = os.path.join(LOGS_DIR, report_id)
         if not os.path.isdir(report_path):
             return render_template('404.html')
@@ -232,6 +233,10 @@ def report_page(report_id):
         **data,
         ICON_CDN_LINK=ICON_CDN_LINK,
     )
+
+@SERVER.route("/reports/<report_id>/download")
+def download_logs(report_id):
+    return send_from_directory(LOGS_RAW_DIR, f"{report_id}.7z")
 
 @SERVER.route("/reports/<report_id>/player/<source_name>/")
 def player(report_id, source_name):
