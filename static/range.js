@@ -10,7 +10,10 @@ function init(slider_div) {
   const query = new URLSearchParams(window.location.search);
   const rangemin = parseInt(query.get("s"));
   const rangemax = parseInt(query.get("f"));
-  if (!rangemin || !rangemax) return;
+  if (!rangemin || !rangemax) {
+    slider_div.style.display = "none";
+    return;
+  }
 
   const minSlider = slider_div.querySelector('.min');
   const maxSlider = slider_div.querySelector('.max');
@@ -35,7 +38,6 @@ function init(slider_div) {
   minSlider.value = customstart ? customstart : rangemin;
   const customend = parseInt(query.get("fc"));
   maxSlider.value = customend ? customend : rangemax;
-  console.log(customstart, customend);
 
   const _slider = document.querySelector(".min-max-slider");
   const rangewidth = _slider.offsetWidth / (rangemax - rangemin)

@@ -563,11 +563,11 @@ td > a:hover {
   min-width: 20ch;
 }
 .dps-cell {
-  min-width: 7ch;
+  min-width: 8ch;
   text-align: right;
 }
 .total-cell {
-  min-width: 10ch;
+  min-width: 12ch;
   text-align: right;
 }
 .rectangle-cell {
@@ -1057,6 +1057,10 @@ td:hover > table {
 
 #potions-table td:not(.player-cell) {
   text-align: right;
+}
+
+#potions-table tr > *:nth-child(7) {
+  border-right: 5px solid dimgray;
 }
 
 #auras-table th img {

@@ -56,10 +56,11 @@ def calc_per_sec(value: int, duration: float, precision: int=1):
 
 def convert_to_table(data: dict[str, int], duration):
     if not data:
-        return []
+        return ["- Total", "0", "0", "100"]
     _data = list(data.items())
     max_value = _data[0][1]
-    return [
+    total = sum(data.values())
+    return [("- Total", separate_thousands(total), calc_per_sec(total, duration), "100")] + [
         (
             name,
             separate_thousands(value),
@@ -566,7 +567,6 @@ class THE_LOGS:
             shift = get_shift(request.path)
             self.segments_apply_shift(segments, shift_s=shift)
         
-        print(segments)
         return {
             "segments": segments,
             "slice_name": slice_name,
@@ -637,7 +637,7 @@ class THE_LOGS:
         if s is None and f is None:
             logs_slice = self.get_logs(None, 50000)
         data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
-        print(s, f)
+
         first_line = logs_slice[0].split(',', 8)
         last_line = logs_slice[-1].split(',', 8)
 
@@ -839,8 +839,9 @@ class THE_LOGS:
     def convert_dict_guids_to_name(self, data: dict):
         return {self.guid_to_name(guid): v for guid, v in data.items()}
 
-    def add_missing_players(self, data, default=0):
-        players = self.get_players_guids()
+    def add_missing_players(self, data, default=0, players=None):
+        if players is None:
+            players = self.get_players_guids()
         for guid in players:
             if guid not in data:
                 data[guid] = default
@@ -848,19 +849,25 @@ class THE_LOGS:
     
     def potions_all(self, segments):
         potions = defaultdict(lambda: defaultdict(int))
+        players = set()
 
         for s, f in segments:
             _potions = self.potions_info(s, f)
             for spell_id, sources in _potions.items():
                 add_new_numeric_data(potions[spell_id], sources)
+                
+            _report_page = self.report_page(s, f)
+            players.update(_report_page["specs"])
         
-
         pots = {x: self.convert_dict_guids_to_name(y) for x,y in potions.items()}
         
         p_total = logs_spell_info.count_total(potions)
-        p_total = sort_dict_by_value(p_total)
-        p_total = self.add_missing_players(p_total)
         p_total = self.convert_dict_guids_to_name(p_total)
+        for name in players:
+            if name not in p_total:
+                p_total[name] = 0
+        p_total = dict(sorted(p_total.items()))
+        p_total = sort_dict_by_value(p_total)
 
         return {
             "ITEM_INFO": logs_spell_info.ITEM_INFO,

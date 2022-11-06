@@ -36,5 +36,12 @@
          .sort(comparer(th.cellIndex))
          .forEach(tr => tbody.appendChild(tr));
   })));
+
+  document.querySelectorAll(".player-cell").forEach(td => {
+    const row = td.parentNode;
+
+    const a = Array.from(row.children).filter(td => td.innerText !== "");
+    console.log(td.innerText, a);
+  })
 </script>
 {% endblock the_scripts %}

@@ -127,7 +127,8 @@ def before_request():
         query = request.query_string.decode()
         query = f"?{query}" if query else ""
         if query in pages:
-            return pages[query]
+            # return pages[query]
+            ...
 
         url_comp = request.path.split('/')
         report_id = url_comp[2]

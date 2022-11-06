@@ -95,10 +95,6 @@ ITEM_INFO = {
         "name": "Flame Cap",
         "icon": "inv_misc_herb_flamecap",
     },
-    "53762": {
-        "name": "Indestructible Potion",
-        "icon": "inv_alchemy_elixir_empty",
-    },
     "54758": {
         "name": "Hyperspeed Acceleration",
         "icon": "spell_shaman_elementaloath",
@@ -118,6 +114,10 @@ ITEM_INFO = {
     "30486": {
         "name": "Super Sapper Charge",
         "icon": "inv_gizmo_supersappercharge",
+    },
+    "53762": {
+        "name": "Indestructible Potion",
+        "icon": "inv_alchemy_elixir_empty",
     },
 }
 
