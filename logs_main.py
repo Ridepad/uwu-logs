@@ -523,8 +523,14 @@ class THE_LOGS:
         segment_difficulty = args.get("mode")
         attempt = args.get("attempt", type=int)
         boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
-        if not boss_name:
-            ts = self.get_timestamp()
+        ts = self.get_timestamp()
+        sc = args.get("sc", type=int) or 0
+        fc = args.get("fc", type=int) or 0
+        if sc > 0 and fc < len(ts):
+            slice_name = "Custom Slice"
+            slice_tries = ""
+            segments = [[ts[sc], ts[fc]]]
+        elif not boss_name:
             slice_name = "Custom Slice"
             slice_tries = "All"
             s = args.get("s", type=int)
@@ -560,6 +566,7 @@ class THE_LOGS:
             shift = get_shift(request.path)
             self.segments_apply_shift(segments, shift_s=shift)
         
+        print(segments)
         return {
             "segments": segments,
             "slice_name": slice_name,
@@ -630,7 +637,7 @@ class THE_LOGS:
         if s is None and f is None:
             logs_slice = self.get_logs(None, 50000)
         data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
-
+        print(s, f)
         first_line = logs_slice[0].split(',', 8)
         last_line = logs_slice[-1].split(',', 8)
 
@@ -1028,16 +1035,62 @@ class THE_LOGS:
             "FORMATTED": _formatted_dmg,
         }
 
+    @running_time
+    def heal_all(self, segments, boss_name):
+        all_data = defaultdict(lambda: defaultdict(int))
+
+        boss_guid_id = self.name_to_guid(boss_name)
+        targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
+        targets_useful = targets["useful"]
+        targets_all = targets["all"]
+        table_heads = ["", "Total Useful"]
+
+        for s, f in segments:
+            data = self.useful_damage(s, f, targets_all, boss_name)
+            for target_name in data["specific"]:
+                targets_useful[target_name] = target_name
+            
+            _damage: dict[str, dict[str, int]] = data["damage"]
+            for guid_id, _dmg_new in _damage.items():
+                add_new_numeric_data(all_data[guid_id], _dmg_new)
+
+        guids = self.get_all_guids()
+        all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
+    
+        targets_useful_dmg = logs_dmg_useful.combine_targets(all_data, targets_useful)
+        targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
+
+        _formatted_dmg = {
+            guid_id: self.add_total_and_names(_data)
+            for guid_id, _data in all_data.items()
+            if _data
+        }
+
+        table_heads.extend([targets_all.get(guid_id, guid_id) for guid_id in _formatted_dmg])
+
+        return {
+            "HEADS": table_heads,
+            "TOTAL": targets_useful_dmg,
+            "FORMATTED": _formatted_dmg,
+        }
+
+    def sort_spell_data_by_name(self, data: dict):
+        spells = self.get_spells()
+        return dict(sorted(data.items(), key=lambda x: spells[x[0]]["name"]))
 
     def get_auras(self, s, f, filter_guid):
         logs_slice = self.get_logs(s, f)
         a = logs_auras.AurasMain(logs_slice)
         data = a.main(filter_guid)
+        # buffs = self.sort_spell_data_by_name(data["buffs"])
+        # debuffs = self.sort_spell_data_by_name(data["debuffs"])
         spell_colors = self.get_spells_colors(data['spells'])
         all_spells = self.get_spells()
         return {
-            'BUFFS': data['buffs'],
-            'DEBUFFS': data['debuffs'],
+            'BUFFS': data["buffs"],
+            'DEBUFFS': data["debuffs"],
+            # 'BUFFS': buffs,
+            # 'DEBUFFS': debuffs,
             'COLORS': spell_colors,
             'ALL_SPELLS': all_spells,
             "BUFF_UPTIME": data['buffs_uptime'],

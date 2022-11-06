@@ -1,11 +1,5 @@
 {% extends "layout_report.html" %}
 
-{% block head_after %}
-<style>
-
-</style>
-{% endblock head_after %}
-
 {% block the_main %}
 <main id="player">
   <a class="swap-button" id="swap-buffs" href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a>
@@ -21,69 +15,111 @@
 
   <section id="buffs-panel">
     <table>
-      <tr>
-        <th>SPELL</th>
-        <th>%</th>
-        <th>UPTIME</th>
-      </tr>
-      {% for spell_id, timings in BUFFS.items() %}
-      <tr>
-        <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a></td>
-        <td>{{ BUFF_UPTIME[spell_id] }}</td>
-        <td class="uppestoftime">
-          {% for t, l in timings %}
-          {% if t %}
-          <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
-          {% else %}
-          <div class="rectangle" style="width: {{ l }}%;"></div>
-          {% endif %}
-          {% endfor %}
-        </td>
-      </tr>
-      {% endfor %}
+      <thead>
+        <tr>
+          <th>AURA</th>
+          <th>%</th>
+          <th>UPTIME</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for spell_id, timings in BUFFS.items() %}
+        <tr>
+          <td class="spell-name">
+            <a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a>
+          </td>
+          <td>{{ BUFF_UPTIME[spell_id] }}</td>
+          <td class="uppestoftime">
+            {% for t, l in timings %}
+            <div class="rectangle{% if t %} gray{% endif %}" style="width: {{ l }}%;"></div>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </section>
 
   <section id="debuffs-panel">
     <table>
-      <tr>
-        <th>SPELL</th>
-        <th>%</th>
-        <th>UPTIME</th>
-      </tr>
-      {% for spell_id, timings in DEBUFFS.items() %}
-      <tr>
-        <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a></td>
-        <td>{{ DEBUFF_UPTIME[spell_id] }}</td>
-        <td class="uppestoftime">
-          {% for t, l in timings %}
-          {% if t %}
-          <div class="rectangle" style="width: {{ l }}%; background-color: rgb(112, 128, 144);"></div>
-          {% else %}
-          <div class="rectangle" style="width: {{ l }}%;"></div>
-          {% endif %}
-          {% endfor %}
-        </td>
-      </tr>
-      {% endfor %}
+      <thead>
+        <tr>
+          <th>AURA</th>
+          <th>%</th>
+          <th>UPTIME</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for spell_id, timings in DEBUFFS.items() %}
+        <tr>
+          <td class="spell-name">
+            <a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ ALL_SPELLS[spell_id]['name'] }}</a>
+          </td>
+          <td>{{ DEBUFF_UPTIME[spell_id] }}</td>
+          <td class="uppestoftime">
+            {% for t, l in timings %}
+            <div class="rectangle{% if t %} gray{% endif %}" style="width: {{ l }}%;"></div>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </section>
 
   <section id="casts-panel"></section>
+
+  <aside id="aura-controls" style="display: none;">
+    <button id="aura-top">🡅</button>
+    <button id="aura-up">▲</button>
+    <button id="aura-down">▼</button>
+  </aside>
 
 </main>
 {% endblock the_main %}
 
 {% block the_scripts %}
 <script>
-  const getCellValue = (tr, idx) => tr.children[idx].innerText;
-  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
-
-  document.querySelectorAll('th:nth-child(2)').forEach(th =>  {
-    const tbody = th.closest('tbody');
-    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
-        .sort(comparer(th.cellIndex))
-        .forEach(tr => tbody.appendChild(tr));
+  document.querySelectorAll('tbody').forEach(tbody => {
+    Array.from(tbody.rows)
+         .sort((a, b) => b.children[0].innerText < a.children[0].innerText)
+         .forEach(tr => tbody.appendChild(tr));
   });
+  
+  <!-- document.querySelectorAll(".rectangle").forEach(div => {conosole.log('123')}); -->
+
+  const auraControls = document.getElementById("aura-controls");
+  document.querySelectorAll(".spell-name").forEach(td => {
+    td.addEventListener('mouseover', () => {
+      td.appendChild(auraControls);
+      auraControls.style.display = "";
+    });
+    td.addEventListener("mouseleave", () => {
+      auraControls.style.display = "none";
+    });
+  });
+
+  const auraTOP = document.getElementById("aura-top");
+  auraTOP.addEventListener("click", () => {
+    const tr = auraControls.parentNode.parentNode;
+    const tbody = tr.parentNode;
+    tbody.insertBefore(tr, tbody.children[0]);
+  });
+
+  const auraUP = document.getElementById("aura-up");
+  auraUP.addEventListener("click", () => {
+    const tr = auraControls.parentNode.parentNode;
+    const tbody = tr.parentNode;
+    tbody.insertBefore(tr, tbody.children[Math.max(tr.rowIndex - 2, 0)]);
+  });
+
+  const auraDOWN = document.getElementById("aura-down");
+  auraDOWN.addEventListener("click", () => {
+    const tr = auraControls.parentNode.parentNode;
+    const tbody = tr.parentNode;
+    tbody.insertBefore(tr, tbody.children[tr.rowIndex + 1]);
+  });
+
+
 </script>
 {% endblock the_scripts %}

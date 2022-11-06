@@ -312,6 +312,18 @@ def damage_targets(report_id):
         **data,
     )
 
+# @SERVER.route("/reports/<report_id>/heal/")
+# def heal_targets(report_id):
+#     _default = request.default_params
+#     segments = _default.pop('segments')
+#     report = load_report(report_id)
+#     data = report.useful_damage_all(segments, _default["boss_name"])
+
+#     return render_template_wrap(
+#         'heal_target.html', **_default,
+#         **data,
+#     )
+
 @SERVER.route("/reports/<report_id>/compare/", methods=["GET", "POST"])
 def compare(report_id):
     if request.method == 'GET':

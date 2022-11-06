@@ -1,38 +1,54 @@
-import constants
+from collections import defaultdict
 from datetime import timedelta
+from constants import to_dt
 
-CNVRT = constants.to_dt
 
-
+AURA_FLAGS = {
+    "SPELL_AURA_APPLIED": 1,
+    "SPELL_AURA_REMOVED": 0,
+    "SPELL_AURA_REFRESH": -1,
+    "SPELL_AURA_APPLIED_DOSE": -1,
+    "SPELL_AURA_REMOVED_DOSE": -1,
+}
 class AurasMain:
     def __init__(self, logs_slice: list[str]) -> None:
         self.logs = logs_slice
-        self.slice_start = CNVRT(logs_slice[0].split(',')[0])
-        self.slice_end = CNVRT(logs_slice[-1].split(',')[0])
+        self.slice_start = to_dt(logs_slice[0])
+        self.slice_end = to_dt(logs_slice[-1])
         self.slice_duration = (self.slice_end-self.slice_start).total_seconds()
 
     def to_prcnt(self, td: timedelta):
-        # rounds to 3 after dec point
         d = td.total_seconds() / self.slice_duration * 100
-        return float(f"{d:.5f}")
+        return round(d, 5)
     
-    def combine_uptime(self, timings: list[tuple[bool, str]]):
-        is_applied_last, timestamp = timings.pop(0)
-        dt_last = CNVRT(timestamp)
-        uptime = [(is_applied_last, dt_last - self.slice_start), ]
-        for is_applied_current, timestamp in timings:
-            if is_applied_last != is_applied_current:
-                dt_current = CNVRT(timestamp)
-                uptime.append((is_applied_current, dt_current - dt_last))
-                dt_last, is_applied_last = dt_current, is_applied_current
-        uptime.append((not is_applied_last, self.slice_end - dt_last))
-        return [(applied, self.to_prcnt(td)) for applied, td in uptime]
-        # return [(applied, self.to_prcnt(td)) for applied, td in uptime]
+    def combine_uptime(self, timings: dict[str, int]):
+        timings_list = list(timings.items())
+        timestamp, code = timings_list.pop(0)
+        dt_last = to_dt(timestamp)
+        is_applied = code != 1
+        percent = self.to_prcnt(dt_last - self.slice_start)
+        uptime = [(is_applied, percent)]
+        for timestamp, code in timings_list:
+            if code == -1:
+                if is_applied:
+                    continue
+                is_applied = True
+            else:
+                is_applied = code == 1
+            
+            dt_current = to_dt(timestamp)
+            percent = self.to_prcnt(dt_current - dt_last)
+            uptime.append((not is_applied, percent))
+            dt_last = dt_current
+        
+        percent = self.to_prcnt(self.slice_end - dt_last)
+        uptime.append((is_applied, percent))
+        return uptime
 
     def combine_spells(self, times: dict):
         return {
-            spell_name: self.combine_uptime(timings)
-            for spell_name, timings in times.items()
+            spell_id: self.combine_uptime(timings)
+            for spell_id, timings in times.items()
         }
 
     def combine_target(self, times: dict, is_player=True):
@@ -43,12 +59,11 @@ class AurasMain:
             for target_guid, spells in times.items()
         }
 
-    @constants.running_time
     def main(self, filter_guid):
-        casts: dict[str, dict[str, list[tuple[bool, str]]]] = {}
+        casts: dict[str, dict[str, list[tuple[bool, str]]]] = defaultdict(lambda: defaultdict(list))
 
-        buffs: dict[str, list[tuple[bool, str]]] = {}
-        debuffs: dict[str, list[tuple[bool, str]]] = {}
+        buffs: dict[str, list[tuple[bool, str]]] = defaultdict(dict)
+        debuffs: dict[str, list[tuple[bool, str]]] = defaultdict(dict)
 
         spells: set[str] = set()
         
@@ -59,25 +74,26 @@ class AurasMain:
                 
             timestamp, flag, source_guid, _, target_guid, _, spell_id, _, _, buff, *_ = line.split(',', 11)
             spell_id = int(spell_id)
-            z = (flag == 'SPELL_AURA_REMOVED', timestamp)
             if target_guid == filter_guid:
                 if buff == 'BUFF':
-                    buffs.setdefault(spell_id, []).append(z)
+                    buffs[spell_id][timestamp] = AURA_FLAGS[flag]
                 else:
-                    debuffs.setdefault(spell_id, []).append(z)
+                    debuffs[spell_id][timestamp] = AURA_FLAGS[flag]
                 spells.add(spell_id)
-            elif source_guid == filter_guid and buff == 'DEBUFF':
-                casts.setdefault(target_guid, {}).setdefault(spell_id, []).append(z)
-                spells.add(spell_id)
+            # elif source_guid == filter_guid and buff == 'DEBUFF':
+            #     casts[target_guid][spell_id].append(z)
+            #     spells.add(spell_id)
+                # casts.setdefault(target_guid, {}).setdefault(spell_id, []).append(z)
         
-        casts = self.combine_target(casts, is_player=False)
-        buffs = self.combine_target(buffs)
-        debuffs = self.combine_target(debuffs)
+        # casts = self.combine_target(casts, is_player=False)
+
+        buffs = self.combine_spells(buffs)
         buffs_uptime = {}
         for spell_id, data in buffs.items():
             s = sum(y for x,y in data if x)
             buffs_uptime[spell_id] = f"{s:.2f}"
 
+        debuffs = self.combine_spells(debuffs)
         debuffs_uptime = {}
         for spell_id, data in debuffs.items():
             s = sum(y for x,y in data if x)

@@ -32,63 +32,99 @@ FLAGS_CUT = {
 }
 
 SAVE_SPELLS = {
+    "75480", # Petrified Twilight Scale
+    "75477",
+    "71639", # Corpse Tongue Coin
+    "71638", # Sindragosa's Flawless Fang
+    "67753", # Juggernaut's Vitality
+    "67753", # Satrina's Impeding Scarab
+    "67596", # PvP
+    "67631", # The Black Heart
+    "71586", # Corroded Skeleton Key
+    "71569", # Ick's Rotting Thumb
+    "64763", # Heart of Iron
+    "60180", # Repelling Charge
+    "60286", # Defender's Code
+    "46021", # Royal Seal of King Llane
+    "45313", # Furnace Stone
+    "64763", # Heart of Iron
+    "67694", # Glyph of Indomitability
+    "49080", # Brawler's Souvenir
+    "54861", # Nitro Boosts
+    # DEATHKNIGHT
+    "42650", # Army of the Dead
+    "45529", # Blood Tap
+    "48707", # Anti-Magic Shell
+    "48792", # Icebound Fortitude
+    "48982", # Rune Tap
+    "49039", # Lichborne
+    "49222", # Bone Shield
+    "51052", # Anti-Magic Zone
+    "51271", # Unbreakable Armor
+    "55233", # Vampiric Blood
+    "64859", # Blade Barrier
+    "70654", # Blood Armor
+    # DRUID
+    "5229",  # Enrage
+    "5487",  # Bear Form
+    "9634",  # Dire Bear Form
+    "22812", # Barkskin
+    "22842", # Frenzied Regeneration
+    "48575", # Cower
+    "61336", # Survival Instincts
+    "62606", # Savage Defense
+    # HUNTER
+    "781",   # Disengage
+    "5384",  # Feign Death
+    "19263", # Deterrence
+    # MAGE
+    "66",    # Invisibility
+    "1953",  # Blink
+    "45438", # Ice Block
+    "55342", # Mirror Image
+    "43010", # Fire Ward (Rank 7)
+    "43012", # Frost Ward (Rank 7)
+    "43020", # Mana shield (Rank 9)
+	"43039", # Ice Barrier (Rank 8)
+    # PALADIN
+    "498",   # Divine Protection
+    "642",   # Divine Shield
+    "1038",  # Hand of Salvation
+    "1044",  # Hand of Freedom
     "6940",  # Hand of Sacrifice
+    "10278", # Hand of Protection
+    "19752", # Divine Intervention
     "31821", # Aura Mastery
+    "31850", # Ardent Defender
+    "31884", # Avenging Wrath
+    "48788", # Lay on Hands
+    "48952", # Holy Shield
     "53601", # Sacred Shield - Aura
     "58597", # Sacred Shield - Shield
     "64205", # Divine Sacrifice
+    "66233", # Ardent Defender
     "70940", # Divine Guardian
-    "71586", # Hardened Skin
-    "45438", # Ice Block
-    "47585", # Dispersion
-    "642",   # Divine Shield
-    "51052", # Anti-Magic Zone
-    "49222", # Bone Shield
-    "51271", # Unbreakable Armor
-    "5487",  # Bear Form
-    "9634",  # Dire Bear Form
-    "48575", # Cower
-    "33206", # Pain Suppression
-    "48066", # Power Word: Shield
+    # PRIEST
     "586",   # Fade
-    "26889", # Vanish
-    "2565",  # Shield Block
-    "47891", # Shadow Ward
-    "19263", # Deterrence
-    "26669", # Evasion
-
     "15359", # Inspiration
+    "33206", # Pain Suppression
+    "47585", # Dispersion
+    "47788", # Guardian Spirit
+    "48066", # Power Word: Shield
+    # ROGUE
+    "26669", # Evasion (Rank 2)
+    "26889", # Vanish (Rank 3)
+    "31224", # Cloak of Shadows
+    "48659", # Feint
+    # SHAMAN
     "16237", # Ancestral Fortitude
-    
-    "71638", # Aegis of Dalaran
-    "54861", # Nitro Boosts
-    "75480", # Scaly Nimbleness
-
-    "48707", # Anti-Magic Shell
-    "48792", #IBF
-    "55233", #Vampiric Blood
-    "64859", #Blade Barrier
-    "70654", #Blood Armor
-    "45529", # Blood Tap
-    "71586", # Hardened Skin
-
-    "498",   #Divine Protection
-    "31884", #Avenging Wrath
-    "48952", #Holy Shield
-
-    "5229",  #Enrage
-    "22812", #Barkskin
-    "22842", #Frenzied Regeneration
-    "61336", #Survival Instincts
-
-    # "73799", #Soul Reaper
-    # "6788", #Weakened Soul
-    # "25771", #Forbearance
-    # "69762", #Unchained Magic
-}
-
-SAVE_SPELLS2 = {
-    "Guardian Spirit",
+    # WARLOCK
+    "47891", # Shadow Ward
+    # WARRIOR
+    "871",   # Shield Wall
+    "2565",  # Shield Block
+    "12975"  # Last Stand
+    "58374", # Glyph of Blocking
 }
 
 ARDENT_DEFENDER = {"66235", }

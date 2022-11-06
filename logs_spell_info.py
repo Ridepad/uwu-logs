@@ -70,8 +70,7 @@ MULTISPELLS = {
     # Mistress' Kiss
     "67907": [
         "66334", "67906", "67905", "67907"
-    ]
-
+    ],
 }
 MULTISPELLS_D = {y: x for x, spells in MULTISPELLS.items() for y in spells}
 
@@ -401,7 +400,8 @@ AURAS_BOSS_MECHANICS = {
     },
 }
 
-AURAS = AURAS_EXTERNAL | AURAS_CONSUME | AURAS_BOSS_MECHANICS | MULTISPELLS_D
+AURAS = AURAS_EXTERNAL | AURAS_CONSUME | AURAS_BOSS_MECHANICS
+AURAS |= {spell_id: AURAS[spell_id_hm] for spell_id, spell_id_hm in MULTISPELLS_D.items()}
 
 
 ALL_POTS = set(ITEM_INFO) - {"28714", }
@@ -437,6 +437,7 @@ def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
             continue
         timestamp, flag, _, _, target_guid, _, spell_id, _ = line.split(',', 7)
         if spell_id in AURAS:
+            spell_id = MULTISPELLS_D.get(spell_id, spell_id)
             auras[target_guid][spell_id].append((flag, timestamp))
 
     return auras

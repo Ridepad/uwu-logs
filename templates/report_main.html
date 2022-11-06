@@ -62,10 +62,24 @@
       </table>
     </section>
   </section>
+  <div class="min-max-slider" data-legendnum="2">
+    <div class="min-max-slider-inputs">
+      <input class="min" name="min" type="range" step="1" />
+      <input class="max" name="max" type="range" step="1" />
+    </div>
+    <div class="min-max-slider-values">
+      <span class="min-value"></span>
+      <span> - </span>
+      <span class="max-value"></span>
+      <span class="total-value"></span>
+    </div>
+    <button class="min-max-slider-submit" type="submit">Slice</button>
+  </div>
   <section>
     <p>First Hit: {{ FIRST_HIT }}</p>
     <p>Last Hit: {{ LAST_HIT }}</p>
   </section>
+  <script defer src="/static/range.js"></script>
 </main>
 
 {% endblock the_main %}
