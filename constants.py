@@ -71,6 +71,8 @@ ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 FLAG_ORDER = [
+    "SWING_DAMAGE", "SWING_MISSED",
+    "RANGE_DAMAGE", "RANGE_MISSED",
     "SPELL_DISPEL", "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "SPELL_HEAL",
     "SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH", "SPELL_AURA_REMOVED",
     "SPELL_CAST_SUCCESS", "SPELL_EXTRA_ATTACKS", "SPELL_ENERGIZE",

@@ -2,14 +2,34 @@ from collections import defaultdict
 
 from constants import to_dt, running_time
 
+DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
+
+def get_other_count(logs_slice: list[str], flag):
+    spells = defaultdict(DEFAULT_DICT_FACTORY)
+    for line in logs_slice:
+        if flag not in line:
+            continue
+
+        _, flag, _, source_name, _, target_name, _ = line.split(',', 6)
+
+        spells[flag]["sources"][source_name] += 1
+        spells[flag]["targets"][target_name] += 1
+
+    return spells
+
 @running_time
 def get_spell_count(logs_slice: list[str], spell_id_str: str):
-    _default_dict_factory = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
-    spells = defaultdict(_default_dict_factory)
+    if spell_id_str == "1":
+        return get_other_count(logs_slice, "SWING")
+    if spell_id_str == "75":
+        return get_other_count(logs_slice, "RANGE")
+    
+    DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
+    spells = defaultdict(DEFAULT_DICT_FACTORY)
     for line in logs_slice:
         if spell_id_str not in line:
             continue
-
+        
         if "_DISPEL" in line:
             _, flag, _, source_name, _, target_name, _, _, _, s_id, _ = line.split(',', 10)
         else:
