@@ -18,9 +18,9 @@ def formal_cell(day_n, reports_list):
         '',
         f'<input id="calendar-day{day_n}" class="radio" name="calendar-days" type="radio">',
         f'<label class="show-reports" for="calendar-day{day_n}">{day_n}</label>',
-        '<article>',
+        '<aside>',
         *reports_list,
-        '</article>',
+        '</aside>',
         '',
     ]
     return '\n'.join(section)

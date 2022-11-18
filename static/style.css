@@ -902,26 +902,32 @@ td:hover > table {
 #calendar * {
   font-size: clamp(10pt, calc(100vw / 17), 40pt);
 }
-#calendar td > article {
-  display: none;
-  position: fixed;
-  bottom: 5%;
-  right: 2%;
-}
-#calendar td {
-  text-align: right;
-}
 #calendar label {
   padding: 0;
   min-width: 3ch;
 }
-#calendar input:checked ~ article {
-  display: grid;
-  grid-template-rows: auto;
+#calendar td {
+  text-align: right;
+}
+#calendar td > aside {
+  display: none;
+  position: fixed;
+  bottom: 5%;
+  left: auto;
+  right: 0;
+  height: min(85vh, 125vw);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-direction: column;
+}
+#calendar input:checked ~ aside {
+  display: flex;
 }
 #calendar #calendar-table a {
   text-align: left;
   font-size: 60%;
+  min-width: max-content;
+  padding-right: 1ch;
 }
 #calendar tr:nth-child(n+2) > td {
   color: var(--highlight-color);

@@ -2,23 +2,14 @@
 <head>
   <title>UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}</title>
   <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'>
-  <link rel="stylesheet" type="text/css" href="/static/style.css">
-  {% block add_css_file %}{% endblock add_css_file %}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
-  {% block head_meta %}{% endblock head_meta %}
-
-  {% block scripts_head %}{% endblock scripts_head %}
-
   <style>
     * {
       color:gainsboro;
-      font-family: Ubuntu;
       font-size: 1.6vh;
       text-decoration: none;
       font-weight: 500;
       margin: 0;
+      font-family: Ubuntu;
     }
 
     @media (min-width: 1100px) {
@@ -36,6 +27,13 @@
       display: none; /*Chrome Safari Opera*/
     }
   </style>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  {% block add_css_file %}{% endblock add_css_file %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
+  {% block head_meta %}{% endblock head_meta %}
+  {% block scripts_head %}{% endblock scripts_head %}
   {% block add_style %}{% endblock add_style %}
 </head>
 <body>
