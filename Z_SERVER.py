@@ -23,6 +23,7 @@ except ImportError:
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
+SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 CLEANER = []
 USE_FILTER = True
@@ -127,8 +128,7 @@ def before_request():
         query = request.query_string.decode()
         query = f"?{query}" if query else ""
         if query in pages:
-            # return pages[query]
-            ...
+            return pages[query]
 
         url_comp = request.path.split('/')
         report_id = url_comp[2]

@@ -899,37 +899,37 @@ td:hover > table {
 
 
 /* LOGS LIST */
-#calendar * {
+#calendar-table * {
   font-size: clamp(10pt, calc(100vw / 17), 40pt);
 }
-#calendar label {
+#calendar-table label {
   padding: 0;
   min-width: 3ch;
 }
-#calendar td {
+#calendar-table td {
   text-align: right;
 }
-#calendar td > aside {
+#calendar-table aside {
   display: none;
   position: fixed;
   bottom: 5%;
   left: auto;
   right: 0;
-  height: min(85vh, 125vw);
+  height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
   flex-direction: column;
 }
-#calendar input:checked ~ aside {
+#calendar-table input:checked ~ aside {
   display: flex;
 }
-#calendar #calendar-table a {
+#calendar-table a {
   text-align: left;
   font-size: 60%;
   min-width: max-content;
   padding-right: 1ch;
 }
-#calendar tr:nth-child(n+2) > td {
+#calendar-table tr:nth-child(n+2) > td {
   color: var(--highlight-color);
 }
 #calendar-footer a {
@@ -944,8 +944,13 @@ td:hover > table {
   #calendar-footer {
     justify-content: center;
   }
+  #calendar-table aside {
+    height: 100vw;
+  }
+  #calendar-table a {
+    font-size: 90%;
+  }
 }
-
 
 #controls > * {
   font-size: clamp(10pt, 3vh, 7vw);
