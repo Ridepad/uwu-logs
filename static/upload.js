@@ -46,7 +46,10 @@ function logsProcessingCheck() {
 
 function upload_progress() {
   if (requestLogsProcessingInfo.readyState !== 4) return;
-  if (requestLogsProcessingInfo.status !== 200) return;
+  if (requestLogsProcessingInfo.status !== 200) {
+    processingStatus.innerText = "Aborted!";
+    return;
+  }
 
   timeout = setTimeout(logsProcessingCheck, 250);
 
@@ -64,8 +67,8 @@ function upload_progress() {
   processingStatus.innerText = res.status || "Preparing...";
 
   for (let slice_name in res.slices) {
-    const slice = res.slices[slice_name]
-    processingTableBody.appendChild(newRow(slice_name, slice, done))
+    const slice = res.slices[slice_name];
+    processingTableBody.appendChild(newRow(slice_name, slice, done));
   }
 }
 
@@ -74,7 +77,7 @@ requestLogsProcessingInfo.ontimeout = logsProcessingCheck;
 requestLogsProcessingInfo.onreadystatechange = upload_progress;
 logsProcessingCheck();
 
-function onchange() {
+fileSelect.onchange = () => {
   const file = fileSelect.files[0];
   const ext = file.name.split('.').pop();
   if (ext != '7z' && ext != "zip" || file.type == "text/plain") {
@@ -83,12 +86,13 @@ function onchange() {
   }
 }
 
-function onclick() {
+fileSubmit.onclick = () => {
   if (fileSelect.files.length == 0) {
     alert('File was not selected');
-    return
+    return;
   }
 
+  processingStatus.innerText = "Uploading...";
   const request = new XMLHttpRequest();
   const started = Date.now();
   let current = 0;
@@ -102,7 +106,7 @@ function onclick() {
   
   async function sendnewchunk(retry) {
     if (!retry) {
-      chunkN = chunkN + 1
+      chunkN = chunkN + 1;
     }
     const chunk = file.slice(current, current + CHUNK_SIZE);
     const arrayBuffer = await chunk.arrayBuffer();
@@ -154,6 +158,3 @@ function onclick() {
   infoSection.style.display = "none";
   sendnewchunk();
 }
-
-fileSelect.onchange = onchange;
-fileSubmit.onclick = onclick;

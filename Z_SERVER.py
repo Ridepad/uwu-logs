@@ -185,7 +185,7 @@ def file_is_proccessing(ip):
 def upload_progress():
     ip = request.remote_addr
     if ip not in NEW_UPLOADS:
-        return '', 204
+        return '', 205
     
     new_upload = NEW_UPLOADS[ip]
     if new_upload.upload_thread is None:

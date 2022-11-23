@@ -1,10 +1,9 @@
 from collections import defaultdict
 
-from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA, running_time, to_dt_simple
+from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA, convert_to_fight_name, running_time, to_dt_simple
 
 MULTIBOSSES_MAIN = {guid: boss_guids[0] for boss_guids in MULTIBOSSES.values() for guid in boss_guids[1:]}
 BOSSES_GUIDS_ALL = set(MULTIBOSSES_MAIN) | set(MULTIBOSSES_MAIN.values()) | set(BOSSES_GUIDS)
-ENCOUNTER_NAMES = {boss_guids[0]: encounter_name for encounter_name, boss_guids in MULTIBOSSES.items()}
 FLAGS = {'UNIT_DIED', 'PARTY_KILL', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_AURA_REMOVED', 'SPELL_HEAL'}
 IGNORED_SPELL_IDS = {
     '56190', '56191', '55346', # Lens
@@ -23,9 +22,6 @@ BOSS_MAX_SEP = {
     "Halion": T_DELTA["2MIN"],
     "Anub'arak": T_DELTA["2MIN"],
 }
-
-def convert_to_name(boss_id: str):
-    return ENCOUNTER_NAMES.get(boss_id, BOSSES_GUIDS[boss_id])
 
 @running_time
 def dump_all_boss_lines(logs: list[str]):
@@ -90,7 +86,7 @@ def get_delta(now, last):
 
 @running_time
 def time_pairs(times: tuple[int, list[str]], boss_id):
-    BOSS_NAME = convert_to_name(boss_id)
+    BOSS_NAME = convert_to_fight_name(boss_id)
     MAX_SEP = BOSS_MAX_SEP.get(BOSS_NAME, T_DELTA["1MIN"])
 
     times = get_more_precise(times)

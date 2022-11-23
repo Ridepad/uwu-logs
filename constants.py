@@ -226,6 +226,14 @@ BOSSES_FROM_HTML = {
 
 BOSSES_GUIDS.update(TOC_CHAMPIONS)
 
+ENCOUNTER_NAMES = {boss_guid: encounter_name for encounter_name, boss_guids in MULTIBOSSES.items() for boss_guid in boss_guids}
+
+def convert_to_fight_name(boss_id: str):
+    if boss_id in ENCOUNTER_NAMES:
+        return ENCOUNTER_NAMES[boss_id]
+    if boss_id in BOSSES_GUIDS:
+        return BOSSES_GUIDS[boss_id]
+
 SPELLS_SCHOOLS = {
     0: "",
     1: "physical", #FFFF00   255, 255, 0

@@ -85,13 +85,13 @@ def new_archive(full_path, upload_dir):
     extracted_file_full = os.path.join(upload_dir, extracted_file)
     mtime = os.path.getmtime(extracted_file_full)
     year = datetime.fromtimestamp(mtime).year
-    data = {
+    return {
         "file_id": file_id,
         "mod_time": mod_time,
         "year": year,
         "path": full_path,
+        "extracted": extracted_file_full,
     }
-    return data, extracted_file
 
 def bytes_write(data: str, path):
     with open(path, 'wb') as f:
