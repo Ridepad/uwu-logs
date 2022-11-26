@@ -515,6 +515,7 @@ class FileSave:
         self.date = 0
         self.chunks = []
         self.upload_thread = None
+        self.current_chunk = 0
     
     def done(self, request):
         j: dict[str, str]
@@ -539,6 +540,8 @@ class FileSave:
             "server": j.get('server'),
             "ip": IP,
         }
+
+        LOGGER_UPLOADS.info(f"{len(self.chunks):>3} | {self.current_chunk:>3}")
         
         self.upload_thread = NewUpload(upload_data)
         self.upload_thread.start()
@@ -557,8 +560,8 @@ class FileSave:
         if len(self.chunks) + 1 != chunkN:
             return
         
+        self.current_chunk = chunkN
         self.chunks.append(chunk)
-        LOGGER_UPLOADS.info(f"{len(self.chunks):>3} | {chunkN:>3} | {len(chunk):>8}")
         return True
 
 def main_local_text(logs_path, forced=False, dont_clean=False, only_slices=False):
