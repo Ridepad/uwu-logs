@@ -17,7 +17,7 @@ SPELLS: dict[str, tuple[str, tuple[str]]] = {
     "Lady Deathwhisper": ("71254", "72503", "72008", "72504"), # Shadow Bolt
     "Gunship": ("70162", "72567", "72566", "72568"), # Shoot
     "Gunship2": ("70161", "72540", "72539", "72541"), # Hurl Axe
-    "Deathbringer Saurfang": ("72409", "72448", "72447", "72449"), # Rune of Blood
+    "Deathbringer Saurfang": ("72385", "72442", "72441", "72443"), # Boiling Blood
     "Festergut": ("72219", "72552", "72551", "72553"), # Gastric Bloat
     "Rotface": ("69674", "73022", "71224", "73023"), # Mutated Infection
     "Professor Putricide": ("70402", "72512", "72511", "72513"), # Mutated Transformation
