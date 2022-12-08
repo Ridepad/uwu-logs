@@ -27,7 +27,6 @@ SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 CLEANER = []
 USE_FILTER = True
-FILTER_TYPE = "private"
 MAX_SURVIVE_LOGS = T_DELTA["30SEC"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
@@ -124,26 +123,27 @@ def before_request():
     LOGGER_CONNECTIONS.info(req)
 
     if request.path.startswith('/reports/'):
-        pages = CACHED_PAGES.get(request.path, {})
-        query = request.query_string.decode()
-        query = f"?{query}" if query else ""
-        if query in pages:
-            return pages[query]
-
         url_comp = request.path.split('/')
         report_id = url_comp[2]
         if not report_id:
-            return
+            return render_template('404.html')
 
         report_path = os.path.join(LOGS_DIR, report_id)
         if not os.path.isdir(report_path):
             return render_template('404.html')
         
         elif USE_FILTER:
-            _filter = get_logs_filter(FILTER_TYPE)
-            if FILTER_TYPE == "private" and report_id in _filter and not _validate.cookie(request):
+            _filter = get_logs_filter("private")
+            if report_id in _filter and not _validate.cookie(request):
                 return render_template('protected.html')
 
+        pages = CACHED_PAGES.get(request.path, {})
+        query = request.query_string.decode()
+        query = f"?{query}" if query else ""
+        if query in pages:
+            # return pages[query]
+            ...
+        
         request.default_params = default_params(report_id, request)
 
 
@@ -369,6 +369,18 @@ def deaths(report_id):
     return render_template_wrap(
         'deaths.html', **_default,
         **data,
+    )
+
+@SERVER.route("/reports/<report_id>/powers/")
+def powers(report_id):
+    _default = request.default_params
+    segments = _default.pop('segments')
+    report = load_report(report_id)
+    data = report.get_powers_all(segments)
+
+    return render_template_wrap(
+        'powers.html', **_default,
+        **data
     )
 
 

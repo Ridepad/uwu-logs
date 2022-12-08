@@ -5,8 +5,10 @@ from collections import defaultdict
 import dmg_heals
 import logs_auras
 import logs_check_difficulty
+import logs_deaths
 import logs_dmg_breakdown
 import logs_dmg_useful
+import logs_energy
 import logs_fight_separator
 import logs_get_time
 import logs_player_spec
@@ -14,7 +16,6 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
-import logs_deaths
 from constants import (
     BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
     add_new_numeric_data, add_space, convert_to_html_name, get_report_name_info, is_player,
@@ -1193,6 +1194,7 @@ class THE_LOGS:
             for target_name, sources in new_data.items()
         }
 
+
     def death_info(self, s, f, guid):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['death_info'].setdefault(guid, {})
@@ -1218,3 +1220,41 @@ class THE_LOGS:
             "SPELLS": self.get_spells(),
         }
     
+    
+    def get_powers(self, s, f):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['get_powers']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
+        logs_slice = self.get_logs(s, f)
+        data = logs_energy.asidjioasjdso(logs_slice)
+        cached_data[slice_ID] = data
+        return data
+
+    def get_powers_all(self, segments):
+        powers = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+
+        for s, f in segments:
+            _data = self.get_powers(s, f)
+            logs_energy.combine_convert(self, _data, powers)
+        _total = defaultdict(lambda: defaultdict(int))
+        _spells = {}
+        for power_name, targets in powers.items():
+            q = _spells[power_name] = {}
+            for name, spells in targets.items():
+                for spell_id, value in spells.items():
+                    _total[power_name][name] += value
+                    q.setdefault(spell_id, logs_energy.SPELLS[spell_id])
+                    spells[spell_id] = separate_thousands(value)
+            
+        _labels = {v:k for k,v in enumerate(powers)}
+        for power_name, targets in _total.items():
+            for name, value in targets.items():
+                targets[name] = separate_thousands(value)
+        return {
+            "POWERS": powers,
+            "TOTAL": _total,
+            "SPELLS": _spells,
+            "LABELS": _labels,
+        }

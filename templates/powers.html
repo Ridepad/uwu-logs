@@ -1,0 +1,92 @@
+{% extends "layout_report.html" %}
+
+{% block add_style %}
+<style>
+#mana:checked ~ #panel-mana,
+#rage:checked ~ #panel-rage,
+#focus:checked ~ #panel-focus,
+#energy:checked ~ #panel-energy,
+#combo-points:checked ~ #panel-combo-points,
+#runes:checked ~ #panel-runes,
+#runic:checked ~ #panel-runic,
+#shards:checked ~ #panel-shards {
+  display: block;
+}
+#powers label {
+  margin: 0;
+  width: 4em;
+  text-align: center;
+  padding: .2rem 1.5rem;
+  background: var(--background);
+  position: fixed;
+  bottom: 4.5vh;
+  left: 0;
+  text-transform: uppercase;
+  margin-left: calc(var(--margin) * 7em);
+}
+#powers td {
+  text-align: right;
+  min-width: 7ch;
+}
+#powers td:nth-child(2) {
+  min-width: 9ch;
+}
+#powers .player-cell {
+  min-width: 25ch;
+  text-align: left;
+}
+section {
+  display: none;
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main id="powers">
+  
+  {% for power_name, index in LABELS.items() %}
+  <input id="{{ power_name }}" name="powers-group" type="radio">
+  <label class="tab" for="{{ power_name }}" style="--margin: {{ index }};">{{ power_name }}</label>
+
+  <section id="panel-{{ power_name }}">
+    <table>
+    <tr>
+      <th>-</th>
+      <th>TOTAL</th>
+      {% for spell_id, spell_info in SPELLS[power_name].items() %}
+      <th title="{{ spell_info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+      {% endfor %}
+    </tr>
+    {% for player_name, power_data in POWERS[power_name].items() %}
+    <tr>
+      <td class="player-cell">
+      <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+      </td>
+      <td>{{ TOTAL[power_name][player_name] }}</td>
+      {% for spell_id in SPELLS[power_name] %}
+      <td>{{ power_data.get(spell_id, '') }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    </table>
+  </section>
+  {% endfor %}
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
+  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+
+  function sort(th) {
+    const tbody = th.closest('tbody');
+    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+         .sort(comparer(th.cellIndex))
+         .forEach(tr => tbody.appendChild(tr));
+  }
+
+  document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', () => sort(th)));
+  sort(document.querySelector('th:nth-child(2)'))
+</script>
+{% endblock the_scripts %}
