@@ -39,7 +39,7 @@ SPELLS = {
   },
   "9512": {
     "name": "Restore Energy",
-    "icon": "trade_engineering"
+    "icon": "inv_drink_milk_05"
   },
   "10310": {
     "name": "Lay on Hands",
@@ -99,7 +99,7 @@ SPELLS = {
   },
   "21400": {
     "name": "Alchemist's Stone",
-    "icon": "trade_engineering"
+    "icon": "spell_holy_aspiration"
   },
   "23575": {
     "name": "Water Shield",
@@ -111,11 +111,11 @@ SPELLS = {
   },
   "23690": {
     "name": "Berserker Rage Effect",
-    "icon": "trade_engineering"
+    "icon": "spell_nature_ancestralguardian"
   },
   "23691": {
     "name": "Berserker Rage Effect",
-    "icon": "trade_engineering"
+    "icon": "spell_nature_ancestralguardian"
   },
   "25046": {
     "name": "Arcane Torrent",
@@ -135,7 +135,7 @@ SPELLS = {
   },
   "28499": {
     "name": "Restore Mana",
-    "icon": "trade_engineering"
+    "icon": "inv_potion_137"
   },
   "28730": {
     "name": "Arcane Torrent",
@@ -175,7 +175,7 @@ SPELLS = {
   },
   "31786": {
     "name": "Spiritual Attunement",
-    "icon": "trade_engineering"
+    "icon": "spell_holy_revivechampion"
   },
   "31818": {
     "name": "Life Tap",
@@ -240,7 +240,7 @@ SPELLS = {
   },
   "43186": {
     "name": "Restore Mana",
-    "icon": "trade_engineering"
+    "icon": "inv_alchemy_elixir_02"
   },
   "43771": {
     "name": "Well Fed",
@@ -384,7 +384,7 @@ SPELLS = {
   },
   "58362": {
     "name": "Glyph of Heroic Strike",
-    "icon": "trade_engineering"
+    "icon": "inv_glyph_majorwarrior"
   },
   "58883": {
     "name": "Rapid Recuperation",
@@ -420,7 +420,7 @@ SPELLS = {
   },
   "61389": {
     "name": "Glyph of Arcane Shot",
-    "icon": "trade_engineering"
+    "icon": "inv_glyph_majorhunter"
   },
   "62473": {
     "name": "Reload Ammo",
@@ -484,7 +484,7 @@ SPELLS = {
   },
   "67490": {
     "name": "Runic Mana Injector",
-    "icon": "trade_engineering"
+    "icon": "inv_gizmo_runicmanainjector"
   },
   "67545": {
     "name": "Empowered Fire",
@@ -516,7 +516,7 @@ SPELLS = {
   },
   "71132": {
     "name": "Glyph of Shadow Word: Pain",
-    "icon": "trade_engineering"
+    "icon": "inv_glyph_majorpriest"
   },
   "71565": {
     "name": "Replenish Mana",
