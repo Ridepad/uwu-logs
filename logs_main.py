@@ -17,7 +17,7 @@ import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
 from constants import (
-    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR,
+    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS,
     add_new_numeric_data, add_space, convert_to_html_name, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
     sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
@@ -29,6 +29,7 @@ SHIFT = {
     'consumables': 10,
     'player_auras': 10,
 }
+DEFAULT_SPELL_DATA = {"icon": "inv_misc_questionmark"}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')
@@ -461,6 +462,13 @@ class THE_LOGS:
                 _spells = json_read_no_exception(spells_data_file_name)
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
+
+    def get_spell_name(self, spell_id):
+        _spells = self.get_spells()
+        spell_id = abs(int(spell_id))
+        if spell_id in _spells:
+            return _spells[spell_id]["name"]
+        return "Unknown spell"
 
     def get_spells_colors(self, spells) -> dict[int, str]:
         if not spells:
@@ -1220,7 +1228,7 @@ class THE_LOGS:
             "SPELLS": self.get_spells(),
         }
     
-    
+
     def get_powers(self, s, f):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['get_powers']
@@ -1245,7 +1253,18 @@ class THE_LOGS:
             for name, spells in targets.items():
                 for spell_id, value in spells.items():
                     _total[power_name][name] += value
-                    q.setdefault(spell_id, logs_energy.SPELLS[spell_id])
+
+                    if spell_id in q:
+                        continue
+                    spell_data = logs_energy.SPELLS.get(spell_id)
+                    if not spell_data:
+                        spell_data = {
+                            "icon": "inv_misc_questionmark",
+                            "name": self.get_spell_name(spell_id)
+                        }
+                        LOGGER_UNUSUAL_SPELLS.info(f"{self.NAME} {spell_id} missing info")
+                    q[spell_id] = spell_data
+
                     spells[spell_id] = separate_thousands(value)
             
         _labels = {v:k for k,v in enumerate(powers)}
