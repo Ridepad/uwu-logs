@@ -1,21 +1,20 @@
 from collections import defaultdict
-import constants
 
 POWER_TYPES = {
     '0': 'mana',
     # Mana will range from 0 to the maximum mana a unit has. Player mana pools are calculated based on a base mana pool plus a certain amount given by the Intellect stat. This is the default power type for most non-player units, although there are exceptions. As of World of Warcraft: Legion Legion, mana is used by Druids, Mages, Mistweaver Monks, Paladins, Priests, Shamans and Warlocks.
     '1': 'rage',
     # Rage is used by Warriors and Druids in [Bear Form]. Rage goes from 0 to 100, but may be increased via player talents. Rage degenerates back to 0 out of combat.
-    '2': 'focus',
-    # Focus is used by Hunters and hunter pets. Focus goes from 0 to 100, and has a slow regeneration rate, but certain abilities will generate focus.
     '3': 'energy',
     # Energy is used by Rogues and Druids in [Cat Form]. Energy goes from 0 to 100, but may be increased via player talents.
+    '6': 'runic',
+    # Runic Power is used by Death Knights. It is gained via certain abilities, and does not degenerate out of combat.
+    '2': 'focus',
+    # Focus is used by hunter pets. Focus goes from 0 to 100, and has a slow regeneration rate, but certain abilities will generate focus.
     '4': 'happiness',
     # Pet happiness.
     '5': 'runes',
     # Runes are used as a power type for Death Knights. By default, they have 6 runes (1 & 2 are blood, 3 & 4 are frost, 5 & 6 are unholy), but certain talents and abilities may change the type of a rune. Runes can be converted into a Death Rune, which can be used as any other type of rune. While runes are used by Death Knights, it does not appear that the Blizzard UI code uses this spell power type. Rather, runes are managed through the RUNE_POWER_UPDATE event via the GetRuneCooldown() API call.
-    '6': 'runic',
-    # Runic Power is used by Death Knights. It is gained via certain abilities, and does not degenerate out of combat.
 }
 
 SPELLS = {
@@ -89,7 +88,7 @@ SPELLS = {
   },
   "20268": {
     "name": "Judgement of Wisdom",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "ability_paladin_judgementblue"
   },
   "20272": {
     "name": "Illumination",
@@ -177,7 +176,7 @@ SPELLS = {
   },
   "31818": {
     "name": "Life Tap",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "spell_shadow_burningspirit"
   },
   "31930": {
     "name": "Judgements of the Wise",
@@ -185,7 +184,7 @@ SPELLS = {
   },
   "32553": {
     "name": "Life Tap",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "spell_shadow_burningspirit"
   },
   "33272": {
     "name": "Well Fed",
@@ -209,8 +208,7 @@ SPELLS = {
   },
   "34720": {
     "name": "Thrill of the Hunt",
-    "icon":
-    "ability_hunter_thrillofthehunt"
+    "icon": "ability_hunter_thrillofthehunt"
   },
   "34952": {
     "name": "Go for the Throat",
@@ -226,11 +224,11 @@ SPELLS = {
   },
   "39104": {
     "name": "Totemic Recall",
-    "icon": "spell_unused"
+    "icon": "spell_shaman_totemrecall"
   },
   "39609": {
     "name": "Mana Tide Totem",
-    "icon": "spell_holy_stoicism"
+    "icon": "spell_frost_summonwaterelemental"
   },
   "42987": {
     "name": "Replenish Mana",
@@ -282,7 +280,7 @@ SPELLS = {
   },
   "49088": {
     "name": "Anti-Magic Shell",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "spell_shadow_antimagicshell"
   },
   "50163": {
     "name": "Butchery",
@@ -303,6 +301,10 @@ SPELLS = {
   "51637": {
     "name": "Focused Attacks",
     "icon": "ability_rogue_focusedattacks"
+  },
+  "52697": {
+    "name": "Noth's Special Brew",
+    "icon": "inv_alchemy_enchantedvial"
   },
   "53358": {
     "name": "Chimera Shot - Viper",
@@ -358,7 +360,7 @@ SPELLS = {
   },
   "57319": {
     "name": "Blessing of Sanctuary",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "spell_holy_greaterblessingofsanctuary"
   },
   "57669": {
     "name": "Replenishment",
@@ -402,7 +404,7 @@ SPELLS = {
   },
   "60242": {
     "name": "Darkmoon Card: Illusion",
-    "icon": "spell_holy_righteousnessaura"
+    "icon": "inv_inscription_tarotillusion"
   },
   "60538": {
     "name": "Soul of the Dead",
@@ -472,9 +474,25 @@ SPELLS = {
     "name": "Energized",
     "icon": "ability_rogue_deviouspoisons"
   },
+  "65724": {
+    "name": "Empowered Darkness",
+    "icon": "spell_shadow_darkritual"
+  },
+  "67213": {
+    "name": "Empowered Darkness",
+    "icon": "spell_shadow_darkritual"
+  },
+  "67214": {
+    "name": "Empowered Darkness",
+    "icon": "spell_shadow_darkritual"
+  },
   "67215": {
     "name": "Empowered Darkness",
     "icon": "spell_shadow_darkritual"
+  },
+  "67216": {
+    "name": "Empowered Light",
+    "icon": "spell_holy_searinglightpriest"
   },
   "67218": {
     "name": "Empowered Light",
@@ -525,13 +543,16 @@ SPELLS = {
     "icon": "spell_holy_magicalsentry"
   },
   "71574": {
-    "name":
-    "Replenish Mana",
+    "name": "Replenish Mana",
     "icon": "inv_misc_gem_stone_01"
   },
   "71882": {
     "name": "Invigoration",
-    "icon": "spell_nature_wispheal"
+    "icon": "ability_hunter_invigeration"
+  },
+  "71887": {
+    "name": "Invigoration",
+    "icon": "ability_hunter_invigeration"
   },
   "71941": {
     "name": "Twisted Nightmares",
@@ -544,8 +565,6 @@ SPELLS = {
 }
 
 
-# z = defaultdict(int)
-@constants.running_time
 def asidjioasjdso(logs: list[str]):
     z2 = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
     
@@ -558,84 +577,7 @@ def asidjioasjdso(logs: list[str]):
         except ValueError:
             pass
     
-    return z2
-
-def __prettyprint(data, guids):
-    for school, players in data.items():
-        print()
-        print(school)
-        for guid, value in players.items():
-            print(f"{guids[guid]['name']:<12} {sum(value.values()):>6} {dict(value)}")
-
-def __prettyprint2(data):
-    for power_type, data1 in data.items():
-        print()
-        print(power_type)
-        for name, value in data1.items():
-            print(f"{name:<12} {sum(value.values()):>6} {dict(value)}")
-
-@constants.running_time
-def combine_convert(
-    report,
-    new_data: dict[str, dict[str, dict[str, int]]],
-    data: dict[str, dict[str, dict[str, int]]]
-):
-    for power_type, targets in sorted(new_data.items()):
-        power_name = POWER_TYPES[power_type]
-        for guid, spells in targets.items():
-            name = report.guid_to_name(guid)
-            _guid = report.get_master_guid(guid)
-            if _guid != guid:
-                master_name = report.guid_to_name(_guid)
-                name = f"{name} ({master_name})"
-            
-            for spell_id, value in spells.items():
-                data[power_name][name][spell_id] += value
-
-def test():
-    report = logs_main.THE_LOGS("22-11-17--20-04--Meownya--Lordaeron")
-    logs = report.get_logs()
-
-    powers = asidjioasjdso(logs)
-    new_d = combine_convert(report, powers)
-    
-    # __prettyprint2(new_d)
-
-def get_spells(logs: list[str]):
-    s = set()
-    for line in logs:
-        if "_ENERGIZE" not in line:
-        # if "_ENERGIZE" not in line or line[-1] != s:
-        # if line[-1] != s:
-            continue
-        try:
-            _, _, _, _, _, _, spell_id, spell_name, _ = line.split(',', 8)
-            # z1[tguid][spell_id] += int(amount)
-            s.add((spell_name, spell_id))
-        except ValueError:
-            # print(line)
-            ...
-    
-    return s
-    
-def get_all_spells():
-    _all = set()
-    folders = constants.get_folders_filter("Icecrown", False)
-    # folders = constants.get_folders(constants.LOGS_DIR)
-    folders = folders[::-1]
-    print(len(folders))
-    folders = folders[:50]
-    for folder in folders:
-        try:
-            report = logs_main.THE_LOGS(folder)
-            logs = report.get_logs()
-            s = get_spells(logs)
-            _all.update(s)
-        except Exception as e:
-            print(e, folder)
-        
-    print(_all)
-
-if __name__ == "__main__":
-    import logs_main
-    test()
+    return {
+      POWER_TYPES[power_type]: data
+      for power_type, data in z2.items()
+    }

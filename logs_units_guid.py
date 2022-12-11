@@ -139,6 +139,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     everything: dict[str, dict[str, str]] = {}
     pets_perma: dict[str, dict[str, str]] = {}
     unholy_DK_pets: defaultdict[str, set[str]] = defaultdict(set)
+    pets_felhunter: defaultdict[str, set[str]] = defaultdict(set)
 
     temp_pets: dict[str, dict[str, str]] = {}
     pets_perma_all: set[str] = set()
@@ -173,12 +174,15 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 players_classes[sGUID] = CLASSES[spell_info[0]]
                 players_skip.add(sGUID)
 
-        if spell_id == "47468":
-            # Claw
+        if spell_id == "47468": # Claw
             if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
                 unholy_DK_pets[sGUID].add(tGUID)
                 if sName not in GHOUL_NAMES:
                     LOGGER_REPORTS.debug(f"sName not in GHOUL_NAMES {sName}")
+
+        elif spell_id == "54053": # Shadow Bite
+            if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
+                pets_felhunter[sGUID].add(tGUID)
 
         elif flag == "SPELL_SUMMON":
             if tGUID[6:-6] in BOSS_PETS:
@@ -237,6 +241,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         "classes": dict(sorted(players_classes.items())),
         "pets_perma": pets_perma,
         "unholy_DK_pets": unholy_DK_pets,
+        "pets_felhunter": pets_felhunter,
         "missing_owner": missing_owner,
     }
 
@@ -257,7 +262,16 @@ def guids_main(logs, enc_data):
     everything: dict[str, dict[str, str]] = parsed["everything"]
 
     missing_pets_targets = logs_udk_bullshit2.get_missing_targets(parsed["unholy_DK_pets"], parsed["pets_perma"])
+    # print()
+    # print(missing_pets_targets)
+    # print(parsed["unholy_DK_pets"])
     logs_udk_bullshit2.UDK_BULLSHIT(logs, everything, enc_data, missing_pets_targets)
+
+    # missing_pets_targets = logs_udk_bullshit2.get_missing_targets(parsed["pets_felhunter"], parsed["pets_perma"])
+    # print()
+    # print(missing_pets_targets)
+    # print(parsed["pets_felhunter"])
+    # logs_udk_bullshit2.PET_BULLSHIT_AFFLI(logs, everything, enc_data, missing_pets_targets)
 
     convert_nested_masters(everything)
     return parsed

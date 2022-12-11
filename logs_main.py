@@ -1227,7 +1227,7 @@ class THE_LOGS:
             "GUIDS": self.get_all_guids(),
             "SPELLS": self.get_spells(),
         }
-    
+
 
     def get_powers(self, s, f):
         slice_ID = f"{s}_{f}"
@@ -1240,40 +1240,72 @@ class THE_LOGS:
         cached_data[slice_ID] = data
         return data
 
+    def powers_add_data(
+        self,
+        data: dict[str, dict[str, dict[str, int]]],
+        new_data: dict[str, dict[str, dict[str, int]]]
+    ):
+        for power_name, targets in new_data.items():
+            for guid, spells in targets.items():
+                name = self.guid_to_name(guid)
+                _guid = self.get_master_guid(guid)
+                if _guid != guid:
+                    master_name = self.guid_to_name(_guid)
+                    name = f"{name} ({master_name})"
+                
+                for spell_id, value in spells.items():
+                    data[power_name][name][spell_id] += value
+    
+    def get_power_data(self, spell_data, spell_id):
+        if spell_id in spell_data:
+            return spell_data[spell_id]
+
+        spell_info = dict(logs_energy.SPELLS.get(spell_id, {}))
+        if not spell_info:
+            spell_info = {
+                "icon": "inv_misc_questionmark",
+                "name": self.get_spell_name(spell_id)
+            }
+            LOGGER_UNUSUAL_SPELLS.info(f"{self.NAME} {spell_id} missing info")
+        
+        spell_info["value"] = 0
+        spell_data[spell_id] = spell_info
+        return spell_info
+
+    @running_time
     def get_powers_all(self, segments):
-        powers = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        SPELLS: dict[str, dict] = {}
+        TOTAL = defaultdict(lambda: defaultdict(int))
+        POWERS = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 
         for s, f in segments:
             _data = self.get_powers(s, f)
-            logs_energy.combine_convert(self, _data, powers)
-        _total = defaultdict(lambda: defaultdict(int))
-        _spells = {}
-        for power_name, targets in powers.items():
-            q = _spells[power_name] = {}
-            for name, spells in targets.items():
-                for spell_id, value in spells.items():
-                    _total[power_name][name] += value
+            self.powers_add_data(POWERS, _data)
+        
+        for power_name, targets in POWERS.items():
+            spell_data = {}
+            for target_name, target_spells in targets.items():
+                for spell_id, value in target_spells.items():
+                    target_spells[spell_id] = separate_thousands(value)
 
-                    if spell_id in q:
-                        continue
-                    spell_data = logs_energy.SPELLS.get(spell_id)
-                    if not spell_data:
-                        spell_data = {
-                            "icon": "inv_misc_questionmark",
-                            "name": self.get_spell_name(spell_id)
-                        }
-                        LOGGER_UNUSUAL_SPELLS.info(f"{self.NAME} {spell_id} missing info")
-                    q[spell_id] = spell_data
-
-                    spells[spell_id] = separate_thousands(value)
+                    TOTAL[power_name][target_name] += value
+                    
+                    spell_info = self.get_power_data(spell_data, spell_id)
+                    spell_info["value"] += value
             
-        _labels = {v:k for k,v in enumerate(powers)}
-        for power_name, targets in _total.items():
-            for name, value in targets.items():
-                targets[name] = separate_thousands(value)
+            SPELLS[power_name] = dict(sorted(spell_data.items(), key=lambda x: x[1]["value"], reverse=True))
+            for power_data in spell_data.values():
+                power_data["value"] = separate_thousands(power_data["value"])
+        
+        for targets in TOTAL.values():
+            for target_name, value in targets.items():
+                targets[target_name] = separate_thousands(value)
+
+        labels = [(i, p) for i, p in enumerate(logs_energy.POWER_TYPES.values()) if p in POWERS]
+        
         return {
-            "POWERS": powers,
-            "TOTAL": _total,
-            "SPELLS": _spells,
-            "LABELS": _labels,
+            "POWERS": POWERS,
+            "TOTAL": TOTAL,
+            "SPELLS": SPELLS,
+            "LABELS": labels,
         }

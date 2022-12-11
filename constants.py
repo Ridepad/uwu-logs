@@ -63,6 +63,7 @@ T_DELTA = {
     "15MIN": timedelta(minutes=15),
     "20MIN": timedelta(minutes=20),
     "30MIN": timedelta(minutes=30),
+    "20H": timedelta(hours=20),
 }
 
 LOGS_CUT_NAME = "LOGS_CUT"
@@ -333,6 +334,9 @@ SPELL_BOOK = {
     "12472": [3, "Icy Veins"],
     "12654": [3, "Ignite"],
     "44401": [3, "Missile Barrage"],
+    "42842": [3, "Frostbolt"],
+    "47610": [3, "Frostfire Bolt"],
+    "42873": [3, "Fire Blast"],
     "48827": [4, "Avenger's Shield"],
     "53654": [4, "Beacon of Light"],
     "48819": [4, "Consecration"],
@@ -901,10 +905,10 @@ def get_now():
 # Z = re.compile('(\d{1,2})/(\d{1,2}) (\d\d):(\d\d):(\d\d).(\d\d\d)')
 def to_dt_closure(year=None):
     Z = re.compile('(\d+)')
-    current = get_now()
+    find_all = Z.findall
+    current = get_now() + T_DELTA["20H"]
     day = current.day
     month = current.month
-    find_all = Z.findall
     if year is None:
         year = current.year
         def inner(s: str):

@@ -35,11 +35,21 @@ def find_kill(segments):
         if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
             yield segment_info
 
+
 @constants.running_time
 def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
+    def is_player(guid):
+        if guid in PLAYERS:
+            return True
+        LOGGER_REPORTS.error(f"{report.NAME} {boss_name} Missing player {guid}")
+    
     S = kill_segment['start']
     F = kill_segment['end']
     GUIDS = report.get_all_guids()
+    PLAYERS = report.get_players_guids()
+    SPECS = report.get_players_specs_in_segments(S, F)
+    DURATION = report.get_slice_duration(S, F)
+    AURAS = report.auras_info(S, F)
 
     boss_guid_id = report.name_to_guid(boss_name)
     targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
@@ -57,27 +67,21 @@ def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
     data_with_pets_d = dmg_heals.add_pets_guids(total_dmg, GUIDS)
     data_with_pets = data_with_pets_d["players"]
 
-    specs = report.get_players_specs_in_segments(S, F)
-
-    duration = report.get_slice_duration(S, F)
-    auras = report.auras_info(S, F)
-    
-    players = report.get_players_guids()
-    report_name = report.NAME
     return [
         {
             'i': guid[-7:],
-            'n': players[guid],
-            'r': report_name,
+            'n': PLAYERS[guid],
+            'r': report.NAME,
             'ua': useful,
-            'ud': round(useful/duration, 2),
+            'ud': round(useful/DURATION, 2),
             'ta': data_with_pets[guid],
-            'td': round(data_with_pets[guid]/duration, 2),
-            't': duration,
-            's': specs[guid],
-            'a': f_auras(auras[guid], specs[guid])
+            'td': round(data_with_pets[guid]/DURATION, 2),
+            't': DURATION,
+            's': SPECS[guid],
+            'a': f_auras(AURAS[guid], SPECS[guid])
         }
         for guid, useful in targets_useful_dmg.items()
+        if is_player(guid)
     ]
 
 
@@ -120,7 +124,7 @@ if __name__ == "__main__":
     # import _redo
     # _redo.redo_data(main_wrap, proccesses=2, filter="Lordaeron")
     # make_report_top("21-11-22--20-25--Snowinice--Icecrown")
-    make_report_top("22-09-04--18-44--Cleavedog--Icecrown")
+    make_report_top("22-12-02--19-43--Cinekgodx--Icecrown")
     # _redo.redo_data(main_wrap, filter="Lordaeron", startfrom=-50, proccesses=4)
 
 # [2022-09-04 21:36:00,898] [DEBUG] "logs_archive.py:121" | 22-09-04--19-55--Lipnitskaya--Lordaeron | Done in  2,533 ms

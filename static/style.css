@@ -403,7 +403,7 @@ footer #report-slice a span {
   position: fixed;
   left: 0;
   top: var(--nav-height);
-  padding: .25rem;
+  padding-top: .25rem;
 }
 #fights-container::after {
   content: '';
@@ -682,7 +682,7 @@ select {
   border: none;
   background-color: unset;
   color: var(--secondary-color);
-  border-bottom: .2rem solid var(--primary-color);
+  border-bottom: .2rem solid currentColor;
 }
 
 select * {
@@ -1327,9 +1327,6 @@ span.value.upper {
 
 .min-max-slider-inputs {
   padding-top: 1em;
-}
-
-.min-max-slider-submit {
 }
 
 
