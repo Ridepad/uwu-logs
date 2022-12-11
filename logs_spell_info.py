@@ -23,13 +23,15 @@ def get_spell_count(logs_slice: list[str], spell_id_str: str):
         return get_other_count(logs_slice, "SWING")
     if spell_id_str == "75":
         return get_other_count(logs_slice, "RANGE")
+
+    spell_id_str_filter = f",{spell_id_str},"
     
     DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
     spells = defaultdict(DEFAULT_DICT_FACTORY)
     for line in logs_slice:
-        if spell_id_str not in line:
+        if spell_id_str_filter not in line:
             continue
-        
+
         if "_DISPEL" in line:
             _, flag, _, source_name, _, target_name, _, _, _, s_id, _ = line.split(',', 10)
         else:

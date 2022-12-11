@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from constants import is_player, running_time, sort_dict_by_value
+from constants import LOGGER_REPORTS, is_player, running_time, sort_dict_by_value
 
 
 def dmg_gen(logs: list[str]):
@@ -100,7 +100,7 @@ def add_pets_guids(data: dict[str, int], guids: dict[str, dict[str, str]]):
 
     for sGUID, value in data.items():
         if sGUID not in guids:
-            print(f"[ERROR] {sGUID} not in GUIDS!")
+            LOGGER_REPORTS.error(f"{sGUID} not in GUIDS!")
             continue
 
         masterGUID = guids[sGUID].get('master_guid', sGUID)
