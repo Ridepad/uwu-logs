@@ -3,9 +3,11 @@ const selectSpell = document.getElementById("select-spell");
 const compareTable = document.getElementById("compare-field-table");
 const compareTableBody = document.getElementById("compare-field-table-tbody");
 const POST_ENDPOINT = `${window.location.pathname}${window.location.search}`;
+const PLAYER_LINK = window.location.pathname.replace("compare", "player");
+const CACHE_COMP = {}
 
 const SPELLS = {
-  "Mage": {
+  "mage": {
     42833: "Fireball",
     42891: "Pyroblast",
     55362: "Living Bomb",
@@ -26,7 +28,7 @@ const SPELLS = {
     42842: "Frostbolt",
     71757: "Deep Freeze",
   },
-  "Warrior": {
+  "warrior": {
     47520: "Cleave",
     23881: "Bloodthirst",
     12721: "Deep Wounds",
@@ -35,7 +37,7 @@ const SPELLS = {
     44949: "Whirlwind",
     50783: "Slam",
   },
-  "Priest": {
+  "priest": {
     58381: "Mind Flay",
     53022: "Mind Sear",
     48160: "Vampiric Touch",
@@ -45,7 +47,7 @@ const SPELLS = {
     48127: "Mind Blast",
     48158: "Shadow Word: Death",
   },
-  "Hunter": {
+  "hunter": {
     75: "Auto Shot",
     53209: "Chimera Shot",
     53352: "Explosive Shot",
@@ -60,7 +62,7 @@ const SPELLS = {
     58433: "Volley",
     49065: "Explosive Trap Effect",
   },
-  "Paladin": {
+  "paladin": {
     53385: "Divine Storm",
     53739: "Seal of Corruption",
     53733: "Judgement of Corruption",
@@ -74,7 +76,7 @@ const SPELLS = {
     71433: "Manifest Anger",
     48801: "Exorcism",
   },
-  "Druid": {
+  "druid": {
     48465: "Starfire",
     48461: "Wrath",
     53195: "Starfall",
@@ -93,7 +95,7 @@ const SPELLS = {
     48566: "Mangle (Cat)",
 
   },
-  "Rogue": {
+  "rogue": {
     48638: "Sinister Strike",
     22482: "Blade Flurry",
     51723: "Fan of Knives",
@@ -106,7 +108,7 @@ const SPELLS = {
     48665: "Mutilate",
     48664: "Mutilate",
   },
-  "Warlock": {
+  "warlock": {
     47825: "Soul Fire",
     47834: "Seed of Corruption",
     47809: "Shadow Bolt",
@@ -127,7 +129,7 @@ const SPELLS = {
     59172: "Chaos Bolt",
     47847: "Shadowfury",
   },
-  "Death Knight": {
+  "death-knight": {
     56815: "Rune Strike",
     49909: "Icy Touch",
     52212: "Death and Decay",
@@ -153,7 +155,7 @@ const SPELLS = {
     70890: "Scourge Strike",
     50536: "Unholy Blight",
   },
-  "Shaman": {
+  "shaman": {
     49238: "Lightning Bolt",
     49271: "Chain Lightning",
     60043: "Lava Burst",
@@ -170,39 +172,23 @@ const SPELLS = {
     32176: "Stormstrike",
   }
 }
-const CLASSES_TO_LOW = {
-  "Death Knight": "death-knight",
-  "Druid": "druid",
-  "Hunter": "hunter",
-  "Mage": "mage",
-  "Paladin": "paladin",
-  "Priest": "priest",
-  "Rogue": "rogue",
-  "Shaman": "shaman",
-  "Warlock": "warlock",
-  "Warrior": "warrior"
-}
-
-const CACHE_COMP = {}
 
 function newTableCell(value, class_name) {
   const td = document.createElement("td");
   td.className = class_name;
-  td.innerText = value || "";
+  if (value) td.innerText = value;
   return td;
 }
 
 function player_name_cell(player_name) {
-  const name_cell = newTableCell("", "player-cell");
-  const pathname = window.location.pathname.replace("compare", `player/${player_name}`);
-  
   const a = document.createElement("a");
-  a.className = CLASSES_TO_LOW[selectClass.value];
-  a.href = `${pathname}/${window.location.search}`;
+  a.className = selectClass.value;
+  a.href = `${PLAYER_LINK}${player_name}/${window.location.search}`;
   a.target = "_blank";
   a.innerText = player_name;
-  name_cell.appendChild(a);
 
+  const name_cell = newTableCell("", "player-cell");
+  name_cell.appendChild(a);
   return name_cell;
 }
 
@@ -253,10 +239,7 @@ xhttp_compare.onreadystatechange = () => {
 }
 
 function empty_table() {
-  document.querySelectorAll("tbody tr").forEach(tr => {
-    if (tr.firstChild.tagName == "TD")
-      compareTableBody.removeChild(tr);
-  })
+  compareTableBody.innerHTML = "";
 }
 
 function onSelectSpell() {
@@ -287,7 +270,7 @@ function onSelectClass() {
     selectSpell.appendChild(newOption(spell_id, spells[spell_id]));
   }
   selectSpell.appendChild(newOption(1, "Melee"));
-
+  
   if (CACHE_COMP[selectClass.value]) {
     onSelectSpell();
     return;
@@ -301,12 +284,11 @@ function onSelectClass() {
 
 function init() {
   const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/[% ]/g, "");
-  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
-  document.querySelectorAll("th").forEach(th => th.addEventListener("click", () => {
-    const tbody = th.closest("tbody");
-    Array.from(tbody.querySelectorAll("tr:nth-child(n+3)"))
+  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+  document.querySelectorAll("#compare-field-table-headers th").forEach(th => th.addEventListener("click", () => {
+    Array.from(compareTableBody.querySelectorAll("tr"))
          .sort(comparer(th.cellIndex))
-         .forEach(tr => tbody.appendChild(tr));
+         .forEach(tr => compareTableBody.appendChild(tr));
   }));
   
   selectClass.addEventListener("change", onSelectClass);
