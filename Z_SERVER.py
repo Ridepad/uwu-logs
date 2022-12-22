@@ -141,8 +141,8 @@ def before_request():
         query = request.query_string.decode()
         query = f"?{query}" if query else ""
         if query in pages:
-            # return pages[query]
-            ...
+            return pages[query]
+            # ...
         
         request.default_params = default_params(report_id, request)
 

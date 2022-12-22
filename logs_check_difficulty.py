@@ -111,7 +111,7 @@ def auras_removed(logs_slice: list[str], size):
             continue
         if line[4][6:-6] in COWARDS:
             removed += 1
-    print(removed)
+    # print(removed)
     return removed > size
 
 def get_slice_duration(logs_slice):

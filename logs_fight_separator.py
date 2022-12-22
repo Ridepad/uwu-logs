@@ -5,6 +5,7 @@ from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA, convert_to_fight_name,
 MULTIBOSSES_MAIN = {guid: boss_guids[0] for boss_guids in MULTIBOSSES.values() for guid in boss_guids[1:]}
 BOSSES_GUIDS_ALL = set(MULTIBOSSES_MAIN) | set(MULTIBOSSES_MAIN.values()) | set(BOSSES_GUIDS)
 FLAGS = {'UNIT_DIED', 'PARTY_KILL', 'SPELL_DAMAGE', 'RANGE_DAMAGE', 'DAMAGE_SHIELD', 'SWING_DAMAGE', 'SPELL_AURA_APPLIED', 'SPELL_AURA_REMOVED', 'SPELL_HEAL'}
+HEAL_BOSSES = {"008FB5"}
 IGNORED_SPELL_IDS = {
     '56190', '56191', '55346', # Lens
     '60122', # Baby Spice
@@ -42,12 +43,16 @@ def dump_all_boss_lines(logs: list[str]):
                 continue
         except IndexError:
             pass
-        
+
         _guid = line[4][6:-6]
+        if _guid not in HEAL_BOSSES and line[1] == "SPELL_HEAL":
+            continue
+        
         if _guid not in BOSSES_GUIDS_ALL:
             _guid = line[2][6:-6]
             if _guid not in BOSSES_GUIDS_ALL or line[1] != "SPELL_AURA_APPLIED":
                 continue
+
         _guid = MULTIBOSSES_MAIN.get(_guid, _guid)
         _bosses[_guid].append((n, line))
     return _bosses

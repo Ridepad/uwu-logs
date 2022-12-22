@@ -81,6 +81,15 @@ FLAG_ORDER = [
     "SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE",
 ]
 
+ICONS = {
+    "toc": "achievement_reputation_argentchampion",
+    "naxx": "achievement_dungeon_naxxramas_10man",
+    "maly": "achievement_dungeon_nexusraid_heroic",
+    "rs": "spell_shadow_twilight",
+    "uld": "achievement_dungeon_ulduarraid_misc_01",
+    "icc": "achievement_zone_icecrown_01",
+}
+
 BOSSES_GUIDS = {
     "007995": "Archavon the Stone Watcher",
     "0084C9": "Emalon the Storm Watcher",
@@ -230,6 +239,8 @@ BOSSES_GUIDS.update(TOC_CHAMPIONS)
 ENCOUNTER_NAMES = {boss_guid: encounter_name for encounter_name, boss_guids in MULTIBOSSES.items() for boss_guid in boss_guids}
 
 def convert_to_fight_name(boss_id: str):
+    if len(boss_id) == 18:
+        boss_id = boss_id[6:-6]
     if boss_id in ENCOUNTER_NAMES:
         return ENCOUNTER_NAMES[boss_id]
     if boss_id in BOSSES_GUIDS:

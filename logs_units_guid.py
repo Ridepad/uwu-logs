@@ -1,9 +1,7 @@
 from collections import defaultdict
 
-import logs_udk_bullshit2
-from constants import (
-    CLASS_FROM_HTML, LOGGER_REPORTS, SPELL_BOOK,
-    running_time, sort_dict_by_value)
+import logs_pet_bullshit
+from constants import CLASS_FROM_HTML, LOGGER_REPORTS, SPELL_BOOK, running_time, sort_dict_by_value
 
 CLASSES = list(CLASS_FROM_HTML)
 _prefix = [
@@ -21,6 +19,7 @@ TEMP_DK_PETS = {
 
 NIL_GUID = "0x0000000000000000"
 FLAG_SKIP = {"PARTY_KILL", "UNIT_DIED"}
+FLAG_PET_AGGRO = {"SWING_DAMAGE", "SPELL_DAMAGE"}
 NAMES_SKIP = {"nil", "Unknown"}
 PET_FILTER_SPELLS = {
     "43771", # Well Fed
@@ -85,11 +84,11 @@ def is_perma_pet(guid):
     return guid[:5] == "0xF14"
 
 
-def pet_sort_by_id(pets_raw):
-    d: dict[str, set[str]] = {}
+def pet_group_by_id(pets_raw):
+    d: defaultdict[str, set[str]] = defaultdict(set)
     for guid in pets_raw:
         if is_perma_pet(guid):
-            d.setdefault(guid[6:-6], set()).add(guid)
+            d[guid[6:-6]].add(guid)
     return d
 
 
@@ -100,37 +99,44 @@ def new_entry(name: str, master_name: str, master_guid: str):
         'master_guid': master_guid
     }
 
-def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, str]], pets_raw: set[str]):
-    def get_pet_name(guid_id):
+def add_missing_pets(everything: dict[str, str], pets_perma: dict[str, dict[str, str]], pets_perma_all: set[str]):
+    def get_name(guid_id):
         for guid in everything:
-            if guid_id in guid:
+            if guid[6:-6] == guid_id:
                 return everything[guid]['name']
 
     def get_owner(pet_guids):
         owners = defaultdict(int)
-        for pet in pet_guids:
-            owner_guid = pets_data.get(pet, {}).get('master_guid')
-            owners[owner_guid] += 1
+        for pet_guid in pet_guids:
+            if pet_guid not in pets_perma:
+                continue
+            owner_guid = pets_perma[pet_guid].get('master_guid')
+            if owner_guid:
+                owners[owner_guid] += 1
         
-        owners.pop(None, None)
+        if None in owners:
+            del owners[None]
+
         if owners:
             owners = sort_dict_by_value(owners)
             return list(owners)[0]
     
     missing_owner = []
-    sorted_pets_raw = pet_sort_by_id(pets_raw)
-    for guid_id, pet_guids in sorted_pets_raw.items():
+    pets_perma_all_groupped = pet_group_by_id(pets_perma_all)
+    for guid_id, pet_guids in pets_perma_all_groupped.items():
         master_guid = get_owner(pet_guids)
         if not master_guid:
             missing_owner.append(guid_id)
             continue
         if master_guid not in everything:
             continue
+        
         master_name = everything[master_guid]['name']
-        pet_name = get_pet_name(guid_id)
+        pet_name = get_name(guid_id)
         _pet = new_entry(pet_name, master_name, master_guid)
         for pet_guid in pet_guids:
             everything[pet_guid] = _pet
+            pets_perma[pet_guid] = _pet
 
     return missing_owner
 
@@ -138,8 +144,8 @@ def add_missing_pets(everything: dict[str, str], pets_data: dict[str, dict[str, 
 def logs_parser(logs: list[str]): # sourcery no-metrics
     everything: dict[str, dict[str, str]] = {}
     pets_perma: dict[str, dict[str, str]] = {}
-    unholy_DK_pets: defaultdict[str, set[str]] = defaultdict(set)
-    pets_felhunter: defaultdict[str, set[str]] = defaultdict(set)
+    ghouls: defaultdict[str, set[str]] = defaultdict(set)
+    felhunters: defaultdict[str, set[str]] = defaultdict(set)
 
     temp_pets: dict[str, dict[str, str]] = {}
     pets_perma_all: set[str] = set()
@@ -176,13 +182,13 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
 
         if spell_id == "47468": # Claw
             if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
-                unholy_DK_pets[sGUID].add(tGUID)
+                ghouls[sGUID].add(tGUID)
                 if sName not in GHOUL_NAMES:
                     LOGGER_REPORTS.debug(f"sName not in GHOUL_NAMES {sName}")
 
         elif spell_id == "54053": # Shadow Bite
             if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
-                pets_felhunter[sGUID].add(tGUID)
+                felhunters[sGUID].add(tGUID)
 
         elif flag == "SPELL_SUMMON":
             if tGUID[6:-6] in BOSS_PETS:
@@ -199,35 +205,32 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                     pets_perma_all.add(sGUID)
             
             elif is_player(sGUID):
-                guids_entry = new_entry(tName, sName, sGUID)
+                pet_info = new_entry(tName, sName, sGUID)
                 if is_perma_pet(tGUID):
-                    pets_perma[tGUID] = guids_entry
+                    pets_perma[tGUID] = pet_info
                     pets_perma_all.add(tGUID)
                 else:
-                    temp_pets[tGUID] = guids_entry
+                    temp_pets[tGUID] = pet_info
             
             elif is_player(tGUID):
-                guids_entry = new_entry(sName, tName, tGUID)
+                pet_info = new_entry(sName, tName, tGUID)
                 if is_perma_pet(sGUID):
-                    pets_perma[sGUID] = guids_entry
+                    pets_perma[sGUID] = pet_info
                     pets_perma_all.add(sGUID)
                 else:
-                    temp_pets[sGUID] = guids_entry
+                    temp_pets[sGUID] = pet_info
 
-        elif spell_id == "34650":
-            # Mana Leech
+        elif spell_id == "34650": # Mana Leech
             temp_pets[sGUID] = new_entry("Shadowfiend", tName, tGUID)
 
-        elif spell_id == "70308":
-            # Mutated Transformation
+        elif spell_id == "70308": # Mutated Transformation
             last_abom = new_entry("Mutated Abomination", sName, sGUID)
 
-        elif last_abom and sGUID == tGUID and sGUID[6:-6] == "00958D":
-            # Mutated Abomination
+        elif last_abom and sGUID == tGUID and sGUID[6:-6] == "00958D": # Mutated Abomination
             temp_pets[sGUID] = last_abom
             last_abom = {}
 
-        elif is_perma_pet(sGUID):
+        elif is_perma_pet(sGUID) and flag in FLAG_PET_AGGRO:
             pets_perma_all.add(sGUID)
 
     everything |= temp_pets
@@ -240,38 +243,32 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         "players": dict(sorted(players.items())),
         "classes": dict(sorted(players_classes.items())),
         "pets_perma": pets_perma,
-        "unholy_DK_pets": unholy_DK_pets,
-        "pets_felhunter": pets_felhunter,
+        "Ghoul": ghouls,
+        "Felhunter": felhunters,
         "missing_owner": missing_owner,
     }
 
 def convert_nested_masters(data: dict[str, dict[str, str]]):
-    for p in data.values():
-        if 'master_guid' not in p:
+    for unit_info in data.values():
+        if 'master_guid' not in unit_info:
             continue
-        master_guid = p['master_guid']
-        master_master_guid = data.get(master_guid, {}).get('master_guid')
+        
+        master_info = data.get(unit_info['master_guid'])
+        if not master_info:
+            continue
+        
+        master_master_guid = master_info.get('master_guid')
         if not master_master_guid:
             continue
-        p['master_guid'] = master_master_guid
-        p['master_name'] = data[master_master_guid]['name']
+        
+        unit_info['master_guid'] = master_master_guid
+        unit_info['master_name'] = data[master_master_guid]['name']
 
 @running_time
 def guids_main(logs, enc_data):
     parsed = logs_parser(logs)
-    everything: dict[str, dict[str, str]] = parsed["everything"]
+    logs_pet_bullshit.PET_BULLSHIT(logs, enc_data, parsed, "Unholy")
+    logs_pet_bullshit.PET_BULLSHIT(logs, enc_data, parsed, "Affliction")
 
-    missing_pets_targets = logs_udk_bullshit2.get_missing_targets(parsed["unholy_DK_pets"], parsed["pets_perma"])
-    # print()
-    # print(missing_pets_targets)
-    # print(parsed["unholy_DK_pets"])
-    logs_udk_bullshit2.UDK_BULLSHIT(logs, everything, enc_data, missing_pets_targets)
-
-    # missing_pets_targets = logs_udk_bullshit2.get_missing_targets(parsed["pets_felhunter"], parsed["pets_perma"])
-    # print()
-    # print(missing_pets_targets)
-    # print(parsed["pets_felhunter"])
-    # logs_udk_bullshit2.PET_BULLSHIT_AFFLI(logs, everything, enc_data, missing_pets_targets)
-
-    convert_nested_masters(everything)
+    convert_nested_masters(parsed["everything"])
     return parsed

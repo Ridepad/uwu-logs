@@ -314,6 +314,10 @@ SPELLS = {
     "name": "Moonkin Form",
     "icon": "ability_druid_improvedmoonkinform"
   },
+  "53517": {
+    "name": "Roar of Recovery",
+    "icon": "ability_druid_mastershapeshifter"
+  },
   "53750": {
     "name": "Crazy Alchemist's Potion",
     "icon": "trade_alchemy"
@@ -401,6 +405,10 @@ SPELLS = {
   "59159": {
     "name": "Thunderstorm",
     "icon": "spell_shaman_thunderstorm"
+  },
+  "59159": {
+    "name": "Discerning Eye of the Beast",
+    "icon": "inv_jewelry_talisman_08"
   },
   "60242": {
     "name": "Darkmoon Card: Illusion",

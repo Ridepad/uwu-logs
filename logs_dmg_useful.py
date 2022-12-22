@@ -398,6 +398,8 @@ def get_valks_dmg(logs: list[str]):
 def combine_pets(data: dict[str, int], guids: dict[str, dict], trim_non_players=False, ignore_abom=False):
     combined: dict[str, int] = defaultdict(int)
     for sGUID, value in data.items():
+        if sGUID not in guids:
+            continue
         if ignore_abom and sGUID[6:-6] == "00958D":
             continue
         sGUID = guids[sGUID].get('master_guid', sGUID)

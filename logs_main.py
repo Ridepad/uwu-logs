@@ -2,16 +2,16 @@ import json
 import os
 from collections import defaultdict
 
-import dmg_heals
 import logs_auras
 import logs_check_difficulty
 import logs_deaths
 import logs_dmg_breakdown
+import logs_dmg_heals
 import logs_dmg_useful
-import logs_energy
 import logs_fight_separator
 import logs_get_time
 import logs_player_spec
+import logs_power
 import logs_spell_info
 import logs_spells_list
 import logs_units_guid
@@ -638,7 +638,7 @@ class THE_LOGS:
         
         logs_slice = self.get_logs(s, f)
         players_and_pets = self.get_players_and_pets_guids()
-        data = dmg_heals.parse_both(logs_slice, players_and_pets)
+        data = logs_dmg_heals.parse_both(logs_slice, players_and_pets)
         
         units = set(data["damage"]) | set(data["heal"])
         players = self.get_players_guids(filter_guids=units)
@@ -665,7 +665,7 @@ class THE_LOGS:
     
     def dry_data(self, data, slice_duration):
         guids = self.get_all_guids()
-        data_with_pets = dmg_heals.add_pets(data, guids)
+        data_with_pets = logs_dmg_heals.add_pets(data, guids)
         data_sorted = sort_dict_by_value(data_with_pets)
         return convert_to_table(data_sorted, slice_duration)
 
@@ -1180,9 +1180,9 @@ class THE_LOGS:
     def dmg_taken(self, logs_slice, filter_guids=None, players=False):
         if filter_guids is None:
             filter_guid = PLAYER if players else '0xF1'
-            dmg = dmg_heals.parse_dmg_taken_single(logs_slice, filter_guid)
+            dmg = logs_dmg_heals.parse_dmg_taken_single(logs_slice, filter_guid)
         else:
-            dmg = dmg_heals.parse_dmg_taken(logs_slice, filter_guids)
+            dmg = logs_dmg_heals.parse_dmg_taken(logs_slice, filter_guids)
         new_data: dict[str, dict[str, int]] = {}
         for tguid, sources in dmg.items():
             name = self.guid_to_name(tguid)
@@ -1236,7 +1236,7 @@ class THE_LOGS:
             return cached_data[slice_ID]
         
         logs_slice = self.get_logs(s, f)
-        data = logs_energy.asidjioasjdso(logs_slice)
+        data = logs_power.asidjioasjdso(logs_slice)
         cached_data[slice_ID] = data
         return data
 
@@ -1260,7 +1260,7 @@ class THE_LOGS:
         if spell_id in spell_data:
             return spell_data[spell_id]
 
-        spell_info = dict(logs_energy.SPELLS.get(spell_id, {}))
+        spell_info = dict(logs_power.SPELLS.get(spell_id, {}))
         if not spell_info:
             spell_info = {
                 "icon": "inv_misc_questionmark",
@@ -1301,7 +1301,7 @@ class THE_LOGS:
             for target_name, value in targets.items():
                 targets[target_name] = separate_thousands(value)
 
-        labels = [(i, p) for i, p in enumerate(logs_energy.POWER_TYPES.values()) if p in POWERS]
+        labels = [(i, p) for i, p in enumerate(logs_power.POWER_TYPES.values()) if p in POWERS]
         
         return {
             "POWERS": POWERS,

@@ -2,7 +2,7 @@ import os
 from time import perf_counter
 
 import constants
-import dmg_heals
+import logs_dmg_heals
 import logs_dmg_useful
 import logs_main
 from constants import LOGGER_REPORTS
@@ -63,8 +63,8 @@ def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
     
     logs_slice = report.get_logs(S, F)
     players_and_pets = report.get_players_and_pets_guids()
-    total_dmg = dmg_heals.parse_only_dmg_no_friendly(logs_slice, players_and_pets)
-    data_with_pets_d = dmg_heals.add_pets_guids(total_dmg, GUIDS)
+    total_dmg = logs_dmg_heals.parse_only_dmg_no_friendly(logs_slice, players_and_pets)
+    data_with_pets_d = logs_dmg_heals.add_pets_guids(total_dmg, GUIDS)
     data_with_pets = data_with_pets_d["players"]
 
     return [
