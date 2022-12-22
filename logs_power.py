@@ -187,8 +187,8 @@ SPELLS = {
     "icon": "spell_shadow_burningspirit"
   },
   "33272": {
-    "name": "Well Fed",
-    "icon": "spell_misc_food"
+    "name": "Sporeling Snack",
+    "icon": "inv_misc_food_87_sporelingsnack"
   },
   "33737": {
     "name": "Water Shield",
@@ -230,6 +230,10 @@ SPELLS = {
     "name": "Mana Tide Totem",
     "icon": "spell_frost_summonwaterelemental"
   },
+  "41618": {
+    "name": "Bottled Nethergon Energy",
+    "icon": "inv_potion_156"
+  },
   "42987": {
     "name": "Replenish Mana",
     "icon": "inv_misc_gem_stone_01"
@@ -239,8 +243,8 @@ SPELLS = {
     "icon": "inv_alchemy_elixir_02"
   },
   "43771": {
-    "name": "Well Fed",
-    "icon": "spell_misc_food"
+    "name": "Spiced Mammoth Treats",
+    "icon": "inv_misc_food_123_roast"
   },
   "44450": {
     "name": "Burnout",
@@ -297,6 +301,10 @@ SPELLS = {
   "51178": {
     "name": "King of the Jungle",
     "icon": "ability_druid_kingofthejungle"
+  },
+  "51490": {
+    "name": "Thunderstorm",
+    "icon": "spell_shaman_thunderstorm"
   },
   "51637": {
     "name": "Focused Attacks",
@@ -482,9 +490,17 @@ SPELLS = {
     "name": "Energized",
     "icon": "ability_rogue_deviouspoisons"
   },
+  "65247": {
+    "name": "Kibler's Bits",
+    "icon": "inv_misc_food_49"
+  },
   "65724": {
     "name": "Empowered Darkness",
     "icon": "spell_shadow_darkritual"
+  },
+  "65748": {
+    "name": "Empowered Light",
+    "icon": "spell_holy_searinglightpriest"
   },
   "67213": {
     "name": "Empowered Darkness",
@@ -499,6 +515,10 @@ SPELLS = {
     "icon": "spell_shadow_darkritual"
   },
   "67216": {
+    "name": "Empowered Light",
+    "icon": "spell_holy_searinglightpriest"
+  },
+  "67217": {
     "name": "Empowered Light",
     "icon": "spell_holy_searinglightpriest"
   },
