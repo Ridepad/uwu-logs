@@ -177,7 +177,6 @@ BOSSES_GUIDS = {
     "008067": "Algalon the Observer",
 }
 
-
 TOC_CHAMPIONS = {
     "00869D": "Tyrius Duskblade <DK>",
     "00869C": "Kavina Grovesong <Druid>",
@@ -1025,20 +1024,9 @@ def get_folders_filter(filter=None, public_only=True):
         folders = [name for name in folders if name not in filter_list]
     return folders
 
+REPORT_NAME_STRUCTURE = ("date", "time", "name", "server")
 def get_report_name_info(name: str):
-    info = name.split('--')
-    return {
-        "date": info[0],
-        "time": info[1],
-        "name": info[2],
-        "server": info[3],
-    }
-
-
-def add_new_numeric_data(data_total: defaultdict, data_new: dict):
-    for source, amount in data_new.items():
-        data_total[source] += amount
-
+    return dict(zip(REPORT_NAME_STRUCTURE, name.split('--')))
 
 def get_last_line(filename, skip_lines=0):
     with open(filename, 'rb') as f:
@@ -1082,5 +1070,3 @@ def wrong_pw(ip):
 
 def banned(ip):
     return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS
-
-

@@ -19,7 +19,7 @@ from constants import (
     bytes_write, convert_to_fight_name, get_ms_str, json_read, json_write, new_folder_path, to_dt_bytes)
 
 
-ARCHIVE_ID_ERROR = "Bad archive. Don't rename .rar files into .zip, create .zip from 0"
+ARCHIVE_ID_ERROR = "Bad archive. Don't rename files to .zip/.7z, create archives from 0."
 ARCHIVE_ERROR = "Error unziping file. Make sure logs file inside the archive without any folders."
 LOGS_ERROR = "Error parsing logs."
 ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."

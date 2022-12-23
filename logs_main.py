@@ -18,7 +18,7 @@ import logs_units_guid
 import logs_valk_grabs
 from constants import (
     BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS,
-    add_new_numeric_data, add_space, convert_to_html_name, get_report_name_info, is_player,
+    add_space, convert_to_html_name, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
     sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
 
@@ -29,7 +29,6 @@ SHIFT = {
     'consumables': 10,
     'player_auras': 10,
 }
-DEFAULT_SPELL_DATA = {"icon": "inv_misc_questionmark"}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')
@@ -37,6 +36,10 @@ def get_shift(request_path: str):
         return SHIFT.get(url_comp[3], 0)
     except IndexError:
         return 0
+
+def add_new_numeric_data(data_total: defaultdict, data_new: dict):
+    for source, amount in data_new.items():
+        data_total[source] += amount
 
 def separate_thousands(num):
     if not num: return ""
