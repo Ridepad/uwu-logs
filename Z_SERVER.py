@@ -66,9 +66,10 @@ def get_default_params_wrap(report_id: str):
 
 @SERVER.route('/favicon.ico')
 def favicon():
-    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-    response.cache_control.max_age = 30 * 24 * 60 * 60
-    return response
+    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    # response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    # response.cache_control.max_age = 30 * 24 * 60 * 60
+    # return response
 
 @SERVER.route('/class_icons.jpg')
 def class_icons():
