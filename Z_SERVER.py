@@ -123,7 +123,7 @@ def log_incoming_connection():
     if request.data:
         path = f"{path} | {request.data.decode()}"
     
-    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.data.decode()}{request.headers.get('User-Agent')}"
+    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.headers.get('User-Agent')}"
     LOGGER_CONNECTIONS.info(req)
 
 @SERVER.before_request
