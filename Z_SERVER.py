@@ -121,7 +121,10 @@ def log_incoming_connection():
         path = f"{path}?{request.query_string.decode()}"
 
     if request.data:
-        path = f"{path} | {request.data.decode()}"
+        try:
+            path = f"{path} | {request.data.decode()}"
+        except UnicodeDecodeError:
+            pass
     
     req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.headers.get('User-Agent')}"
     LOGGER_CONNECTIONS.info(req)
