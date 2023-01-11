@@ -1,5 +1,22 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+#valks-table-tbody td:not(.player-cell) {
+  text-align: right;
+}
+#valks-table-tbody .total-cell {
+  min-width: 5ch;
+}
+#valks-table-tbody .grab {
+  background-color: crimson;
+}
+#valks-table-tbody td:not(.player-cell, .total-cell) {
+  color: transparent;
+}
+</style>
+{% endblock add_style %}
+
 {% block the_main %}
 <main id="valks">
   <table>
@@ -17,7 +34,7 @@
       {% for player_name, grabs_amount in GRABS_TOTAL.items() %}
       <tr>
         <td class="player-cell">
-          <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+          <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
         </td>
         <td class="total-cell">{{ grabs_amount }}</td>
         {% for wave in ALL_GRABS %}

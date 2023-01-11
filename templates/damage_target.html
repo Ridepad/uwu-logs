@@ -1,26 +1,36 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+th {
+  min-width: 13ch;
+  max-width: 13ch;
+}
+</style>
+{% endblock add_style %}
+
 {% block the_main %}
 <main id="report-damage">
   <div>
     <table>
-      <caption>damage to target</caption>
       <thead>
         <tr>
-        {% for _th in HEADS %}
+          <th>-</th>
+          {% for _th in HEADS %}
           <th>{{ _th }}</th>
-        {% endfor %}
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% for player_name, player_total in TOTAL.items() %}
+        {% for player_name, player_total in TOTAL_USEFUL.items() %}
         <tr>
           <td class="player-cell">
-            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
           <td class="total-cell">{{ player_total }}</td>
-          {% for tguid, _t in FORMATTED.items() %}
-          <td class="total-cell">{{ _t.get(player_name, 0) }}</td>
+          <td class="total-cell">{{ TOTAL[player_name] }}</td>
+          {% for tguid, players_damage in TARGETS.items() %}
+          <td class="total-cell">{{ players_damage.get(player_name, 0) }}</td>
           {% endfor %}
         </tr>
         {% endfor %}

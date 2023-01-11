@@ -31,7 +31,10 @@ def get_spec_info(player_class, spec_index=0):
     classi = CLASSES.index(player_class)
     return SPECS_LIST[classi*4+spec_index]
 
-def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str]):
+def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str], cut=True):
+    if cut:
+        logs = logs[:50000]
+    
     specs = get_specs_guids(logs, players, classes)
     
     new_data: dict[str, tuple[str, str]] = {}

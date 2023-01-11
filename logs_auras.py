@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
-from constants import to_dt
+from constants import to_dt_simple
 
 
 AURA_FLAGS = {
@@ -13,8 +13,8 @@ AURA_FLAGS = {
 class AurasMain:
     def __init__(self, logs_slice: list[str]) -> None:
         self.logs = logs_slice
-        self.slice_start = to_dt(logs_slice[0])
-        self.slice_end = to_dt(logs_slice[-1])
+        self.slice_start = to_dt_simple(logs_slice[0])
+        self.slice_end = to_dt_simple(logs_slice[-1])
         self.slice_duration = (self.slice_end-self.slice_start).total_seconds()
 
     def to_prcnt(self, td: timedelta):
@@ -24,7 +24,7 @@ class AurasMain:
     def combine_uptime(self, timings: dict[str, int]):
         timings_list = list(timings.items())
         timestamp, code = timings_list.pop(0)
-        dt_last = to_dt(timestamp)
+        dt_last = to_dt_simple(timestamp)
         is_applied = code != 1
         percent = self.to_prcnt(dt_last - self.slice_start)
         uptime = [(is_applied, percent)]
@@ -36,7 +36,7 @@ class AurasMain:
             else:
                 is_applied = code == 1
             
-            dt_current = to_dt(timestamp)
+            dt_current = to_dt_simple(timestamp)
             percent = self.to_prcnt(dt_current - dt_last)
             uptime.append((not is_applied, percent))
             dt_last = dt_current

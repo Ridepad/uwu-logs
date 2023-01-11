@@ -1,66 +1,145 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+.per-sec-cell,
+.player-cell,
+th {
+  border-right: 5px solid var(--table-border);
+}
+
+tr:is(:last-child, :first-child) td {
+  border-bottom: 1px solid var(--table-border);
+}
+.rectangle-cell {
+  width: 12rem;
+  position: relative;
+  isolation: isolate;
+  text-shadow: .1em .1em .1em black;
+  text-shadow: 0 0 .3em black;
+  text-align: right;
+}
+.rectangle-cell > div {
+  width: var(--width);
+  height: .9em;
+  height: 1em;
+  border-radius: 0.1em;
+  position: absolute;
+  top: .1em;
+  z-index: -1;
+}
+.damage-bar, .taken-bar {
+  box-shadow: .1em .1em 1em darkred;
+  animation: 3s linear infinite;
+  animation-name: dmgbar;
+}
+@keyframes dmgbar {
+  0%,
+  100% {background-color: hsl(0, 85%, 30%);}
+  50%  {background-color: hsl(0, 100%, 25%);}
+}
+
+.heal-bar {
+  box-shadow: .1em .1em 1em forestgreen;
+  animation: 3s linear infinite;
+  animation-name: healbar;
+}
+@keyframes healbar {
+  0%,
+  100% {background-color: hsl(120, 75%, 25%);}
+  50%  {background-color: hsl(120, 100%, 25%);}
+}
+
+.per-sec-cell {
+  min-width: 9ch;
+  text-align: right;
+}
+.player-cell div {
+  display: inline-block;
+  vertical-align: text-bottom;
+  max-height: 1.1em;
+  max-width: 1.1em;
+  min-height: 1.1em;
+  min-width: 1.1em;
+}
+tr:nth-child(n+2) .player-cell div {
+  background-image: url('/class_icons.jpg');
+  background-repeat: no-repeat;
+  background-size: 400% 1000%;
+  height: 56px;
+  width: 56px;
+  background-position-x: calc(var(--spec-i)  * 33.33333%);
+  background-position-y: calc(var(--class-i) * 11.11111%);
+}
+#tables {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#chart {
+  max-height: 20vh;
+  width: 100%;
+}
+</style>
+{% endblock add_style %}
+
+{% block scripts_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.1.2/chart.umd.min.js"></script>
+{% endblock scripts_head %}
+
 {% block the_main %}
 <main id="report-main">
-  <section id="report-main-tables">
-    <section>
-      <table id="damage">
-        <caption>Damage done</caption>
+  <section id="tables">
+    <table>
+      <thead>
+        <th>Name</th>
+        <th class="col-damage" colspan="3">Damage</th>
+        <th class="col-heal" colspan="3">Heal</th>
+        <th class="col-taken" colspan="3">Damage Taken</th>
+      </thead>
+      <tbody>
+        {% for player_name, data in TABLE.items() %}
         <tr>
-          <th>Name</th>
-          <th colspan="2">Total</th>
-          <th>DPS</th>
-        </tr>
-        {% for player_name, source_total, dps, p in DAMAGE %}
-        <tr>
-          {% if player_name in SPECS %}
-          <td class="player-cell" title="{{ SPECS[player_name][0] }}">
-            <img src="{{ ICON_CDN_LINK }}/{{ SPECS[player_name][1] }}.jpg">
-            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+          <td class="player-cell" title="{{ data['spec_name'] }}">
+            {% if data['spec_icon'] in SPEC_ICON_TO_POSITION %}
+            <div style="--class-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][0] }}; --spec-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][1] }}"></div>
+            {% else %}
+            <div></div>
+            {% endif %}
+            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
-          {% else %}
-          <td class="player-cell" title="Unknown">
-            <img src="{{ ICON_CDN_LINK }}/inv_misc_questionmark.jpg">
-            <a class="unknown" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-          </td>
-          {% endif %}
-          <td class="total-cell">{{ source_total }}</td>
-          <td class="rectangle-cell"><div style="width: {{ p }}%;"></div></td>
-          <td class="dps-cell">{{ dps }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </section>
-    <section>
-      <table id="heal">
-        <caption>Healing done</caption>
-        <tr>
-          <th>Name</th>
-          <th colspan="2">Total</th>
-          <th>HPS</th>
-        </tr>
-        {% for player_name, source_total, hps, p in HEAL %}
-        <tr>
-          {% if player_name in SPECS %}
-          <td class="player-cell" title="{{ SPECS[player_name][0] }}">
-            <img src="{{ ICON_CDN_LINK }}/{{ SPECS[player_name][1] }}.jpg">
-            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-          </td>
-          {% else %}
-          <td class="player-cell" title="Unknown">
-            <img src="{{ ICON_CDN_LINK }}/inv_misc_questionmark.jpg">
-            <a class="unknown" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-          </td>
-          {% endif %}
-          <td class="total-cell">{{ source_total }}</td>
           <td class="rectangle-cell">
-            <div style="width: {{ p }}%;"></div>
+            <!-- {{ data['damage'] }} -->
+            {% if 'd_p' in data %}
+            <div class="damage-bar" style="--width: {{ data['d_p'] }}%"></div>
+            {% endif %}
           </td>
-          <td class="dps-cell">{{ hps }}</td>
+          <td class="total-cell col-damage">{{ data['damage'] }}</td>
+          <td class="per-sec-cell">{{ data['dps'] }}</td>
+
+          <td class="rectangle-cell">
+            <!-- {{ data['heal'] }} -->
+            {% if 'h_p' in data %}
+            <div class="heal-bar" style="--width: {{ data['h_p'] }}%"></div>
+            {% endif %}
+          </td>
+          <td class="total-cell col-heal">{{ data['heal'] }}</td>
+          <td class="per-sec-cell">{{ data['hps'] }}</td>
+          
+          <td class="rectangle-cell">
+            <!-- {{ data['taken'] }} -->
+            {% if 't_p' in data %}
+            <div class="taken-bar" style="--width: {{ data['t_p'] }}%"></div>
+            {% endif %}
+          </td>
+          <td class="total-cell col-taken">{{ data['taken'] }}</td>
+          <td class="per-sec-cell">{{ data['tps'] }}</td>
         </tr>
         {% endfor %}
-      </table>
-    </section>
+      </tbody>
+    </table>
+    <canvas id="chart"></canvas>
   </section>
   <div class="min-max-slider" data-legendnum="2">
     <div class="min-max-slider-inputs">
@@ -75,7 +154,7 @@
     </div>
     <button class="min-max-slider-submit" type="submit">Slice</button>
   </div>
-  <section>
+  <section style="display: none;">
     <p>First Hit: {{ FIRST_HIT }}</p>
     <p>Last Hit: {{ LAST_HIT }}</p>
   </section>
@@ -83,3 +162,94 @@
 </main>
 
 {% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  const thead = document.querySelector("thead");
+  const tbody = document.querySelector("tbody");
+  const getCellValue = (tr, className) => tr.querySelector(className).innerText.replace(/[% ]/g, "");
+  const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
+  document.querySelectorAll("th[class").forEach(th => th.addEventListener("click", () => {
+    const _class = th.className;
+    Array.from(tbody.querySelectorAll("tr"))
+         .sort(comparer(`.${th.className}`))
+         .forEach(tr => tbody.appendChild(tr));
+  }));
+  
+  async function draw_chart(datapoints) {
+    if (Object.keys(datapoints).length === 0) return;
+    const data = {
+      datasets: [
+        {
+          data: datapoints,
+          cubicInterpolationMode: 'monotone',
+          borderColor: '#FF0000',
+          pointBorderWidth: 0,
+        }
+      ]
+    };
+
+    const datapoints_values = Object.values(datapoints);
+    const datapoints_min = Math.min(...datapoints_values);
+    const graph_min = Math.floor(datapoints_min);
+    const datapoints_max = Math.max(...datapoints_values);
+    const graph_max = Math.ceil(datapoints_max);
+
+    const options = {
+      animation: false,
+      responsive: true,
+      scales: {
+        y: {
+          grid: {
+            color: 'rgb(32, 32, 32)',
+            tickLength: 1,
+          },
+          min: graph_min,
+          max: graph_max,
+          display: true,
+          title: {
+            display: true,
+            text: 'DPS'
+          },
+          ticks: {
+            padding: 0
+          }
+        },
+        x: {
+          display: false
+        }
+      },
+      plugins: {
+        tooltip: {
+          intersect: false
+        },
+        legend: {
+          display: false
+        }
+      }
+    };
+
+    const config = {
+      type: 'line',
+      data: data,
+      options: options,
+    };
+    new Chart(document.getElementById('chart'), config);
+  }
+
+  const get_dps_request = new XMLHttpRequest();
+  get_dps_request.onreadystatechange = () => {
+    if (get_dps_request.readyState != 4 || get_dps_request.status != 200) return;
+    const datapoints = JSON.parse(get_dps_request.response);
+    draw_chart(datapoints);
+  }
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const paramsjson = Object.fromEntries(params);
+    const reportID = window.location.pathname.split('/')[2];
+    const END_POINT = `/reports/${reportID}/get_dps`;
+    get_dps_request.open("POST", END_POINT);
+    get_dps_request.send(JSON.stringify(paramsjson));
+  })();
+</script>
+{% endblock the_scripts %}

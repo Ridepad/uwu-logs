@@ -197,3 +197,22 @@ def format_hits(hits: dict[str, list[int]]):
 
 def hits_data(data: dict[int, dict[str, list[int]]]):
     return {spell_id: format_hits(hits) for spell_id, hits in data.items()}
+
+PARSE_LOGS_FUNCTIONS = {
+    "casts": casts,
+    "misses": misses,
+    "auras": auras,
+}
+
+def get_total_damage_hits(data: dict[str, list]):
+    return len(data.get("spells_hit", [])) + len(data.get("spells_crit", []))
+
+def parse_logs_wrap(logs_slice, sGUID, controlled_units, all_player_pets, tGUID):
+    data = parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+    for key, func in PARSE_LOGS_FUNCTIONS.items():
+        data[key] = func(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+    data['dmg_hits'] = {
+        spell_id: get_total_damage_hits(_d)
+        for spell_id, _d in data["actual"].items()
+    }
+    return data

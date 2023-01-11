@@ -72,23 +72,27 @@ def parse_only_heal(logs):
 
 @running_time
 def parse_both(logs: list[str], players_and_pets: set[str]):
-    dmg: defaultdict[str, int] = defaultdict(int)
-    heal: defaultdict[str, int] = defaultdict(int)
+    DMG: defaultdict[str, int] = defaultdict(int)
+    HEAL: defaultdict[str, int] = defaultdict(int)
+    TAKEN: defaultdict[str, int] = defaultdict(int)
+    
     for line in logs:
         if "_DAMAGE" in line:
             _, _, guid, _, tguid, _, _, _, _, d, ok, _ = line.split(',', 11)
             if tguid in players_and_pets:
-                continue
-            dmg[guid] += int(d) - int(ok)
+                TAKEN[tguid] += int(d)
+            else:
+               DMG[guid] += int(d)
         
         elif "_H" in line:
             _, _, guid, _, _, _, _, _, _, d, ok, _ = line.split(',', 11)
             if d != ok:
-                heal[guid] += int(d) - int(ok)
+                HEAL[guid] += int(d) - int(ok)
     
     return {
-        "damage": dmg,
-        "heal": heal,
+        "damage": DMG,
+        "heal": HEAL,
+        "taken": TAKEN
     }
 
 CUSTOM_UNITS = {"00958D"}
@@ -348,3 +352,10 @@ def parse_dmg_taken_add_pets(data: dict[str, dict], guids):
         _ttl_tar[target_guid] = sum(src.values())
             
     return new_dmg, _ttl_tar, _ttl_src
+
+def readable_logs_line(line: str):
+    _line = line.split(',', 8)
+    try:
+        return f"{_line[0]} {_line[1]} {_line[3]} -> {_line[5]} with {_line[7]}"
+    except IndexError:
+        return f"{_line[0]} {_line[1]} {_line[3]} -> {_line[5]}"

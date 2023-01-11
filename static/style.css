@@ -13,6 +13,7 @@
   --highlight-color: rgb(24, 24, 24);
   /* --highlight-alternate-color: rgb(128, 128, 128); */
   --slider-background: #4F00A9;
+  --table-border: rgb(32, 32, 32);
 }
 
 * {
@@ -132,33 +133,6 @@ a:not([class]):hover {
   position: relative;
 }
 
-
-/* UPLOAD */
-.upload {
-  display: grid;
-  justify-content: center;
-}
-#upload-error {
-  font-size: 200%;
-  margin-top: 1rem;
-  color: crimson;
-}
-#upload-status {
-  font-size: 200%;
-  min-width: 20ch;
-  width: 50vw;
-}
-.upload h2 {
-  font-size: 300%;
-}
-.upload td {
-  padding-inline: 1em;
-}
-
-.upload span {
-  color:bisque;
-  background-color: var(--highlight-color);
-}
 
 /* NO PAGE */
 #no-page {
@@ -522,12 +496,13 @@ table, th, td {
   padding: 0;
 }
 th, td {
-  border: 1px solid dimgray;
+  border: 1px solid var(--table-border);
 }
 
 th {
   font-weight: 600;
   background-color: var(--highlight-color);
+  cursor: pointer;
 }
 tbody > tr:nth-child(odd) > td {
   background-color: hsl(0, 0%, 5%);
@@ -556,15 +531,28 @@ td > a:hover {
 .avgs td {
   min-width: 7ch;
 }
+
 .player-cell {
-  min-width: 16ch;
+  min-width: 20ch;
+  width: 24ch;
 }
+tr:nth-child(n+2) {
+  counter-increment: rowNumber;
+}
+.player-cell::before {
+  display: inline-block;
+  min-width: 2.5ch;
+  text-align: right;
+}
+tr .player-cell::before {
+  content: counter(rowNumber);
+}
+tr:first-child .player-cell::before {
+  content: '';
+}
+
 .boss-cell {
   min-width: 20ch;
-}
-.dps-cell {
-  min-width: 8ch;
-  text-align: right;
 }
 .total-cell {
   min-width: 12ch;
@@ -603,59 +591,13 @@ td > a:hover {
   text-align: right;
 }
 
-.rectangle-cell > div {
-  height: .9em;
-  height: 1em;
-  border-radius: 0.1em;
-  animation: 3s linear infinite;
-}
-#damage .rectangle-cell > div {
-  box-shadow: .1em .1em 1em darkred;
-  animation-name: dmgbar;
-}
-@keyframes dmgbar {
-  0%,
-  100% {background-color: hsl(0, 85%, 30%);}
-  50%  {background-color: hsl(0, 100%, 25%);}
-}
-#heal .rectangle-cell > div {
-  box-shadow: .1em .1em 1em forestgreen;
-  animation-name: healbar;
-}
-@keyframes healbar {
-  0%,
-  100% {background-color: hsl(120, 75%, 25%);}
-  50%  {background-color: hsl(120, 100%, 25%);}
-}
 
-td > img {
+/* td > img {
   min-height: 1.1em;
   max-height: 1.1em;
   min-width: 1.1em;
   vertical-align: middle;
-}
-
-/* USEFUL DAMAGE */
-#report-damage th {
-  min-width: 13ch;
-  max-width: 13ch;
-}
-
-/* SPELLS */
-#spells h1 a {
-  font-size: 200%;
-}
-#spells .panel section {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-}
-@media (min-width: 1100px) {
-  #spells .panel section {
-    margin-left: 5rem;
-  }
-}
-
+} */
 
 /* INPUTS */
 
@@ -898,146 +840,6 @@ td:hover > table {
 }
 
 
-/* LOGS LIST */
-#calendar-table * {
-  font-size: clamp(10pt, calc(100vw / 17), 40pt);
-}
-#calendar-table label {
-  padding: 0;
-  min-width: 3ch;
-}
-#calendar-table td {
-  text-align: right;
-}
-#calendar-table aside {
-  display: none;
-  position: fixed;
-  bottom: 5%;
-  left: auto;
-  right: 0;
-  height: 85vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex-direction: column;
-}
-#calendar-table input:checked ~ aside {
-  display: flex;
-}
-#calendar-table a {
-  text-align: left;
-  font-size: 60%;
-  min-width: max-content;
-  padding-right: 1ch;
-}
-#calendar-table tr:nth-child(n+2) > td {
-  color: var(--highlight-color);
-}
-#calendar-footer a {
-  font-size: 150%;
-}
-#calendar-footer-date {
-  display: inline-block;
-  min-width: 14ch;
-  text-align: center;
-}
-@media (max-width: 1100px) {
-  #calendar-footer {
-    justify-content: center;
-  }
-  #calendar-table aside {
-    height: 100vw;
-  }
-  #calendar-table a {
-    font-size: 90%;
-  }
-}
-
-#controls > * {
-  font-size: clamp(10pt, 3vh, 7vw);
-  text-align: center;
-}
-
-#controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
-}
-#ladder #instance,
-#ladder #boss {
-  grid-column: span 3;
-}
-
-
-#table-section {
-  margin-top: 1vh;
-}
-#ladder table {
-  display: flex;
-  justify-content: center;
-}
-#ladder table * {
-  border: 0;
-}
-#ladder table th {
-  border-bottom: .2em solid var(--primary-color);
-}
-#ladder table td {
-  padding: 0 1vw;
-}
-
-#ladder td {
-  text-align: right;
-}
-
-#table-section td:nth-child(4) {
-  min-width: 2ch;
-  max-width: 4ch;
-}
-#table-section td:nth-child(5), 
-#table-section td:last-child {
-  min-width: calc(8ch + 2px);
-  max-width: calc(8ch + 2px);
-}
-#ladder table td:first-child,
-#table-section td:nth-child(3) {
-  min-width: 4.5ch;
-  max-width: 4.5ch;
-}
-#ladder .guild-cell,
-#ladder table td:last-child {
-  text-align: center;
-}
-#ladder .guild-cell {
-  /* word-break: break-word; */
-  /* word-break: keep-all; */
-  max-width: 35vw;
-  min-width: 10ch;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: "";
-  
-}
-
-@media (min-width: 1100px) {
-  #ladder #instance,
-  #ladder #boss {
-    min-width: 25ch;
-    margin-left: 0;
-  }
-  #ladder table {
-    width: unset;
-  }
-  #controls {
-    margin-inline: 30vw;
-  }
-  abbr span {
-    display: none;
-  }
-  abbr::before {
-    content: attr(title);
-  }
-}
-
 #swap-buffs {
   font-size: clamp(1vw, 3rem, 5vw);
   text-align: center;
@@ -1054,40 +856,6 @@ td:hover > table {
 #dmg-done button:hover {
   cursor: pointer;
   box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
-}
-
-#potions-table > tbody > tr th {
-  position: sticky;
-}
-
-#potions-table th img {
-  min-height: 1.5em;
-  max-height: 1.5em;
-  min-width: 1.5em;
-}
-
-#potions-table td:not(.player-cell) {
-  text-align: right;
-}
-
-#potions-table tr > *:nth-child(7) {
-  border-right: 5px solid dimgray;
-}
-
-#auras-table th img {
-  min-height: 2em;
-  max-height: 2em;
-  min-width: 2em;
-}
-#auras-table td:not(.player-cell):nth-child(odd) {
-  min-width: 7.5ch;
-}
-#auras-table td:not(.player-cell) {
-  text-align: right;
-}
-
-#auras-table td:not(.player-cell, :empty):nth-child(odd)::after {
-  content: "%";
 }
 
 
@@ -1117,153 +885,6 @@ td:hover > table {
   background-color: var(--background);
   box-shadow: inset 0 0 .5em var(--primary-color);
   border-radius: .5em;
-}
-
-
-/* VALKS */
-#valks-table-tbody td:not(.player-cell) {
-  text-align: right;
-}
-#valks-table-tbody .total-cell {
-  min-width: 5ch;
-}
-#valks-table-tbody .grab {
-  background-color: crimson;
-}
-#valks-table-tbody td:not(.player-cell, .total-cell) {
-  color: transparent;
-}
-
-
-/* DEATHS */
-#deaths {
-  margin-bottom: calc(var(--nav-height) * 2 + 1rem);
-}
-
-#deaths tr * {
-  text-shadow: 0 0 1em var(--background);
-}
-
-#open-tabs + label {
-  position: fixed;
-}
-#deaths .panel {
-  position: fixed;
-  top: 10vh;
-  overflow: scroll;
-  height: 80%;
-}
-#deaths .name {
-  text-overflow:ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-#deaths td:first-of-type {
-  text-align: right;
-}
-#deaths td {
-  padding-inline: .1em;
-}
-
-#all-tabs label {
-  position: relative;
-  display: none;
-  z-index: 1;
-  top: -2vh;
-  padding: 0 1rem;
-  background-color: var(--background);
-  box-shadow: inset 0 0 .4rem var(--primary-color);
-}
-#open-tabs:checked ~ div label {
-  display: block;
-}
-#deaths input:checked + label {
-  color: crimson;
-}
-#deaths .damage > td {
-  background-color: hsl(348, 100%, 15%);
-}
-#deaths .buff > td {
-  background-color: hsl(50, 50%, 20%);
-}
-#deaths .debuff > td {
-  background-color: hsl(325, 100%, 15%);
-}
-#deaths .heal > td {
-  background-color: hsl(135, 100%, 15%);
-}
-
-
-/* PLAYER AURAS */
-
-#player section {
-  display: none;
-}
-
-#player #buffs:checked ~ #buffs-panel,
-#player #debuffs:checked ~ #debuffs-panel,
-#player #casts:checked ~ #casts-panel {
-  display: block;
-}
-
-#player label {
-  margin: 0 0;
-  width: 4em;
-  text-align: center;
-  padding: .2rem 1.5rem;
-  background: var(--background);
-  position: fixed;
-  bottom: 4.5vh;
-  left: 0;
-}
-
-#player td:nth-child(2) {
-  min-width: 6ch;
-  text-align: right;
-}
-
-#player label ~ label {
-  margin-left: 7rem;
-}
-
-#player label ~ label  ~ label {
-  margin-left: 14rem;
-}
-
-/* #player section {
-  position: fixed;
-  left: 0;
-  top: 10vh;
-} */
-
-/* #player input:checked + label + section {
-  display: block;
-} */
-
-#upload-progress-bar-wrapper {
-  box-shadow: inset 0 0 .5em var(--unfocused), 0 0 .5em var(--unfocused);
-  border-radius: .5em;
-  position: relative;
-  height: 1.25em;
-  z-index: initial;
-  margin-top: .25em;
-  margin-bottom: .25em;
-}
-
-#upload-progress-bar {
-  position: relative;
-  z-index: -1;
-  border-radius: .5em;
-  background-color: var(--secondary-color);
-  width: 0%;
-  height: 100%;
-}
-
-#upload-progress-bar-percentage {
-  text-align: right;
-  position: absolute;
-  right: .5em;
-  bottom: 5%;
 }
 
 

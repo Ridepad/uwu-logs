@@ -156,6 +156,8 @@ class PET_BULLSHIT:
 
     def filter_out_pets(self, pets: set[str], owners: set[str]):
         for pet_guid in set(pets):
+            if pet_guid not in self.everything:
+                continue
             master_guid = self.everything[pet_guid].get('master_guid')
             if master_guid:
                 if pet_guid in pets:

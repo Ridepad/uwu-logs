@@ -1,5 +1,66 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+#deaths {
+  margin-bottom: calc(var(--nav-height) * 2 + 1rem);
+}
+
+#deaths tr * {
+  text-shadow: 0 0 1em var(--background);
+}
+
+#open-tabs + label {
+  position: fixed;
+}
+#deaths .panel {
+  position: fixed;
+  top: 10vh;
+  overflow: scroll;
+  height: 80%;
+}
+#deaths .name {
+  text-overflow:ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#deaths td:first-of-type {
+  text-align: right;
+}
+#deaths td {
+  padding-inline: .1em;
+}
+
+#all-tabs label {
+  position: relative;
+  display: none;
+  z-index: 1;
+  top: -2vh;
+  padding: 0 1rem;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .4rem var(--primary-color);
+}
+#open-tabs:checked ~ div label {
+  display: block;
+}
+#deaths input:checked + label {
+  color: crimson;
+}
+#deaths .damage > td {
+  background-color: hsl(348, 100%, 15%);
+}
+#deaths .buff > td {
+  background-color: hsl(50, 50%, 20%);
+}
+#deaths .debuff > td {
+  background-color: hsl(325, 100%, 15%);
+}
+#deaths .heal > td {
+  background-color: hsl(135, 100%, 15%);
+}
+</style>
+{% endblock add_style %}
+
 {% block the_main %}
 <main id="deaths">
   <section id="dmg-done-selection">

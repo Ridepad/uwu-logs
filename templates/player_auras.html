@@ -1,5 +1,44 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+#player section {
+  display: none;
+}
+
+#player #buffs:checked ~ #buffs-panel,
+#player #debuffs:checked ~ #debuffs-panel,
+#player #casts:checked ~ #casts-panel {
+  display: block;
+}
+
+#player label {
+  margin: 0 0;
+  width: 4em;
+  text-align: center;
+  padding: .2rem 1.5rem;
+  background: var(--background);
+  position: fixed;
+  bottom: 4.5vh;
+  left: 0;
+}
+
+#player td:nth-child(2) {
+  min-width: 6ch;
+  text-align: right;
+}
+
+#player label ~ label {
+  margin-left: 7rem;
+}
+
+#player label ~ label  ~ label {
+  margin-left: 14rem;
+}
+</style>
+{% endblock add_style %}
+
+
 {% block the_main %}
 <main id="player">
   <a class="swap-button" id="swap-buffs" href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a>

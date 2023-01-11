@@ -62,7 +62,7 @@ input:checked + label + section {
         {% for player_name, power_data in POWERS[power_name].items() %}
         <tr>
           <td class="player-cell">
-            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
           <td>{{ TOTAL[power_name][player_name] }}</td>
           {% for spell_id in SPELLS[power_name] %}

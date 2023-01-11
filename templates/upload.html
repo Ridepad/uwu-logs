@@ -1,5 +1,60 @@
 {% extends "layout.html" %}
 
+{% block add_style %}
+<style>
+#upload-progress-bar-wrapper {
+  box-shadow: inset 0 0 .5em var(--unfocused), 0 0 .5em var(--unfocused);
+  border-radius: .5em;
+  position: relative;
+  height: 1.25em;
+  z-index: initial;
+  margin-top: .25em;
+  margin-bottom: .25em;
+}
+#upload-progress-bar {
+  position: relative;
+  z-index: -1;
+  border-radius: .5em;
+  background-color: var(--secondary-color);
+  width: 0%;
+  height: 100%;
+}
+#upload-progress-bar-percentage {
+  text-align: right;
+  position: absolute;
+  right: .5em;
+  bottom: 5%;
+}
+.upload {
+  display: grid;
+  justify-content: center;
+}
+#upload-error {
+  font-size: 200%;
+  margin-top: 1rem;
+  color: crimson;
+}
+#upload-status {
+  font-size: 200%;
+  min-width: 30ch;
+  width: fit-content;
+}
+.upload h2 {
+  font-size: 300%;
+}
+.upload td {
+  padding-inline: 1em;
+}
+.upload span {
+  color: bisque;
+  background-color: var(--highlight-color);
+}
+#server-input {
+  width: 100%;
+}
+</style>
+{% endblock add_style %}
+
 {% block scripts_head %}
 <script defer src="/static/upload.js"></script>
 {% endblock scripts_head %}
@@ -13,12 +68,12 @@
     <button id="upload-form-submit" type="button">Upload File</button>
   </form>
   <div id="server-select">
-    <p>Optional: (Warmane is parsed automatically)</p>
-    <input id="server-input" type="text" placeholder="Type in any server name" list="server-list">
+    <input id="server-input" type="text" placeholder="Optional: Type in any server name (if not Warmane)" list="server-list">
     <datalist id="server-list">
       <option value="Algalon"></option>
       <option value="ChromieCraft"></option>
       <option value="Crystalsong"></option>
+      <option value="Frosthold"></option>
       <option value="Sindragosa"></option>
       <option value="Rising Gods"></option>
     </datalist>
@@ -27,17 +82,18 @@
 <section id="upload-info" class="upload">
   <h2>How to start logging</h2>
   <ul>
-    <li>Make sure WoW folder isn't read-only</li>
-    <li>Type <span>/combatlog</span> in game (before anything happens, not after)</li>
+    <li>0. Make sure WoW folder isn't read-only</li>
+    <li>1. Type <span>/combatlog</span> in game (before anything happens, not after)</li>
     <li>- You have to do this every time after relog/reload/crash</li>
     <li>- Use <a href="https://wago.io/9Okfx9zrS" target="_blank">weakauras</a> instead to never forget to start logging</li>
     <li>- You can even <span>/reload</span> mid pull with this wa and it'll continue logging</li>
-    <li>Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
-    <li>Archive it (supported formates: <span>.7z</span> or <span>.zip</span>)</li>
-    <li>- Don't rename files to .zip/.7z, create archives from 0.</li>
-    <li>- Make sure to archive only <span>.txt</span> file without any folders.</li>
-    <li>Upload the archive above</li>
+    <li>2. Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
+    <li>3. Archive it (supported formates: <span>.7z</span> or <span>.zip</span>)</li>
+    <li style="color: crimson;">- Don't rename files to .zip/.7z, create archives from 0.</li>
+    <li style="color: goldenrod;">- Make sure to archive only <span>.txt</span> file without any folders.</li>
+    <li>4. Upload the archive above</li>
   </ul>
+  <img src="/static/upload_guide.png">
   <h2>Additional info</h2>
   <ul>
     <li>Combatlog is logged into the same file always</li>
@@ -66,7 +122,7 @@
 </section>
 <section id="upload-progress-section" class="upload" style="display: none;">
   <h2>Upload progress:</h2>
-  <div id="upload-status">Uploading...</div>
+  <p id="upload-status">Uploading...</p>
   <div id="upload-progress-bar-wrapper" class="progress-bar-wrapper">
     <div id="upload-progress-bar" class="progress-bar"></div>
     <div id="upload-progress-bar-percentage"></div>

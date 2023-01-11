@@ -16,11 +16,12 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
+import test_dps
 from constants import (
-    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS,
-    add_space, convert_to_html_name, get_report_name_info, is_player,
+    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS, SPEC_ICON_TO_POSITION,
+    add_space, convert_to_html_name, duration_to_string, get_report_name_info, is_player,
     json_read, json_read_no_exception, json_write, running_time, setup_logger,
-    sort_dict_by_value, get_now, to_dt_simple_year, zlib_text_read)
+    sort_dict_by_value, get_now, to_dt_year_precise, zlib_text_read)
 
 IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
 PLAYER = "0x0"
@@ -37,13 +38,19 @@ def get_shift(request_path: str):
     except IndexError:
         return 0
 
-def add_new_numeric_data(data_total: defaultdict, data_new: dict):
+def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
     for source, amount in data_new.items():
         data_total[source] += amount
 
 def separate_thousands(num):
-    if not num: return ""
-    v = f"{num:,}" if type(num) == int else f"{num:,.1f}"
+    if not num:
+        return ""
+    
+    if type(num) == int:
+        v = f"{num:,}"
+    else:
+        v = f"{num:,.1f}"
+
     return v.replace(",", " ")
 
 def format_total_data(data: dict):
@@ -58,6 +65,11 @@ def calc_per_sec(value: int, duration: float, precision: int=1):
     precision = 10**precision
     v = int(v * precision) / precision
     return separate_thousands(v)
+
+def calc_per_sec(value: int, duration: float, precision: int=1):
+    v = value / (duration or 1)
+    precision = 10**precision
+    return int(v * precision) / precision
 
 def convert_to_table(data: dict[str, int], duration):
     if not data:
@@ -74,6 +86,34 @@ def convert_to_table(data: dict[str, int], duration):
         )
         for name, value in _data
     ]
+
+TABLE_VALUES: dict[str, tuple[str]] = {
+    "damage": ("damage", "dps", "d_p"),
+    "heal": ("heal", "hps", "h_p"),
+    "taken": ("taken", "tps", "t_p"),
+}
+
+def add_new_data(data: dict, table: dict[str, dict], duration: float, _type: str):
+    MAX_VALUE = max(data.values())
+    KEYS = TABLE_VALUES[_type]
+    TOTAL = {KEYS[-1]: 100}
+    for name, value in data.items():
+        UNIT_DATA = table.setdefault(name, {})
+
+        NEW_DATA = (
+            value,
+            calc_per_sec(value, duration),
+            calc_percent(value, MAX_VALUE)
+        )
+        
+        for key, new_value in zip(KEYS, NEW_DATA):
+            if not key.endswith("_p"):
+                UNIT_DATA[key] = separate_thousands(new_value)
+                TOTAL[key] = TOTAL.get(key, 0) + new_value
+            else:
+                UNIT_DATA[key] = new_value
+
+    return TOTAL
 
 def count_total(spell_data: dict[str, dict[str, list[int]]]):
     return {
@@ -121,32 +161,6 @@ def build_query(boss_name_html, mode, s, f, attempt):
         return f"?{query}"
     return ""
 
-def convert_duration(t):
-    milliseconds = int(t % 1 * 1000)
-    t = int(t)
-    seconds = t % 60
-    minutes = t // 60 % 60
-    hours = t // 3600
-    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
-    
-@running_time
-def get_targets(logs_slice: list[str], source=PLAYER, target="0xF1"):
-    _targets: set[str] = set()
-    for line in logs_slice:
-        if "_DAMAGE" not in line:
-            continue
-        if source not in line:
-            continue
-        _, _, sguid, _, tguid, _ = line.split(',', 5)
-        if source in sguid and target in tguid:
-            _targets.add(tguid)
-    target_ids = {x[6:-6] for x in _targets}
-    # print(target_ids)
-    return {
-        target_id: {x for x in _targets if target_id in x}
-        for target_id in target_ids
-    }
-
 def group_targets(targets: set[str]):
     target_ids = {guid[:-6] for guid in targets}
     return {
@@ -165,11 +179,6 @@ def regroup_targets(data):
 
 
 class THE_LOGS:
-    GUIDS: dict[str, dict[str, str]]
-    PLAYERS: dict[str, str]
-    CLASSES: dict[str, str]
-    SEGMENTS: dict[str, list[tuple[str]]]
-
     def __init__(self, logs_name: str) -> None:
         self.loading = False
         self.NAME = logs_name
@@ -182,7 +191,6 @@ class THE_LOGS:
 
         self.last_access = get_now()
 
-        self.bosses_convert: dict[str, str] = {}
         self.DURATIONS: dict[str, float] = {}
         self.TARGETS: dict[str, dict[str, set[str]]] = {}
         self.CACHE: dict[str, dict[str, dict]] = {x: {} for x in dir(self) if "__" not in x}
@@ -232,8 +240,8 @@ class THE_LOGS:
         
         return logs[s:f]
 
-    def to_dt(self, last, now):
-        return to_dt_simple_year(now, self.year) - to_dt_simple_year(last, self.year)
+    def get_timedelta(self, last, now):
+        return to_dt_year_precise(now, self.year) - to_dt_year_precise(last, self.year)
     
     def get_slice_first_last_lines(self, s, f):
         return self.get_logs()[s or 0], self.get_logs()[f or -1]
@@ -243,7 +251,7 @@ class THE_LOGS:
         if slice_ID in self.DURATIONS:
             return self.DURATIONS[slice_ID]
         first_line, last_line = self.get_slice_first_last_lines(s, f)
-        dur = self.to_dt(first_line, last_line).total_seconds()
+        dur = self.get_timedelta(first_line, last_line).total_seconds()
         self.DURATIONS[slice_ID] = dur
         return dur
 
@@ -254,7 +262,7 @@ class THE_LOGS:
         return sum(durations)
 
     def get_fight_duration_total_str(self, segments):
-        return convert_duration(self.get_fight_duration_total(segments))
+        return duration_to_string(self.get_fight_duration_total(segments))
         
     def get_enc_data(self, rewrite=False):
         try:
@@ -271,26 +279,36 @@ class THE_LOGS:
                 self.ENCOUNTER_DATA = enc_data
             return self.ENCOUNTER_DATA
     
-    def new_guids(self, guids_data_file_name, players_data_file_name, classes_data_file_name):
+    def new_guids(self):
         logs = self.get_logs()
         enc_data = self.get_enc_data()
         parsed = logs_units_guid.guids_main(logs, enc_data)
 
         if parsed['missing_owner']:
-            LOGGER_REPORTS.error(f"Missing owners: {parsed['missing_owner']}")
+            LOGGER_REPORTS.error(f"{self.NAME} | Missing owners: {parsed['missing_owner']}")
+        
+        guids_data_file_name = self.relative_path("GUIDS_DATA.json")
+        players_data_file_name = self.relative_path("PLAYERS_DATA.json")
+        classes_data_file_name = self.relative_path("CLASSES_DATA.json")
 
         _guids = parsed['everything']
         _players = parsed['players']
         _classes = parsed['classes']
+        
         json_write(guids_data_file_name, _guids)
         json_write(players_data_file_name, _players)
         json_write(classes_data_file_name, _classes)
+        
         return _guids, _players, _classes
     
     def get_guids(self, rewrite=False):
         try:
             return self.GUIDS, self.PLAYERS, self.CLASSES
         except AttributeError:
+            _guids: dict[str, dict[str, str]]
+            _players: dict[str, str]
+            _classes: dict[str, str]
+
             files = [
                 self.relative_path("GUIDS_DATA.json"),
                 self.relative_path("PLAYERS_DATA.json"),
@@ -298,13 +316,14 @@ class THE_LOGS:
             ]
             
             if rewrite or self.cache_files_missing(files):
-                self.GUIDS, self.PLAYERS, self.CLASSES = self.new_guids(*files)
+                _guids, _players, _classes = self.new_guids()
             else:
-                self.GUIDS, self.PLAYERS, self.CLASSES = [
+                _guids, _players, _classes = [
                     json_read_no_exception(_file_name)
                     for _file_name in files
                 ]
             
+            self.GUIDS, self.PLAYERS, self.CLASSES = _guids, _players, _classes
             return self.GUIDS, self.PLAYERS, self.CLASSES
 
     def get_all_guids(self):
@@ -321,6 +340,51 @@ class THE_LOGS:
 
     def get_classes(self):
         return self.get_guids()[2]
+
+    def name_to_guid(self, name: str) -> str:
+        guids = self.get_all_guids()
+        players_names = self.guid_to_player_name()
+
+        if name in players_names:
+            return players_names[name]
+        for guid, data in guids.items():
+            if data['name'] == name:
+                return guid
+    
+    def guid_to_name(self, guid: str) -> str:
+        guids = self.get_all_guids()
+        try:
+            return guids[guid]["name"]
+        except KeyError:
+            for full_guid, p in guids.items():
+                if guid in full_guid:
+                    return p['name']
+        
+    def get_master_guid(self, guid: str):
+        guids = self.get_all_guids()
+        master_guid = guids[guid].get('master_guid')
+        if not master_guid:
+            return guid
+        return guids.get(master_guid, {}).get('master_guid', master_guid)
+
+    def get_units_controlled_by(self, master_guid: str):
+        try:
+            int(master_guid, 16)
+        except ValueError:
+            master_guid = self.name_to_guid(master_guid)
+        
+        if master_guid in self.CONTROLLED_UNITS:
+            return self.CONTROLLED_UNITS[master_guid]
+        
+        all_guids = self.get_all_guids()
+        controlled_units = {
+            guid
+            for guid, p in all_guids.items()
+            if p.get("master_guid") == master_guid
+        }
+        controlled_units.add(master_guid)
+        self.CONTROLLED_UNITS[master_guid] = controlled_units
+        return controlled_units
 
     def guid_to_player_name(self):
         try:
@@ -448,10 +512,102 @@ class THE_LOGS:
             self.BOSSES_TO_HTML = _data['boss_html']
             self.BOSSES_FROM_HTML = {v:k for k, v in self.BOSSES_TO_HTML.items()}
             
-            self.SEGMENTS = _data['segments']
+            self.SEGMENTS: dict[str, list[tuple[str]]] = _data['segments']
             return self.SEGMENTS
-
+    
+    def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
+        if not shift_s and not shift_f:
+            return
         
+        ts = self.get_timestamp()
+        for i, (seg_s, seg_f) in enumerate(segments):
+            if shift_s:
+                seg_s_shifted = self.find_index(seg_s, shift_s)
+                seg_s = ts[seg_s_shifted]
+            if shift_f:
+                seg_f_shifted = self.find_index(seg_f, shift_f)
+                seg_f = ts[seg_f_shifted]
+            segments[i] = [seg_s, seg_f]
+    
+    def parse_request(self, path: str, args: dict) -> dict:
+        segment_difficulty = args.get("mode")
+        attempt = args.get("attempt", type=int)
+        boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
+        ts = self.get_timestamp()
+        sc = args.get("sc", type=int) or 0
+        fc = args.get("fc", type=int) or 0
+        if sc > 0 and fc < len(ts):
+            slice_name = "Custom Slice"
+            slice_tries = ""
+            segments = [[ts[sc], ts[fc]]]
+        elif not boss_name:
+            slice_name = "Custom Slice"
+            slice_tries = "All"
+            s = args.get("s", type=int)
+            f = args.get("f", type=int)
+            if s and f:
+                segments = [[ts[s], ts[f]]]
+            else:
+                segments =  [[None, None]]
+        
+        else:
+            enc_data = self.get_enc_data()
+            separated = self.get_segments_separated()
+            slice_name = boss_name
+            if attempt is not None:
+                segments = [enc_data[boss_name][attempt], ]
+                slice_tries = f"Try {attempt+1}"
+                for diff, segm_data in separated[boss_name].items():
+                    for segm in segm_data:
+                        if segm.get("attempt") == attempt:
+                            segment_type = segm.get("segment_type", "")
+                            slice_tries = f"{diff} {segment_type}"
+                            break
+            elif segment_difficulty:
+                slice_tries = f"{segment_difficulty} All"
+                segments = [
+                    [segment["start"], segment["end"]]
+                    for segment in separated[boss_name][segment_difficulty]
+                ]
+            else:
+                slice_tries = "All"
+                segments = enc_data[boss_name]
+            
+            shift = get_shift(path)
+            self.segments_apply_shift(segments, shift_s=shift)
+        
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": slice_name,
+            "SLICE_TRIES": slice_tries,
+            "BOSS_NAME": boss_name,
+        }
+    
+    # def get_default_params(self, path: str, query: str, args: dict) -> dict:
+    def get_default_params(self, request) -> dict:
+        PATH: str = request.path
+        QUERY: str = request.query_string.decode()
+        if QUERY:
+            QUERY = f"?{QUERY}"
+        cached_data = self.CACHE['get_default_params'].setdefault(PATH, {})
+        if QUERY in cached_data:
+            return cached_data[QUERY]
+        
+        parsed = self.parse_request(PATH, request.args)
+        return_data = parsed | {
+            "PATH": PATH,
+            "QUERY": QUERY,
+            "REPORT_ID": self.NAME,
+            "REPORT_NAME": self.get_formatted_name(),
+            "SEGMENTS_LINKS": self.get_segment_queries(),
+            "PLAYER_CLASSES": self.get_classes_with_names(),
+            "DURATION": self.get_fight_duration_total_str(parsed["SEGMENTS"]),
+            "SPEC_ICON_TO_POSITION": SPEC_ICON_TO_POSITION,
+        }
+        cached_data[QUERY] = return_data
+        return return_data
+
+
     def get_spells(self, rewrite=False):
         try:
             return self.SPELLS
@@ -514,126 +670,10 @@ class THE_LOGS:
             for spell_id, spell_v in _spells.items()
             if INPUT in spell_v
         }
-    
-
-    def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
-        if not shift_s and not shift_f:
-            return
-        
-        ts = self.get_timestamp()
-        for i, (seg_s, seg_f) in enumerate(segments):
-            if shift_s:
-                seg_s_shifted = self.find_index(seg_s, shift_s)
-                seg_s = ts[seg_s_shifted]
-            if shift_f:
-                seg_f_shifted = self.find_index(seg_f, shift_f)
-                seg_f = ts[seg_f_shifted]
-            segments[i] = [seg_s, seg_f]
-    
-    def parse_request(self, request):
-        args: dict = request.args
-
-        segment_difficulty = args.get("mode")
-        attempt = args.get("attempt", type=int)
-        boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
-        ts = self.get_timestamp()
-        sc = args.get("sc", type=int) or 0
-        fc = args.get("fc", type=int) or 0
-        if sc > 0 and fc < len(ts):
-            slice_name = "Custom Slice"
-            slice_tries = ""
-            segments = [[ts[sc], ts[fc]]]
-        elif not boss_name:
-            slice_name = "Custom Slice"
-            slice_tries = "All"
-            s = args.get("s", type=int)
-            f = args.get("f", type=int)
-            if s and f:
-                segments = [[ts[s], ts[f]]]
-            else:
-                segments =  [[None, None]]
-        
-        else:
-            enc_data = self.get_enc_data()
-            separated = self.get_segments_separated()
-            slice_name = boss_name
-            if attempt is not None:
-                segments = [enc_data[boss_name][attempt], ]
-                slice_tries = f"Try {attempt+1}"
-                for diff, segm_data in separated[boss_name].items():
-                    for segm in segm_data:
-                        if segm.get("attempt") == attempt:
-                            segment_type = segm.get("segment_type", "")
-                            slice_tries = f"{diff} {segment_type}"
-                            break
-            elif segment_difficulty:
-                slice_tries = f"{segment_difficulty} All"
-                segments = [
-                    [segment["start"], segment["end"]]
-                    for segment in separated[boss_name][segment_difficulty]
-                ]
-            else:
-                slice_tries = "All"
-                segments = enc_data[boss_name]
-            
-            shift = get_shift(request.path)
-            self.segments_apply_shift(segments, shift_s=shift)
-        
-        return {
-            "segments": segments,
-            "slice_name": slice_name,
-            "slice_tries": slice_tries,
-            "boss_name": boss_name,
-        }
-
-    def name_to_guid(self, name: str) -> str:
-        guids = self.get_all_guids()
-        players_names = self.guid_to_player_name()
-
-        if name in players_names:
-            return players_names[name]
-        for guid, data in guids.items():
-            if data['name'] == name:
-                return guid
-    
-    def guid_to_name(self, guid: str) -> str:
-        guids = self.get_all_guids()
-        try:
-            return guids[guid]["name"]
-        except KeyError:
-            for full_guid, p in guids.items():
-                if guid in full_guid:
-                    return p['name']
-        
-    def get_master_guid(self, guid: str):
-        guids = self.get_all_guids()
-        master_guid = guids[guid].get('master_guid')
-        if not master_guid:
-            return guid
-        return guids.get(master_guid, {}).get('master_guid', master_guid)
-
-    def get_units_controlled_by(self, master_guid: str):
-        if master_guid in self.CONTROLLED_UNITS:
-            return self.CONTROLLED_UNITS[master_guid]
-        
-        all_guids = self.get_all_guids()
-        controlled_units = {
-            guid
-            for guid, p in all_guids.items()
-            if p.get("master_guid") == master_guid
-        }
-        controlled_units.add(master_guid)
-        self.CONTROLLED_UNITS[master_guid] = controlled_units
-        return controlled_units
-
-    def convert_data_to_names(self, data: dict):
-        guids = self.get_all_guids()
-        data = sort_dict_by_value(data)
-        return [(guids[guid]["name"], separate_thousands(v)) for guid, v in data.items()]
 
 
     @running_time
-    def report_page(self, s, f) -> tuple[dict[str, int], dict[str, int]]:
+    def report_page(self, s, f) -> dict[str, defaultdict[str, int]]:
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['report_page']
         if slice_ID in cached_data:
@@ -646,23 +686,11 @@ class THE_LOGS:
         units = set(data["damage"]) | set(data["heal"])
         players = self.get_players_guids(filter_guids=units)
         classes = self.get_classes()
-        if s is None and f is None:
-            logs_slice = self.get_logs(None, 50000)
+
         data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
+        data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
+        data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
 
-        first_line = logs_slice[0].split(',', 8)
-        last_line = logs_slice[-1].split(',', 8)
-
-        try:
-            data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]} with {first_line[7]}"
-        except IndexError:
-            data['first_hit'] = f"{first_line[0]} {first_line[1]} {first_line[3]} -> {first_line[5]}"
-        
-        try:
-            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]} with {last_line[7]}"
-        except IndexError:
-            data['last_hit'] = f"{last_line[0]} {last_line[1]} {last_line[3]} -> {last_line[5]}"
-        
         cached_data[slice_ID] = data
         return data
     
@@ -672,49 +700,68 @@ class THE_LOGS:
         data_sorted = sort_dict_by_value(data_with_pets)
         return convert_to_table(data_sorted, slice_duration)
 
-    def report_add_missing_specs(self, specs, damage, heals):
+    def report_add_missing_specs(self, specs, data: dict[str, dict]):
         classes_names = self.get_classes_with_names()
-        damage_set = {x[0] for x in damage}
-        heal_set = {x[0] for x in heals}
-        another_units: set[str] = damage_set | heal_set
 
-        for unit_name in another_units:
+        for unit_name in data:
             if unit_name.endswith('-A'):
                 specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
+            elif unit_name == "Total":
+                specs[unit_name] = ('Total', 'ability_hunter_readiness')
             elif unit_name not in specs and unit_name in classes_names:
                 player_class = classes_names[unit_name]
                 specs[unit_name] = logs_player_spec.get_spec_info(player_class)
-                LOGGER_REPORTS.error(f"{unit_name} doesn't have spec")
+                LOGGER_REPORTS.error(f"{self.NAME} | {unit_name} doesn't have spec")
             # elif unit_name not in classes_names:
             #     print(f"{unit_name} not in classes_names!")
 
 
     def get_report_page_all(self, segments):
-        return_dict = {}
-        damage = defaultdict(int)
-        heal = defaultdict(int)
-        specs = {}
+        DATA = {
+            "damage": defaultdict(int),
+            "heal": defaultdict(int),
+            "taken": defaultdict(int),
+        }
+        SPECS = {}
+
+        total = {}
+        TABLE = {
+            "Total": total
+        }
+
+        return_dict = {
+            "TABLE": TABLE,
+        }
+
 
         for s, f in segments:
-            _data = self.report_page(s, f)
-            add_new_numeric_data(damage, _data["damage"])
-            add_new_numeric_data(heal, _data["heal"])
-            specs |= _data['specs']
-            return_dict["FIRST_HIT"] = _data['first_hit']
-            return_dict["LAST_HIT"] = _data['last_hit']
+            new_data = self.report_page(s, f)
+            for k, _data in DATA.items():
+                add_new_numeric_data(_data, new_data[k])
+
+            SPECS |= new_data['specs']
+
+            return_dict.setdefault("FIRST_HIT", new_data['first_hit'])
+            return_dict["LAST_HIT"] = new_data['last_hit']
 
         total_duration = self.get_fight_duration_total(segments)
 
-        damage = self.dry_data(damage, total_duration)
-        heal = self.dry_data(heal, total_duration)
+        GUIDS = self.get_all_guids()
+        for k, _data in DATA.items():
+            data_with_pets = logs_dmg_heals.add_pets(_data, GUIDS)
+            if k == "damage":
+                data_with_pets = sort_dict_by_value(data_with_pets)
+            total |= add_new_data(data_with_pets, TABLE, total_duration, k)
 
-        self.report_add_missing_specs(specs, damage, heal)
-
-        return return_dict | {
-            "DAMAGE": damage,
-            "HEAL": heal,
-            "SPECS": specs,
-        }
+        for k, v in total.items():
+            total[k] = separate_thousands(v) 
+        
+        self.report_add_missing_specs(SPECS, TABLE)
+        for name, (spec_name, spec_icon) in SPECS.items():
+            TABLE[name]['spec_name'] = spec_name
+            TABLE[name]['spec_icon'] = spec_icon
+        
+        return return_dict
 
     def player_info(self, s, f, sGUID, tGUID=None):
         slice_ID = f"{s}_{f}"
@@ -725,14 +772,7 @@ class THE_LOGS:
         logs_slice = self.get_logs(s, f)
         controlled_units = self.get_units_controlled_by(sGUID)
         all_player_pets = self.get_players_and_pets_guids()
-        data = logs_dmg_breakdown.parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-        data['casts'] = logs_dmg_breakdown.casts(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-        data['misses'] = logs_dmg_breakdown.misses(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-        data['auras'] = logs_dmg_breakdown.auras(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-        data['dmg'] = {
-            spell_id: len(_d.get("spells_hit", [])) + len(_d.get("spells_crit", []))
-            for spell_id, _d in data["actual"].items()
-        }
+        data = logs_dmg_breakdown.parse_logs_wrap(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
         cached_data[slice_ID] = data
         return data
 
@@ -766,7 +806,7 @@ class THE_LOGS:
             try:
                 if spell_id < 0:
                     return f"{spell_data[-spell_id]['name']} (Pet)"
-                return f"{spell_data[spell_id]['name']}"
+                return spell_data[spell_id]['name']
             except KeyError:
                 return spell_id
 
@@ -801,10 +841,10 @@ class THE_LOGS:
             for spell_id, value in actual_sum.items()
         }
         
-        dmg = {spell_name(spell_id): value for spell_id, value in _data['dmg'].items()}
+        dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
         auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
         casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
-        casts = dmg | auras | casts
+        casts = dmg_hits | auras | casts
         misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
 
         return {
@@ -1007,13 +1047,17 @@ class THE_LOGS:
         }
         cached_data[slice_ID] = data
         return data
+
+    def convert_data_to_names(self, data: dict):
+        guids = self.get_all_guids()
+        data = sort_dict_by_value(data)
+        return [(guids[guid]["name"], separate_thousands(v)) for guid, v in data.items()]
     
     def add_total_and_names(self, data: dict):
+        data_names = self.convert_data_to_names(data)
         data_sum = sum(data.values())
-        return dict([
-            ("Total", separate_thousands(data_sum)),
-            *self.convert_data_to_names(data)
-        ])
+        data_names.insert(0, ("Total", separate_thousands(data_sum)))
+        return dict(data_names)
 
     @running_time
     def useful_damage_all(self, segments, boss_name):
@@ -1023,7 +1067,7 @@ class THE_LOGS:
         targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
         targets_useful = targets["useful"]
         targets_all = targets["all"]
-        table_heads = ["", "Total Useful"]
+        table_heads = []
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
@@ -1036,22 +1080,29 @@ class THE_LOGS:
 
         guids = self.get_all_guids()
         all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
+
+        dmg_useful = logs_dmg_useful.get_total_damage(all_data, targets_useful)
+        dmg_useful = self.add_total_and_names(dmg_useful)
+        table_heads.append("Total Useful")
+        dmg_total = logs_dmg_useful.get_total_damage(all_data)
+        dmg_total = self.add_total_and_names(dmg_total)
+        table_heads.append("Total")
     
-        targets_useful_dmg = logs_dmg_useful.combine_targets(all_data, targets_useful)
-        targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
+        custom_units = logs_dmg_useful.add_custom_units(all_data, boss_name)
+        all_data = custom_units | all_data
 
-        _formatted_dmg = {
-            guid_id: self.add_total_and_names(_data)
-            for guid_id, _data in all_data.items()
-            if _data
-        }
-
-        table_heads.extend([targets_all.get(guid_id, guid_id) for guid_id in _formatted_dmg])
+        dmg_to_target = {}
+        for guid_id, _data in all_data.items():
+            if not _data:
+                continue
+            table_heads.append(targets_all.get(guid_id, guid_id))
+            dmg_to_target[guid_id] = self.add_total_and_names(_data)
 
         return {
             "HEADS": table_heads,
-            "TOTAL": targets_useful_dmg,
-            "FORMATTED": _formatted_dmg,
+            "TOTAL": dmg_total,
+            "TOTAL_USEFUL": dmg_useful,
+            "TARGETS": dmg_to_target,
         }
 
     @running_time
@@ -1076,7 +1127,7 @@ class THE_LOGS:
         guids = self.get_all_guids()
         all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
     
-        targets_useful_dmg = logs_dmg_useful.combine_targets(all_data, targets_useful)
+        targets_useful_dmg = logs_dmg_useful.get_total_damage(all_data, targets_useful)
         targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
 
         _formatted_dmg = {
@@ -1312,3 +1363,24 @@ class THE_LOGS:
             "SPELLS": SPELLS,
             "LABELS": labels,
         }
+
+    def get_dps(self, data: dict):
+        if not data:
+            return {}
+        enc_name = data.get("boss")
+        attempt = data.get("attempt")
+        if not enc_name and not attempt:
+            return
+        
+        enc_data = self.get_enc_data()
+        enc_name = BOSSES_FROM_HTML[enc_name]
+        s, f = enc_data[enc_name][int(attempt)]
+        logs_slice = self.get_logs(s, f)
+        
+        player = data.get("player_name")
+        if player:
+            guids = self.get_units_controlled_by(player)
+        else:
+            guids = self.get_players_and_pets_guids()
+        
+        return test_dps.get_continuous_dps_seconds(logs_slice, guids)

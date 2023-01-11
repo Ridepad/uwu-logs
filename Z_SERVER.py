@@ -25,19 +25,22 @@ SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_pref
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
-CLEANER = []
+LOGGER_CONNECTIONS.debug("Starting server...")
+
+CLEANER: threading.Thread = None
 USE_FILTER = True
 MAX_SURVIVE_LOGS = T_DELTA["30SEC"]
 ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 CACHED_PAGES = {}
+IGNORED_PATHS = {"upload_progress"}
 
 def render_template_wrap(file: str, **kwargs):
     path = kwargs.get("PATH", "")
     query = kwargs.get("QUERY", "")
-    pages = CACHED_PAGES.setdefault(path, {})
     page = render_template(file, **kwargs)
+    pages = CACHED_PAGES.setdefault(path, {})
     pages[query] = page
     return page
 
@@ -47,61 +50,56 @@ def load_report(name: str):
     else:
         report = logs_main.THE_LOGS(name)
         OPENED_LOGS[name] = report
-        print('[SERVER] LOGS OPENED:', name)
+        LOGGER_CONNECTIONS.info(f"{request.remote_addr:>15} | LOGS OPENED | {name}")
     
     report.last_access = datetime.now()
     return report
 
-def default_params(report_id, request):
-    report = load_report(report_id)
-    report_name = report.get_formatted_name()
-    parsed = report.parse_request(request)
-    classes_names = report.get_classes_with_names()
-    segm_links = report.get_segment_queries()
-    duration = report.get_fight_duration_total_str(parsed["segments"])
+def get_formatted_query_string():
     query = request.query_string.decode()
-    query = f"?{query}" if query else ""
+    if not query:
+        return ""
+    return f"?{query}"
 
-    return {
-        "REPORT_ID": report_id,
-        "REPORT_NAME": report_name,
-        "PATH": request.path,
-        "QUERY": query,
-        "SLICE_NAME": parsed["slice_name"],
-        "SLICE_TRIES": parsed["slice_tries"],
-        "SEGMENTS_LINKS": segm_links,
-        "CLASS_DATA": classes_names,
-        "DURATION": duration,
-        "boss_name": parsed["boss_name"],
-        "segments": parsed["segments"],
-    }
+def get_default_params_wrap(report_id: str):
+    return load_report(report_id).get_default_params(request)
 
 @SERVER.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    response.cache_control.max_age = 30 * 24 * 60 * 60
+    return response
+
+@SERVER.route('/class_icons.jpg')
+def class_icons():
+    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'class_icons.jpg', mimetype='image/jpeg')
+    response.cache_control.max_age = 30 * 24 * 60 * 60
+    return response
 
 @SERVER.errorhandler(404)
 def method404(e):
-    return render_template('404.html')
+    return render_template("404.html")
 
 @SERVER.errorhandler(500)
 def method500(e):
-    return render_template('500.html')
+    return render_template("500.html")
 
 def _cleaner():
     now = datetime.now()
     for name, report in dict(OPENED_LOGS).items():
         if now - report.last_access > MAX_SURVIVE_LOGS:
             del OPENED_LOGS[name]
-    
+
 @SERVER.teardown_request
 def after_request_callback(response):
-    if not CLEANER:
-        t = threading.Thread(target=_cleaner)
-        t.start()
-        CLEANER.append(t)
-    elif not CLEANER[0].is_alive():
-        CLEANER.clear()
+    global CLEANER
+
+    if CLEANER is None:
+        CLEANER = threading.Thread(target=_cleaner)
+        CLEANER.start()
+    elif not CLEANER.is_alive():
+        CLEANER = None
+    
     return response
 
 @SERVER.route("/pw_validate", methods=["POST"])
@@ -114,37 +112,48 @@ def pw_validate():
     attempts_left = wrong_pw(request.remote_addr)
     return f'{attempts_left}', 401
 
+def log_incoming_connection():
+    # for k in dir(request):
+    #     print(k, getattr(request, k))
+    path = request.path
+    if path in IGNORED_PATHS:
+        return
+    if request.query_string:
+        path = f"{path}?{request.query_string.decode()}"
+
+    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.json} | {request.headers.get('User-Agent')}"
+    LOGGER_CONNECTIONS.info(req)
+
 @SERVER.before_request
 def before_request():
+    log_incoming_connection()
+
     if banned(request.remote_addr):
         return render_template('home.html')
 
-    req = f"{request.remote_addr:>15} | {request.method:<7} | {request.full_path} | {request.headers.get('User-Agent')}"
-    LOGGER_CONNECTIONS.info(req)
+    url_comp = request.path.split('/')
+    if url_comp[1] != "reports":
+        return
 
-    if request.path.startswith('/reports/'):
-        url_comp = request.path.split('/')
-        report_id = url_comp[2]
-        if not report_id:
-            return render_template('404.html')
+    report_id = url_comp[2]
+    if not report_id:
+        return show_logs_list()
 
-        report_path = os.path.join(LOGS_DIR, report_id)
-        if not os.path.isdir(report_path):
-            return render_template('404.html')
-        
-        elif USE_FILTER:
-            _filter = get_logs_filter("private")
-            if report_id in _filter and not _validate.cookie(request):
-                return render_template('protected.html')
+    report_path = os.path.join(LOGS_DIR, report_id)
+    if not os.path.isdir(report_path):
+        return render_template("404.html")
+    
+    elif USE_FILTER:
+        _filter = get_logs_filter("private")
+        if report_id in _filter and not _validate.cookie(request):
+            return render_template('protected.html')
 
-        pages = CACHED_PAGES.get(request.path, {})
-        query = request.query_string.decode()
-        query = f"?{query}" if query else ""
+    if request.path in CACHED_PAGES:
+        query = get_formatted_query_string()
+        pages = CACHED_PAGES[request.path]
         if query in pages:
-            return pages[query]
-            # ...
-        
-        request.default_params = default_params(report_id, request)
+            pass
+            # return pages[query]
 
 
 @SERVER.route("/")
@@ -152,7 +161,6 @@ def home():
     return render_template('home.html')
 
 @SERVER.route("/logs_list")
-@SERVER.route("/reports/")
 def show_logs_list():
     page = request.args.get("page", default=0, type=int)
     year, month = logs_calendar.new_month(page)
@@ -163,10 +171,6 @@ def show_logs_list():
         new_month=new_month,
         page=page, month=month_name, year=year,
     )
-
-def allowed_file(filename: str):
-    if '.' in filename:
-        return filename.lower().rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def file_is_proccessing(ip):
     if ip not in NEW_UPLOADS:
@@ -199,14 +203,14 @@ def upload_progress():
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
 def upload():
-    ip = request.remote_addr
+    IP = request.remote_addr
 
     if request.method == 'GET':
         return render_template('upload.html')
 
-    new_upload = NEW_UPLOADS.get(ip)
+    new_upload = NEW_UPLOADS.get(IP)
     if new_upload is None:
-        new_upload = NEW_UPLOADS[ip] = logs_upload.FileSave()
+        new_upload = NEW_UPLOADS[IP] = logs_upload.FileSave()
     
     if request.headers.get("Content-Type") == "application/json":
         new_upload.done(request)
@@ -223,14 +227,13 @@ def upload():
 
 @SERVER.route("/reports/<report_id>/")
 def report_page(report_id):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
-
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
     data = report.get_report_page_all(segments)
 
     return render_template_wrap(
-        'report_main.html', **_default,
+        'report_main.html', **default_params,
         **data,
         ICON_CDN_LINK=ICON_CDN_LINK,
     )
@@ -241,15 +244,16 @@ def download_logs(report_id):
 
 @SERVER.route("/reports/<report_id>/player/<source_name>/")
 def player(report_id, source_name):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
     sGUID = report.name_to_guid(source_name)
     tGUID = request.args.get('target')
     data = report.player_info_all(segments, sGUID, tGUID)
 
     return render_template_wrap(
-        'dmg_done2.html', **_default,
+        'dmg_done2.html', **default_params,
         **data,
         SOURCE_NAME=source_name,
     )
@@ -262,54 +266,63 @@ def spellsearch(report_id):
     report = load_report(report_id)
     return report.filtered_spell_list(data)
 
+@SERVER.route("/reports/<report_id>/get_dps", methods=["POST"])
+def get_dps(report_id):
+    data = request.get_json(force=True, silent=True)
+    if data is None:
+        data = request.form
+    report = load_report(report_id)
+    return report.get_dps(data)
+
 @SERVER.route("/reports/<report_id>/spell/<spell_id>/")
 def spells(report_id, spell_id: str):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
 
     data = report.spell_count_all(segments, spell_id)
 
     return render_template_wrap(
-        'spells_page.html', **_default,
+        'spells_page.html', **default_params,
         **data,
     )
 
 @SERVER.route("/reports/<report_id>/consumables/")
 def consumables(report_id):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
 
     data = report.potions_all(segments)
 
     return render_template_wrap(
-        'consumables.html', **_default,
+        'consumables.html', **default_params,
         **data,
     )
 
 @SERVER.route("/reports/<report_id>/all_auras/")
 def all_auras(report_id):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
 
     data = report.auras_info_all(segments)
 
     return render_template_wrap(
-        'all_auras.html', **_default,
+        'all_auras.html', **default_params,
         **data,
     )
 
 @SERVER.route("/reports/<report_id>/damage/")
 def damage_targets(report_id):
-    _default = request.default_params
-    segments = _default.pop('segments')
     report = load_report(report_id)
-    data = report.useful_damage_all(segments, _default["boss_name"])
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    data = report.useful_damage_all(segments, default_params["BOSS_NAME"])
 
     return render_template_wrap(
-        'damage_target.html', **_default,
+        'damage_target.html', **default_params,
         **data,
     )
 
@@ -328,10 +341,11 @@ def damage_targets(report_id):
 @SERVER.route("/reports/<report_id>/compare/", methods=["GET", "POST"])
 def compare(report_id):
     if request.method == 'GET':
-        _default = request.default_params
+        report = load_report(report_id)
+        default_params = report.get_default_params(request)
 
         return render_template(
-            'compare.html', **_default,
+            'compare.html', **default_params,
         )
     elif request.method == 'POST':
         request_data = request.get_json(force=True, silent=True)
@@ -341,45 +355,48 @@ def compare(report_id):
         if not class_name:
             return "{}"
         
-        _default = request.default_params
-        segments = _default.pop('segments')
         report = load_report(report_id)
+        default_params = report.get_default_params(request)
+        segments = default_params["SEGMENTS"]
         return report.get_comp_data(segments, class_name)
 
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):
-    _default = request.default_params
-    segments = _default.pop('segments')
     report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+    
     data = report.valk_info_all(segments)
 
     return render_template_wrap(
-        'valks.html', **_default,
+        'valks.html', **default_params,
         **data,
     )
 
 @SERVER.route("/reports/<report_id>/deaths/")
 def deaths(report_id):
-    _default = request.default_params
-    segments = _default.pop('segments')
     report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
     guid = request.args.get("target")
     data = report.get_deaths(segments, guid)
 
     return render_template_wrap(
-        'deaths.html', **_default,
+        'deaths.html', **default_params,
         **data,
     )
 
 @SERVER.route("/reports/<report_id>/powers/")
 def powers(report_id):
-    _default = request.default_params
-    segments = _default.pop('segments')
     report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
     data = report.get_powers_all(segments)
 
     return render_template_wrap(
-        'powers.html', **_default,
+        'powers.html', **default_params,
         **data
     )
 
@@ -398,90 +415,19 @@ def custom_search_post(report_id):
 
 @SERVER.route("/reports/<report_id>/custom_search/")
 def custom_search(report_id):
-    _default = default_params(report_id, request)
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
 
     return render_template(
-        'custom_search.html', **_default,
+        'custom_search.html', **default_params,
     )
         
-
-@SERVER.route("/test2")
-def test2():
-    # deaths test
-    report_id = '21-10-08--20-57--Nomadra'
-    report = load_report(report_id)
-    logs_slice = report.get_logs()
-    guid = '0x06000000004C3CEB'
-    death_logs = deaths.find_deaths(logs_slice, guid)
-    d2 = []
-    css = []
-    tabs = []
-    for n, timestamp in enumerate(death_logs, 1):
-        name_css = f"death{n}"
-        tabs.append((name_css, timestamp))
-        css.append(f'#{name_css}:checked ~ #{name_css}-panel')
-        d2.append((name_css, death_logs[timestamp]))
-    # css = ', '.join(css) + " {position: absolute; display: block;}"
-    css = ', '.join(css) + " {display: block;}"
-    class_data = report.get_classes()
-    return render_template(
-        'deaths.html', tabs=tabs, _deaths=d2, customstyle=css,
-        class_data=class_data,
-        )
-
-@SERVER.route("/test22")
-def test22():
-    report_id = '21-10-07--21-06--Inia'
-    report = load_report(report_id)
-    logs_slice = report.get_logs()
-    guid = '0x06000000002E50C8'
-    death_logs = deaths.find_deaths(logs_slice, guid)
-    d2 = []
-    css = []
-    tabs = []
-    for n, timestamp in enumerate(death_logs, 1):
-        name_css = f"death{n}"
-        tabs.append((name_css, timestamp))
-        # css.append(f'#{name_css}:checked ~ #{name_css}-panel')
-        # d2.append((name_css, death_logs[timestamp]))
-    # css = ', '.join(css) + " {position: absolute; display: block;}"
-    class_data = report.get_classes()
-    return render_template(
-        'deaths2.html', tabs=tabs, death_logs=death_logs,
-        class_data=class_data,
-        )
-
-@SERVER.route("/test3")
-def test3():
-    # new dmg done test
-    name = '21-07-16--21-10--Nomadra'
-    report = load_report(name)
-    # players_names = report.get_players_guids().values()
-
-    enc_data = report.get_enc_data()
-    s, f = enc_data["deathbringer_saurfang"][-1]
-    s, f = enc_data["professor_putricide"][-1]
-    s, f = enc_data["the_lich_king"][-1]
-    # s, f = 626385, 633765
-    logs_slice = report.get_logs(s, f)
-    # '0xF150008F010002BE', '0xF150008F010002BF', '0xF150008F010002C0'
-    # filter_guids = ['0xF150008F010005AC', '0xF150008F010005AD', '0xF150008F010005AE', "0xF130008EF500020C"]
-    # dmg = report.dmg_taken(logs_slice, filter_guids=filter_guids)
-    dmg = report.dmg_taken(logs_slice)
-    boss = next(iter(dmg))
-    players = list(dmg[boss])
-    players_names = {name for sources in dmg.values() for name in sources}
-    # players_names = {name for name in players_names if any(name in sources for sources in dmg.values())}
-    players.extend(players_names - set(players))
-    return render_template('dmg_taken_test.html', dmg=dmg, players=players)
-
 @SERVER.route("/reports/<report_id>/player_auras/<player_name>/")
 def player_auras(report_id, player_name):
-    _default = request.default_params
     report = load_report(report_id)
-    segments = _default.pop('segments')
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
 
     s, f = segments[0]
 
@@ -504,7 +450,7 @@ def player_auras(report_id, player_name):
     # css = ', '.join(css) + "{display: inline-block;}"
     
     return render_template_wrap(
-        'player_auras.html', **_default,
+        'player_auras.html', **default_params,
         **data,
         SOURCE_NAME=player_name,
         # checkboxes=checkboxes, intable=intable, 
@@ -523,6 +469,9 @@ def top():
     response.headers['Content-Encoding'] = 'gzip'
     return response
 
+
+def connections():
+    return
 
 if __name__ == "__main__":
     SERVER.run(host="0.0.0.0", port=5000, debug=True)

@@ -1,5 +1,26 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+#auras-table th img {
+  min-height: 2em;
+  max-height: 2em;
+  min-width: 2em;
+}
+#auras-table td:not(.player-cell):nth-child(odd) {
+  min-width: 7.5ch;
+}
+#auras-table td:not(.player-cell) {
+  text-align: right;
+}
+
+#auras-table td:not(.player-cell, :empty):nth-child(odd)::after {
+  content: "%";
+}
+</style>
+{% endblock add_style %}
+
+
 {% block the_main %}
 <main id="auras">
   <table id="auras-table">
@@ -12,7 +33,7 @@
     {% for player_name, aura_data in AURA_UPTIME.items() %}
     <tr>
       <td class="player-cell">
-        <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+        <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
       </td>
       {% for spell_id in AURA_INFO %}
       <td>{{ AURA_COUNT.get(player_name, {}).get(spell_id, '') }}</td>

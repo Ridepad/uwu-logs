@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from constants import to_dt, running_time
+from constants import to_dt_simple, running_time
 
 DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
 
@@ -26,7 +26,6 @@ def get_spell_count(logs_slice: list[str], spell_id_str: str):
 
     spell_id_str_filter = f",{spell_id_str},"
     
-    DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
     spells = defaultdict(DEFAULT_DICT_FACTORY)
     for line in logs_slice:
         if spell_id_str_filter not in line:
@@ -474,7 +473,7 @@ def iter_spell(data, last_update, end):
             if last_apply is None:
                 last_apply = last_update
                 count += 1
-            last_update = to_dt(timestamp)
+            last_update = to_dt_simple(timestamp)
             new_uptime = (last_update-last_apply).total_seconds()
             if new_uptime < 1:
                 count -= 1
@@ -482,7 +481,7 @@ def iter_spell(data, last_update, end):
                 uptime += new_uptime
             last_apply = None
         elif flag in NON_DOSE:
-            last_update = to_dt(timestamp)
+            last_update = to_dt_simple(timestamp)
             count += 1
             if last_apply is None:
                 last_apply = last_update
@@ -497,8 +496,8 @@ def iter_spell(data, last_update, end):
     return count, uptime
 
 def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
-    START = to_dt(logs_slice[0])
-    END = to_dt(logs_slice[-1])
+    START = to_dt_simple(logs_slice[0])
+    END = to_dt_simple(logs_slice[-1])
     DUR = (END-START).total_seconds()
 
     new_auras: defaultdict[str, dict[str, float]] = defaultdict(dict)

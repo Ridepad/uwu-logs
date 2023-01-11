@@ -275,8 +275,8 @@ ALL_GUIDS = {
         "0xF130009B86": "Onyx Flamecaller"
     },
     "Halion": {
-        "0xF130009BB7": "Halion",
-        "0xF130009CCE": "Halion",
+        "0xF130009BB7": "Halion Fire",
+        "0xF130009CCE": "Halion Shadow",
         "0xF130009EE9": "Living Inferno",
         "0xF130009EEB": "Living Ember",
     },
@@ -324,6 +324,18 @@ ALL_GUIDS = {
     },
 }
 
+CUSTOM_GROUPS = {
+    "Lady Deathwhisper": {
+        "Adds": ("0xF130009402", "0xF13000943D", "0xF130009655"),
+    },
+    "Professor Putricide": {
+        "Oozes": ("0xF1300092BA", "0xF130009341"),
+    },
+    "Halion": {
+        "Halion": ("0xF130009BB7", "0xF130009CCE"),
+        "Adds": ("0xF130009EE9", "0xF130009EEB"),
+    }
+}
 
 def get_all_targets(boss_name: str, boss_guid_id: str=None):
     if not boss_name:
@@ -415,7 +427,7 @@ def combine_pets_all(data: dict[str, int], guids, trim_non_players=False, ignore
         for tGUID, d in data.items()
     }
 
-def combine_targets(data: dict[str, dict[str, int]], filter_targets=None):
+def get_total_damage(data: dict[str, dict[str, int]], filter_targets=None):
     total = defaultdict(int)
 
     for target_guid_id, sources in data.items():
@@ -472,3 +484,22 @@ def specific_useful_combined(logs_slice, boss_name):
         for guid, d in _data.items():
             new_data[guid] += d
     return new_data
+
+
+def add_custom_units(data, encounter_name):
+    _custom_groups = CUSTOM_GROUPS.get(encounter_name)
+    if not _custom_groups:
+        return {}
+
+    custom_data = {}
+    for group_name, guids in _custom_groups.items():
+        if not any(guid in guids for guid in data):
+            continue
+        q = custom_data[group_name] = defaultdict(int)
+        for guid in guids:
+            if guid not in data:
+                continue
+            for player_guid, player_damage in data[guid].items():
+                q[player_guid] += player_damage
+
+    return custom_data

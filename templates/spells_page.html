@@ -1,5 +1,23 @@
 {% extends "layout_report.html" %}
 
+{% block add_style %}
+<style>
+h1 a {
+  font-size: 200%;
+}
+.panel section {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+@media (min-width: 1100px) {
+  .panel section {
+    margin-left: 5rem;
+  }
+}
+</style>
+{% endblock add_style %}
+
 {% block the_main %}
 <main id="spells">
 <section>
@@ -16,7 +34,7 @@
         {% for player_name, total in v.items() %}
         <tr>
           <td class="boss-cell">
-            <a class="{{ CLASS_DATA[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
           </td>
           <td class="buff-count">{{ total }}</td>
         </tr>

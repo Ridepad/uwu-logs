@@ -80,6 +80,10 @@ def new_archive(full_path, upload_dir):
     extracted_file = get_extracted_file(upload_dir, name)
     if extracted_file is None:
         return
+
+    new_name = os.path.join(upload_dir, "__logs.txt")
+    os.rename(extracted_file, new_name)
+    extracted_file = new_name
     
     mod_time = logs_edit_time(extracted_file)
     extracted_file_full = os.path.join(upload_dir, extracted_file)
@@ -118,7 +122,7 @@ def save_raw_logs(logs_id: str, upload_dir: str, forced=False):
     cmd = [PATH_7Z, 'a', archive_path, tmp_file_name, '-m0=PPMd', '-mo=11', '-mx=9']
     subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    LOGGER_UPLOADS.debug(f'{logs_id} | Done in {get_ms_str(pc)}')
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {logs_id} | Saved raw')
 
 def __test():
     from multiprocessing import Process

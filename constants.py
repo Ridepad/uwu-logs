@@ -4,7 +4,6 @@ import os
 import pickle
 import re
 import zlib
-from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
 
@@ -27,7 +26,7 @@ UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
 LOGGERS_DIR = new_folder_path(PATH_DIR, "_loggers")
 
-LOGGING_FORMAT_DEFAULT = '''[%(asctime)s] [%(levelname)s] "%(filename)s:%(lineno)s" | %(message)s'''
+LOGGING_FORMAT_DEFAULT = '''[%(asctime)s] [%(levelname)-5s] %(filename)18s:%(lineno)s | %(message)s'''
 LOGGING_FORMAT = {
     "connections" : '''[%(asctime)s] %(message)s''',
 }
@@ -58,12 +57,13 @@ T_DELTA = {
     "30SEC": timedelta(seconds=30),
     "1MIN": timedelta(minutes=1),
     "2MIN": timedelta(minutes=2),
+    "3MIN": timedelta(minutes=3),
     "5MIN": timedelta(minutes=5),
     "10MIN": timedelta(minutes=10),
     "15MIN": timedelta(minutes=15),
     "20MIN": timedelta(minutes=20),
     "30MIN": timedelta(minutes=30),
-    "20H": timedelta(hours=20),
+    "14H": timedelta(hours=14),
 }
 
 LOGS_CUT_NAME = "LOGS_CUT"
@@ -235,7 +235,11 @@ BOSSES_FROM_HTML = {
 
 BOSSES_GUIDS.update(TOC_CHAMPIONS)
 
-ENCOUNTER_NAMES = {boss_guid: encounter_name for encounter_name, boss_guids in MULTIBOSSES.items() for boss_guid in boss_guids}
+ENCOUNTER_NAMES = {
+    boss_guid: encounter_name
+    for encounter_name, boss_guids in MULTIBOSSES.items()
+    for boss_guid in boss_guids
+}
 
 def convert_to_fight_name(boss_id: str):
     if len(boss_id) == 18:
@@ -244,7 +248,7 @@ def convert_to_fight_name(boss_id: str):
         return ENCOUNTER_NAMES[boss_id]
     if boss_id in BOSSES_GUIDS:
         return BOSSES_GUIDS[boss_id]
-
+    
 SPELLS_SCHOOLS = {
     0: "",
     1: "physical", #FFFF00   255, 255, 0
@@ -606,14 +610,6 @@ SPELL_BOOK_SPEC = {
     },
 }
 
-SERVERS = {
-    "0x06": "Lordaeron",
-    "0x07": "Icecrown",
-    "0x0D": "Frostmourne3",
-    "0x0C": "Frostmourne2",
-    "0x0A": "Blackrock",
-}
-
 CLASSES = {
   "Death Knight": {
     "": "class_deathknight",
@@ -684,6 +680,12 @@ SPECS_LIST = [
     for sname, icon in v.items()
 ]
 
+SPEC_ICON_TO_POSITION = {
+    icon: (class_i, spec_i)
+    for class_i, specs in enumerate(CLASSES.values())
+    for spec_i, icon in enumerate(specs.values())
+}
+
 CLASS_TO_HTML = {
     'Death Knight': 'death-knight',
     'Druid': 'druid',
@@ -710,21 +712,30 @@ CLASS_FROM_HTML = {
     "warrior": "Warrior"
 }
 
-def get_ms(pc):
-    if pc is None:
-        return -1
-    return int((perf_counter()-pc)*1000)
+SERVERS = {
+    "0x06": "Lordaeron",
+    "0x07": "Icecrown",
+    "0x0D": "Frostmourne3",
+    "0x0C": "Frostmourne2",
+    "0x0A": "Blackrock",
+}
 
-def get_ms_str(pc):
-    return f"{get_ms(pc):>6,} ms"
+def get_ms(timestamp):
+    if timestamp is None:
+        return -1
+    return int((perf_counter()-timestamp)*1000)
+
+def get_ms_str(timestamp):
+    return f"{get_ms(timestamp):>6,} ms"
 
 def running_time(f):
     def running_time_inner(*args, **kwargs):
-        pc = perf_counter()
+        timestamp = perf_counter()
         q = f(*args, **kwargs)
-        msg = f"[PERFOMANCE] Done in {get_ms_str(pc)} with {f.__module__}.{f.__name__}"
+        msg = f"{get_ms_str(timestamp)} | {f.__module__}.{f.__name__}"
         LOGGER_REPORTS.debug(msg)
         return q
+    
     return running_time_inner
 
 def sort_dict_by_value(d: dict):
@@ -912,80 +923,89 @@ def pickle_write(path: str, data):
 def get_now():
     return datetime.now()
 
-# Z = re.compile('(\d{1,2})/(\d{1,2}) (\d\d):(\d\d):(\d\d).(\d\d\d)')
 def to_dt_closure(year=None):
-    Z = re.compile('(\d+)')
-    find_all = Z.findall
-    current = get_now() + T_DELTA["20H"]
-    day = current.day
-    month = current.month
+    re_find_all = re.compile('(\d+)').findall
+    CURRENT = get_now()
+    CURRENT_SHIFT = CURRENT + T_DELTA["14H"]
+
     if year is None:
-        year = current.year
+        year = CURRENT.year
         def inner(s: str):
-            q = list(map(int, find_all(s[:18])))
+            q = list(map(int, re_find_all(s[:18])))
             q[-1] *= 1000
-            if q[0] > month or q[0] == month and q[1] > day:
-                return datetime(year-1, *q)
-            return datetime(year, *q)
+            dt = datetime(year, *q)
+            if dt > CURRENT_SHIFT:
+                dt = dt.replace(year=year-1)
+            return dt
     else:
         def inner(s: str):
-            q = list(map(int, find_all(s[:18])))
+            q = list(map(int, re_find_all(s[:18])))
             q[-1] *= 1000
             return datetime(year, *q)
         
     return inner
 
-to_dt = to_dt_closure()
-
 CURRENT_YEAR = get_now().year
-SIMPLE_TD_FINDALL = re.compile('(\d+)').findall
-def to_dt_simple(s):
-    q = list(map(int, SIMPLE_TD_FINDALL(s[:18])))
+RE_FIND_ALL = re.compile("(\d+)").findall
+RE_FIND_ALL_BYTES = re.compile(b'(\d+)').findall
+
+def to_dt_simple(s: str):
+    return datetime(CURRENT_YEAR, *map(int, RE_FIND_ALL(s[:18])))
+
+def to_dt_simple_precise(s: str):
+    q = list(map(int, RE_FIND_ALL(s[:18])))
     q[-1] *= 1000
     return datetime(CURRENT_YEAR, *q)
 
-def to_dt_simple_year(s, year):
-    q = list(map(int, SIMPLE_TD_FINDALL(s[:18])))
+def get_delta(current, previous):
+    return to_dt_simple(current) - to_dt_simple(previous)
+
+def get_delta_simple_precise(current, previous):
+    return to_dt_simple_precise(current) - to_dt_simple_precise(previous)
+
+def to_dt_year(s: str, year: int):
+    return datetime(year, *map(int, RE_FIND_ALL(s[:18])))
+
+def to_dt_year_precise(s: str, year: int):
+    q = list(map(int, RE_FIND_ALL(s[:18])))
     q[-1] *= 1000
     return datetime(year, *q)
 
+def to_dt_simple_bytes(s: bytes):
+    return datetime(CURRENT_YEAR, *map(int, RE_FIND_ALL_BYTES(s[:18])))
 
-__year = get_now().year
-__p_bytes_fa = re.compile(b'(\d+)').findall
-def to_dt_bytes(s, year=__year):
-    q = list(map(int, __p_bytes_fa(s[:18])))
-    dt = datetime(year, *q)
-    if dt > get_now():
-        return dt.replace(year=dt.year-1)
-    return dt
+def to_dt_year_bytes(s: bytes, year: int):
+    return datetime(year, *map(int, RE_FIND_ALL_BYTES(s[:18])))
 
-def to_dt_bytes_wrap(year=None):
+def to_dt_bytes_closure(year: int=None):
     if year is None:
         year = get_now().year
-    findall = re.compile(b'(\d+)').findall
-    def inner(s):
-        q = list(map(int, findall(s[:18])))
-        return datetime(year, *q)
+
+    def inner(s: str):
+        return datetime(year, *map(int, RE_FIND_ALL_BYTES(s[:18])))
+        
     return inner
 
-def get_time_delta(s: str, f: str, _to_dt=to_dt):
-    return _to_dt(f) - _to_dt(s)
+def to_dt_bytes_year_fix(s, year: int=None):
+    if year is None:
+        year = get_now().year
+    
+    dt = datetime(year, *map(int, RE_FIND_ALL_BYTES(s[:18])))
+    if dt > get_now():
+        dt = dt.replace(year=year-1)
+    return dt
 
-def get_time_delta_wrap(_to_dt=to_dt):
-    def inner(s: str, f: str):
-        return _to_dt(f) - _to_dt(s)
-    return inner
-
-def get_fight_duration(s, f):
-    return get_time_delta(s, f).total_seconds()
-
-def convert_duration(t):
-    milliseconds = int(t % 1 * 1000)
+def duration_to_string(t: float):
+    milliseconds = t % 1 * 1000
+    if milliseconds < 1:
+        milliseconds = milliseconds * 1000
+    
     t = int(t)
-    seconds = t % 60
-    minutes = t // 60 % 60
     hours = t // 3600
-    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0<3}"
+    minutes = t // 60 % 60
+    seconds = t % 60
+    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
+
 
 def get_folders(path) -> list[str]:
     return sorted(next(os.walk(path))[1])
