@@ -16,7 +16,7 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
-import test_dps
+import logs_dps
 from constants import (
     BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS, SPEC_ICON_TO_POSITION,
     add_space, convert_to_html_name, duration_to_string, get_report_name_info, is_player,
@@ -1383,4 +1383,4 @@ class THE_LOGS:
         else:
             guids = self.get_players_and_pets_guids()
         
-        return test_dps.get_continuous_dps_seconds(logs_slice, guids)
+        return logs_dps.get_continuous_dps_seconds(logs_slice, guids)
