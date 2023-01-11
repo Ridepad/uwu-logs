@@ -66,10 +66,9 @@ def get_default_params_wrap(report_id: str):
 
 @SERVER.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-    # response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-    # response.cache_control.max_age = 30 * 24 * 60 * 60
-    # return response
+    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    response.cache_control.max_age = 30 * 24 * 60 * 60
+    return response
 
 @SERVER.route('/class_icons.jpg')
 def class_icons():
@@ -114,15 +113,17 @@ def pw_validate():
     return f'{attempts_left}', 401
 
 def log_incoming_connection():
-    # for k in dir(request):
-    #     print(k, getattr(request, k))
     path = request.path
     if path in IGNORED_PATHS:
         return
+    
     if request.query_string:
         path = f"{path}?{request.query_string.decode()}"
 
-    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.json} | {request.headers.get('User-Agent')}"
+    if request.data:
+        path = f"{path} | {request.data.decode()}"
+    
+    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.data.decode()}{request.headers.get('User-Agent')}"
     LOGGER_CONNECTIONS.info(req)
 
 @SERVER.before_request
@@ -153,8 +154,8 @@ def before_request():
         query = get_formatted_query_string()
         pages = CACHED_PAGES[request.path]
         if query in pages:
-            pass
-            # return pages[query]
+            # pass
+            return pages[query]
 
 
 @SERVER.route("/")
@@ -297,7 +298,7 @@ def consumables(report_id):
     data = report.potions_all(segments)
 
     return render_template_wrap(
-        'consumables.html', **default_params,
+        'consumables.html', **segments,
         **data,
     )
 
