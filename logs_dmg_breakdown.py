@@ -18,7 +18,7 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
         "spells_crit": [],
         "dot_hit": [],
         "dot_crit": [] } }'''
-    targets = set()
+    units = set()
 
     overkill = defaultdict(int)
     reduced = defaultdict(int)
@@ -37,7 +37,7 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
         if sGUID not in controlled_units:
             continue
 
-        targets.add(tGUID)
+        units.add(tGUID)
 
         if target_filter:
             if target_filter not in tGUID:
@@ -61,7 +61,7 @@ def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[st
             reduced[spell_id] += int(dmg_raw/3)
         
     return {
-        "targets": targets,
+        "units": units,
         "actual": actual,
         "overkill": overkill,
         "reduced": reduced,
@@ -216,3 +216,97 @@ def parse_logs_wrap(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
         for spell_id, _d in data["actual"].items()
     }
     return data
+
+
+
+def parse_logs_taken(logs_slice: list[str], player_GUID: set[str], source_filter=None):
+    units = set()
+    reduced = defaultdict(int)
+    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+
+    for line in logs_slice:
+        if player_GUID not in line:
+            continue
+        if "DAMAGE" not in line:
+            continue
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, _ = line.split(',', 16)
+        except ValueError:
+            # DAMAGE_SHIELD_MISSED
+            continue
+        
+        if tGUID != player_GUID:
+            continue
+
+        units.add(sGUID)
+
+        if source_filter:
+            if source_filter not in sGUID:
+                continue
+        
+        spell_id = int(sp_id)
+        _dmg = int(dmg)
+        if over != "0":
+            over = int(over)
+            reduced[spell_id] += over
+            _dmg = _dmg - over
+        
+        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+        actual[spell_id][HIT_TYPE[_hit_type]].append(_dmg)
+        
+        if res != "0":
+            reduced[spell_id] += int(res)
+        if absrb != "0":
+            reduced[spell_id] += int(absrb)
+        
+    return {
+        "units": units,
+        "actual": actual,
+        "reduced": reduced,
+    }
+
+def parse_logs_heal(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
+    units = set()
+    overkill = defaultdict(int)
+    reduced = defaultdict(int)
+    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+
+    for line in logs_slice:
+        if "HEAL" not in line:
+            continue
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, crit = line.split(',', 12)
+        except ValueError:
+            continue
+
+        if sGUID not in controlled_units:
+            continue
+        
+        units.add(tGUID)
+
+        if target_filter:
+            if target_filter not in tGUID:
+                continue
+        
+        if tGUID not in filter_guids:
+            continue
+
+        
+        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
+        
+        _value = int(dmg)
+        if over != "0":
+            over = int(over)
+            _value = _value - over
+            reduced[spell_id] += over
+            overkill[spell_id] += over
+        
+        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+        actual[spell_id][HIT_TYPE[_hit_type]].append(_value)
+
+    return {
+        "units": units,
+        "actual": actual,
+        "overkill": overkill,
+        "reduced": reduced,
+    }

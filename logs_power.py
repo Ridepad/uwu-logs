@@ -68,7 +68,7 @@ SPELLS = {
   },
   "17099": {
     "name": "Furor",
-    "icon": "spell_shadow_detectinvisibility"
+    "icon": "spell_holy_blessingofstamina"
   },
   "17528": {
     "name": "Mighty Rage",
@@ -183,8 +183,8 @@ SPELLS = {
     "icon": "ability_paladin_judgementofthewise"
   },
   "32553": {
-    "name": "Life Tap",
-    "icon": "spell_shadow_burningspirit"
+    "name": "Mana Feed",
+    "icon": "spell_shadow_manafeed"
   },
   "33272": {
     "name": "Sporeling Snack",
@@ -236,7 +236,7 @@ SPELLS = {
   },
   "42987": {
     "name": "Replenish Mana",
-    "icon": "inv_misc_gem_stone_01"
+    "icon": "inv_misc_gem_sapphire_02"
   },
   "43186": {
     "name": "Restore Mana",
@@ -356,14 +356,14 @@ SPELLS = {
   },
   "54833": {
     "name": "Glyph of Innervate",
-    "icon": "spell_nature_lightning"
+    "icon": "inv_glyph_majordruid"
   },
   "55382": {
     "name": "Mana Restore",
     "icon": "spell_holy_magicalsentry"
   },
   "55767": {
-    "name": "Darkglow",
+    "name": "Darkglow Embroidery",
     "icon": "spell_nature_giftofthewaterspirit"
   },
   "56186": {
@@ -384,7 +384,7 @@ SPELLS = {
   },
   "57894": {
     "name": "Glyph of Mend Pet",
-    "icon": "inv_misc_food_87_sporelingsnack"
+    "icon": "inv_glyph_minorhunter"
   },
   "57961": {
     "name": "Water Shield",
@@ -392,7 +392,7 @@ SPELLS = {
   },
   "58227": {
     "name": "Glyph of Shadowfiend",
-    "icon": "spell_arcane_manatap"
+    "icon": "inv_glyph_minorpriest"
   },
   "58362": {
     "name": "Glyph of Heroic Strike",
@@ -540,7 +540,7 @@ SPELLS = {
   },
   "68082": {
     "name": "Glyph of Seal of Command",
-    "icon": "ability_paladin_judgementofthewise"
+    "icon": "inv_glyph_majorpaladin"
   },
   "68285": {
     "name": "Improved Leader of the Pack",
@@ -552,7 +552,7 @@ SPELLS = {
   },
   "70804": {
     "name": "Tricks of the Trade",
-    "icon": "spell_misc_conjuremanajewel"
+    "icon": "ability_rogue_tricksofthetrade"
   },
   "70873": {
     "name": "Emerald Vigor",
@@ -564,7 +564,7 @@ SPELLS = {
   },
   "71565": {
     "name": "Replenish Mana",
-    "icon": "inv_misc_gem_stone_01"
+    "icon": "inv_jewelry_trinket_05"
   },
   "71566": {
     "name": "Replenished",
@@ -572,7 +572,7 @@ SPELLS = {
   },
   "71574": {
     "name": "Replenish Mana",
-    "icon": "inv_misc_gem_stone_01"
+    "icon": "inv_jewelry_trinket_05"
   },
   "71882": {
     "name": "Invigoration",

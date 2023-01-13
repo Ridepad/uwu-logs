@@ -30,6 +30,7 @@ SHIFT = {
     'consumables': 10,
     'player_auras': 10,
 }
+_SORT = {"0xF": 1, "0x0": 2}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')
@@ -168,15 +169,23 @@ def group_targets(targets: set[str]):
         for target_id in target_ids
     }
 
-def regroup_targets(data):
-    grouped_targets = group_targets(data)
+def regroup_targets(targets):
+    grouped_targets = group_targets(targets)
     targets_players = set()
-    for x in grouped_targets:
-        if x[:3] == PLAYER:
-            targets_players = grouped_targets.pop(x, set())
+    
+    for target_id in grouped_targets:
+        if target_id[:3] == PLAYER:
+            targets_players = grouped_targets.pop(target_id, set())
             break
+    
     return set(grouped_targets) | targets_players
 
+def sort_by_name_type(targets):
+    targets = sorted(targets)
+    targets = sorted(targets, key=lambda x: x[1])
+    targets = sorted(targets, key=lambda x: x[0][:5])
+    targets = sorted(targets, key=lambda x: _SORT[x[0][:3]])
+    return dict(targets)
 
 class THE_LOGS:
     def __init__(self, logs_name: str) -> None:
@@ -592,7 +601,8 @@ class THE_LOGS:
         cached_data = self.CACHE['get_default_params'].setdefault(PATH, {})
         if QUERY in cached_data:
             return cached_data[QUERY]
-        
+
+        report_name_info = get_report_name_info(self.NAME)
         parsed = self.parse_request(PATH, request.args)
         return_data = parsed | {
             "PATH": PATH,
@@ -603,6 +613,7 @@ class THE_LOGS:
             "PLAYER_CLASSES": self.get_classes_with_names(),
             "DURATION": self.get_fight_duration_total_str(parsed["SEGMENTS"]),
             "SPEC_ICON_TO_POSITION": SPEC_ICON_TO_POSITION,
+            "SERVER": report_name_info["server"],
         }
         cached_data[QUERY] = return_data
         return return_data
@@ -763,44 +774,79 @@ class THE_LOGS:
         
         return return_dict
 
-    def player_info(self, s, f, sGUID, tGUID=None):
+
+    def player_damage(self, s, f, player_GUID, filter_GUID=None):
         slice_ID = f"{s}_{f}"
-        cached_data = self.CACHE['player_info'].setdefault(sGUID, {}).setdefault(tGUID, {})
+        cached_data = self.CACHE['player_damage'].setdefault(player_GUID, {}).setdefault(filter_GUID, {})
         if slice_ID in cached_data:
             return cached_data[slice_ID]
 
         logs_slice = self.get_logs(s, f)
-        controlled_units = self.get_units_controlled_by(sGUID)
+        controlled_units = self.get_units_controlled_by(player_GUID)
         all_player_pets = self.get_players_and_pets_guids()
-        data = logs_dmg_breakdown.parse_logs_wrap(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
+        data = logs_dmg_breakdown.parse_logs_wrap(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
+        cached_data[slice_ID] = data
+        return data
+    
+    def player_damage_taken(self, s, f, player_GUID, filter_GUID=None):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['player_damage_taken'].setdefault(player_GUID, {}).setdefault(filter_GUID, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+
+        logs_slice = self.get_logs(s, f)
+        data = logs_dmg_breakdown.parse_logs_taken(logs_slice, player_GUID, source_filter=filter_GUID)
+        cached_data[slice_ID] = data
+        return data
+    
+    def player_heal(self, s, f, player_GUID, filter_GUID=None):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['player_heal'].setdefault(player_GUID, {}).setdefault(filter_GUID, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+
+        logs_slice = self.get_logs(s, f)
+        controlled_units = self.get_units_controlled_by(player_GUID)
+        all_player_pets = self.get_players_and_pets_guids()
+        data = logs_dmg_breakdown.parse_logs_heal(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
         cached_data[slice_ID] = data
         return data
 
-    def player_info_all_add(self, segments, sGUID, tGUID=None):
-        info_data = defaultdict(lambda: defaultdict(int))
-        targets: set[str] = set()
-        info_data['targets'] = targets
-        actual = defaultdict(lambda: defaultdict(list))
-        info_data['actual'] = actual
-
+    def player_damage_gen(self, segments, player_GUID, filter_GUID=None):
         for s, f in segments:
-            data = self.player_info(s, f, sGUID, tGUID)
+            yield self.player_damage(s, f, player_GUID, filter_GUID)
 
+    def player_damage_taken_gen(self, segments, player_GUID, filter_GUID=None):
+        for s, f in segments:
+            yield self.player_damage_taken(s, f, player_GUID, filter_GUID)
+
+    def player_heal_gen(self, segments, player_GUID, filter_GUID=None):
+        for s, f in segments:
+            yield self.player_heal(s, f, player_GUID, filter_GUID)
+
+    def player_damage_sum(self, data_gen):
+        dmg_data = defaultdict(lambda: defaultdict(int))
+        units: set[str] = set()
+        dmg_data["units"] = units
+        actual = defaultdict(lambda: defaultdict(list))
+        dmg_data["actual"] = actual
+
+        for data in data_gen:
             for k, v in data.items():
-                if k == "targets":
-                    targets.update(v)
+                if k == "units":
+                    units.update(v)
                 elif k == "actual":
                     for spell_id, cats in v.items():
                         spells = actual[spell_id]
                         for hit_type, hits in cats.items():
                             spells[hit_type].extend(hits)
                 else:
-                    add_new_numeric_data(info_data[k], v)
+                    add_new_numeric_data(dmg_data[k], v)
 
-        return info_data
-
+        return dmg_data
+    
     @running_time
-    def player_info_all(self, segments, sGUID, tGUID=None):
+    def player_damage_format(self, _data):
         spell_data = self.get_spells()
         def spell_name(spell_id):
             try:
@@ -809,14 +855,15 @@ class THE_LOGS:
                 return spell_data[spell_id]['name']
             except KeyError:
                 return spell_id
-
-        _data = self.player_info_all_add(segments, sGUID, tGUID)
-
-        targets_set = regroup_targets(_data['targets'])
-        targets = {self.guid_to_name(gid): gid for gid in sorted(targets_set)}
-        targets = dict(sorted(targets.items()))
         
-        actual = _data['actual']
+        targets_set = regroup_targets(_data["units"])
+        targets = [
+            (gid, self.guid_to_name(gid))
+            for gid in targets_set
+        ]
+        targets = sort_by_name_type(targets)
+        
+        actual = _data["actual"]
         hits_data = logs_dmg_breakdown.hits_data(actual)
         actual_sum = {
             spell_id: sum(sum(x) for x in d.values())
@@ -829,7 +876,7 @@ class THE_LOGS:
         reduced = _data['reduced']
         reduced_formatted = format_total_data(reduced)
         reduced_percent = {
-            spell_id: f"{(((value + reduced[spell_id]) / value - 1) * 100):.1f}%"
+            spell_id: f"{((reduced[spell_id] / (value + reduced[spell_id])) * 100):.1f}%"
             for spell_id, value in actual_sum.items()
             if reduced.get(spell_id)
         }
@@ -841,11 +888,16 @@ class THE_LOGS:
             for spell_id, value in actual_sum.items()
         }
         
-        dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
-        auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
-        casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
-        casts = dmg_hits | auras | casts
-        misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
+        if _data['casts']:
+            dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
+            auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
+            casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
+            casts = dmg_hits | auras | casts
+            misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
+        else:
+            casts = {}
+            misses = {}
+
 
         return {
             "TARGETS": targets,
@@ -860,6 +912,7 @@ class THE_LOGS:
             "MISSES": misses,
         }
     
+    
     def get_comp_data(self, segments, class_filter: str, tGUID=None):
         class_filter = class_filter.lower()
         response = []
@@ -869,7 +922,7 @@ class THE_LOGS:
             name = self.guid_to_name(guid)
             data = {
                 "name": name,
-                "data": self.player_info_all(segments, guid, tGUID)
+                "data": self.player_damage_all(segments, guid, tGUID)
             }
             response.append(data)
         return json.dumps(response)
@@ -1367,10 +1420,11 @@ class THE_LOGS:
     def get_dps(self, data: dict):
         if not data:
             return {}
+        
         enc_name = data.get("boss")
         attempt = data.get("attempt")
         if not enc_name and not attempt:
-            return
+            return {}
         
         enc_data = self.get_enc_data()
         enc_name = BOSSES_FROM_HTML[enc_name]

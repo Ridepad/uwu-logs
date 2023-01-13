@@ -10,25 +10,44 @@
   max-height: 20vh;
   width: 100%;
 }
+#player-info {
+  display: flex;
+  align-items: baseline;
+}
+#warmane-armory-link {
+  margin-left: 3ch;
+}
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="dmg-done">
 <section id="dmg-done-selection">
-  <a class="swap-button" id="swap-buffs" href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a>
   <button type="button" id="dmg-done-reset">All</button>
   <select id="dmg-done-select">
     <option>Select specific target:</option>
-    {% for target_name, guid_id in TARGETS.items() %}
+    {% for guid_id, target_name in TARGETS.items() %}
     <option value="{{ guid_id }}">{{ target_name }}</option>
     {% endfor %}
   </select>
 </section>
+<div>
+  <ul id="player-nav">
+    <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
+    <li><a>CASTS</a></li>
+</div>
 <section id="dmg-done-main">
+  <div>
+    <ul id="player-info">
+      <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
+      <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory🡥</a></li>
+    </ul>
+  </div>
   {% if NAMES %}
   <table>
-    <caption>{{ SOURCE_NAME }}'s spells</caption>
     <tbody>
       <tr>
         <th class="spell-name">-</th>

@@ -2,6 +2,9 @@
 
 {% block add_style %}
 <style>
+#player {
+  padding-bottom: 2rem;
+}
 #player section {
   display: none;
 }
@@ -19,7 +22,7 @@
   padding: .2rem 1.5rem;
   background: var(--background);
   position: fixed;
-  bottom: 4.5vh;
+  bottom: var(--bottom-row-two);
   left: 0;
 }
 
@@ -41,8 +44,6 @@
 
 {% block the_main %}
 <main id="player">
-  <a class="swap-button" id="swap-buffs" href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a>
-
   <input id="buffs" name="player-group" type="radio">
   <label class="tab" for="buffs">BUFFS</label>
 
@@ -113,7 +114,15 @@
     <button id="aura-up">▲</button>
     <button id="aura-down">▼</button>
   </aside>
-
+  
+  <div>
+    <ul id="player-nav">
+      <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
+      <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
+      <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
+      <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
+      <li><a>CASTS</a></li>
+  </div>
 </main>
 {% endblock the_main %}
 

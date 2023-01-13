@@ -238,8 +238,7 @@ def report_page(report_id):
     data = report.get_report_page_all(segments)
 
     return render_template_wrap(
-        'report_main.html', **default_params,
-        **data,
+        'report_main.html', **default_params, **data,
         ICON_CDN_LINK=ICON_CDN_LINK,
     )
 
@@ -255,11 +254,48 @@ def player(report_id, source_name):
 
     sGUID = report.name_to_guid(source_name)
     tGUID = request.args.get('target')
-    data = report.player_info_all(segments, sGUID, tGUID)
+    
+    data_gen = report.player_damage_gen(segments, sGUID, tGUID)
+    data_sum = report.player_damage_sum(data_gen)
+    data = report.player_damage_format(data_sum)
 
     return render_template_wrap(
-        'dmg_done2.html', **default_params,
-        **data,
+        'dmg_done2.html', **default_params, **data,
+        SOURCE_NAME=source_name,
+    )
+
+@SERVER.route("/reports/<report_id>/taken/<source_name>/")
+def taken(report_id, source_name):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    sGUID = report.name_to_guid(source_name)
+    tGUID = request.args.get('target')
+    data_gen = report.player_damage_taken_gen(segments, sGUID, tGUID)
+    data_sum = report.player_damage_sum(data_gen)
+    data = report.player_damage_format(data_sum)
+
+    return render_template_wrap(
+        'dmg_done2.html', **default_params, **data,
+        SOURCE_NAME=source_name,
+    )
+
+@SERVER.route("/reports/<report_id>/heal/<source_name>/")
+def heal(report_id, source_name):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    sGUID = report.name_to_guid(source_name)
+    tGUID = request.args.get('target')
+    data_gen = report.player_heal_gen(segments, sGUID, tGUID)
+    data_sum = report.player_damage_sum(data_gen)
+    print(data_sum["units"])
+    data = report.player_damage_format(data_sum)
+
+    return render_template_wrap(
+        'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=source_name,
     )
 
@@ -288,8 +324,7 @@ def spells(report_id, spell_id: str):
     data = report.spell_count_all(segments, spell_id)
 
     return render_template_wrap(
-        'spells_page.html', **default_params,
-        **data,
+        'spells_page.html', **default_params, **data,
     )
 
 @SERVER.route("/reports/<report_id>/consumables/")
@@ -301,8 +336,7 @@ def consumables(report_id):
     data = report.potions_all(segments)
 
     return render_template_wrap(
-        'consumables.html', **segments,
-        **data,
+        'consumables.html', **default_params, **data,
     )
 
 @SERVER.route("/reports/<report_id>/all_auras/")
@@ -314,8 +348,7 @@ def all_auras(report_id):
     data = report.auras_info_all(segments)
 
     return render_template_wrap(
-        'all_auras.html', **default_params,
-        **data,
+        'all_auras.html', **default_params, **data,
     )
 
 @SERVER.route("/reports/<report_id>/damage/")
@@ -327,21 +360,8 @@ def damage_targets(report_id):
     data = report.useful_damage_all(segments, default_params["BOSS_NAME"])
 
     return render_template_wrap(
-        'damage_target.html', **default_params,
-        **data,
+        'damage_target.html', **default_params, **data,
     )
-
-# @SERVER.route("/reports/<report_id>/heal/")
-# def heal_targets(report_id):
-#     _default = request.default_params
-#     segments = _default.pop('segments')
-#     report = load_report(report_id)
-#     data = report.useful_damage_all(segments, _default["boss_name"])
-
-#     return render_template_wrap(
-#         'heal_target.html', **_default,
-#         **data,
-#     )
 
 @SERVER.route("/reports/<report_id>/compare/", methods=["GET", "POST"])
 def compare(report_id):
@@ -374,8 +394,7 @@ def valks(report_id):
     data = report.valk_info_all(segments)
 
     return render_template_wrap(
-        'valks.html', **default_params,
-        **data,
+        'valks.html', **default_params, **data,
     )
 
 @SERVER.route("/reports/<report_id>/deaths/")
@@ -388,8 +407,7 @@ def deaths(report_id):
     data = report.get_deaths(segments, guid)
 
     return render_template_wrap(
-        'deaths.html', **default_params,
-        **data,
+        'deaths.html', **default_params, **data,
     )
 
 @SERVER.route("/reports/<report_id>/powers/")
@@ -401,8 +419,7 @@ def powers(report_id):
     data = report.get_powers_all(segments)
 
     return render_template_wrap(
-        'powers.html', **default_params,
-        **data
+        'powers.html', **default_params, **data
     )
 
 
@@ -455,8 +472,7 @@ def player_auras(report_id, player_name):
     # css = ', '.join(css) + "{display: inline-block;}"
     
     return render_template_wrap(
-        'player_auras.html', **default_params,
-        **data,
+        'player_auras.html', **default_params, **data,
         SOURCE_NAME=player_name,
         # checkboxes=checkboxes, intable=intable, 
     )
