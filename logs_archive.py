@@ -47,7 +47,7 @@ def extract(full_path, upload_dir):
     pc = perf_counter()
     cmd = [PATH_7Z, 'e', full_path, '-aoa', f"-o{upload_dir}", "*.txt"]
     code = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    LOGGER_UPLOADS.debug(f'{full_path} | Extracted in {get_ms_str(pc)}')
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {upload_dir} | Extracted')
     return code
 
 def get_extracted_file(upload_dir, file_name):
@@ -108,7 +108,7 @@ def valid_raw_logs(logs_id):
 def save_raw_logs(logs_id: str, upload_dir: str, forced=False):
     archive_path = os.path.join(LOGS_RAW_DIR, f"{logs_id}.7z")
     if not forced and get_7z_info(archive_path) is not None:
-        LOGGER_UPLOADS.debug(f'{logs_id} | Exists')
+        LOGGER_UPLOADS.debug(f'            | Exists | {logs_id}')
         return
     
     pc = perf_counter()

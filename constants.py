@@ -26,9 +26,9 @@ UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
 LOGGERS_DIR = new_folder_path(PATH_DIR, "_loggers")
 
-LOGGING_FORMAT_DEFAULT = '''[%(asctime)s] [%(levelname)-5s] %(filename)18s:%(lineno)s | %(message)s'''
+LOGGING_FORMAT_DEFAULT = '''%(asctime)s | %(levelname)-5s | %(filename)18s:%(lineno)-4s | %(message)s'''
 LOGGING_FORMAT = {
-    "connections" : '''[%(asctime)s] %(message)s''',
+    "connections" : '''%(asctime)s | %(message)s''',
 }
 def setup_logger(logger_name):
     log_file = os.path.join(LOGGERS_DIR, f'{logger_name}.log')
@@ -726,7 +726,7 @@ def get_ms(timestamp):
     return int((perf_counter()-timestamp)*1000)
 
 def get_ms_str(timestamp):
-    return f"{get_ms(timestamp):>6,} ms"
+    return f"{get_ms(timestamp):>7,} ms"
 
 def running_time(f):
     def running_time_inner(*args, **kwargs):

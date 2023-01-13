@@ -223,9 +223,9 @@ class NewUpload(Thread):
             if _slice_info.get("length") == len(segment):
                 return self.slice_cache[first_line]
         
-        timestamp = perf_counter()
+        # timestamp = perf_counter()
         slice_info = self.get_slice_info(segment)
-        self.add_logger_msg("Got slice info", timestamp)
+        # self.add_logger_msg("Got slice info", timestamp)
 
         self.slice_cache[first_line] = slice_info
         return slice_info
@@ -236,7 +236,8 @@ class NewUpload(Thread):
         
         logs_id = self.get_logs_id(logs_slice)
         
-        self.add_logger_msg(f"{logs_id} | Sliced | SIZE: {sys.getsizeof(logs_slice):>12,} | LEN: {len(logs_slice):>12,}", self.timestamp)
+        msg = f"Sliced | {logs_id} | {sys.getsizeof(logs_slice):>12,} | {len(logs_slice):>12,}"
+        self.add_logger_msg(msg, self.timestamp)
 
         _slice_info = self.get_slice_info_wrap(logs_slice)
         print("_slice_info", _slice_info)
@@ -534,6 +535,7 @@ class FileSave:
         self.chunks = []
         self.upload_thread = None
         self.current_chunk = 0
+        self.started = perf_counter()
     
     def done(self, request):
         j: dict[str, str]
@@ -559,7 +561,7 @@ class FileSave:
             "ip": IP,
         }
 
-        LOGGER_UPLOADS.info(f"{new_upload_dir} | {len(self.chunks):>3} | {self.current_chunk:>3}")
+        LOGGER_UPLOADS.info(f"{get_ms_str(self.started)} | {new_upload_dir} | {len(self.chunks):>3} | {self.current_chunk:>3}")
         
         self.upload_thread = NewUpload(upload_data)
         self.upload_thread.start()
