@@ -74,8 +74,12 @@ SPELLS = {
     "name": "Mighty Rage",
     "icon": "ability_warrior_innerrage"
   },
+  "17530": {
+    "name": "Superior Mana Potion",
+    "icon": "inv_potion_74"
+  },
   "17531": {
-    "name": "Restore Mana",
+    "name": "Major Mana Potion",
     "icon": "trade_engineering"
   },
   "18371": {
@@ -129,6 +133,10 @@ SPELLS = {
   "27869": {
     "name": "Dark Rune",
     "icon": "inv_misc_rune_04"
+  },
+  "27996": {
+    "name": "Spellsurge",
+    "icon": "spell_arcane_arcane02"
   },
   "28499": {
     "name": "Restore Mana",
@@ -222,6 +230,10 @@ SPELLS = {
     "name": "Combat Potency",
     "icon": "inv_weapon_shortblade_38"
   },
+  "36070": {
+    "name": "Power of the Sun King",
+    "icon": "inv_mace_48"
+  },
   "39104": {
     "name": "Totemic Recall",
     "icon": "spell_shaman_totemrecall"
@@ -239,7 +251,7 @@ SPELLS = {
     "icon": "inv_misc_gem_sapphire_02"
   },
   "43186": {
-    "name": "Restore Mana",
+    "name": "Runic Mana Potion",
     "icon": "inv_alchemy_elixir_02"
   },
   "43771": {
@@ -317,6 +329,10 @@ SPELLS = {
   "53358": {
     "name": "Chimera Shot - Viper",
     "icon": "ability_hunter_chimerashot2"
+  },
+  "53398": {
+    "name": "Invigoration",
+    "icon": "ability_hunter_invigeration"
   },
   "53506": {
     "name": "Moonkin Form",
