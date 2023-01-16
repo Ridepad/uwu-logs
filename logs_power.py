@@ -139,8 +139,8 @@ SPELLS = {
     "icon": "spell_arcane_arcane02"
   },
   "28499": {
-    "name": "Restore Mana",
-    "icon": "inv_potion_137"
+    "name": "Endless Mana Potion",
+    "icon": "inv_alchemy_endlessflask_04"
   },
   "28730": {
     "name": "Arcane Torrent",
@@ -247,7 +247,7 @@ SPELLS = {
     "icon": "inv_potion_156"
   },
   "42987": {
-    "name": "Replenish Mana",
+    "name": "Mana Sapphire",
     "icon": "inv_misc_gem_sapphire_02"
   },
   "43186": {
