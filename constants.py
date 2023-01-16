@@ -1004,7 +1004,8 @@ def to_dt_bytes_year_fix(s, year: int=None):
         year = get_now().year
     
     dt = datetime(year, *map(int, RE_FIND_ALL_BYTES(s[:18])))
-    if dt > get_now():
+    CURRENT_SHIFTED = get_now() + T_DELTA["14H"]
+    if dt > CURRENT_SHIFTED:
         dt = dt.replace(year=year-1)
     return dt
 
