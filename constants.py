@@ -667,7 +667,7 @@ CLASSES = {
   },
   "Warrior": {
     "": "class_warrior",
-    "Arms": "ability_rogue_eviscerate",
+    "Arms": "ability_warrior_savageblow",
     "Fury": "ability_warrior_innerrage",
     "Protection": "ability_warrior_defensivestance"
   }
@@ -680,10 +680,23 @@ SPECS_LIST = [
     for sname, icon in v.items()
 ]
 
+DEFAULT_ICONS = [
+    "inv_misc_questionmark",
+    "ability_rogue_deviouspoisons",
+    "ability_hunter_readiness",
+    "ability_druid_catform",
+]
+
+_ICONS = [
+    list(specs.values())
+    for specs in CLASSES.values()
+]
+_ICONS.insert(0, DEFAULT_ICONS)
+
 SPEC_ICON_TO_POSITION = {
     icon: (class_i, spec_i)
-    for class_i, specs in enumerate(CLASSES.values())
-    for spec_i, icon in enumerate(specs.values())
+    for class_i, specs in enumerate(_ICONS)
+    for spec_i, icon in enumerate(specs)
 }
 
 CLASS_TO_HTML = {
