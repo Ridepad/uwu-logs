@@ -228,6 +228,7 @@ class NewUpload(Thread):
         # self.add_logger_msg("Got slice info", timestamp)
 
         self.slice_cache[first_line] = slice_info
+        print(slice_info)
         return slice_info
 
     def save_slice_cache(self, logs_slice: list):
@@ -287,7 +288,10 @@ class NewUpload(Thread):
             players_current = set(current_slice_info.get("players", []))
             _intersection = players_last & players_current
             max_len = max(len(players_last), len(players_current))
-            different_raid = len(_intersection) < max_len // 2
+            if current_slice_info.get("length", 0) < 1000:
+                different_raid = len(_intersection) < max_len // 5
+            else:
+                different_raid = len(_intersection) < max_len // 2
 
             if big_gap:
                 if different_raid:
@@ -355,6 +359,7 @@ class NewUpload(Thread):
 
     def main(self):
         self.slice_logs()
+        return
 
         if not self.slices:
             self.change_status(FULL_DONE_NONE_FOUND, 1)
