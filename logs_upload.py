@@ -359,7 +359,6 @@ class NewUpload(Thread):
 
     def main(self):
         self.slice_logs()
-        return
 
         if not self.slices:
             self.change_status(FULL_DONE_NONE_FOUND, 1)
