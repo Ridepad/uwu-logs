@@ -1425,7 +1425,7 @@ class THE_LOGS:
         
         enc_name = data.get("boss")
         attempt = data.get("attempt")
-        if not enc_name and not attempt:
+        if not enc_name or not attempt:
             return {}
         
         enc_data = self.get_enc_data()
