@@ -742,7 +742,7 @@ def separate_thousands(num, precision=None):
     if precision is None:
         precision = 1 if isinstance(num, float) else 0
     
-    return f"{num:,.{precision}f}"
+    return f"{num:,.{precision}f}".replace(',', ' ')
 
 
 def get_now():
