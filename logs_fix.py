@@ -21,7 +21,7 @@ def env_f(_line: bytes):
     line[6:7] = [spell_id, spell_name, school_hex]
     return [x.encode() for x in line]
 
-def trim_logs(fname):
+def trim_logs(fname: str):
     new_logs = []
     _l_a = new_logs.append
     _join = b','.join
@@ -48,27 +48,3 @@ def trim_logs(fname):
                 pass
     
     return new_logs
-
-
-def __test1():
-    import zlib
-    from time import perf_counter
-    from constants import get_ms_str, bytes_write
-
-    fname = r"F:\Python\uwulogs\uploads\test3\WoWCombatLog.txt"
-    for _ in range(2):
-        pc = perf_counter()
-        logs = trim_logs(fname)
-        print(get_ms_str(pc))
-    logs = b'\n'.join(logs)
-    print(get_ms_str(pc))
-    _len = len(logs)
-    print(_len)
-    assert _len == 272824032
-    # logs = zlib.compress(logs, level=7)
-    # print(f'{get_ms(pc)} ms')
-    # bytes_write(r"F:\Python\uwulogs\uploads\test3\cut1.zlib", logs)
-    # print(f'{get_ms(pc)} ms')
-
-if __name__ == '__main__':
-    __test1()

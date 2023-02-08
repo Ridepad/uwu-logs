@@ -1,24 +1,27 @@
 import os
 from time import perf_counter
 
-import constants
+import file_functions
 import logs_dmg_heals
 import logs_dmg_useful
 import logs_main
-from constants import LOGGER_REPORTS
+from constants import LOGGER_REPORTS, get_ms_str, running_time
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
-SPECS_NO_USE_FOR_CHICKEN = {*range(12,16), *range(20,24), 29, 31, 33, 35}
+HUNGER_FOR_BLOOD = "63848"
+FOCUS_MAGIC = "54646"
+BATTLE_SQUAWK = "23060"
+SPECS_NO_USE_FOR_CHICKEN = {*range(12, 16), *range(20, 24), 29, 31, 33, 35}
 
 def f_auras(auras: dict[str, tuple[int, float]], spec: int):
-    if spec == 25 and "63848" in auras:
-        del auras["63848"]
-    elif spec in range(12,16) and "54646" in auras:
-        del auras["54646"]
-    elif spec in SPECS_NO_USE_FOR_CHICKEN and "23060" in auras:
-        del auras["23060"]
+    if spec == 25 and HUNGER_FOR_BLOOD in auras:
+        del auras[HUNGER_FOR_BLOOD]
+    elif spec in range(12, 16) and FOCUS_MAGIC in auras:
+        del auras[FOCUS_MAGIC]
+    elif spec in SPECS_NO_USE_FOR_CHICKEN and BATTLE_SQUAWK in auras:
+        del auras[BATTLE_SQUAWK]
     
     zz: dict[str, list[int, float, int]] = {}
     for spell_id, (count, uptime) in auras.items():
@@ -39,9 +42,8 @@ def find_kill(segments):
         if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
             yield segment_info
 
-
-@constants.running_time
-def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
+@running_time
+def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
     def is_player(guid):
         if guid in PLAYERS:
             return True
@@ -88,9 +90,7 @@ def doshit(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
         if is_player(guid)
     ]
 
-
-
-@constants.running_time
+@running_time
 def make_report_top(name: str, rewrite=False):
     print(name)
     report = logs_main.THE_LOGS(name)
@@ -102,16 +102,14 @@ def make_report_top(name: str, rewrite=False):
     top = {}
     segments = report.get_segments_data()
     for boss_name, boss_segments in segments.items():
-        # if boss_name not in BOSSES:
-        #     continue
         boss_top = top.setdefault(boss_name, {})
         for kill_segment in find_kill(boss_segments):
             diff = kill_segment['diff']
-            data = doshit(report, boss_name, kill_segment)
+            data = make_boss_top(report, boss_name, kill_segment)
             boss_top[diff] = data
 
-    constants.json_write(top_path, top, indent=None)
-    LOGGER_REPORTS.info(f'{constants.get_ms_str(pc)} | {name:<50} | Done top')
+    file_functions.json_write(top_path, top, indent=None)
+    LOGGER_REPORTS.info(f'{get_ms_str(pc)} | {name:<50} | Done top')
     return top
 
 def main_wrap(name):
@@ -119,7 +117,3 @@ def main_wrap(name):
         make_report_top(name)
     except Exception:
         LOGGER_REPORTS.exception(name)
-
-
-if __name__ == "__main__":
-    make_report_top("22-12-02--19-43--Cinekgodx--Icecrown")

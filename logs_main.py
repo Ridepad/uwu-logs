@@ -2,12 +2,14 @@ import json
 import os
 from collections import defaultdict
 
+import file_functions
 import logs_auras
 import logs_check_difficulty
 import logs_deaths
 import logs_dmg_breakdown
 import logs_dmg_heals
 import logs_dmg_useful
+import logs_dps
 import logs_fight_separator
 import logs_get_time
 import logs_player_spec
@@ -16,12 +18,11 @@ import logs_spell_info
 import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
-import logs_dps
 from constants import (
-    BOSSES_FROM_HTML, LOGGER_REPORTS, MONTHS, FLAG_ORDER, LOGS_DIR, LOGGER_UNUSUAL_SPELLS, SPEC_ICON_TO_POSITION,
-    add_space, convert_to_html_name, duration_to_string, get_report_name_info, is_player,
-    json_read, json_read_no_exception, json_write, running_time, setup_logger,
-    sort_dict_by_value, get_now, to_dt_year_precise, zlib_text_read)
+    BOSSES_FROM_HTML, CLASSES, FLAG_ORDER, LOGGER_REPORTS, LOGGER_UNUSUAL_SPELLS, LOGS_DIR, MONTHS,
+    convert_to_html_name, duration_to_string, get_now, get_report_name_info, is_player, running_time,
+    separate_thousands, setup_logger, sort_dict_by_value, to_dt_year_precise
+)
 
 IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
 PLAYER = "0x0"
@@ -31,6 +32,23 @@ SHIFT = {
     'player_auras': 10,
 }
 _SORT = {"0xF": 1, "0x0": 2}
+
+DEFAULT_ICONS = [
+    "inv_misc_questionmark",
+    "ability_rogue_deviouspoisons",
+    "ability_hunter_readiness",
+    "ability_druid_catform",
+]
+_ICONS = [
+    list(specs.values())
+    for specs in CLASSES.values()
+]
+_ICONS.insert(0, DEFAULT_ICONS)
+SPEC_ICON_TO_POSITION = {
+    icon: (class_i, spec_i)
+    for class_i, specs in enumerate(_ICONS)
+    for spec_i, icon in enumerate(specs)
+}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')
@@ -42,17 +60,6 @@ def get_shift(request_path: str):
 def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
     for source, amount in data_new.items():
         data_total[source] += amount
-
-def separate_thousands(num):
-    if not num:
-        return ""
-    
-    if type(num) == int:
-        v = f"{num:,}"
-    else:
-        v = f"{num:,.1f}"
-
-    return v.replace(",", " ")
 
 def format_total_data(data: dict):
     data["Total"] = sum(data.values())
@@ -244,7 +251,7 @@ class THE_LOGS:
             logs = self.LOGS
         except AttributeError:
             logs_cut_file_name = self.relative_path("LOGS_CUT")
-            logs = zlib_text_read(logs_cut_file_name).splitlines()
+            logs = file_functions.zlib_text_read(logs_cut_file_name).splitlines()
             self.LOGS = logs
         
         return logs[s:f]
@@ -281,10 +288,10 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(enc_data_file_name):
                 logs = self.get_logs()
                 self.ENCOUNTER_DATA = logs_fight_separator.main(logs)
-                json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
+                file_functions.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
             else:
                 enc_data: dict[str, list[tuple[int, int]]]
-                enc_data = json_read(enc_data_file_name)
+                enc_data = file_functions.json_read(enc_data_file_name)
                 self.ENCOUNTER_DATA = enc_data
             return self.ENCOUNTER_DATA
     
@@ -304,9 +311,9 @@ class THE_LOGS:
         _players = parsed['players']
         _classes = parsed['classes']
         
-        json_write(guids_data_file_name, _guids)
-        json_write(players_data_file_name, _players)
-        json_write(classes_data_file_name, _classes)
+        file_functions.json_write(guids_data_file_name, _guids)
+        file_functions.json_write(players_data_file_name, _players)
+        file_functions.json_write(classes_data_file_name, _classes)
         
         return _guids, _players, _classes
     
@@ -328,7 +335,7 @@ class THE_LOGS:
                 _guids, _players, _classes = self.new_guids()
             else:
                 _guids, _players, _classes = [
-                    json_read_no_exception(_file_name)
+                    file_functions.json_read_no_exception(_file_name)
                     for _file_name in files
                 ]
             
@@ -442,10 +449,10 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(timestamp_data_file_name):
                 logs = self.get_logs()
                 self.TIMESTAMP = logs_get_time.get_timestamps(logs)
-                json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None, sep=(",", ""))
+                file_functions.json_write(timestamp_data_file_name, self.TIMESTAMP, indent=None, sep=(",", ""))
             else:
                 timestamp_data: list[int]
-                timestamp_data = json_read(timestamp_data_file_name)
+                timestamp_data = file_functions.json_read(timestamp_data_file_name)
                 self.TIMESTAMP = timestamp_data
             return self.TIMESTAMP
     
@@ -516,12 +523,7 @@ class THE_LOGS:
         except AttributeError:
             logs = self.get_logs()
             enc_data = self.get_enc_data()
-            _data = logs_check_difficulty.get_segments(logs, enc_data)
-
-            self.BOSSES_TO_HTML = _data['boss_html']
-            self.BOSSES_FROM_HTML = {v:k for k, v in self.BOSSES_TO_HTML.items()}
-            
-            self.SEGMENTS: dict[str, list[tuple[str]]] = _data['segments']
+            self.SEGMENTS = logs_check_difficulty.get_segments(logs, enc_data)
             return self.SEGMENTS
     
     def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
@@ -627,9 +629,9 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(spells_data_file_name):
                 logs = self.get_logs()
                 self.SPELLS = logs_spells_list.get_all_spells(logs)
-                json_write(spells_data_file_name, self.SPELLS)
+                file_functions.json_write(spells_data_file_name, self.SPELLS)
             else:
-                _spells = json_read_no_exception(spells_data_file_name)
+                _spells = file_functions.json_read_no_exception(spells_data_file_name)
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
 
@@ -1242,7 +1244,7 @@ class THE_LOGS:
         guids = self.get_all_guids()
         data = sort_dict_by_value(data)
         for guid, value in data.items():
-            print(f"{guids[guid]['name']:<12} {add_space(value):>13}")
+            print(f"{guids[guid]['name']:<12} {separate_thousands(value):>13}")
 
     def get_players_specs_in_segments(self, s, f):
         logs_slice = self.get_logs(s, f)

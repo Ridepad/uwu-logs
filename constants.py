@@ -1,30 +1,22 @@
-import json
 import logging
 import os
-import pickle
 import re
-import zlib
 from datetime import datetime, timedelta
 from time import perf_counter
 
-
-def create_folder(path):
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
-
-def new_folder_path(root, name):
-    new_folder = os.path.join(root, name)
-    create_folder(new_folder)
-    return new_folder
+import file_functions
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
-LOGS_DIR = new_folder_path(PATH_DIR, "LogsDir")
-LOGS_RAW_DIR = new_folder_path(PATH_DIR, "LogsRaw")
-TOP_DIR = new_folder_path(PATH_DIR, 'top')
-UPLOADS_DIR = new_folder_path(PATH_DIR, "uploads")
-UPLOADED_DIR = new_folder_path(UPLOADS_DIR, "uploaded")
-LOGGERS_DIR = new_folder_path(PATH_DIR, "_loggers")
+LOGS_DIR = file_functions.new_folder_path(PATH_DIR, "LogsDir")
+LOGS_RAW_DIR = file_functions.new_folder_path(PATH_DIR, "LogsRaw")
+TOP_DIR = file_functions.new_folder_path(PATH_DIR, 'top')
+UPLOADS_DIR = file_functions.new_folder_path(PATH_DIR, "uploads")
+UPLOADED_DIR = file_functions.new_folder_path(UPLOADS_DIR, "uploaded")
+LOGGERS_DIR = file_functions.new_folder_path(PATH_DIR, "_loggers")
+STATIC_DIR = file_functions.new_folder_path(PATH_DIR, 'static')
+REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
+REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
 
 LOGGING_FORMAT_DEFAULT = '''%(asctime)s | %(levelname)-5s | %(filename)18s:%(lineno)-4s | %(message)s'''
 LOGGING_FORMAT = {
@@ -82,12 +74,14 @@ FLAG_ORDER = [
 ]
 
 ICONS = {
-    "toc": "achievement_reputation_argentchampion",
     "naxx": "achievement_dungeon_naxxramas_10man",
     "maly": "achievement_dungeon_nexusraid_heroic",
-    "rs": "spell_shadow_twilight",
-    "uld": "achievement_dungeon_ulduarraid_misc_01",
+    "os": "achievement_dungeon_coablackdragonflight_heroic",
+    "voa": "inv_essenceofwintergrasp",
+    "uld": "spell_shadow_shadesofdarkness",
+    "toc": "achievement_reputation_argentchampion",
     "icc": "achievement_zone_icecrown_01",
+    "rs": "spell_shadow_twilight",
 }
 
 BOSSES_GUIDS = {
@@ -673,31 +667,11 @@ CLASSES = {
   }
 }
 
-CLASSES_LIST = list(CLASSES)
 SPECS_LIST = [
     (sname or cname, icon)
     for cname, v in CLASSES.items()
     for sname, icon in v.items()
 ]
-
-DEFAULT_ICONS = [
-    "inv_misc_questionmark",
-    "ability_rogue_deviouspoisons",
-    "ability_hunter_readiness",
-    "ability_druid_catform",
-]
-
-_ICONS = [
-    list(specs.values())
-    for specs in CLASSES.values()
-]
-_ICONS.insert(0, DEFAULT_ICONS)
-
-SPEC_ICON_TO_POSITION = {
-    icon: (class_i, spec_i)
-    for class_i, specs in enumerate(_ICONS)
-    for spec_i, icon in enumerate(specs)
-}
 
 CLASS_TO_HTML = {
     'Death Knight': 'death-knight',
@@ -759,178 +733,16 @@ NIL_GUID = '0x0000000000000000'
 def is_player(guid: str):
     return guid.startswith('0x0') and guid != NIL_GUID
 
-def add_space(v):
-    return f"{v:,}".replace(',', ' ')
-
-
-def fix_extention(ext: str):
-    if ext[0] == '.':
-        return ext
-    return f".{ext}"
-
-def add_extention(path: str, ext=None):
-    if ext is not None:
-        ext = fix_extention(ext)
-        if not path.endswith(ext):
-            path = path.split('.')[0]
-            return f"{path}{ext}"
-    return path
-
-def save_backup(path):
-    if os.path.isfile(path):
-        old = f"{path}.old"
-        if os.path.isfile(old):
-            os.remove(old)
-        os.rename(path, old)
-
-def json_read(path: str):
-    path = add_extention(path, '.json')
+def separate_thousands(num, precision=None):
     try:
-        with open(path) as file:
-            return json.load(file)
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return {}
-
-def json_read_no_exception(path: str):
-    path = add_extention(path, '.json')
-    with open(path) as file:
-        return json.load(file)
-
-def json_write(path: str, data, backup=False, indent=2, sep=None):
-    path = add_extention(path, '.json')
-    if backup:
-        save_backup(path)
-    with open(path, 'w') as file:
-        json.dump(data, file, ensure_ascii=False, default=sorted, indent=indent, separators=sep)
-
-
-def bytes_read(path: str, ext=None):
-    path = add_extention(path, ext)
-    try:
-        with open(path, 'rb') as file:
-            return file.read()
-    except FileNotFoundError:
-        return b''
-
-def bytes_write(path: str, data: bytes, ext=None):
-    path = add_extention(path, ext)
-    with open(path, 'wb') as file:
-        file.write(data)
-
-@running_time
-def file_read(path: str, ext=None):
-    path = add_extention(path, ext)
-    # try:
-    #     raw = bytes_read(path, ext)
-    #     return raw.decode()
-    # except Exception as e:
-    #     print(f"[file_read] {e}")
-
-    try:
-        with open(path, 'r') as f:
-            return f.read()
-    except FileNotFoundError:
+        num + 0
+    except TypeError:
         return ""
-
-@running_time
-def file_write(path: str, data: str, ext=None):
-    path = add_extention(path, ext)
-    with open(path, 'w') as f:
-        f.write(data)
-
-
-def zlib_decompress(data: bytes):
-    return zlib.decompress(data)
-
-@running_time
-def pickle_from_bytes(data: bytes):
-    return pickle.loads(data)
-
-@running_time
-def zlib_pickle_read(path: str):
-    path = add_extention(path, '.pickle.zlib')
-    data_raw = bytes_read(path)
-    data = zlib_decompress(data_raw)
-    return pickle_from_bytes(data)
-
-@running_time
-def zlib_text_read(path: str):
-    path = add_extention(path, '.zlib')
-    data_raw = bytes_read(path)
-    data = zlib_decompress(data_raw)
-    return data.decode()
-
-
-@running_time
-def pickle_dumps(data):
-    return pickle.dumps(data)
-
-@running_time
-def zlib_compress(__data: bytes, level=7):
-    return zlib.compress(__data, level=level)
-
-def zlib_pickle_make(data_raw, level=7):
-    data_pickle = pickle_dumps(data_raw)
-    comresesed = zlib_compress(data_pickle, level)
-    return comresesed
-
-@running_time
-def zlib_pickle_write(data_raw, path: str, level=7):
-    path = add_extention(path, '.pickle.zlib')
-    zlib_pickle = zlib_pickle_make(data_raw, level)
-    bytes_write(path, zlib_pickle)
-
-def zlib_text_make(data_raw: str, level=7):
-    data_enc = data_raw.encode()
-    comresesed = zlib_compress(data_enc, level)
-    return comresesed
-
-# @running_time
-# def zlib_text_write(data_raw: str, path: str, check_exists: bool=True):
-#     path = add_extention(path, '.zlib')
-#     zlib_text = zlib_text_make(data_raw)
-#     if not check_exists:
-#         bytes_write(path, zlib_text)
-#         return
-#     old_data = bytes_read(path)
-#     exists = old_data == zlib_text
-#     if not exists:
-#         bytes_write(path, zlib_text)
-#     return exists
-
-def zlib_text_write(data_raw: str, path: str):
-    path = add_extention(path, '.zlib')
-    zlib_text = zlib_text_make(data_raw)
-    bytes_write(path, zlib_text)
-
-def zlib_text_bytes_write(data_raw: bytes, path: str, level=7):
-    path = add_extention(path, '.zlib')
-    zlib_text = zlib_compress(data_raw, level)
-    bytes_write(path, zlib_text)
-
-
-@running_time
-def logs_splitlines(logs: str):
-    return logs.splitlines()
-
-@running_time
-def prepare_logs(file_name):
-    logs_raw = bytes_read(file_name)
-    logs_raw_decoded = logs_raw.decode()
-    return logs_splitlines(logs_raw_decoded)
-
-def pickle_read(path: str):
-    path = add_extention(path, '.pickle')
-    try:
-        with open(path, 'rb') as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        print('[ERROR] FILE DOESNT EXISTS:', path)
-
-def pickle_write(path: str, data):
-    path = add_extention(path, '.pickle')
-    with open(path, 'wb') as f:
-        pickle.dump(data, f)
+    
+    if precision is None:
+        precision = 1 if isinstance(num, float) else 0
+    
+    return f"{num:,.{precision}f}"
 
 
 def get_now():
@@ -1021,46 +833,12 @@ def duration_to_string(t: float):
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
 
-def get_folders(path) -> list[str]:
-    return sorted(next(os.walk(path))[1])
-
-def get_files(path) -> list[str]:
-    return sorted(next(os.walk(path))[2])
-
-def get_all_files(path=None, ext=None):
-    if path is None:
-        path = '.'
-    files = get_files(path)
-    if ext is None:
-        return files
-    ext = fix_extention(ext)
-    return [file for file in files if file.endswith(ext)]
-
-REPORTS_FILTER_FILES = {
-    'allowed': os.path.join(PATH_DIR, "__allowed.txt"),
-    'private': os.path.join(PATH_DIR, "__private.txt"),
-}
-FILTERED_LOGS = {}
-def get_logs_filter(filter_type: str):
-    if filter_type in FILTERED_LOGS:
-        return FILTERED_LOGS[filter_type]
-    data = file_read(REPORTS_FILTER_FILES[filter_type])
-    data = data.splitlines()
-    FILTERED_LOGS[filter_type] = data
-    return data
-
-def get_folders_filter(filter=None, public_only=True):
-    folders = get_folders('LogsDir')
-    if filter is not None:
-        folders = [name for name in folders if filter in name]
-    if public_only:
-        filter_list = get_logs_filter('private')
-        folders = [name for name in folders if name not in filter_list]
-    return folders
-
 REPORT_NAME_STRUCTURE = ("date", "time", "name", "server")
 def get_report_name_info(name: str):
-    return dict(zip(REPORT_NAME_STRUCTURE, name.split('--')))
+    _name = name.split('--')
+    while len(_name) < len(REPORT_NAME_STRUCTURE):
+        _name.append("")
+    return dict(zip(REPORT_NAME_STRUCTURE, _name))
 
 def get_last_line(filename, skip_lines=0):
     with open(filename, 'rb') as f:
@@ -1089,18 +867,3 @@ def logs_edit_time(file_name):
         last_line = get_last_line(file_name, skip_lines=1)
         dt_last_line = _to_dt(last_line)
     return abs(dt_last_edit-dt_last_line).total_seconds()
-
-
-MAX_PW_ATTEMPTS = 5
-WRONG_PW_FILE = os.path.join(PATH_DIR, '_wrong_pw.json')
-WRONG_PW = json_read(WRONG_PW_FILE)
-
-def wrong_pw(ip):
-    attempt = WRONG_PW.get(ip, 0) + 1
-    WRONG_PW[ip] = attempt
-    if attempt >= MAX_PW_ATTEMPTS:
-        json_write(WRONG_PW_FILE, WRONG_PW, backup=True)
-    return MAX_PW_ATTEMPTS - attempt
-
-def banned(ip):
-    return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS

@@ -1,10 +1,10 @@
 import gzip
 import json
 import os
+from collections import defaultdict
 
-from constants import (
-    LOGS_DIR, TOP_DIR,
-    bytes_read, bytes_write, get_folders_filter, json_read, new_folder_path, running_time)
+import file_functions
+from constants import LOGS_DIR, TOP_DIR, running_time
 
 TOP_FILE = 'top.json'
 
@@ -13,10 +13,10 @@ def new_request(request: dict):
     if not server:
         return b''
     
-    server_folder = new_folder_path(TOP_DIR, server)
+    server_folder = file_functions.new_folder_path(TOP_DIR, server)
     fname = f"{request.get('boss')} {request.get('diff')}.gzip"
     p = os.path.join(server_folder, fname)
-    return bytes_read(p)
+    return file_functions.bytes_read(p)
 
 def get_player_id(item: dict[str, str]):
     report_id = item['r']
@@ -25,7 +25,7 @@ def get_player_id(item: dict[str, str]):
     return f"{report_date}-{player_guid}"
 
 def gzip_read(path):
-    f = bytes_read(path, ext="gzip")
+    f = file_functions.bytes_read(path, ext="gzip")
     if not f:
         return {}
     g = gzip.decompress(f)
@@ -34,18 +34,18 @@ def gzip_read(path):
 
 @running_time
 def save_tops(top: dict, server):
-    server_folder = new_folder_path(TOP_DIR, server)
+    server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in top.items():
         data = list(data.values())
         data = json.dumps(data, separators=(',', ':'), ).encode()
         data = gzip.compress(data, compresslevel=5)
         bpath = os.path.join(server_folder, f"{boss_f_n}.gzip")
-        bytes_write(bpath, data)
+        file_functions.bytes_write(bpath, data)
 
 def data_gen(report_id: str):
     report_folder = os.path.join(LOGS_DIR, report_id)
     top_file = os.path.join(report_folder, TOP_FILE)
-    TOP: dict[str, dict[str, list[dict]]] = json_read(top_file)
+    TOP: dict[str, dict[str, list[dict]]] = file_functions.json_read(top_file)
     for boss_name, diffs in TOP.items():
         for diff, data in diffs.items():
             boss_f_n = f"{boss_name} {diff}"
@@ -70,7 +70,7 @@ def __make_top(reports):
     return top
 
 def make_from_zero(server):
-    reports = get_folders_filter(server)
+    reports = file_functions.get_folders_filter(server)
     TOP_D = __make_top(reports)
     save_tops(TOP_D, server)
 
@@ -80,7 +80,7 @@ def add_new_reports(server: str, reports: list[str]):
 
     changed = False
     new_top = {}
-    server_folder = new_folder_path(TOP_DIR, server)
+    server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in TOP_D.items():
         top_path = os.path.join(server_folder, boss_f_n)
         cached_top = gzip_read(top_path)
@@ -92,10 +92,10 @@ def add_new_reports(server: str, reports: list[str]):
         save_tops(new_top, server)
 
 def add_new_reports_wrap(reports: list[str]):
-    grouped_reports = {}
+    grouped_reports = defaultdict(list)
     for report in reports:
         server = report.rsplit('--', 1)[-1]
-        grouped_reports.setdefault(server, []).append(report)
+        grouped_reports[server].append(report)
         
     for server, reports in grouped_reports.items():
         add_new_reports(server, reports)
@@ -107,7 +107,7 @@ def add_new_single(report_id: str, forced=False):
     changed = False
     TOP_D: dict[str, dict[str, dict]] = {}
     REPORT_SERVER = report_id.rsplit('--', 1)[-1]
-    SERVER_FOLDER = new_folder_path(TOP_DIR, REPORT_SERVER)
+    SERVER_FOLDER = file_functions.new_folder_path(TOP_DIR, REPORT_SERVER)
     for boss_f_n, data in data_gen(report_id):
         top_path = os.path.join(SERVER_FOLDER, boss_f_n)
         _top = TOP_D[boss_f_n] = gzip_read(top_path)
@@ -121,7 +121,7 @@ def delete_single(report_id: str):
     changed = False
     TOP_D: dict[str, dict[str, dict]] = {}
     REPORT_SERVER = report_id.rsplit('--', 1)[-1]
-    SERVER_FOLDER = new_folder_path(TOP_DIR, REPORT_SERVER)
+    SERVER_FOLDER = file_functions.new_folder_path(TOP_DIR, REPORT_SERVER)
     for boss_f_n, data in data_gen(report_id):
         top_path = os.path.join(SERVER_FOLDER, boss_f_n)
         _top = TOP_D[boss_f_n] = gzip_read(top_path)
@@ -135,7 +135,10 @@ def delete_single(report_id: str):
         save_tops(TOP_D, REPORT_SERVER)
 
 
-if __name__ == "__main__":
+def __test():
     # make_from_zero("Lordaeron")
     # add_new_single("21-10-20--19-42--Xtan--Lordaeron", forced=True)
     delete_single("21-10-20--19-42--Xtan--Lordaeron")
+
+if __name__ == "__main__":
+    __test()

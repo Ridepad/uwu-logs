@@ -207,7 +207,7 @@ def convert_to_html_name(name: str):
     return name.lower().replace(" ", "-").replace("'", "")
 
 def get_segments(logs, enc_data: dict[str, list[tuple[int, int]]]):
-    new_data: dict[str, list[dict]] = {}
+    segments_data: dict[str, list[dict]] = {}
     boss_to_html: dict[str, str] = {}
     for boss_name, segments in enc_data.items():
         boss_to_html[boss_name] = convert_to_html_name(boss_name)
@@ -219,12 +219,9 @@ def get_segments(logs, enc_data: dict[str, list[tuple[int, int]]]):
             if segment_data["attempt_type"] == "kill":
                 shift = attempt+1
             boss_data.append(segment_data)
-        new_data[boss_name] = boss_data
+        segments_data[boss_name] = boss_data
     
-    return {
-        "segments": new_data,
-        "boss_html": boss_to_html,
-    }
+    return segments_data
 
 def separate_modes(data: dict[str, list[dict]]):
     separated: dict[str, dict[str, list[dict]]] = {}

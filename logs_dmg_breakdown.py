@@ -11,6 +11,17 @@ def group_targets(targets: set[str]):
         for target_id in target_ids
     }
 
+def separate_thousands(num, precision=None):
+    try:
+        num + 0
+    except TypeError:
+        return ""
+    
+    if precision is None:
+        precision = 1 if isinstance(num, float) else 0
+    
+    return f"{num:,.{precision}f}"
+
 def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
     '''absolute = { spell_id: sum }
     useful = { spell_id: {
@@ -149,13 +160,7 @@ def auras(logs_slice: list[str], player_GUID: str, controlled_units: set[str], f
         spells[spell_id] += 1
     
     return spells
-
-def rounder(num):
-    if not num:
-        return ""
-    v = f"{num:,}" if type(num) == int else f"{num:,.1f}"
-    return v.replace(",", " ")
-
+    
 def get_avgs(hits: list):
     if not hits:
         return []
@@ -172,13 +177,13 @@ def get_avgs(hits: list):
         sum(hits[:len10]) // len10,
         min(hits),
     ]
-    return list(map(rounder, avgs))
+    return list(map(separate_thousands, avgs))
 
 def format_percent(hit, crit):
     if crit == 0:
         return ""
     percent = crit/(hit+crit)*100
-    percent = rounder(percent)
+    percent = separate_thousands(percent)
     return f"{percent}%"
 
 def format_hits_data(hits, crits):
@@ -187,8 +192,8 @@ def format_hits_data(hits, crits):
     percent = format_percent(hits_count, crits_count)
     hits_avg = get_avgs(hits)
     crits_avg = get_avgs(crits)
-    hits_count = rounder(hits_count)
-    crits_count = rounder(crits_count)
+    hits_count = separate_thousands(hits_count)
+    crits_count = separate_thousands(crits_count)
     return ((hits_count, hits_avg), (crits_count, crits_avg)), percent
 
 def format_hits(hits: dict[str, list[int]]):

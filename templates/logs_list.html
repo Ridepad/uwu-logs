@@ -15,10 +15,10 @@
 #calendar-table aside {
   display: none;
   position: fixed;
-  bottom: 5%;
   left: auto;
   right: 0;
-  height: 85vh;
+  bottom: 0;
+  height: 90%;
   overflow-y: auto;
   overflow-x: hidden;
   flex-direction: column;
@@ -26,78 +26,131 @@
 #calendar-table input:checked ~ aside {
   display: flex;
 }
-#calendar-table a {
+#calendar-table aside a {
   text-align: left;
   font-size: 60%;
   min-width: max-content;
   padding-right: 1ch;
 }
-#calendar-table tr:nth-child(n+2) > td {
+#calendar-table td {
   color: var(--highlight-color);
 }
-#calendar-footer a {
-  font-size: 150%;
-}
-#calendar-footer-date {
-  display: inline-block;
-  min-width: 14ch;
-  text-align: center;
-}
 @media (max-width: 1100px) {
-  #calendar-footer {
-    justify-content: center;
-  }
   #calendar-table aside {
-    height: 100vw;
+    height: 50%;
   }
-  #calendar-table a {
+  #calendar-table aside a {
     font-size: 90%;
   }
 }
 
-#controls > * {
-  font-size: clamp(10pt, 3vh, 7vw);
-  text-align: center;
+#calendar-controls {
+  display: flex;
+  flex-direction: column;
 }
-
-#controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
+#calendar-controls-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
-#ladder #instance,
-#ladder #boss {
-  grid-column: span 3;
+#month-prev,
+#month-next {
+  padding-inline: 1ch;
+}
+#calendar-year {
+  min-width: 5ch;
+}
+#calendar-month {
+  min-width: 10ch;
+}
+#toggle-more {
+  min-width: 2ch;
+  color: var(--unfocused);
 }
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="calendar">
-  <!-- <section id="calendar-controls">
-    <select id="calendar-server-select">
-      <option>All servers</option>
-      <option></option>
-    </select>
-  </section> -->
   <section id="calendar-table">
-{{ new_month | safe }}
+    <table>
+      <caption>
+        <section id="calendar-controls">
+          <div id="calendar-controls-top">
+            <a id="month-prev" href="{{ PREV_QUERY }}">&lt;&lt;</a>
+            <select id="calendar-month">
+              {% for month_n, month_name in MONTHS %}
+              <option value="{{ month_n }}"{% if month_name == CURRENT_MONTH %} selected{% endif %}>{{ month_name }}</option>
+              {% endfor %}
+            </select>
+            <select id="calendar-year">
+              {% for year in YEARS %}
+              <option value="{{ year }}"{% if year == CURRENT_YEAR %} selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+            </select>
+            <button id="toggle-more">🔍</button>
+            <a id="month-next" href="{{ NEXT_QUERY }}">&gt;&gt;</a>
+          </div>
+          <div id="calendar-controls-bot" style="display: none;">
+            <select id="calendar-server">
+              <option selected value="">All Servers</option>
+              {% for server in SERVERS %}
+              <option value="{{ server }}"{% if server == CURRENT_SERVER %} selected{% endif %}>{{ server }}</option>
+              {% endfor %}
+            </select>
+            <input id="calendar-free" type="text" placeholder="Author, time, etc. (press enter after)" maxlength="20" autocomplete="on">
+          </div>
+        </section>
+      </caption>
+      <thead>
+        <tr>
+          <th class="mon">Mon</th>
+          <th class="tue">Tue</th>
+          <th class="wed">Wed</th>
+          <th class="thu">Thu</th>
+          <th class="fri">Fri</th>
+          <th class="sat">Sat</th>
+          <th class="sun">Sun</th>
+        </tr>
+      </thead>
+      <tbody id="calendar-body">
+        {{ new_month | safe }}
+      </tbody>
+    </table>
   </section>
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    const searchInputServer = document.getElementById("calendar-server");
+    const searchInputFree = document.getElementById("calendar-free");
+    const searchInputMonth = document.getElementById("calendar-month");
+    const searchInputYear = document.getElementById("calendar-year");
+    const toggleMore = document.getElementById("toggle-more");
+    const calendarControlsBot = document.getElementById("calendar-controls-bot");
+
+    function change_parameter(param, value) {
+      value ?  p.set(param, value) : p.delete(param);
+    }
+    function make_request_data() {
+      const d = new Date();
+      const month = searchInputMonth.value - d.getMonth();
+      const year = searchInputYear.value - d.getFullYear();
+      const page = year * 12 + month - 1;
+      change_parameter("page", page);
+      change_parameter("server", searchInputServer.value);
+      change_parameter("free", searchInputFree.value);
+      window.location.replace(`?${p}`);
+    }
+    searchInputServer.addEventListener("input", make_request_data);
+    searchInputMonth.addEventListener("input", make_request_data);
+    searchInputYear.addEventListener("input", make_request_data);
+    searchInputFree.addEventListener("keypress", event => event.key == "Enter" && make_request_data());
+
+    searchInputFree.value = p.get("free");
+
+    toggleMore.addEventListener("click", () => {
+      const is_shown = calendarControlsBot.style.display == "block";
+      calendarControlsBot.style.display = is_shown ? "none" : "block";
+    })
+  </script>
 </main>
 {% endblock the_main %}
-
-{% block main_foot %}
-<footer>
-  <ul id="calendar-footer">
-    <li>
-      <a href="/logs_list?page={{ page-1 }}">&lt;&lt;</a>
-    </li>
-    <li>
-      <a id="calendar-footer-date" href="/logs_list">{{ month }} {{ year }}</a>
-    </li>
-    <li>
-      <a href="/logs_list?page={{ page+1 }}">&gt;&gt;</a>
-    </li>
-  </ul>
-</footer>
-{% endblock main_foot %}

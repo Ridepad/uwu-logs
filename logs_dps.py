@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-import logs_main
-
 FLAGS = {'SWING_DAMAGE', 'RANGE_DAMAGE', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'DAMAGE_SHIELD'}
 
 def get_raw_data(logs: list[str], guids: set[str]):
@@ -123,6 +121,7 @@ def test():
     print(dps)
 
 if __name__ == "__main__":
+    import logs_main
     test()
 
 

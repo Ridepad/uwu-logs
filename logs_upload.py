@@ -10,14 +10,12 @@ from threading import Thread
 from time import perf_counter
 
 import constants
+import file_functions
 import logs_archive
 import logs_fix
 import logs_top
 import logs_top_server
-from constants import (
-    LOGGER_UPLOADS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA, UPLOADED_DIR, UPLOADS_DIR,
-    bytes_write, convert_to_fight_name, get_ms_str, json_read, json_write, new_folder_path, to_dt_bytes_year_fix
-)
+from constants import LOGGER_UPLOADS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR, SERVERS, T_DELTA, UPLOADED_DIR, UPLOADS_DIR
 
 ARCHIVE_ID_ERROR = "Bad archive. Don't rename files to .zip/.7z, create archives from 0."
 ARCHIVE_ERROR = "Error unziping file. Make sure logs file inside the archive without any folders."
@@ -30,27 +28,28 @@ SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
 TOP_UPDATE = "Updating top..."
 BUGGED_NAMES = {"nil", "Unknown"}
+file_functions.create_new_folders(PATH_DIR, LOGS_DIR, UPLOADS_DIR, UPLOADED_DIR)
 
 UPLOADED_FILES_FILE = os.path.join(PATH_DIR, '_uploaded_files.json')
-UPLOADED_FILES: dict[str, dict] = json_read(UPLOADED_FILES_FILE)
+UPLOADED_FILES: dict[str, dict] = file_functions.json_read(UPLOADED_FILES_FILE)
 UPLOADED_LOGS_FILE = os.path.join(PATH_DIR, '_uploaded_logs.json')
-UPLOADED_LOGS: dict[str, dict] = json_read(UPLOADED_LOGS_FILE)
+UPLOADED_LOGS: dict[str, dict] = file_functions.json_read(UPLOADED_LOGS_FILE)
 def save_upload_cache(_data, slices):
-    u_logs = json_read(UPLOADED_LOGS_FILE)
+    u_logs = file_functions.json_read(UPLOADED_LOGS_FILE)
     u_logs_old = dict(u_logs)
     u_logs.update(slices)   
     if u_logs != u_logs_old:
-        json_write(UPLOADED_LOGS_FILE, u_logs)
+        file_functions.json_write(UPLOADED_LOGS_FILE, u_logs)
         UPLOADED_LOGS.update(u_logs)
 
     new_upload_data = dict(_data)
     new_upload_data['logs_list'] = sorted(slices)
     file_id = _data["file_id"]
-    u_files = json_read(UPLOADED_FILES_FILE)
+    u_files = file_functions.json_read(UPLOADED_FILES_FILE)
     u_files_old = dict(u_files)
     u_files[file_id] = new_upload_data
     if u_files != u_files_old:
-        json_write(UPLOADED_FILES_FILE, u_files)
+        file_functions.json_write(UPLOADED_FILES_FILE, u_files)
         UPLOADED_FILES.update(u_files)
 
 def get_logs_author_info(logs: list[bytes]):
@@ -63,10 +62,6 @@ def get_logs_author_info(logs: list[bytes]):
         if name not in BUGGED_NAMES:
             return guid, name
     return None
-
-def get_author_guid(logs_slice):
-    logs_author_info = get_logs_author_info(logs_slice)
-    return logs_author_info and logs_author_info[0]
 
 def _format_name(name: bytes):
     return name.decode().replace('"', '')
@@ -100,14 +95,14 @@ def get_extracted_file_info(logs_path):
 
 
 class NewUpload(Thread):
-    def __init__(self, upload_data: dict[str, str], forced=False, dont_clean=False, only_slices=False) -> None:
+    def __init__(self, upload_data: dict[str, str], forced=False, only_slices=False, keep_temp_folder=False) -> None:
         super().__init__()
         self.upload_data = upload_data
         self.upload_dir: str = upload_data["upload_dir"]
         self.server: str = upload_data.get("server") or "Unknown"
         self.forced = forced
-        self.dont_clean = dont_clean
         self.only_slices = only_slices
+        self.keep_temp_folder = keep_temp_folder
         self.slice_cache: dict[str, dict] = {}
 
         self.slices: dict[str, dict] = {}
@@ -132,18 +127,18 @@ class NewUpload(Thread):
         slice["done"] = int(slice_done)
         self.status_to_json()
     
-    def add_logger_msg(self, msg, timestamp: float=None, error=False):
+    def add_logger_msg(self, msg, timestamp: float=None, is_error=False):
         msg = f"{self.upload_dir} | {msg}"
         if timestamp is not None:
-            msg = f"{get_ms_str(timestamp)} | {msg}"
+            msg = f"{constants.get_ms_str(timestamp)} | {msg}"
         
-        if error:
+        if is_error:
             LOGGER_UPLOADS.error(msg)
         else:
             LOGGER_UPLOADS.debug(msg)
     
     def to_dt(self, s):
-        return to_dt_bytes_year_fix(s, self.year)
+        return constants.to_dt_bytes_year_fix(s, self.year)
 
     def get_timedelta(self, now, before):
         return self.to_dt(now) - self.to_dt(before)
@@ -199,7 +194,7 @@ class NewUpload(Thread):
         players = set()
         for guid in entities:
             if guid[:5] in {b"0xF13", b"0xF15"}:
-                _fight_name = convert_to_fight_name(guid[6:-6].decode())
+                _fight_name = constants.convert_to_fight_name(guid[6:-6].decode())
                 if _fight_name:
                     bosses.add(_fight_name)
             elif guid[:3] == b"0x0" and guid != b"0x0000000000000000":
@@ -258,7 +253,7 @@ class NewUpload(Thread):
         timestamp = perf_counter()
         slice_name = os.path.join(self.upload_dir, f"{logs_id}.txt")
         data_joined, _ = b''.join(logs_slice), logs_slice.clear()
-        bytes_write(slice_name, data_joined)
+        file_functions.bytes_write(slice_name, data_joined)
         os.utime(slice_name, (self.mtime, self.mtime))
 
         self.add_logger_msg(f"{logs_id} | Slice saved", timestamp)
@@ -342,7 +337,7 @@ class NewUpload(Thread):
 
         if logs_id in logs_folder:
             shutil.rmtree(logs_folder, ignore_errors=True)
-        logs_folder = new_folder_path(LOGS_DIR, logs_id)
+        logs_folder = file_functions.new_folder_path(LOGS_DIR, logs_id)
         
         timestamp = perf_counter()
         
@@ -352,7 +347,7 @@ class NewUpload(Thread):
         logs = b'\n'.join(logs)
         self.change_slice_status(logs_id, "Saving slice...")
         logs = zlib.compress(logs, level=7)
-        bytes_write(logs_name, logs)
+        file_functions.bytes_write(logs_name, logs)
         self.change_slice_status(logs_id, "Done!", slice_done=True)
 
         self.add_logger_msg(f"{logs_id} | Slice done", timestamp)
@@ -429,7 +424,7 @@ class NewUpload(Thread):
         archive_data = logs_archive.new_archive(archive_path, self.upload_dir)
         if not archive_data:
             self.change_status(ARCHIVE_ERROR, 1)
-            self.add_logger_msg(f"{archive_path} {ARCHIVE_ERROR}", error=True)
+            self.add_logger_msg(f"{archive_path} {ARCHIVE_ERROR}", is_error=True)
             return
         
         self.upload_data["extracted"] = archive_data["extracted"]
@@ -437,7 +432,7 @@ class NewUpload(Thread):
 
     def run(self):
         if self.upload_data is None:
-            self.add_logger_msg("self.upload_data is None", error=True)
+            self.add_logger_msg("self.upload_data is None", is_error=True)
             return
         
         extracted_file = self.upload_data.get("extracted")
@@ -478,11 +473,11 @@ class NewUpload(Thread):
         except Exception:
             LOGGER_UPLOADS.exception(f"{self.upload_dir} | NewUpload finish")
 
-        if self.dont_clean:
+        if self.keep_temp_folder:
             return
 
         if "uploads" not in self.upload_dir:
-            self.add_logger_msg("NewUpload 'uploads' not in self.upload_dir", error=True)
+            self.add_logger_msg("NewUpload 'uploads' not in self.upload_dir", is_error=True)
             return
 
         try:
@@ -515,9 +510,9 @@ def format_filename(file_name):
     return f"{'_'.join(words)}.{ext}"
 
 def new_upload_folder(ip='localhost'):
-    new_upload_dir_ip = new_folder_path(UPLOADS_DIR, ip)
+    new_upload_dir_ip = file_functions.new_folder_path(UPLOADS_DIR, ip)
     timestamp = constants.get_now().strftime("%y-%m-%d--%H-%M-%S")
-    new_upload_dir = new_folder_path(new_upload_dir_ip, timestamp)
+    new_upload_dir = file_functions.new_folder_path(new_upload_dir_ip, timestamp)
     return new_upload_dir
 
 def main(file: File, ip='localhost', server=None, forced=False):
@@ -565,7 +560,7 @@ class FileSave:
             "ip": IP,
         }
 
-        LOGGER_UPLOADS.info(f"{get_ms_str(self.started)} | {new_upload_dir} | {len(self.chunks):>3} | {self.current_chunk:>3}")
+        LOGGER_UPLOADS.info(f"{constants.get_ms_str(self.started)} | {new_upload_dir} | {len(self.chunks):>3} | {self.current_chunk:>3}")
         
         self.upload_thread = NewUpload(upload_data)
         self.upload_thread.start()
@@ -588,15 +583,15 @@ class FileSave:
         self.chunks.append(chunk)
         return True
 
-def main_local_text(logs_path, forced=False, dont_clean=False, only_slices=False):
+def main_local_text(logs_path, ip="localhost", forced=False, dont_clean=False, only_slices=False):
     upload_data = {
-        "upload_dir": new_upload_folder(),
+        "upload_dir": new_upload_folder(ip),
         "archive": "",
         "extracted": logs_path,
         "server": None,
-        "ip": "localhost"
+        "ip": ip
     }
-    return NewUpload(upload_data, forced=forced, dont_clean=dont_clean, only_slices=only_slices)
+    return NewUpload(upload_data, forced=forced, keep_temp_folder=dont_clean, only_slices=only_slices)
 
 
 def __main():

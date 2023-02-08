@@ -7,13 +7,14 @@ from flask import (
     make_response, render_template, send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import file_functions
 import logs_calendar
 import logs_main
 import logs_upload
-import logs_top_server
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR, T_DELTA, TOP_DIR,
-    banned, get_folders, get_logs_filter, wrong_pw)
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR,
+    REPORTS_PRIVATE, STATIC_DIR, T_DELTA, TOP_DIR
+)
 
 try:
     import _validate
@@ -34,7 +35,7 @@ ALLOWED_EXTENSIONS = {'zip', '7z', }
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 CACHED_PAGES = {}
-IGNORED_PATHS = {"upload_progress"}
+IGNORED_PATHS = {"upload", "upload_progress"}
 
 def render_template_wrap(file: str, **kwargs):
     path = kwargs.get("PATH", "")
@@ -64,15 +65,30 @@ def get_formatted_query_string():
 def get_default_params_wrap(report_id: str):
     return load_report(report_id).get_default_params(request)
 
+MAX_PW_ATTEMPTS = 5
+WRONG_PW_FILE = os.path.join(PATH_DIR, '_wrong_pw.json')
+WRONG_PW = file_functions.json_read(WRONG_PW_FILE)
+
+def wrong_pw(ip):
+    attempt = WRONG_PW.get(ip, 0) + 1
+    WRONG_PW[ip] = attempt
+    if attempt >= MAX_PW_ATTEMPTS:
+        file_functions.json_write(WRONG_PW_FILE, WRONG_PW, backup=True)
+    return MAX_PW_ATTEMPTS - attempt
+
+def banned(ip):
+    return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS
+
+
 @SERVER.route('/favicon.ico')
 def favicon():
-    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
     response.cache_control.max_age = 30 * 24 * 60 * 60
     return response
 
 @SERVER.route('/class_icons.jpg')
 def class_icons():
-    response = send_from_directory(os.path.join(PATH_DIR, 'static'), 'class_icons.jpg', mimetype='image/jpeg')
+    response = send_from_directory(STATIC_DIR, 'class_icons.jpg', mimetype='image/jpeg')
     response.cache_control.max_age = 30 * 24 * 60 * 60
     return response
 
@@ -149,7 +165,7 @@ def before_request():
         return render_template("404.html")
     
     elif USE_FILTER:
-        _filter = get_logs_filter("private")
+        _filter = file_functions.get_logs_filter(REPORTS_PRIVATE)
         if report_id in _filter and not _validate.cookie(request):
             return render_template('protected.html')
 
@@ -165,16 +181,40 @@ def before_request():
 def home():
     return render_template('home.html')
 
+LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
+# @SERVER.route("/logs_list", methods=['GET', 'POST'])
 @SERVER.route("/logs_list")
 def show_logs_list():
+    # if request.method == 'POST':
+    #     print(request.data)
+    #     return '', 200
+        # page = request.data.get()
+        # new_month = logs_calendar.makeshit(page)
+        # return logs_calendar.makeshit(page)
+
     page = request.args.get("page", default=0, type=int)
+    free = request.args.get("free")
+    server = request.args.get("server")
+    new_month = logs_calendar.makeshit(page, free, server)
     year, month = logs_calendar.new_month(page)
-    new_month = logs_calendar.get_reports_by_month(year, month)
+    years = list(range(2018, datetime.now().year+2))
     month_name = MONTHS[month-1]
+    servers = file_functions.get_folders(TOP_DIR)
+    
+    query = ""
+    if server:
+        query = f"{query}&server={server}"
+    if free:
+        query = f"{query}&free={free}"
+    prev_query = f"?page={page-1}{query}"
+    next_query = f"?page={page+1}{query}"
+    
     return render_template(
         'logs_list.html',
         new_month=new_month,
-        page=page, month=month_name, year=year,
+        PREV_QUERY=prev_query, NEXT_QUERY=next_query,
+        CURRENT_MONTH=month_name, CURRENT_YEAR=year, CURRENT_SERVER=server,
+        MONTHS=LOGS_LIST_MONTHS, YEARS=years, SERVERS=servers,
     )
 
 def file_is_proccessing(ip):
@@ -258,6 +298,10 @@ def player(report_id, source_name):
     data_gen = report.player_damage_gen(segments, sGUID, tGUID)
     data_sum = report.player_damage_sum(data_gen)
     data = report.player_damage_format(data_sum)
+
+    _server = default_params.get("SERVER", "")
+    if _server.startswith("Frostmourne"):
+        default_params["SERVER"] = "Frostmourne"
 
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
@@ -481,10 +525,22 @@ def player_auras(report_id, player_name):
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
     if request.method == "GET":
-        servers = get_folders(TOP_DIR)
+        servers = file_functions.get_folders(TOP_DIR)
         return render_template('top.html', SERVERS=servers)
-     
-    content = logs_top_server.new_request(request.json)
+    
+    _data: dict = request.get_json()
+
+    server = _data.get("server")
+    boss = _data.get("boss")
+    diff = _data.get("diff")
+    if not any({server, boss, diff}):
+        return '', 404
+    
+    server_folder = file_functions.new_folder_path(TOP_DIR, server)
+    fname = f"{boss} {diff}.gzip"
+    p = os.path.join(server_folder, fname)
+    content = file_functions.bytes_read(p)
+
     response = make_response(content)
     response.headers['Content-length'] = len(content)
     response.headers['Content-Encoding'] = 'gzip'
