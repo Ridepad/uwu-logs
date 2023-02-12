@@ -17,10 +17,13 @@ def separate_thousands(num, precision=None):
     except TypeError:
         return ""
     
+    if not num:
+        return ""
+    
     if precision is None:
         precision = 1 if isinstance(num, float) else 0
     
-    return f"{num:,.{precision}f}"
+    return f"{num:,.{precision}f}".replace(',', ' ')
 
 def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
     '''absolute = { spell_id: sum }

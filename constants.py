@@ -739,6 +739,9 @@ def separate_thousands(num, precision=None):
     except TypeError:
         return ""
     
+    if not num:
+        return ""
+    
     if precision is None:
         precision = 1 if isinstance(num, float) else 0
     
