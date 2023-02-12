@@ -1419,10 +1419,27 @@ class THE_LOGS:
             "LABELS": labels,
         }
 
-    def get_dps(self, data: dict):
+    def get_dps(self, s, f, player: str):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['get_dps']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+
+        logs_slice = self.get_logs(s, f)
+        if player:
+            guids = self.get_units_controlled_by(player)
+        else:
+            guids = self.get_players_and_pets_guids()
+        data = logs_dps.get_raw_data(logs_slice, guids)
+        logs_dps.convert_keys(data)
+
+        cached_data[slice_ID] = data
+        return data
+
+    def get_dps_wrap(self, data: dict):
         if not data:
             return {}
-        
+
         enc_name = data.get("boss")
         attempt = data.get("attempt")
         if not enc_name or not attempt:
@@ -1431,12 +1448,9 @@ class THE_LOGS:
         enc_data = self.get_enc_data()
         enc_name = BOSSES_FROM_HTML[enc_name]
         s, f = enc_data[enc_name][int(attempt)]
-        logs_slice = self.get_logs(s, f)
-        
         player = data.get("player_name")
-        if player:
-            guids = self.get_units_controlled_by(player)
-        else:
-            guids = self.get_players_and_pets_guids()
-        
-        return logs_dps.get_continuous_dps_seconds(logs_slice, guids)
+        _data = self.get_dps(s, f, player)
+        refresh_window = data.get("sec")
+        new_data = logs_dps.convert_to_dps(_data, refresh_window)
+        logs_dps.convert_keys_to_str(new_data)
+        return new_data

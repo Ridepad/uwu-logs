@@ -17,6 +17,12 @@
 #warmane-armory-link {
   margin-left: 3ch;
 }
+#sliced-cb ~ :not(label) {
+  visibility: hidden;
+}
+#sliced-cb:checked ~ :not(label) {
+  visibility: visible;
+}
 </style>
 {% endblock add_style %}
 
@@ -112,7 +118,27 @@
   {% else %}
   <p>Player not found</p>
   {% endif %}
-  <canvas id="chart"></canvas>
+  <section>
+    <div>
+      <input id="sliced-cb" type="checkbox">
+      <label for="sliced-cb">Sliced</label>
+      <select id="sliced-sec">
+        <option value="" disabled selected>0</option>
+        <option value=1>1</option>
+        <option value=2>2</option>
+        <option value=3>3</option>
+        <option value=5>5</option>
+        <option value=10>10</option>
+        <option value=15>15</option>
+        <option value=20>20</option>
+        <option value=30>30</option>
+      </select>
+      <span>sec</span>
+    </div>
+    <div>
+      <canvas id="chart"></canvas>
+    </div>
+  </section>
 </section>
 </main>
 {% endblock the_main %}
@@ -136,83 +162,84 @@
   reset.addEventListener('click', redirect);
   select.addEventListener('change', redirect);
 
-  async function draw_chart(datapoints) {
-    console.log(Object.keys(datapoints).length);
-    if (Object.keys(datapoints).length === 0) return;
-    const data = {
-      datasets: [
-        {
-          data: datapoints,
-          cubicInterpolationMode: 'monotone',
-          borderColor: '#FF0000',
-          pointBorderWidth: 0,
-        }
-      ]
-    };
 
-    const datapoints_values = Object.values(datapoints);
-    const datapoints_min = Math.min(...datapoints_values);
-    const graph_min = Math.floor(datapoints_min);
-    const datapoints_max = Math.max(...datapoints_values);
-    const graph_max = Math.ceil(datapoints_max);
-
-    const options = {
-      animation: false,
-      responsive: true,
-      scales: {
-        y: {
-          grid: {
-            color: 'rgb(32, 32, 32)',
-            tickLength: 1,
-          },
-          min: graph_min,
-          max: graph_max,
-          display: true,
-          title: {
-            display: true,
-            text: 'DPS'
-          },
-          ticks: {
-            padding: 0
-          }
+  const options = {
+    animation: false,
+    responsive: true,
+    scales: {
+      y: {
+        grid: {
+          color: 'rgb(32, 32, 32)',
+          tickLength: 1,
         },
-        x: {
-          display: false
+        display: true,
+        title: {
+          display: true,
+          text: 'DPS'
+        },
+        ticks: {
+          padding: 0
         }
       },
-      plugins: {
-        tooltip: {
-          intersect: false
-        },
-        legend: {
-          display: false
-        }
+      x: {
+        display: false
       }
-    };
+    },
+    plugins: {
+      tooltip: {
+        intersect: false
+      },
+      legend: {
+        display: false
+      }
+    }
+  };
 
-    const config = {
-      type: 'line',
-      data: data,
-      options: options,
-    };
-    new Chart(document.getElementById('chart'), config);
+  const config = {
+    type: 'line',
+    options: options,
+  };
+  const CHART = new Chart(document.getElementById('chart'), config);
+
+  function make_new_dataset(datapoints) {
+    return {
+      data: datapoints,
+      cubicInterpolationMode: 'monotone',
+      borderColor: '#FF0000',
+      pointBorderWidth: 0,
+    }
+  }
+
+  function chartSetData(datapoints) {
+    const datapoints_values = Object.values(datapoints);
+    const datapoints_min = Math.min(...datapoints_values);
+    const datapoints_max = Math.max(...datapoints_values);
+    CHART.options.scales.y.min = Math.floor(datapoints_min);
+    CHART.options.scales.y.max = Math.ceil(datapoints_max);
+    CHART.data.datasets[0] = make_new_dataset(datapoints);
+    CHART.update();
   }
 
   const get_dps_request = new XMLHttpRequest();
   get_dps_request.onreadystatechange = () => {
     if (get_dps_request.readyState != 4 || get_dps_request.status != 200) return;
     const datapoints = JSON.parse(get_dps_request.response);
-    draw_chart(datapoints);
+    chartSetData(datapoints);
   }
-  (function() {
+  const sliceCB = document.getElementById("sliced-cb");
+  const sliceSec = document.getElementById("sliced-sec");
+  function sent_post() {
     const params = new URLSearchParams(window.location.search);
+    const [, , reportID, , playerName] = window.location.pathname.split('/')
+    params.set("player_name", playerName)
+    if (sliceCB.checked && sliceSec.value) params.set("sec", sliceSec.value);
     const paramsjson = Object.fromEntries(params);
-    const reportID = window.location.pathname.split('/')[2];
-    const playerName = window.location.pathname.split('/')[4];
-    paramsjson.player_name = playerName;
     const END_POINT = `/reports/${reportID}/get_dps`;
     get_dps_request.open("POST", END_POINT);
     get_dps_request.send(JSON.stringify(paramsjson));
-  })();
+  }
+
+  sliceSec.addEventListener("change", sent_post);
+  sent_post();
 </script>
 {% endblock the_scripts %}

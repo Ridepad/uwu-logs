@@ -240,6 +240,7 @@ def upload_progress():
     if new_upload.upload_thread is None:
         return '', 204
     
+    print(new_upload.upload_thread.status_dict)
     status_str = new_upload.upload_thread.status_json
     if new_upload.upload_thread.status_dict.get('done') == 1:
         del NEW_UPLOADS[ip]
@@ -357,7 +358,7 @@ def get_dps(report_id):
     if data is None:
         data = request.form
     report = load_report(report_id)
-    return report.get_dps(data)
+    return report.get_dps_wrap(data)
 
 @SERVER.route("/reports/<report_id>/spell/<spell_id>/")
 def spells(report_id, spell_id: str):
