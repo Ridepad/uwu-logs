@@ -40,16 +40,19 @@ const requestLogsProcessingInfo = new XMLHttpRequest();
 let timeout;
 
 function logsProcessingCheck() {
+  console.log('logsProcessingCheck');
   requestLogsProcessingInfo.open("GET", "/upload_progress");
   requestLogsProcessingInfo.send();
 }
 
 function upload_progress() {
+  console.log('upload_progress');
   if (requestLogsProcessingInfo.readyState !== 4) return;
   if (requestLogsProcessingInfo.status !== 200) {
     processingStatus.innerText = "Aborted!";
     return;
   }
+  console.log('upload_progress 200');
 
   timeout = setTimeout(logsProcessingCheck, 250);
 
@@ -71,11 +74,6 @@ function upload_progress() {
     processingTableBody.appendChild(newRow(slice_name, slice, done));
   }
 }
-
-requestLogsProcessingInfo.timeout = 2500;
-requestLogsProcessingInfo.ontimeout = logsProcessingCheck;
-requestLogsProcessingInfo.onreadystatechange = upload_progress;
-logsProcessingCheck();
 
 fileSelect.onchange = () => {
   const file = fileSelect.files[0];
@@ -158,3 +156,8 @@ fileSubmit.onclick = () => {
   infoSection.style.display = "none";
   sendnewchunk();
 }
+
+requestLogsProcessingInfo.timeout = 2500;
+requestLogsProcessingInfo.ontimeout = logsProcessingCheck;
+requestLogsProcessingInfo.onreadystatechange = upload_progress;
+logsProcessingCheck();

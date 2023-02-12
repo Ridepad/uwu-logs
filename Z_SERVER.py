@@ -233,10 +233,12 @@ def file_is_proccessing(ip):
 @SERVER.route("/upload_progress")
 def upload_progress():
     ip = request.remote_addr
+    print("upload_progress ip not in NEW_UPLOADS")
     if ip not in NEW_UPLOADS:
-        return '', 205
+        return '', 204
     
     new_upload = NEW_UPLOADS[ip]
+    print("new_upload.upload_thread", new_upload.upload_thread)
     if new_upload.upload_thread is None:
         return '', 204
     
