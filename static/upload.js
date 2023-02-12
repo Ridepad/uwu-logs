@@ -46,7 +46,7 @@ function logsProcessingCheck() {
 }
 
 function upload_progress() {
-  console.log('upload_progress');
+  console.log('upload_progress', requestLogsProcessingInfo.readyState, requestLogsProcessingInfo.status);
   if (requestLogsProcessingInfo.readyState !== 4) return;
   if (requestLogsProcessingInfo.status !== 200) {
     processingStatus.innerText = "Aborted!";
@@ -103,6 +103,7 @@ fileSubmit.onclick = () => {
   })
   
   async function sendnewchunk(retry) {
+    console.log('sendnewchunk', retry);
     if (!retry) {
       chunkN = chunkN + 1;
     }
@@ -127,9 +128,11 @@ fileSubmit.onclick = () => {
   }
 
   function upload_on_ready () {
+    console.log('upload_on_ready');
     if (request.readyState !== 4) return;
     if (request.status === 201) return logsProcessingCheck();
     if (request.status !== 200) return retry();
+    console.log('upload_on_ready 200');
     
     retries = 0;
     current = current + CHUNK_SIZE;

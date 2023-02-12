@@ -1421,6 +1421,8 @@ class THE_LOGS:
 
     def get_dps(self, s, f, player: str):
         slice_ID = f"{s}_{f}"
+        if player:
+            slice_ID = f"{slice_ID}_{player}"
         cached_data = self.CACHE['get_dps']
         if slice_ID in cached_data:
             return cached_data[slice_ID]
