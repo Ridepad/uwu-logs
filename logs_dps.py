@@ -100,6 +100,11 @@ def convert_to_slice_dps_custom(data: dict[int, int], refresh_window=None):
     return DPS
 
 def convert_to_dps(data: dict[int, int], refresh_window=None):
+    try:
+        refresh_window = int(refresh_window)
+    except:
+        pass
+    
     if not refresh_window:
         return convert_to_continuous_dps_seconds(data)
     return convert_to_slice_dps_custom(data, int(refresh_window))

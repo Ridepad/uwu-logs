@@ -17,11 +17,8 @@
 #warmane-armory-link {
   margin-left: 3ch;
 }
-#sliced-cb ~ :not(label) {
-  visibility: hidden;
-}
-#sliced-cb:checked ~ :not(label) {
-  visibility: visible;
+#chart-slice > * {
+  font-size: 200%;
 }
 </style>
 {% endblock add_style %}
@@ -37,14 +34,14 @@
     {% endfor %}
   </select>
 </section>
-<div>
+<section>
   <ul id="player-nav">
     <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
     <li><a>CASTS</a></li>
-</div>
+</section>
 <section id="dmg-done-main">
   <div>
     <ul id="player-info">
@@ -118,27 +115,26 @@
   {% else %}
   <p>Player not found</p>
   {% endif %}
-  <section>
-    <div>
-      <input id="sliced-cb" type="checkbox">
-      <label for="sliced-cb">Sliced</label>
-      <select id="sliced-sec">
-        <option value="" disabled selected>0</option>
-        <option value=1>1</option>
-        <option value=2>2</option>
-        <option value=3>3</option>
-        <option value=5>5</option>
-        <option value=10>10</option>
-        <option value=15>15</option>
-        <option value=20>20</option>
-        <option value=30>30</option>
-      </select>
-      <span>sec</span>
-    </div>
-    <div>
-      <canvas id="chart"></canvas>
-    </div>
-  </section>
+</section>
+<section>
+  <div>
+    <canvas id="chart"></canvas>
+  </div>
+  <div id="chart-slice">
+    <span>Sliced</span>
+    <select id="sliced-sec">
+      <option value=0 selected>0</option>
+      <option value=1>1</option>
+      <option value=2>2</option>
+      <option value=3>3</option>
+      <option value=5>5</option>
+      <option value=10>10</option>
+      <option value=15>15</option>
+      <option value=20>20</option>
+      <option value=30>30</option>
+    </select>
+    <span>sec</span>
+  </div>
 </section>
 </main>
 {% endblock the_main %}
@@ -182,7 +178,7 @@
         }
       },
       x: {
-        display: false
+        display: true
       }
     },
     plugins: {
@@ -226,13 +222,13 @@
     const datapoints = JSON.parse(get_dps_request.response);
     chartSetData(datapoints);
   }
-  const sliceCB = document.getElementById("sliced-cb");
+  
   const sliceSec = document.getElementById("sliced-sec");
   function sent_post() {
     const params = new URLSearchParams(window.location.search);
     const [, , reportID, , playerName] = window.location.pathname.split('/')
     params.set("player_name", playerName)
-    if (sliceCB.checked && sliceSec.value) params.set("sec", sliceSec.value);
+    params.set("sec", sliceSec.value);
     const paramsjson = Object.fromEntries(params);
     const END_POINT = `/reports/${reportID}/get_dps`;
     get_dps_request.open("POST", END_POINT);
