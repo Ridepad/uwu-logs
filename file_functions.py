@@ -3,6 +3,11 @@ import os
 import zlib
 
 
+real_path = os.path.realpath(__file__)
+PATH_DIR = os.path.dirname(real_path)
+REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
+REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
+
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
@@ -119,10 +124,10 @@ def get_all_files(path=None, ext=None):
 def get_logs_filter(filter_file: str):
     return file_read(filter_file).splitlines()
 
-def get_folders_filter(folders: list[str], _filter=None, public_only=True):
-    if _filter is not None:
-        folders = [name for name in folders if _filter in name]
-    if public_only:
-        filter_list = get_logs_filter('private')
+def get_folders_filter(folders: list[str], filter_str: str=None, private_only=True):
+    if filter_str is not None:
+        folders = [name for name in folders if filter_str in name]
+    if private_only:
+        filter_list = get_logs_filter(REPORTS_PRIVATE)
         folders = [name for name in folders if name not in filter_list]
     return folders

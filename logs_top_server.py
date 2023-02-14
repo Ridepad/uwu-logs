@@ -34,8 +34,10 @@ def gzip_read(path):
 
 @running_time
 def save_tops(top: dict, server):
+    print("\nSaving top for", server)
     server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in top.items():
+        print(boss_f_n)
         data = list(data.values())
         data = json.dumps(data, separators=(',', ':'), ).encode()
         data = gzip.compress(data, compresslevel=5)
@@ -82,11 +84,13 @@ def add_new_reports(server: str, reports: list[str]):
     new_top = {}
     server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in TOP_D.items():
+        print(boss_f_n)
         top_path = os.path.join(server_folder, boss_f_n)
         cached_top = gzip_read(top_path)
         new_top[boss_f_n] = cached_top
         new_list = data.values()
-        changed = update_top(cached_top, new_list)
+        if update_top(cached_top, new_list):
+            changed = True
 
     if changed:
         save_tops(new_top, server)
@@ -98,6 +102,8 @@ def add_new_reports_wrap(reports: list[str]):
         grouped_reports[server].append(report)
         
     for server, reports in grouped_reports.items():
+        print()
+        print(server)
         add_new_reports(server, reports)
 
 

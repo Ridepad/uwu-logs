@@ -69,7 +69,7 @@ def makeshit(page: int=0, *filters):
     folders = file_functions.get_folders(LOGS_DIR)
     for x in filters:
         print(x)
-        folders = file_functions.get_folders_filter(folders, _filter=x)
+        folders = file_functions.get_folders_filter(folders, filter_str=x)
     prev_month = get_a(page-1, folders)
     prev_month_last_line = remove_empty(prev_month[-1])
 
