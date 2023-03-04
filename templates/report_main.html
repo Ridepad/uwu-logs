@@ -11,22 +11,10 @@ th {
 tr:is(:last-child, :first-child) td {
   border-bottom: 1px solid var(--table-border);
 }
-.rectangle-cell {
-  width: 12rem;
-  position: relative;
-  isolation: isolate;
-  text-shadow: .1em .1em .1em black;
-  text-shadow: 0 0 .3em black;
-  text-align: right;
-}
 .rectangle-cell > div {
   width: var(--width);
-  height: .9em;
   height: 1em;
   border-radius: 0.1em;
-  position: absolute;
-  top: .1em;
-  z-index: -1;
 }
 .damage-bar, .taken-bar {
   box-shadow: .1em .1em 1em darkred;
@@ -90,10 +78,10 @@ tr:nth-child(n+2) .player-cell div {
 
 {% block the_main %}
 <main id="report-main">
-  <section id="tables">
+  <section class="table-wrap wrap-player">
     <table>
       <thead>
-        <th>Name</th>
+        <th class="player-cell">Name</th>
         <th class="col-damage" colspan="3">Damage</th>
         <th class="col-heal" colspan="3">Heal</th>
         <th class="col-taken" colspan="3">Damage Taken</th>
@@ -139,8 +127,8 @@ tr:nth-child(n+2) .player-cell div {
         {% endfor %}
       </tbody>
     </table>
-    <canvas id="chart"></canvas>
   </section>
+  <canvas id="chart"></canvas>
   <div class="min-max-slider" data-legendnum="2">
     <div class="min-max-slider-inputs">
       <input class="min" name="min" type="range" step="1" />

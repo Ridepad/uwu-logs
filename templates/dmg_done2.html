@@ -50,71 +50,73 @@
     </ul>
   </div>
   {% if NAMES %}
-  <table>
-    <tbody>
-      <tr>
-        <th class="spell-name">-</th>
-        <th colspan="2">Actual</th>
-        <th colspan="2">Reduced</th>
-        <th colspan="2"></th>
-        <th colspan="5">Direct hits</th>
-        <th colspan="5">Damage over time</th>
-      </tr>
-      <tr>
-        <th class="spell-name">Spell</th>
-        <th>%</th>
-        <th>Amount</th>
-        <th>%</th>
-        <th>Amount</th>
-        <th>Cast</th>
-        <th>Miss</th>
-        <th colspan="2">Hit</th>
-        <th colspan="3">Crit</th>
-        <th colspan="2">Hit</th>
-        <th colspan="3">Crit</th>
-      </tr>
-      {% for spell_id, spell_name in NAMES.items() %} 
-      <tr class="{{ spell_id }}">
-        <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_name }}</a></td>
-        <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>
-        <td class="total-cell">{{ ACTUAL[spell_id] }}</td>
-        <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
-        <td class="total-cell">{{ REDUCED[spell_id] }}</td>
-        <td class="count">{{ CASTS[spell_name] }}</td>
-        <td class="count">{{ MISSES[spell_name] }}</td>
-        {% for hits, percent in HITS[spell_id] %}
-        {% for _count, _avg in hits %}
-        <td class="count">{{ _count }}</td>
-        <td class="count">
-          {% if _avg %}
-          {{ _avg[0] }}
-          <table class="avgs">
-            {% for avg in _avg[1:] %}
-            <tr><td>{{ avg }}
-            {% endfor %}
-          </table>
-          {% endif %}
-        </td>
+  <div class="table-wrap wrap-spell">
+    <table>
+      <tbody>
+        <tr>
+          <th class="spell-name">-</th>
+          <th colspan="2">Actual</th>
+          <th colspan="2">Reduced</th>
+          <th colspan="2"></th>
+          <th colspan="5">Direct hits</th>
+          <th colspan="5">Damage over time</th>
+        </tr>
+        <tr>
+          <th class="spell-name">Spell</th>
+          <th>%</th>
+          <th>Amount</th>
+          <th>%</th>
+          <th>Amount</th>
+          <th>Cast</th>
+          <th>Miss</th>
+          <th colspan="2">Hit</th>
+          <th colspan="3">Crit</th>
+          <th colspan="2">Hit</th>
+          <th colspan="3">Crit</th>
+        </tr>
+        {% for spell_id, spell_name in NAMES.items() %} 
+        <tr class="{{ spell_id }}">
+          <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_name }}</a></td>
+          <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>
+          <td class="total-cell">{{ ACTUAL[spell_id] }}</td>
+          <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
+          <td class="total-cell">{{ REDUCED[spell_id] }}</td>
+          <td class="count">{{ CASTS[spell_name] }}</td>
+          <td class="count">{{ MISSES[spell_name] }}</td>
+          {% for hits, percent in HITS[spell_id] %}
+          {% for _count, _avg in hits %}
+          <td class="count">{{ _count }}</td>
+          <td class="count">
+            {% if _avg %}
+            {{ _avg[0] }}
+            <table class="avgs">
+              {% for avg in _avg[1:] %}
+              <tr><td>{{ avg }}
+              {% endfor %}
+            </table>
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td class="count">{{ percent }}</td>
+          {% endfor %}
+        </tr>
         {% endfor %}
-        <td class="count">{{ percent }}</td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-    <tfoot>
-      <tr>
-        <td class="spell-name">Total</td>
-        <td></td>
-        <td>{{ ACTUAL["Total"] }}</td>
-        <td></td>
-        <td>{{ REDUCED["Total"] }}</td>
-        <td colspan="69"></td>
-      </tr>
-    </tfoot>
-  </table>
-  {% else %}
-  <p>Player not found</p>
-  {% endif %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="spell-name">Total</td>
+          <td></td>
+          <td>{{ ACTUAL["Total"] }}</td>
+          <td></td>
+          <td>{{ REDUCED["Total"] }}</td>
+          <td colspan="69"></td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <p>No data</p>
+    {% endif %}
+  </div>
 </section>
 <section>
   <div>
