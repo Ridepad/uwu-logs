@@ -18,10 +18,10 @@ const DATA_KEYS = {
 const BOSSES = {
   "Icecrown Citadel": [
     "The Lich King",
-    "Lord Marrowgar", "Lady Deathwhisper", "Gunship", "Deathbringer Saurfang",
+    "Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang",
     "Festergut", "Rotface", "Professor Putricide",
     "Blood Prince Council", "Blood-Queen Lana'thel",
-    "Valithria Dreamwalker", "Sindragosa"
+    "Sindragosa"
   ],
   "The Ruby Sanctum": ["Halion", "Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian"],
   "Trial of the Crusader": ["Anub'arak", "Northrend Beasts", "Lord Jaraxxus", "Faction Champions", "Twin Val'kyr"],
