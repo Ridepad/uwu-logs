@@ -172,8 +172,7 @@ def before_request():
     if request.path in CACHED_PAGES:
         query = get_formatted_query_string()
         pages = CACHED_PAGES[request.path]
-        if query in pages:
-            # pass
+        if not SERVER.debug and query in pages:
             return pages[query]
 
 
@@ -343,6 +342,24 @@ def heal(report_id, source_name):
 
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
+        SOURCE_NAME=source_name,
+    )
+
+@SERVER.route("/reports/<report_id>/casts/<source_name>/")
+def casts(report_id, source_name):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    # sGUID = report.name_to_guid(source_name)
+    # tGUID = request.args.get('target')
+    # data_gen = report.player_heal_gen(segments, sGUID, tGUID)
+    # data_sum = report.player_damage_sum(data_gen)
+    # print(data_sum["units"])
+    data = report.get_spell_history_wrap(segments, source_name)
+
+    return render_template_wrap(
+        'player_spells.html', **default_params, **data,
         SOURCE_NAME=source_name,
     )
 

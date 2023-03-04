@@ -1,0 +1,156 @@
+{% extends "layout_report.html" %}
+
+{% block add_style %}
+<style>
+ /* Tooltip container */
+ .tooltip {
+  position: absolute;
+  display: block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+  left: var(--margin);
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: fit-content;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 100%;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+.spell-name {
+  min-width: 30ch;
+  text-align: center;
+  display: table-cell;
+}
+.spell-history-wrap {
+  width: 80%;
+  overflow-x: auto;
+}
+.spell-history {
+  display: table-cell;
+  position: relative;
+  width: 200vw;
+}
+.tooltip {
+
+  width: .3rem;
+  height: .3rem;
+  background-color: currentColor;
+  border: 1px solid var(--table-border);
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main id="dmg-done">
+<section>
+  <ul id="player-nav">
+    <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
+    <li><a>CASTS</a></li>
+  </ul>
+</section>
+<section id="casts-section" style="display: none">
+  <ul>
+    {% for flag in FLAGS %}
+    <input id="{{ flag }}" type="checkbox" checked>
+    <label class="tab" for="{{ flag }}">{{ flag }}</label>
+    {% endfor %}
+  </ul>
+  <table>
+    <tbody>
+      {% for spell_id, _asdasd in DATA.items() %}
+      <tr class="spell-row">
+        <td class="spell-name">
+          <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
+        </td>
+        <td class="spell-history">
+          {% for ts, flag, target, etc in _asdasd %}
+          <div class="tooltip {{ flag }}" style="--margin: {{ ts }}">
+            <div class="tooltiptext">
+              <p>{{ flag }}</p>
+              <p>{{ target }}</p>
+              <p>{{ etc }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+</section>
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  function has_visible(row) {
+    for (let tooltip of row.getElementsByClassName("tooltip")) {
+      if (tooltip.style.display != "none") return true;
+    }
+  }
+  
+  function toggle_rows() {
+    for (let row of document.getElementsByClassName("spell-row")) {
+      row.style.display = has_visible(row) ? "" : "none";
+    }
+  }
+  
+  function toggle_nodes(input) {
+    for (let div of document.getElementsByClassName(input.id)) {
+      div.style.display = input.checked ? "" : "none";
+    }
+  }
+
+  function init() {
+    document.querySelectorAll("#casts-section input").forEach(input => {
+      input.checked = localStorage.getItem(input.id) === "true";
+      toggle_nodes(input);
+      input.addEventListener("change", () => {
+        toggle_nodes(input);
+        toggle_rows();
+        localStorage.setItem(input.id, input.checked);
+      })
+    })
+    toggle_rows();
+    document.getElementById("casts-section").style.display = "";
+  }
+
+  window.addEventListener('DOMContentLoaded', init)
+</script>
+{% endblock the_scripts %}

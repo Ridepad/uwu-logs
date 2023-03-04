@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 
+import test_spells_order
 import file_functions
 import logs_auras
 import logs_check_difficulty
@@ -1456,3 +1457,30 @@ class THE_LOGS:
         new_data = logs_dps.convert_to_dps(_data, refresh_window)
         logs_dps.convert_keys_to_str(new_data)
         return new_data
+
+    @running_time
+    def get_spell_history(self, s, f, guid) -> dict[str, defaultdict[str, int]]:
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['get_spell_history'].setdefault(guid, {})
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
+        logs_slice = self.get_logs(s, f)
+        data = test_spells_order.get_history(logs_slice, guid)
+        _spells = self.get_spells()
+        data["SPELLS"] = {
+            x: _spells[int(x)]
+            for x in set(data["DATA"])
+        }
+        print(data["SPELLS"])
+        
+
+        cached_data[slice_ID] = data
+        return data
+    
+    def get_spell_history_wrap(self, segments: dict, player_name: str):
+        s, f = segments[0]
+        player = self.name_to_guid(player_name)
+        _data = self.get_spell_history(s, f, player)
+        return _data
+    
