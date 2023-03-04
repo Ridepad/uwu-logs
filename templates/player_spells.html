@@ -2,15 +2,13 @@
 
 {% block add_style %}
 <style>
- /* Tooltip container */
  .tooltip {
   position: absolute;
-  display: block;
-  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+  top: 0;
+  height: 100%;
   left: var(--margin);
 }
 
-/* Tooltip text */
 .tooltip .tooltiptext {
   visibility: hidden;
   width: fit-content;
@@ -20,30 +18,14 @@
   padding: 5px 0;
   border-radius: 6px;
 
-  /* Position the tooltip text */
   position: absolute;
   z-index: 1;
   top: 100%;
   left: 100%;
 
-  /* Fade in tooltip */
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.1s;
 }
-
-/* Tooltip arrow */
-.tooltip .tooltiptext::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #555 transparent transparent transparent;
-}
-
-/* Show the tooltip text when you mouse over the tooltip container */
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
@@ -63,11 +45,45 @@
   width: 200vw;
 }
 .tooltip {
-
-  width: .3rem;
-  height: .3rem;
+  width: .2rem;
+  height: 100%;
   background-color: currentColor;
-  border: 1px solid var(--table-border);
+}
+
+#flag-filter-wrap {
+  position: fixed;
+  bottom: var(--bottom-row-two);
+  margin: 1rem;
+}
+#flag-filter-wrap > span {
+  font-size: 150%;
+  padding: .1em;
+  padding-left: 1ch;
+  border: .1em solid var(--primary-color);
+  border-radius: .3em;
+  background-color: var(--background)
+}
+#flag-filter-wrap > #flag-filter {
+  padding: .1rem;
+  display: none;
+  width: max-content;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 1;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
+}
+#flag-filter-wrap:hover > #flag-filter {
+  display: block;
+}
+.flag-color-picker {
+  width: 2em;
+  border: none;
+}
+.flag-checkbox:checked + label {
+  color: var(--secondary-color);
 }
 </style>
 {% endblock add_style %}
@@ -84,12 +100,18 @@
   </ul>
 </section>
 <section id="casts-section" style="display: none">
-  <ul>
-    {% for flag in FLAGS %}
-    <input id="{{ flag }}" type="checkbox" checked>
-    <label class="tab" for="{{ flag }}">{{ flag }}</label>
-    {% endfor %}
-  </ul>
+  <section id="flag-filter-wrap">
+    <span>FLAG FILTER ≡</span>
+    <ul id="flag-filter">
+      {% for flag in FLAGS %}
+      <li>
+        <input type="color" class="flag-color-picker">
+        <input id="{{ flag }}" type="checkbox" class="flag-checkbox" checked>
+        <label class="tab" for="{{ flag }}">{{ flag }}</label>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
   <table>
     <tbody>
       {% for spell_id, _asdasd in DATA.items() %}
@@ -97,10 +119,12 @@
         <td class="spell-name">
           <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
         </td>
+        <td class="spell-count"></td>
         <td class="spell-history">
-          {% for ts, flag, target, etc in _asdasd %}
+          {% for ts, from_start, flag, target, etc in _asdasd %}
           <div class="tooltip {{ flag }}" style="--margin: {{ ts }}">
             <div class="tooltiptext">
+              <p>{{ from_start }}</p>
               <p>{{ flag }}</p>
               <p>{{ target }}</p>
               <p>{{ etc }}</p>
@@ -125,9 +149,18 @@
     }
   }
   
+  function spell_count(row) {
+    let c = 0;
+    for (let tooltip of row.getElementsByClassName("tooltip")) {
+      if (tooltip.style.display != "none") c = c + 1;
+    }
+    return c
+  }
+
   function toggle_rows() {
     for (let row of document.getElementsByClassName("spell-row")) {
       row.style.display = has_visible(row) ? "" : "none";
+      row.querySelector(".spell-count").innerText = spell_count(row);
     }
   }
   
@@ -137,14 +170,47 @@
     }
   }
 
+  function change_color(flag, color) {
+    for (let tooltip of document.getElementsByClassName(flag)) {
+      tooltip.style.color = color;
+    }
+  }
+
+  const DEFAULT_COLORS = {
+    "SWING_DAMAGE": "#dcdcdc",
+    "SPELL_DAMAGE": "#3f3fcf",
+    "SPELL_MISSED": "#5b5a99",
+    "SPELL_PERIODIC_DAMAGE": "#783c9f",
+    "SPELL_AURA_APPLIED": "#41cc00",
+    "SPELL_AURA_APPLIED_DOSE": "#41cc00",
+    "SPELL_AURA_REFRESH": "#ccad00",
+    "SPELL_AURA_REMOVED": "#cc7a00",
+    "SPELL_CAST_SUCCESS": "#9200cc",
+  }
+
   function init() {
-    document.querySelectorAll("#casts-section input").forEach(input => {
-      input.checked = localStorage.getItem(input.id) === "true";
-      toggle_nodes(input);
-      input.addEventListener("change", () => {
-        toggle_nodes(input);
+    document.querySelectorAll("#flag-filter li").forEach(li => {
+      const checkbox = li.querySelector(".flag-checkbox");
+      const color_ID = `${checkbox.id}_COLOR`
+      const colorPicker = li.querySelector(".flag-color-picker");
+      const label = li.querySelector("label");
+
+      checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
+      toggle_nodes(checkbox);
+      checkbox.addEventListener("change", () => {
+        toggle_nodes(checkbox);
         toggle_rows();
-        localStorage.setItem(input.id, input.checked);
+        localStorage.setItem(checkbox.id, checkbox.checked);
+      })
+
+      colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#dcdcdc";
+      label.style.setProperty('--secondary-color', colorPicker.value);
+      change_color(checkbox.id, colorPicker.value);
+      
+      colorPicker.addEventListener("change", () => {
+        localStorage.setItem(color_ID, colorPicker.value);
+        label.style.setProperty('--secondary-color', colorPicker.value);
+        change_color(checkbox.id, colorPicker.value);
       })
     })
     toggle_rows();

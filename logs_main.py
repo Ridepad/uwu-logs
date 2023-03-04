@@ -1468,12 +1468,13 @@ class THE_LOGS:
         logs_slice = self.get_logs(s, f)
         data = logs_spells_order.get_history(logs_slice, guid)
         _spells = self.get_spells()
+        _flags = [flag for flag in FLAG_ORDER if flag in data["FLAGS"]]
+        _other = sorted(set(data["FLAGS"]) - set(_flags))
+        data["FLAGS"] = _flags + _other
         data["SPELLS"] = {
             x: _spells[int(x)]
-            for x in set(data["DATA"])
+            for x in data["DATA"]
         }
-        print(data["SPELLS"])
-        
 
         cached_data[slice_ID] = data
         return data

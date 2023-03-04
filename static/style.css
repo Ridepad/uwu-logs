@@ -103,6 +103,7 @@ a:not([class]):hover {
 
 ul {
   list-style-type: none;
+  padding: 0;
 }
 
 /* SELECTION */

@@ -1,5 +1,4 @@
 from collections import defaultdict
-import constants
 
 SPELLS = {
   "17": {
@@ -3200,6 +3199,11 @@ def to_float(s: str):
 def get_positive_delta():
     return
 
+def to_str(k: float):
+    seconds = k % 60
+    minutes = k // 60
+    return f"{minutes:0>2.0f}:{seconds:0>4.1f}"
+
 def convert_keys(data: dict[str, int]):
     FIRST_KEY = to_int(list(data)[0])
     for k in list(data):
@@ -3218,18 +3222,14 @@ def get_history(logs: list[str], guid):
             new_key = new_key + 3600
         return new_key
     
-    def get_percentage(current_ts: str):
-        from_start = get_delta(current_ts)
+    def get_percentage(from_start: float):
         percent_from_start = from_start / FIGHT_DURATION * 100
         return f"{percent_from_start}%"
-        # return round(from_start / FIGHT_DURATION * 100, 2)
 
     history = defaultdict(list)
     flags = set()
     FIRST_KEY = to_float(logs[0].split(",", 1)[0])
     FIGHT_DURATION = get_delta(logs[-1].split(",", 1)[0])
-    print(FIGHT_DURATION)
-
 
     for line in logs:
         if guid not in line:
@@ -3246,7 +3246,8 @@ def get_history(logs: list[str], guid):
             # print(o)
             # q.append([timestamp, spell_id, flag, o])
             # q[flag].append([timestamp, spell_id, flag, o])
-            history[spell_id].append([get_percentage(timestamp), flag, tName, o])
+            _delta = get_delta(timestamp)
+            history[spell_id].append([get_percentage(_delta), to_str(_delta), flag, tName, o])
             flags.add(flag)
         except:
             # PARTY_KILL UNIT_DIED
