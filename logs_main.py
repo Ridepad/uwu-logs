@@ -2,7 +2,7 @@ import json
 import os
 from collections import defaultdict
 
-import test_spells_order
+import logs_spells_order
 import file_functions
 import logs_auras
 import logs_check_difficulty
@@ -1466,7 +1466,7 @@ class THE_LOGS:
             return cached_data[slice_ID]
         
         logs_slice = self.get_logs(s, f)
-        data = test_spells_order.get_history(logs_slice, guid)
+        data = logs_spells_order.get_history(logs_slice, guid)
         _spells = self.get_spells()
         data["SPELLS"] = {
             x: _spells[int(x)]
