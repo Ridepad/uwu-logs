@@ -271,7 +271,7 @@ class NewUpload(Thread):
         current_segment = []
         last_segment = []
 
-        FIVE_MINUTES = T_DELTA["5MIN"]
+        SMALL_GAP = T_DELTA["1MIN"]
         THIRTY_MINUTES = T_DELTA["30MIN"]
 
         def __save_segment(big_gap):
@@ -322,9 +322,9 @@ class NewUpload(Thread):
                         print("Exception: self.get_timedelta", line, last_line)
                         continue
                     
-                    # if _tdelta > FIVE_MINUTES:
-                        # print("_tdelta > FIVE_MINUTES")
-                    __save_segment(_tdelta > THIRTY_MINUTES)
+                    if _tdelta > SMALL_GAP:
+                        print("_tdelta > SMALL_GAP")
+                        __save_segment(_tdelta > THIRTY_MINUTES)
 
                 current_segment.append(line)
                 last_timestamp = timestamp
