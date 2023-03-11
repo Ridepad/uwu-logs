@@ -223,7 +223,6 @@ class NewUpload(Thread):
         # self.add_logger_msg("Got slice info", timestamp)
 
         self.slice_cache[first_line] = slice_info
-        print(slice_info)
         return slice_info
 
     def save_slice_cache(self, logs_slice: list):
@@ -310,17 +309,22 @@ class NewUpload(Thread):
                 try:
                     timestamp = self.to_int(line)
                 except Exception:
+                    print("Exception: self.to_int", line)
                     continue
                 
                 _delta = timestamp - last_timestamp
                 if _delta > 100 or _delta < 0:
+                    print("\nNew jump:", last_timestamp, timestamp)
+                    print(last_line.decode() + line.decode())
                     try:
                         _tdelta = self.get_timedelta(line, last_line)
                     except Exception:
+                        print("Exception: self.get_timedelta", line, last_line)
                         continue
                     
-                    if _tdelta > FIVE_MINUTES:
-                        __save_segment(_tdelta > THIRTY_MINUTES)
+                    # if _tdelta > FIVE_MINUTES:
+                        # print("_tdelta > FIVE_MINUTES")
+                    __save_segment(_tdelta > THIRTY_MINUTES)
 
                 current_segment.append(line)
                 last_timestamp = timestamp
@@ -440,7 +444,7 @@ class NewUpload(Thread):
             print('extracted')
             archive_data = get_extracted_file_info(extracted_file)
         else:
-            print('else')
+            print('run new file')
             archive_data = self.extract_archive()
             if not archive_data:
                 return
