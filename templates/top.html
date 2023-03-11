@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3K322W7YVS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-3K322W7YVS');
+    </script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no" />
     <title>UwU Logs - Top</title>
@@ -66,6 +76,10 @@
       </section>
       <section id="loading-info-panel" style="display: none;">
         <p id="loading-info"></p>
+        <div id="upload-progress-bar-wrapper" class="progress-bar-wrapper">
+          <div id="upload-progress-bar" class="progress-bar"></div>
+          <div id="upload-progress-bar-percentage"></div>
+        </div>
         <p>You can select any other filter to cancel</p>
         <p>Some filters will make your browser beg for mercy</p>
       </section>

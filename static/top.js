@@ -1,11 +1,5 @@
 import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
 
-const LOC = window.location;
-const screenX = window.matchMedia("(min-width: 1100px)");
-
-const mainTableBody = document.getElementById("main-table-body");
-const headDPS = document.getElementById('head-dps');
-
 const serverSelect = document.getElementById('server-select');
 const instanceSelect = document.getElementById('instance-select');
 const bossSelect = document.getElementById('boss-select');
@@ -26,7 +20,13 @@ const INTERACTABLES = {
   spec: specSelect,
 }
 
+const mainTableBody = document.getElementById("main-table-body");
+const headDPS = document.getElementById('head-dps');
+const progressBar = document.getElementById('upload-progress-bar');
+const progressBarPercentage = document.getElementById('upload-progress-bar-percentage');
+const tableContainer = document.getElementById('table-container');
 const loadingInfo = document.getElementById('loading-info');
+const loadingInfoPanel = document.getElementById('loading-info-panel');
 const headUsefulDps = document.getElementById('head-useful-dps');
 const headUsefulAmount = document.getElementById('head-useful-amount');
 const headTotalDps = document.getElementById('head-total-dps');
@@ -35,6 +35,9 @@ const toggleTotalDamage = document.getElementById('toggle-total-damage');
 const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
 const toggleLimit = document.getElementById('toggle-limit');
 const LIMITED_ROWS = 1000;
+const LOC = window.location;
+const screenX = window.matchMedia("(min-width: 1100px)");
+
 
 function toggleColumn(className, display) {
   document.querySelectorAll(className).forEach(e => e.style.display = display);
@@ -299,8 +302,9 @@ function tableAddNewData(data) {
   data = combineCheckbox.checked ? noDublicates(data) : data;
   if (!data) return;
 
-  mainTableBody.style.display = "none";
-  loadingInfo.parentElement.style.display = "";
+  loadingInfo.innerText = "Building table:";
+  tableContainer.style.display = "none";
+  loadingInfoPanel.style.display = "";
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
   let i = 0;
   (function chunk() {
@@ -310,12 +314,12 @@ function tableAddNewData(data) {
       mainTableBody.appendChild(row);
     }
     if (i < LIMIT) {
-      loadingInfo.innerText = `Done: ${i}/${LIMIT}`
       mainTimeout = setTimeout(chunk);
+      update_progress(i, LIMIT);
     } else {
-      loadingInfo.innerText = '';
-      loadingInfo.parentElement.style.display = "none";
-      mainTableBody.style.display = "";
+      loadingInfo.innerText = "Rendering table:";
+      tableContainer.style.display = "";
+      loadingInfoPanel.style.display = "none";
       toggleUsefulColumns();
       toggleTotalColumns();
     }
@@ -336,21 +340,36 @@ function makeQuery() {
 
 const CACHE = {
   lastQuery: "",
-  setNewData: function(data) {
+  setNewData(data) {
     const query = makeQuery();
     if (query == this.lastQuery) {
       this[query] = data;
     }
   },
-  getCurrent: function() {
+  getCurrent() {
     const query = makeQuery();
     return this[query];
   }
 };
 
+function update_progress(done, total) {
+  console.log(done, total);
+  const percent = Math.round(done / total * 100);
+  progressBarPercentage.innerHTML = `${done} / ${total} (${percent}%)`;
+  progressBar.style.width = `${percent}%`;
+}
+
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
+xrequest.onprogress = pe => {
+  if(pe.lengthComputable) {
+    update_progress(pe.loaded, pe.total)
+  }
+}
 xrequest.onreadystatechange = () => {
+  // const current_dl = xrequest.responseText.length;
+  // const content_lenght = xrequest.getResponseHeader("Content-Length");
+  // console.log(current_dl, content_lenght);
   if (xrequest.status != 200 || xrequest.readyState != 4) return;
   console.timeEnd("query");
   const parsed_json = xrequest.response ? JSON.parse(xrequest.response) : [];
@@ -367,6 +386,9 @@ xrequest.onreadystatechange = () => {
 }
 
 function queryServer(query) {
+  loadingInfo.innerText = "Downloading top:";
+  tableContainer.style.display = "none";
+  loadingInfoPanel.style.display = "";
   console.time("query");
   xrequest.open("POST", TOP_POST);
   xrequest.setRequestHeader("Content-Type", "application/json");

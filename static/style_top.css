@@ -335,3 +335,32 @@ li span {
 #link-home::before {
   content: "<<";
 }
+
+#progress-bar {
+  width: 100%;
+  color: var(--primary-color);
+}
+
+#upload-progress-bar-wrapper {
+  box-shadow: inset 0 0 .5em var(--unfocused), 0 0 .5em var(--unfocused);
+  border-radius: .5em;
+  position: relative;
+  height: 1.25em;
+  z-index: initial;
+  margin-top: .25em;
+  margin-bottom: .25em;
+}
+#upload-progress-bar {
+  position: relative;
+  z-index: -1;
+  border-radius: .5em;
+  background-color: var(--secondary-color);
+  width: 0%;
+  height: 100%;
+}
+#upload-progress-bar-percentage {
+  text-align: right;
+  position: absolute;
+  right: .5em;
+  bottom: 5%;
+}
