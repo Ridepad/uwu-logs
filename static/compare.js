@@ -227,15 +227,29 @@ function addTableRow(data) {
   compareTableBody.append(row);
 }
 
+const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/[% ]/g, "");
+const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+function sort_by_column(th) {
+  Array.from(compareTableBody.querySelectorAll("tr"))
+       .sort(comparer(th.cellIndex))
+       .forEach(tr => compareTableBody.appendChild(tr));
+}
+
 const xhttp_compare = new XMLHttpRequest();
 xhttp_compare.onreadystatechange = () => {
   if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
+  
+  empty_table();
   const parsed_json = JSON.parse(xhttp_compare.response);
+  if (parsed_json.length == 0) return;
+  
   const spellCache = CACHE_COMP[selectClass.value];
   for (let i = 0; i<parsed_json.length; i++) {
     addTableRow(parsed_json[i]);
     spellCache.push(parsed_json[i]);
   }
+  const totalHeader = document.querySelector("th.player-cell + th");
+  sort_by_column(totalHeader);
 }
 
 function empty_table() {
@@ -245,8 +259,11 @@ function empty_table() {
 function onSelectSpell() {
   empty_table();
   const data = CACHE_COMP[selectClass.value];
-  for (let i=0; i<data.length; i++)
+  for (let i=0; i<data.length; i++) {
     addTableRow(data[i]);
+  }
+  const totalHeader = document.querySelector("th.player-cell + th");
+  sort_by_column(totalHeader);
 }
 
 function newOption(spellID, spellsName) {
@@ -263,7 +280,6 @@ function onSelectClass() {
     return;
   }
 
-  empty_table();
   compareTable.style.display = "";
   selectSpell.innerHTML = "";
   for (let spell_id in spells) {
@@ -282,17 +298,11 @@ function onSelectClass() {
   xhttp_compare.send(JSON.stringify({"class": selectClass.value}));
 }
 
+document.querySelectorAll("#compare-field-table-headers th").forEach(th => th.addEventListener("click", () => sort_by_column(th)));
+
+selectClass.addEventListener("change", onSelectClass);
+selectSpell.addEventListener("change", onSelectSpell);
 function init() {
-  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/[% ]/g, "");
-  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
-  document.querySelectorAll("#compare-field-table-headers th").forEach(th => th.addEventListener("click", () => {
-    Array.from(compareTableBody.querySelectorAll("tr"))
-         .sort(comparer(th.cellIndex))
-         .forEach(tr => compareTableBody.appendChild(tr));
-  }));
-  
-  selectClass.addEventListener("change", onSelectClass);
-  selectSpell.addEventListener("change", onSelectSpell);
 
   onSelectClass();
 }

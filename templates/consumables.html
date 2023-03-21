@@ -2,14 +2,12 @@
 
 {% block add_style %}
 <style>
-#potions-table > tbody > tr th {
-  position: sticky;
-}
-
 #potions-table th img {
-  min-height: 1.5em;
-  max-height: 1.5em;
-  min-width: 1.5em;
+	vertical-align: text-bottom;
+	max-height: 2em;
+	max-width: 2em;
+	min-height: 2em;
+	min-width: 2em;
 }
 
 #potions-table td:not(.player-cell) {
@@ -25,45 +23,42 @@
 {% block the_main %}
 <main id="potions">
   <table id="potions-table">
-    <tr>
-      <th></th>
-      <th title="Total"></th>
-      {% for spell_id, _info in ITEM_INFO.items() %}
-      <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+    <thead>
+      <tr>
+        <th></th>
+        <th title="Total"></th>
+        {% for spell_id, _info in ITEM_INFO.items() %}
+        <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody id="potions-table-body">
+      {% for player_name, total_value in ITEMS_TOTAL.items() %}
+      <tr>
+        <td class="player-cell">
+          <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+        </td>
+        <td>{{ total_value }}</td>
+        {% for spell_id in ITEM_INFO %}
+        <td>{{ ITEMS.get(spell_id, {}).get(player_name, '') }}</td>
+        {% endfor %}
+      </tr>
       {% endfor %}
-    </tr>
-    {% for player_name, total_value in ITEMS_TOTAL.items() %}
-    <tr>
-      <td class="player-cell">
-        <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-      </td>
-      <td>{{ total_value }}</td>
-      {% for spell_id in ITEM_INFO %}
-      <td>{{ ITEMS.get(spell_id, {}).get(player_name, '') }}</td>
-      {% endfor %}
-    </tr>
-    {% endfor %}
+    </tbody>
   </table>
 </main>
 {% endblock the_main %}
 
 {% block the_scripts %}
 <script>
-  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
-  const comparer = (idx) => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+  const potionsTableBody = document.getElementById("potions-table-body");
+  const getCellValue = (tr, idx) => tr.children[idx].innerText;
+  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
 
   document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', (() => {
-    const tbody = th.closest('tbody');
-    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+    Array.from(potionsTableBody.querySelectorAll('tr'))
          .sort(comparer(th.cellIndex))
-         .forEach(tr => tbody.appendChild(tr));
+         .forEach(tr => potionsTableBody.appendChild(tr));
   })));
-
-  document.querySelectorAll(".player-cell").forEach(td => {
-    const row = td.parentNode;
-
-    const a = Array.from(row.children).filter(td => td.innerText !== "");
-    console.log(td.innerText, a);
-  })
 </script>
 {% endblock the_scripts %}

@@ -51,8 +51,8 @@
 {% endblock fight_aside %}
 {% block main_foot %}
 <footer>
-  <div id="report-slice">
-    <a href="/reports/{{ REPORT_ID }}/{{ QUERY }}"><span id="slice-name">{{ SLICE_NAME }}</span><span id="slice-dur">{{ DURATION }}</span><span id="slice-tries">{{ SLICE_TRIES }}</span></a>
+  <div id="report-slice" data-duration="{{ DURATION }}">
+    <a href="/reports/{{ REPORT_ID }}/{{ QUERY }}"><span id="slice-name">{{ SLICE_NAME }}</span><span id="slice-dur">{{ DURATION_STR }}</span><span id="slice-tries">{{ SLICE_TRIES }}</span></a>
   </div>
   <input id="open-bot" type="checkbox"></button>
   <label id="bot-chkbox" for="open-bot">≣</label>

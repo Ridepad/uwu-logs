@@ -10,13 +10,6 @@
   max-height: 20vh;
   width: 100%;
 }
-#player-info {
-  display: flex;
-  align-items: baseline;
-}
-#warmane-armory-link {
-  margin-left: 3ch;
-}
 #chart-slice > * {
   font-size: 200%;
 }
@@ -34,7 +27,7 @@
     {% endfor %}
   </select>
 </section>
-<section>
+<section id="player-nav-wrap">
   <ul id="player-nav">
     <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
@@ -42,13 +35,13 @@
     <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">CASTS</a></li>
 </section>
-<section id="dmg-done-main">
-  <div>
-    <ul id="player-info">
-      <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
-      <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
-    </ul>
-  </div>
+<section>
+  <ul id="player-info">
+    <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
+    <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
+  </ul>
+</section>
+<section id="dmg-done-main" class="table-wrap wrap-spell">
   {% if NAMES %}
   <div class="table-wrap wrap-spell">
     <table>

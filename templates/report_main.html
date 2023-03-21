@@ -2,10 +2,9 @@
 
 {% block add_style %}
 <style>
-.per-sec-cell,
-.player-cell,
+.rectangle-cell,
 th {
-  border-right: 10px solid var(--table-border);
+  border-left: 10px solid var(--table-border);
 }
 
 tr:is(:last-child, :first-child) td {
@@ -38,10 +37,6 @@ tr:is(:last-child, :first-child) td {
   50%  {background-color: hsl(120, 100%, 25%);}
 }
 
-.per-sec-cell {
-  min-width: 9ch;
-  text-align: right;
-}
 .player-cell div {
   display: inline-block;
   vertical-align: text-bottom;
@@ -59,15 +54,12 @@ tr:nth-child(n+2) .player-cell div {
   background-position-x: calc(var(--spec-i)  * 33.33333%);
   background-position-y: calc(var(--class-i) * 10%);
 }
-#tables {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
 #chart {
   max-height: 20vh;
   width: 100%;
+}
+.rectangle-cell {
+  width: 12rem;
 }
 </style>
 {% endblock add_style %}
@@ -79,60 +71,64 @@ tr:nth-child(n+2) .player-cell div {
 {% block the_main %}
 <main id="report-main">
   <section class="table-wrap wrap-player">
-    <table>
-      <thead>
-        <th class="player-cell">Name</th>
-        <th class="col-damage" colspan="3">Damage</th>
-        <th class="col-heal" colspan="3">Heal</th>
-        <th class="col-taken" colspan="3">Damage Taken</th>
-      </thead>
-      <tbody>
-        {% for player_name, data in TABLE.items() %}
-        <tr>
-          <td class="player-cell" title="{{ data['spec_name'] }}">
-            {% if data['spec_icon'] in SPEC_ICON_TO_POSITION %}
-            <div style="--class-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][0] }}; --spec-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][1] }}"></div>
-            {% else %}
-            <div></div>
-            {% endif %}
-            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-          </td>
-          <td class="rectangle-cell">
-            <!-- {{ data['damage'] }} -->
-            {% if 'd_p' in data %}
-            <div class="damage-bar" style="--width: {{ data['d_p'] }}%"></div>
-            {% endif %}
-          </td>
-          <td class="total-cell col-damage">{{ data['damage'] }}</td>
-          <td class="per-sec-cell">{{ data['dps'] }}</td>
-
-          <td class="rectangle-cell">
-            <!-- {{ data['heal'] }} -->
-            {% if 'h_p' in data %}
-            <div class="heal-bar" style="--width: {{ data['h_p'] }}%"></div>
-            {% endif %}
-          </td>
-          <td class="total-cell col-heal">{{ data['heal'] }}</td>
-          <td class="per-sec-cell">{{ data['hps'] }}</td>
-          
-          <td class="rectangle-cell">
-            <!-- {{ data['taken'] }} -->
-            {% if 't_p' in data %}
-            <div class="taken-bar" style="--width: {{ data['t_p'] }}%"></div>
-            {% endif %}
-          </td>
-          <td class="total-cell col-taken">{{ data['taken'] }}</td>
-          <td class="per-sec-cell">{{ data['tps'] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div>
+      <table class="add-player-rank">
+        <thead>
+          <tr>
+            <th class="player-cell">Name</th>
+            <th class="col-damage" colspan="3">Damage</th>
+            <th class="col-heal" colspan="3">Heal</th>
+            <th class="col-taken" colspan="3">Damage Taken</th>
+          </tr> 
+        </thead>
+        <tbody class="table-has-total">
+          {% for player_name, data in TABLE.items() %}
+          <tr>
+            <td class="player-cell" title="{{ data['spec_name'] }}">
+              {% if data['spec_icon'] in SPEC_ICON_TO_POSITION %}
+              <div style="--class-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][0] }}; --spec-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][1] }}"></div>
+              {% else %}
+              <div></div>
+              {% endif %}
+              <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            </td>
+            <td class="rectangle-cell">
+              <!-- {{ data['damage'] }} -->
+              {% if 'd_p' in data %}
+              <div class="damage-bar" style="--width: {{ data['d_p'] }}%"></div>
+              {% endif %}
+            </td>
+            <td class="total-cell col-damage">{{ data['damage'] }}</td>
+            <td class="per-sec-cell">{{ data['dps'] }}</td>
+  
+            <td class="rectangle-cell">
+              <!-- {{ data['heal'] }} -->
+              {% if 'h_p' in data %}
+              <div class="heal-bar" style="--width: {{ data['h_p'] }}%"></div>
+              {% endif %}
+            </td>
+            <td class="total-cell col-heal">{{ data['heal'] }}</td>
+            <td class="per-sec-cell">{{ data['hps'] }}</td>
+            
+            <td class="rectangle-cell">
+              <!-- {{ data['taken'] }} -->
+              {% if 't_p' in data %}
+              <div class="taken-bar" style="--width: {{ data['t_p'] }}%"></div>
+              {% endif %}
+            </td>
+            <td class="total-cell col-taken">{{ data['taken'] }}</td>
+            <td class="per-sec-cell">{{ data['tps'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
   <canvas id="chart"></canvas>
   <div class="min-max-slider" data-legendnum="2">
     <div class="min-max-slider-inputs">
-      <input class="min" name="min" type="range" step="1" />
-      <input class="max" name="max" type="range" step="1" />
+      <input class="min min-max-slider-half" name="min" type="range" step="1"/>
+      <input class="max min-max-slider-half" name="max" type="range" step="1"/>
     </div>
     <div class="min-max-slider-values">
       <span class="min-value"></span>

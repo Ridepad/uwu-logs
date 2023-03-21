@@ -23,38 +23,46 @@
 
 {% block the_main %}
 <main id="auras">
-  <table id="auras-table">
-    <tr>
-      <th>-</th>
-      {% for spell_id, spell_info in AURA_INFO.items() %}
-      <th title="{{ spell_info['name'] }}" colspan="2"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
-      {% endfor %}
-    </tr>
-    {% for player_name, aura_data in AURA_UPTIME.items() %}
-    <tr>
-      <td class="player-cell">
-        <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-      </td>
-      {% for spell_id in AURA_INFO %}
-      <td>{{ AURA_COUNT.get(player_name, {}).get(spell_id, '') }}</td>
-      <td>{{ AURA_UPTIME.get(player_name, {}).get(spell_id, '') }}</td>
-      {% endfor %}
-    </tr>
-    {% endfor %}
-  </table>
+  <section id="panel-{{ power_name }}" class="table-wrap wrap-damage">
+    <div>
+      <table id="auras-table">
+        <thead>
+          <tr>
+            <th class="player-cell">-</th>
+            {% for spell_id, spell_info in AURA_INFO.items() %}
+            <th title="{{ spell_info['name'] }}" colspan="2"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody id="auras-table-body">
+          {% for player_name, aura_data in AURA_UPTIME.items() %}
+          <tr>
+            <td class="player-cell">
+              <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            </td>
+            {% for spell_id in AURA_INFO %}
+            <td>{{ AURA_COUNT.get(player_name, {}).get(spell_id, '') }}</td>
+            <td>{{ AURA_UPTIME.get(player_name, {}).get(spell_id, '') }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </main>
 {% endblock the_main %}
 
 {% block the_scripts %}
 <script>
-  const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/ /g, '');
+  const aurasTableBody = document.getElementById("auras-table-body");
+  const getCellValue = (tr, idx) => tr.children[idx].innerText;
   const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
 
-  document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', (() => {
-    const tbody = th.closest('tbody');
-    Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'))
+  document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', () => {
+    Array.from(aurasTableBody.querySelectorAll('tr:nth-child(n+2)'))
          .sort(comparer(th.cellIndex*2))
-         .forEach(tr => tbody.appendChild(tr));
-  })));
+         .forEach(tr => aurasTableBody.appendChild(tr));
+  }));
 </script>
 {% endblock the_scripts %}

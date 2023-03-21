@@ -2,58 +2,27 @@
 
 {% block add_style %}
 <style>
- .tooltip {
+.spell-history {
+  position: relative;
+}
+
+.cleu {
   position: absolute;
   top: 0;
-  height: 100%;
   left: var(--margin);
-}
-
-.tooltip .tooltiptext {
-  visibility: hidden;
-  width: fit-content;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  padding: 5px 0;
-  border-radius: 6px;
-
-  position: absolute;
-  z-index: 1;
-  top: 100%;
-  left: 100%;
-
-  opacity: 0;
-  transition: opacity 0.1s;
-}
-.tooltip:hover .tooltiptext {
-  visibility: visible;
-  opacity: 1;
-}
-.spell-name {
-  min-width: 30ch;
-  text-align: center;
-  display: table-cell;
-}
-.spell-history-wrap {
-  width: 80%;
-  overflow-x: auto;
-}
-.spell-history {
-  display: table-cell;
-  position: relative;
-  width: 200vw;
-}
-.tooltip {
-  width: .2rem;
   height: 100%;
+  width: calc(var(--mult) * 0.05rem);
   background-color: currentColor;
+  border-left: 1px solid white;
+  z-index: 1;
 }
 
 #flag-filter-wrap {
   position: fixed;
   bottom: var(--bottom-row-two);
-  margin: 1rem;
+  margin-inline: .3rem;
+  margin-block: 1rem;
+  z-index: 5;
 }
 #flag-filter-wrap > span {
   font-size: 150%;
@@ -85,12 +54,54 @@
 .flag-checkbox:checked + label {
   color: var(--secondary-color);
 }
+#spell-timeline-wrap {
+  width: 30vw;
+  display: flex;
+  flex-direction: row;
+}
+.spell-count {
+  width: 5ch;
+}
+.spell-name::before {
+  content: attr(data-count);
+  min-width: 5ch;
+  text-align: right;
+  display: inline-block;
+}
+table {
+  width: 100%;
+}
+.dummy-cell {
+  /* fixes height */
+  min-width: 0;
+  width: 0;
+  visibility: hidden;
+}
+
+#the-tooltip {
+  width: fit-content;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  position: absolute;
+  z-index: 5;
+}
+img {
+  min-height: 1em;
+  min-width: 1em;
+  max-width: 1em;
+  vertical-align: middle;
+  margin-bottom: 1px;
+}
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="dmg-done">
-<section>
+<section id="player-nav-wrap">
   <ul id="player-nav">
     <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
@@ -99,124 +110,249 @@
     <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">CASTS</a></li>
   </ul>
 </section>
-<section id="casts-section" style="display: none">
-  <section id="flag-filter-wrap">
-    <span>FLAG FILTER ≡</span>
-    <ul id="flag-filter">
-      {% for flag in FLAGS %}
-      <li>
-        <input type="color" class="flag-color-picker">
-        <input id="{{ flag }}" type="checkbox" class="flag-checkbox" checked>
-        <label class="tab" for="{{ flag }}">{{ flag }}</label>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  <table>
-    <tbody>
-      {% for spell_id, _asdasd in DATA.items() %}
-      <tr class="spell-row">
-        <td class="spell-name">
-          <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
-        </td>
-        <td class="spell-count"></td>
-        <td class="spell-history">
-          {% for ts, from_start, flag, target, etc in _asdasd %}
-          <div class="tooltip {{ flag }}" style="--margin: {{ ts }}">
-            <div class="tooltiptext">
-              <p>{{ from_start }}</p>
-              <p>{{ flag }}</p>
-              <p>{{ target }}</p>
-              <p>{{ etc }}</p>
-            </div>
-          </div>
-          {% endfor %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  
+<section id="flag-filter-wrap">
+  <span>FLAG FILTER ≡</span>
+  <ul id="flag-filter">
+    {% for flag in FLAGS %}
+    <li>
+      <input type="color" class="flag-color-picker">
+      <input id="{{ flag }}" type="checkbox" class="flag-checkbox" checked>
+      <label class="tab" for="{{ flag }}">{{ flag }}</label>
+    </li>
+    {% endfor %}
+  </ul>
 </section>
+<section>
+  <ul id="player-info">
+    <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
+    <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
+  </ul>
+</section>
+<section id="spell-timeline-wrap">
+  <span>ZOOM:</span>
+  <input id="spell-timeline-mult" type="range" min="1" max="50" value="10">
+  <span id="spell-timeline-mult-label"></span>
+</section>
+<section id="casts-section" style="display: none" class="table-wrap wrap-spell">
+  <div class="casts-section-wrap">
+    <table>
+      <tbody class="casts-section-tbody">
+        {% for spell_id, _asdasd in DATA.items() %}
+        <tr class="spell-row" data-spell-id="{{ spell_id }}" data-spell-name="{{ SPELLS[spell_id]['name'] }} }}">
+          <td class="spell-name">
+            <img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ SPELL_ICONS[spell_id] }}.jpg" alt="{{ spell_id }}">
+            <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
+          </td>
+          <td class="spell-history">
+            {% for ts, from_start, flag, target, etc in _asdasd %}
+            <div class="cleu {{ flag }}" style="--margin: {{ ts }}" data-time="{{ from_start }}" data-target="{{ target }}" data-etc="{{ etc }}" data-pad="{{ ts }}"></div>
+            {% endfor %}
+          </td>
+          <td class="dummy-cell">-</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<aside id="the-tooltip" style="display: none">
+  <p id="tooltip-time"></p>
+  <p id="tooltip-flag"></p>
+  <p id="tooltip-target"></p>
+  <p id="tooltip-data"></p>
+</aside>
 </main>
 {% endblock the_main %}
 
 {% block the_scripts %}
 <script>
-  function has_visible(row) {
-    for (let tooltip of row.getElementsByClassName("tooltip")) {
-      if (tooltip.style.display != "none") return true;
+  const castsSection = document.getElementById("casts-section");
+  const timelineMultRange = document.getElementById("spell-timeline-mult");
+  const timelineMultLabel = document.getElementById("spell-timeline-mult-label");
+  const DEFAULT_COLORS = {
+    "SWING_DAMAGE": "#DCDCDC",
+    "SPELL_DAMAGE": "#3F3FCF",
+    "SPELL_MISSED": "#5B5A99",
+    "SPELL_PERIODIC_DAMAGE": "#783C9F",
+    "SPELL_AURA_APPLIED": "#179900",
+    "SPELL_AURA_APPLIED_DOSE": "#FFEE00",
+    "SPELL_AURA_REFRESH": "#c0b300",
+    "SPELL_AURA_REMOVED": "#ff631a",
+    "SPELL_CAST_SUCCESS": "#9200CC",
+    "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
+  }
+  const get_pad_value = e => Number(e.getAttribute("data-pad").slice(0, 5));
+
+  function toggle_aura_duration(row) {
+    const new_array = [];
+    const spellHistory = row.querySelector(".spell-history");
+
+    ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"].forEach(flag => {
+      for (let div of row.getElementsByClassName(flag)) {
+        new_array.push(div);
+      }
+    })
+    new_array.sort((a, b) => get_pad_value(a) - get_pad_value(b));
+    if (new_array.length > 0) {
+      if (new_array[0].classList[1] == "SPELL_AURA_REMOVED") {
+        const div = document.createElement("div");
+        div.style.setProperty("--margin", 0);
+        div.style.width = get_pad_value(new_array[0]) + "%";
+        div.classList.add("cleu", "SPELL_AURA_APPLIED");
+        spellHistory.insertBefore(div, spellHistory.firstChild);
+      }
+      const lastEvent = new_array.at(-1);
+      if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
+        const div = document.createElement("div");
+        div.style.setProperty("--margin", "100%");
+        lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
+        div.classList.add("cleu", "SPELL_AURA_REMOVED");
+        spellHistory.appendChild(div);
+      }
+    }
+
+    let start;
+    let end;
+    for (let i=0; i<new_array.length; i++) {
+      const div = new_array[i];
+      if (div.classList[1] == "SPELL_AURA_APPLIED") {
+        if (end) {
+          start.style.width = get_pad_value(end) - get_pad_value(start) + "%";
+        }
+        start = div;
+        end = undefined;
+      } else if (div.classList[1] == "SPELL_AURA_REMOVED") {
+        if (start) {
+          end = div;
+        }
+      }
+    }
+
+  }
+  function toggle_aura_duration_wrap() {
+    for (let row of document.getElementsByClassName("spell-row")) {
+      toggle_aura_duration(row);
     }
   }
-  
+
   function spell_count(row) {
     let c = 0;
-    for (let tooltip of row.getElementsByClassName("tooltip")) {
-      if (tooltip.style.display != "none") c = c + 1;
+    for (let cleu of row.getElementsByClassName("cleu")) {
+      if (cleu.style.visibility != "hidden") c = c + 1;
     }
     return c
   }
 
-  function toggle_rows() {
+  function toggle_rows(tbody) {
+    Array.from(tbody.getElementsByClassName("spell-row"))
+         .sort((a, b) => b.getAttribute("data-spell-name") < a.getAttribute("data-spell-name"))
+         .forEach(row => tbody.appendChild(row));
+    
+    const to_hide = [];
     for (let row of document.getElementsByClassName("spell-row")) {
-      row.style.display = has_visible(row) ? "" : "none";
-      row.querySelector(".spell-count").innerText = spell_count(row);
+      const count = spell_count(row);
+      row.firstElementChild.setAttribute('data-count', count);
+      if (count == 0) {
+        to_hide.push(row);
+        row.style.display = "none";
+      } else {
+        row.style.display = "";
+      }
+    }
+    
+    to_hide.forEach(row => tbody.appendChild(row));
+  }
+
+  function toggle_rows_wrap() {
+    for (let tbody of document.getElementsByClassName("casts-section-tbody")) {
+      toggle_rows(tbody);
     }
   }
   
   function toggle_nodes(input) {
     for (let div of document.getElementsByClassName(input.id)) {
-      div.style.display = input.checked ? "" : "none";
+      div.style.visibility = input.checked ? "visible" : "hidden";
     }
   }
 
   function change_color(flag, color) {
-    for (let tooltip of document.getElementsByClassName(flag)) {
-      tooltip.style.color = color;
+    for (let cleu of document.getElementsByClassName(flag)) {
+      cleu.style.color = color;
     }
   }
 
-  const DEFAULT_COLORS = {
-    "SWING_DAMAGE": "#dcdcdc",
-    "SPELL_DAMAGE": "#3f3fcf",
-    "SPELL_MISSED": "#5b5a99",
-    "SPELL_PERIODIC_DAMAGE": "#783c9f",
-    "SPELL_AURA_APPLIED": "#41cc00",
-    "SPELL_AURA_APPLIED_DOSE": "#41cc00",
-    "SPELL_AURA_REFRESH": "#ccad00",
-    "SPELL_AURA_REMOVED": "#cc7a00",
-    "SPELL_CAST_SUCCESS": "#9200cc",
-  }
+  const theTooltip = document.getElementById("the-tooltip");
+  const tooltipTime = document.getElementById("tooltip-time");
+  const tooltipFlag = document.getElementById("tooltip-flag");
+  const tooltipTarget = document.getElementById("tooltip-target");
+  const tooltipData = document.getElementById("tooltip-data");
 
-  function init() {
+  function init_flag_filter() {
     document.querySelectorAll("#flag-filter li").forEach(li => {
-      const checkbox = li.querySelector(".flag-checkbox");
-      const color_ID = `${checkbox.id}_COLOR`
-      const colorPicker = li.querySelector(".flag-color-picker");
       const label = li.querySelector("label");
+      const checkbox = li.querySelector(".flag-checkbox");
+      const colorPicker = li.querySelector(".flag-color-picker");
+      const color_ID = `${checkbox.id}_COLOR`
 
-      checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
       toggle_nodes(checkbox);
-      checkbox.addEventListener("change", () => {
-        toggle_nodes(checkbox);
-        toggle_rows();
-        localStorage.setItem(checkbox.id, checkbox.checked);
-      })
-
-      colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#dcdcdc";
+      checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
+      colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#DCDCDC";
       label.style.setProperty('--secondary-color', colorPicker.value);
       change_color(checkbox.id, colorPicker.value);
       
+      checkbox.addEventListener("change", () => {
+        toggle_nodes(checkbox);
+        toggle_rows_wrap();
+        localStorage.setItem(checkbox.id, checkbox.checked);
+      })
       colorPicker.addEventListener("change", () => {
         localStorage.setItem(color_ID, colorPicker.value);
         label.style.setProperty('--secondary-color', colorPicker.value);
         change_color(checkbox.id, colorPicker.value);
       })
     })
-    toggle_rows();
+  }
+  function add_tooltip_info(cleu) {
+    tooltipFlag.innerText = cleu.classList[1];
+    tooltipTime.innerText = cleu.getAttribute("data-time") ?? "00:00.0";
+    tooltipTarget.innerText = cleu.getAttribute("data-target");
+    tooltipData.innerText = cleu.getAttribute("data-etc");
+  }
+  function move_tooltip_to(cleu) {
+    let rect = cleu.getBoundingClientRect();
+    const bodyRect = document.body.getBoundingClientRect();
+    const elemRect = cleu.getBoundingClientRect();
+    const elemRect2 = cleu.parentElement.previousElementSibling.getBoundingClientRect();
+    const _left = Math.max(elemRect.left, elemRect2.right)
+    theTooltip.style.top = elemRect.bottom - bodyRect.top + 'px';
+    theTooltip.style.right = bodyRect.right - _left + 'px';
+  }
+  function add_tooltip_events() {
+    document.querySelectorAll(".cleu").forEach(cleu => {
+      cleu.addEventListener("mouseleave", () => theTooltip.style.display = "none");
+      cleu.addEventListener("mouseenter", () => {
+        move_tooltip_to(cleu);
+        add_tooltip_info(cleu);
+        theTooltip.style.display = "";
+      });
+    })
+  }
+  function init() {
+    toggle_aura_duration_wrap();
+    init_flag_filter();
+    add_tooltip_events();
+    toggle_rows_wrap();
     document.getElementById("casts-section").style.display = "";
   }
 
-  window.addEventListener('DOMContentLoaded', init)
+  // http://localhost:5000/reports/23-03-03--21-01--Safiyah--Lordaeron/casts/Safiyah/?boss=festergut&mode=25H&s=3430&f=3644&attempt=0&sc=3488&fc=3594
+
+  function change_zoom() {
+    timelineMultLabel.innerText = `${timelineMultRange.value}x`;
+    castsSection.style.setProperty("--mult", timelineMultRange.value);
+  }
+  change_zoom();
+  timelineMultRange.addEventListener("change", change_zoom);
+  window.addEventListener('DOMContentLoaded', init);
 </script>
 {% endblock the_scripts %}

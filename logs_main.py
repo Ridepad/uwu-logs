@@ -103,9 +103,12 @@ TABLE_VALUES: dict[str, tuple[str]] = {
 }
 
 def add_new_data(data: dict, table: dict[str, dict], duration: float, _type: str):
-    MAX_VALUE = max(data.values())
     KEYS = TABLE_VALUES[_type]
+    if not data:
+        return {KEYS[-1]: 0}
+    
     TOTAL = {KEYS[-1]: 100}
+    MAX_VALUE = max(data.values())
     for name, value in data.items():
         UNIT_DATA = table.setdefault(name, {})
 
@@ -278,9 +281,6 @@ class THE_LOGS:
             durations.append(self.get_slice_duration(s, f))
         return sum(durations)
 
-    def get_fight_duration_total_str(self, segments):
-        return duration_to_string(self.get_fight_duration_total(segments))
-        
     def get_enc_data(self, rewrite=False):
         try:
             return self.ENCOUNTER_DATA
@@ -607,6 +607,7 @@ class THE_LOGS:
 
         report_name_info = get_report_name_info(self.NAME)
         parsed = self.parse_request(PATH, request.args)
+        duration = self.get_fight_duration_total(parsed["SEGMENTS"])
         return_data = parsed | {
             "PATH": PATH,
             "QUERY": QUERY,
@@ -614,7 +615,8 @@ class THE_LOGS:
             "REPORT_NAME": self.get_formatted_name(),
             "SEGMENTS_LINKS": self.get_segment_queries(),
             "PLAYER_CLASSES": self.get_classes_with_names(),
-            "DURATION": self.get_fight_duration_total_str(parsed["SEGMENTS"]),
+            "DURATION": duration,
+            "DURATION_STR": duration_to_string(duration),
             "SPEC_ICON_TO_POSITION": SPEC_ICON_TO_POSITION,
             "SERVER": report_name_info["server"],
         }
@@ -923,9 +925,11 @@ class THE_LOGS:
             if class_name != class_filter:
                 continue
             name = self.guid_to_name(guid)
+            data_gen = self.player_damage_gen(segments, guid, tGUID)
+            data_sum = self.player_damage_sum(data_gen)
             data = {
                 "name": name,
-                "data": self.player_damage_all(segments, guid, tGUID)
+                "data": self.player_damage_format(data_sum)
             }
             response.append(data)
         return json.dumps(response)
@@ -1483,5 +1487,14 @@ class THE_LOGS:
         s, f = segments[0]
         player = self.name_to_guid(player_name)
         _data = self.get_spell_history(s, f, player)
+        _spells = {}
+        for spell_id in _data["SPELLS"]:
+            try:
+                _spells[spell_id] = logs_spells_order.SPELLS3[spell_id]
+                # _spells[spell_id] = logs_spells_order.SPELLS[spell_id]['icon']
+            except KeyError:
+                _spells[spell_id] = "inv_misc_questionmark"
+                print(f'MISSING ICON "{spell_id:>5}"')
+        _data["SPELL_ICONS"] = _spells
         return _data
     
