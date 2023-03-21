@@ -62,11 +62,18 @@
 .spell-count {
   width: 5ch;
 }
-.spell-name::before {
+.spell-name {
+  display: flex;
+}
+.spell-name > a {
+  overflow: hidden;
+}
+.spell-name::after {
   content: attr(data-count);
   min-width: 5ch;
   text-align: right;
   display: inline-block;
+  margin-left: auto;
 }
 table {
   width: 100%;
@@ -294,11 +301,11 @@ img {
       const colorPicker = li.querySelector(".flag-color-picker");
       const color_ID = `${checkbox.id}_COLOR`
 
-      toggle_nodes(checkbox);
       checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
       colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#DCDCDC";
       label.style.setProperty('--secondary-color', colorPicker.value);
       change_color(checkbox.id, colorPicker.value);
+      toggle_nodes(checkbox);
       
       checkbox.addEventListener("change", () => {
         toggle_nodes(checkbox);
@@ -338,10 +345,10 @@ img {
     })
   }
   function init() {
-    toggle_aura_duration_wrap();
     init_flag_filter();
     add_tooltip_events();
     toggle_rows_wrap();
+    toggle_aura_duration_wrap();
     document.getElementById("casts-section").style.display = "";
   }
 
