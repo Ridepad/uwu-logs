@@ -5,15 +5,19 @@
 .spell-history {
   position: relative;
 }
+.casts-section-wrap {
+  --tenth-width: calc(var(--mult) * .1rem);
+  width: calc(var(--mult) * var(--duration) * 1rem);
+}
 
 .cleu {
   position: absolute;
   top: 0;
   left: var(--margin);
   height: 100%;
-  width: calc(var(--mult) * 0.05rem);
+  width: var(--tenth-width);
   background-color: currentColor;
-  border-left: 1px solid white;
+  box-shadow: -1px 0 white;
   z-index: 1;
 }
 
@@ -103,6 +107,44 @@ img {
   vertical-align: middle;
   margin-bottom: 1px;
 }
+
+
+#casts-table-timeline {
+	position: relative;
+  z-index: 2;
+}
+.casts-table-timeline-row td {
+  padding-top: 1rem;
+}
+#casts-table-timeline > div {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+}
+.timeline-ruler-tick {
+	position: relative;
+	color: #fff;
+	display: inline-block;
+  box-shadow: -1px 1px white;
+	width: var(--tenth-width);
+}
+.timeline-ruler-second {
+	height: 1rem;
+}
+.timeline-ruler-half-second {
+	height: .5rem;
+  font-size: 75%;
+}
+.timeline-ruler-hundredth-second {
+	height: .25rem;
+  font-size: 50%;
+}
+.timeline-ruler-number {
+  font-size: inherit;
+	position: absolute;
+  bottom: 100%;
+  left: -1rem;
+}
 </style>
 {% endblock add_style %}
 
@@ -137,13 +179,19 @@ img {
 </section>
 <section id="spell-timeline-wrap">
   <span>ZOOM:</span>
-  <input id="spell-timeline-mult" type="range" min="1" max="50" value="10">
+  <input id="spell-timeline-mult" type="range" min="1" max="50" value="3">
   <span id="spell-timeline-mult-label"></span>
 </section>
-<section id="casts-section" style="display: none" class="table-wrap wrap-spell">
+<section id="casts-section" style="display: none; --duration: {{ DURATION }}" class="table-wrap wrap-spell">
   <div class="casts-section-wrap">
     <table>
       <tbody class="casts-section-tbody">
+        <tr class="casts-table-timeline-row">
+          <td class="spell-name">.</td>
+          <td id="casts-table-timeline" data-duration="{{ DURATION }}">
+            <div></div>
+          </td>
+        </tr>
         {% for spell_id, _asdasd in DATA.items() %}
         <tr class="spell-row" data-spell-id="{{ spell_id }}" data-spell-name="{{ SPELLS[spell_id]['name'] }} }}">
           <td class="spell-name">
@@ -176,6 +224,8 @@ img {
   const castsSection = document.getElementById("casts-section");
   const timelineMultRange = document.getElementById("spell-timeline-mult");
   const timelineMultLabel = document.getElementById("spell-timeline-mult-label");
+  const timelineWrap = document.getElementById("casts-table-timeline");
+  const timeline = timelineWrap.querySelector("div");
   const DEFAULT_COLORS = {
     "SWING_DAMAGE": "#DCDCDC",
     "SPELL_DAMAGE": "#3F3FCF",
@@ -350,15 +400,76 @@ img {
       });
     })
   }
+
+  function toggle_timeline_labels_big(lessthan) {
+    const zoom = timelineMultRange.value;
+    const visibility = zoom < lessthan ? "hidden" : "visible";
+    const divs = document.getElementsByClassName("timeline-ruler-second");
+    for (let i = 0; i < divs.length; i++) {
+      if (i%5 == 0) continue;
+      divs[i].firstElementChild.style.visibility = visibility;
+    }
+  }
+
+  function toggle_timeline_labels(classname, lessthan) {
+    const zoom = timelineMultRange.value;
+    const visibility = zoom < lessthan ? "hidden" : "visible";
+    for (let div of document.getElementsByClassName(classname)) {
+      div.firstElementChild.style.visibility = visibility;
+    }
+  }
   
   function change_zoom() {
-    localStorage.setItem("ZOOM", timelineMultRange.value);
-    timelineMultLabel.innerText = `${timelineMultRange.value}x`;
-    castsSection.style.setProperty("--mult", timelineMultRange.value);
+    console.time('zoom');
+    const zoom = timelineMultRange.value;
+    localStorage.setItem("ZOOM", zoom);
+    timelineMultLabel.innerText = `${zoom}x`;
+    castsSection.style.setProperty("--mult", zoom);
+    console.timeEnd('zoom');
+    console.time('toggle');
+    toggle_timeline_labels("timeline-ruler-hundredth-second", 25);
+    toggle_timeline_labels("timeline-ruler-half-second", 5);
+    toggle_timeline_labels_big(3);
+    console.timeEnd('toggle');
+  }
+
+  const TICK_TYPES = {
+    0: "timeline-ruler-second",
+    5: "timeline-ruler-half-second"
+  }
+
+  function time_to_text(t, m) {
+    const minutes = `${Math.floor(t/60)}`.padStart(2, '0');
+    const seconds = `${t%60}`.padStart(2, '0');
+    if (m != 0) {
+      return `${minutes}:${seconds}.${m}`
+    }
+    return `${minutes}:${seconds}`
+  }
+
+  function create_timeline_tick(seconds, miliseconds) {
+    const tick = document.createElement("div");
+    const tick_type = TICK_TYPES[miliseconds%10] ?? "timeline-ruler-hundredth-second";
+    tick.classList.add("timeline-ruler-tick", tick_type);
+    const number = document.createElement("div");
+    number.classList.add("timeline-ruler-number");
+    number.innerText = time_to_text(seconds, miliseconds);
+    tick.appendChild(number);
+    return tick
+  }
+
+  function make_timeline() {
+    const duration = timelineWrap.getAttribute("data-duration");
+    for (let seconds=0; seconds<duration+1; seconds++) {
+      for (let miliseconds=0; miliseconds<10; miliseconds++) {
+        timeline.appendChild(create_timeline_tick(seconds, miliseconds));
+      }
+    }
   }
   
   function init() {
-    timelineMultRange.value = localStorage.getItem("ZOOM") ?? "10";
+    make_timeline();
+    timelineMultRange.value = localStorage.getItem("ZOOM") ?? "3";
     change_zoom();
     timelineMultRange.addEventListener("change", change_zoom);
     toggle_aura_duration_wrap();

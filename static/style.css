@@ -761,7 +761,7 @@ input:checked + label + div {
 }
 .wrap-spell {
   --min-width: 15ch;
-  --max-width: 40ch;
+  --max-width: 32ch;
   padding-bottom: 7rem;
 }
 .table-wrap {
