@@ -188,7 +188,41 @@ img {
     "SPELL_CAST_SUCCESS": "#9200CC",
     "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
   }
+  
   const get_pad_value = e => Number(e.getAttribute("data-pad").slice(0, 5));
+
+  function add_dummy_applied(row, new_array) {
+    if (new_array.length < 1) return;
+    
+    const spellHistory = row.querySelector(".spell-history");
+    
+    if (new_array[0].classList[1] == "SPELL_AURA_REMOVED") {
+      const div = document.createElement("div");
+      div.style.setProperty("--margin", 0);
+      div.style.width = get_pad_value(new_array[0]) + "%";
+      div.classList.add("cleu", "SPELL_AURA_APPLIED");
+      spellHistory.insertBefore(div, spellHistory.firstChild);
+    }
+    
+    const lastEvent = new_array.at(-1);
+    if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
+      lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
+    }
+  }
+
+  function change_applied_width(new_array) {
+    let start = null;
+    for (let i=0; i<new_array.length; i++) {
+      const div = new_array[i];
+      const flag = div.classList[1];
+      if (flag == "SPELL_AURA_APPLIED") {
+        start = div;
+      } else if (start && flag == "SPELL_AURA_REMOVED") {
+        start.style.width = get_pad_value(div) - get_pad_value(start) + "%";
+        start = null;
+      }
+    }
+  }
 
   function toggle_aura_duration(row) {
     const new_array = [];
@@ -199,43 +233,14 @@ img {
         new_array.push(div);
       }
     })
+
     new_array.sort((a, b) => get_pad_value(a) - get_pad_value(b));
-    if (new_array.length > 0) {
-      if (new_array[0].classList[1] == "SPELL_AURA_REMOVED") {
-        const div = document.createElement("div");
-        div.style.setProperty("--margin", 0);
-        div.style.width = get_pad_value(new_array[0]) + "%";
-        div.classList.add("cleu", "SPELL_AURA_APPLIED");
-        spellHistory.insertBefore(div, spellHistory.firstChild);
-      }
-      const lastEvent = new_array.at(-1);
-      if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
-        const div = document.createElement("div");
-        div.style.setProperty("--margin", "100%");
-        lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
-        div.classList.add("cleu", "SPELL_AURA_REMOVED");
-        spellHistory.appendChild(div);
-      }
-    }
 
-    let start;
-    let end;
-    for (let i=0; i<new_array.length; i++) {
-      const div = new_array[i];
-      if (div.classList[1] == "SPELL_AURA_APPLIED") {
-        if (end) {
-          start.style.width = get_pad_value(end) - get_pad_value(start) + "%";
-        }
-        start = div;
-        end = undefined;
-      } else if (div.classList[1] == "SPELL_AURA_REMOVED") {
-        if (start) {
-          end = div;
-        }
-      }
-    }
+    add_dummy_applied(row, new_array);
 
+    change_applied_width(new_array);
   }
+  
   function toggle_aura_duration_wrap() {
     for (let row of document.getElementsByClassName("spell-row")) {
       toggle_aura_duration(row);
@@ -344,22 +349,24 @@ img {
       });
     })
   }
-  function init() {
-    init_flag_filter();
-    add_tooltip_events();
-    toggle_rows_wrap();
-    toggle_aura_duration_wrap();
-    document.getElementById("casts-section").style.display = "";
-  }
-
-  // http://localhost:5000/reports/23-03-03--21-01--Safiyah--Lordaeron/casts/Safiyah/?boss=festergut&mode=25H&s=3430&f=3644&attempt=0&sc=3488&fc=3594
-
+  
   function change_zoom() {
+    localStorage.setItem("ZOOM", timelineMultRange.value);
     timelineMultLabel.innerText = `${timelineMultRange.value}x`;
     castsSection.style.setProperty("--mult", timelineMultRange.value);
   }
-  change_zoom();
-  timelineMultRange.addEventListener("change", change_zoom);
+  
+  function init() {
+    timelineMultRange.value = localStorage.getItem("ZOOM") ?? "10";
+    change_zoom();
+    timelineMultRange.addEventListener("change", change_zoom);
+    toggle_aura_duration_wrap();
+    toggle_rows_wrap();
+    init_flag_filter();
+    add_tooltip_events();
+    document.getElementById("casts-section").style.display = "";
+  }
+
   window.addEventListener('DOMContentLoaded', init);
 </script>
 {% endblock the_scripts %}
