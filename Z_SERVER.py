@@ -1,10 +1,12 @@
 import os
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import (
     Flask, request,
     make_response, render_template, send_from_directory)
+
+from werkzeug.exceptions import TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import file_functions
@@ -37,23 +39,43 @@ NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 CACHED_PAGES = {}
 IGNORED_PATHS = {"upload", "upload_progress"}
 
-def render_template_wrap(file: str, **kwargs):
-    path = kwargs.get("PATH", "")
-    query = kwargs.get("QUERY", "")
-    page = render_template(file, **kwargs)
-    pages = CACHED_PAGES.setdefault(path, {})
-    pages[query] = page
-    return page
+def add_log_entry(ip, method, msg):
+    LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
+
+RL = {}
+rl_td = {
+    timedelta(seconds=30): 5,
+    timedelta(minutes=1): 10,
+    timedelta(hours=1): 20,
+    timedelta(days=1): 100,
+}
+def wait_for_new(ip):
+    openned_times = RL.get(ip)
+    if not openned_times: return
+
+    now = datetime.now()
+    for _delta, open_max in rl_td.items():
+        rlimit = now - _delta
+        openned = sum(openned_on > rlimit for openned_on in openned_times)
+        if openned >= open_max:
+            _min_opened = min(x for x in openned_times if x > rlimit)
+            return _min_opened + _delta
 
 def load_report(name: str):
+    now = datetime.now()
+    ip = request.remote_addr
     if name in OPENED_LOGS:
         report = OPENED_LOGS[name]
+    elif wait_for_new(ip):
+        add_log_entry(ip, "SPAM", name)
+        raise TooManyRequests(retry_after=wait_for_new(ip))
     else:
         report = logs_main.THE_LOGS(name)
         OPENED_LOGS[name] = report
-        LOGGER_CONNECTIONS.info(f"{request.remote_addr:>15} | LOGS OPENED | {name}")
+        RL.setdefault(ip, []).append(now)
+        add_log_entry(ip, "OPENNED", name)
     
-    report.last_access = datetime.now()
+    report.last_access = now
     return report
 
 def get_formatted_query_string():
@@ -61,9 +83,6 @@ def get_formatted_query_string():
     if not query:
         return ""
     return f"?{query}"
-
-def get_default_params_wrap(report_id: str):
-    return load_report(report_id).get_default_params(request)
 
 MAX_PW_ATTEMPTS = 5
 WRONG_PW_FILE = os.path.join(PATH_DIR, '_wrong_pw.json')
@@ -78,6 +97,14 @@ def wrong_pw(ip):
 
 def banned(ip):
     return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS
+
+def render_template_wrap(file: str, **kwargs):
+    path = kwargs.get("PATH", "")
+    query = kwargs.get("QUERY", "")
+    page = render_template(file, **kwargs)
+    pages = CACHED_PAGES.setdefault(path, {})
+    pages[query] = page
+    return page
 
 
 @SERVER.route('/favicon.ico')
@@ -95,6 +122,11 @@ def class_icons():
 @SERVER.errorhandler(404)
 def method404(e):
     return render_template("404.html")
+
+@SERVER.errorhandler(429)
+def method429(e):
+    retry_in = e.retry_after - datetime.now()
+    return render_template("429.html", retry_in=retry_in)
 
 @SERVER.errorhandler(500)
 def method500(e):
@@ -142,8 +174,8 @@ def log_incoming_connection():
         except UnicodeDecodeError:
             pass
     
-    req = f"{request.remote_addr:>15} | {request.method:<7} | {path} | {request.headers.get('User-Agent')}"
-    LOGGER_CONNECTIONS.info(req)
+    msg = f"{path} | {request.headers.get('User-Agent')}"
+    add_log_entry(request.remote_addr, request.method, msg)
 
 @SERVER.before_request
 def before_request():

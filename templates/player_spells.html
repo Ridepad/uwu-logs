@@ -267,7 +267,7 @@ img {
       const div = new_array[i];
       const flag = div.classList[1];
       if (flag == "SPELL_AURA_APPLIED") {
-        start = div;
+        if (!start) start = div;
       } else if (start && flag == "SPELL_AURA_REMOVED") {
         start.style.width = get_pad_value(div) - get_pad_value(start) + "%";
         start = null;
