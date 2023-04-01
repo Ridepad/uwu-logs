@@ -1,6 +1,7 @@
 import os
 import threading
 from datetime import datetime, timedelta
+from struct import unpack
 
 from flask import (
     Flask, request,
@@ -573,6 +574,10 @@ def player_auras(report_id, player_name):
         # checkboxes=checkboxes, intable=intable, 
     )
 
+def getuncompressedsize(filename):
+    with open(filename, 'rb') as f:
+        f.seek(-4, 2)
+        return unpack('I', f.read(4))[0]
 
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
@@ -594,8 +599,9 @@ def top():
     content = file_functions.bytes_read(p)
 
     response = make_response(content)
-    response.headers['Content-length'] = len(content)
     response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-length'] = len(content)
+    response.headers['X-Full-Content-length'] = getuncompressedsize(p)
     return response
 
 

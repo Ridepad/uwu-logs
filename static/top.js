@@ -40,7 +40,7 @@ const screenX = window.matchMedia("(min-width: 1100px)");
 
 
 function toggleColumn(className, display) {
-  document.querySelectorAll(className).forEach(e => e.style.display = display);
+  mainTableBody.querySelectorAll(className).forEach(e => e.style.display = display);
 }
 
 function toggleUsefulColumns(event) {
@@ -243,11 +243,11 @@ function sort_table_by_column(event) {
   SORT_VARS.column = th;
   if (DATA_KEYS2[th.id] && (toggleLimit.checked || combineCheckbox.checked)) {
     const data = CACHE.getCurrent();
-    tableAddNewData(data);
+    tableAddNewDataWrap(data);
     return;
   }
 
-  Array.from(mainTableBody.querySelectorAll('tr:nth-child(n+1)'))
+  Array.from(mainTableBody.querySelectorAll('tr'))
        .sort(tableSort(th.cellIndex))
        .forEach(tr => mainTableBody.appendChild(tr));
 }
@@ -287,18 +287,27 @@ const DATA_KEYS2 = {
   "head-duration": 't',
 }
 
+function update_progress(done, total) {
+  const percent = Math.round(done / total * 100);
+  progressBarPercentage.innerText = `${done} / ${total} (${percent}%)`;
+  progressBar.style.width = `${percent}%`;
+}
+
 let mainTimeout;
 const sortNewData = key => (a, b) => (b[key] - a[key]) * SORT_VARS.order;
 function tableAddNewData(data) {
   clearTimeout(mainTimeout);
   mainTableBody.innerHTML = "";
   if (!data) return;
+  
   data = filterDataByClass(data)
   if (!data) return;
+  
   const key = DATA_KEYS2[SORT_VARS.column.id];
   const sortFunc = sortNewData(key);
   data = data.sort(sortFunc)
   if (!data) return;
+  
   data = combineCheckbox.checked ? noDublicates(data) : data;
   if (!data) return;
 
@@ -308,22 +317,31 @@ function tableAddNewData(data) {
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
   let i = 0;
   (function chunk() {
-    const end = Math.min(i+250, LIMIT)
+    const end = Math.min(i+250, LIMIT);
     for ( ; i < end; i++) {
       const row = newRow(data[i]);
       mainTableBody.appendChild(row);
     }
+    update_progress(i, LIMIT);
     if (i < LIMIT) {
       mainTimeout = setTimeout(chunk);
-      update_progress(i, LIMIT);
     } else {
+      progressBarPercentage.innerText = "Done!";
       loadingInfo.innerText = "Rendering table:";
-      tableContainer.style.display = "";
-      loadingInfoPanel.style.display = "none";
-      toggleUsefulColumns();
-      toggleTotalColumns();
+      setTimeout(() => {
+        toggleUsefulColumns();
+        toggleTotalColumns();
+        loadingInfoPanel.style.display = "none";
+        tableContainer.style.display = "";
+      });
     }
   })();
+}
+
+function tableAddNewDataWrap(data) {
+  console.time("tableAddNewData");
+  tableAddNewData(data);
+  console.timeEnd("tableAddNewData");
 }
 
 function makeQuery() {
@@ -352,37 +370,29 @@ const CACHE = {
   }
 };
 
-function update_progress(done, total) {
-  console.log(done, total);
-  const percent = Math.round(done / total * 100);
-  progressBarPercentage.innerHTML = `${done} / ${total} (${percent}%)`;
-  progressBar.style.width = `${percent}%`;
-}
-
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
-xrequest.onprogress = pe => {
-  if(pe.lengthComputable) {
-    update_progress(pe.loaded, pe.total)
-  }
-}
-xrequest.onreadystatechange = () => {
-  // const current_dl = xrequest.responseText.length;
-  // const content_lenght = xrequest.getResponseHeader("Content-Length");
-  // console.log(current_dl, content_lenght);
-  if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  console.timeEnd("query");
-  const parsed_json = xrequest.response ? JSON.parse(xrequest.response) : [];
 
-  // console.time("sort");
-  // const data = parsed_json.sort(sortNewData);
-  // console.timeEnd("sort");
+xrequest.onprogress = e => {
+  let contentLength;
+  if (e.lengthComputable) {
+    contentLength = e.total;
+  } else {
+    contentLength = parseInt(e.target.getResponseHeader('X-Full-Content-length'));
+  }
+  update_progress(e.loaded, contentLength);
+};
+
+xrequest.onreadystatechange = () => {
+  if (xrequest.status != 200 || xrequest.readyState != 4) return;
+  
+  console.timeEnd("query");
+  
+  const parsed_json = xrequest.response ? JSON.parse(xrequest.response) : [];
 
   CACHE.setNewData(parsed_json);
 
-  console.time("tableAddNewData");
-  tableAddNewData(parsed_json);
-  console.timeEnd("tableAddNewData");
+  tableAddNewDataWrap(parsed_json);
 }
 
 function queryServer(query) {
@@ -399,7 +409,7 @@ function fetchData() {
   const query = makeQuery();
   CACHE.lastQuery = query;
   const data = CACHE[query];
-  data ? tableAddNewData(data) : queryServer(query);
+  data ? tableAddNewDataWrap(data) : queryServer(query);
 }
 
 function searchChanged() {
@@ -471,7 +481,7 @@ function init() {
   toggleUsefulDamage.addEventListener('change', toggleUsefulColumns);
   toggleLimit.addEventListener('change', () => {
     const data = CACHE.getCurrent();
-    tableAddNewData(data);
+    tableAddNewDataWrap(data);
   });
   
   searchChanged();
