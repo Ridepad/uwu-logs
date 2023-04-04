@@ -235,7 +235,6 @@ class NewUpload(Thread):
         self.add_logger_msg(msg, self.timestamp)
 
         _slice_info = self.get_slice_info_wrap(logs_slice)
-        print("_slice_info", _slice_info)
         if not _slice_info.get('bosses'):
             return
         self.slices[logs_id] = _slice_info
@@ -271,10 +270,19 @@ class NewUpload(Thread):
         current_segment = []
         last_segment = []
 
-        SMALL_GAP = T_DELTA["1MIN"]
-        THIRTY_MINUTES = T_DELTA["30MIN"]
+        BIG_GAP = T_DELTA["14H"]
+        SMALL_GAP = T_DELTA["3MIN"]
 
-        def __save_segment(big_gap):
+        def is_big_gap():
+            if not last_segment: return True
+            
+            segments_tdelta = self.get_timedelta(current_segment[0], last_segment[-1])
+            print("is_big_gap segments_tdelta", segments_tdelta)
+            print(last_segment[-1])
+            print(current_segment[0])
+            return segments_tdelta > BIG_GAP
+
+        def __save_segment():
             last_slice_info = self.get_slice_info_wrap(last_segment)
             current_slice_info = self.get_slice_info_wrap(current_segment)
 
@@ -287,21 +295,15 @@ class NewUpload(Thread):
             else:
                 different_raid = len(_intersection) < max_len // 2
 
-            if big_gap:
-                if different_raid:
-                    self.save_slice_cache_wrap(current_segment)
-                else:
-                    last_segment.extend(current_segment)
-                    current_segment.clear()
-                
+            if different_raid or is_big_gap():
+                print("different_raid")
+                print("players_lst", sorted(players_last))
+                print("players_now ", sorted(players_current))
+                print("bosses_lst ", sorted(last_slice_info.get("bosses", [])))
+                print("bosses_now ", sorted(current_slice_info.get("bosses", [])))
                 self.save_slice_cache_wrap(last_segment)
-            else:
-                if not last_slice_info.get("bosses"):
-                    last_segment.clear()
-                elif different_raid:
-                    self.save_slice_cache_wrap(last_segment)
-                last_segment.extend(current_segment)
-                current_segment.clear()
+            last_segment.extend(current_segment)
+            current_segment.clear()
 
         with open(self.extracted_file, 'rb') as _file:
             self.timestamp = perf_counter()
@@ -314,8 +316,6 @@ class NewUpload(Thread):
                 
                 _delta = timestamp - last_timestamp
                 if _delta > 100 or _delta < 0:
-                    print("\nNew jump:", last_timestamp, timestamp)
-                    print(last_line.decode() + line.decode())
                     try:
                         _tdelta = self.get_timedelta(line, last_line)
                     except Exception:
@@ -323,14 +323,17 @@ class NewUpload(Thread):
                         continue
                     
                     if _tdelta > SMALL_GAP:
-                        print("_tdelta > SMALL_GAP")
-                        __save_segment(_tdelta > THIRTY_MINUTES)
+                        print(f"\nNew jump: {last_timestamp:0>6} {timestamp:0>6}")
+                        print(last_line.decode() + line.decode())
+                        __save_segment()
 
                 current_segment.append(line)
                 last_timestamp = timestamp
                 last_line = line
         
-        __save_segment(True)
+        print("=============== DONE ===============")
+        __save_segment()
+        self.save_slice_cache_wrap(last_segment)
 
     def finish_slice(self, logs_id):
         logs_folder = os.path.join(LOGS_DIR, logs_id)
@@ -364,6 +367,8 @@ class NewUpload(Thread):
             return
 
         if self.only_slices:
+            for logs_id in self.slices:
+                print(logs_id)
             self.change_status(FULL_DONE, 1)
             return
 
