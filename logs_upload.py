@@ -9,6 +9,8 @@ from datetime import datetime
 from threading import Thread
 from time import perf_counter
 
+import pytz
+
 import constants
 import file_functions
 import logs_archive
@@ -105,6 +107,13 @@ class NewUpload(Thread):
         self.keep_temp_folder = keep_temp_folder
         self.slice_cache: dict[str, dict] = {}
 
+        _timezone = upload_data.get("timezone")
+        try:
+            self.timezone = pytz.timezone(_timezone)
+        except pytz.exceptions.UnknownTimeZoneError:
+            self.timezone = pytz.utc
+            LOGGER_UPLOADS.exception(f"{self.upload_dir} | Can't parse timezone: {_timezone}")
+
         self.slices: dict[str, dict] = {}
         self.status_dict = {
             'done': 0,
@@ -157,6 +166,9 @@ class NewUpload(Thread):
                 except Exception:
                     pass
         return None
+    
+    def to_utc(self, d):
+        return self.timezone.normalize(self.timezone.localize(d)).astimezone(pytz.utc)
         
     def get_logs_id(self, logs_slice: list[bytes]):
         for _ in range(10):
@@ -165,6 +177,12 @@ class NewUpload(Thread):
                 break
             except Exception:
                 del logs_slice[0]
+        
+        try:
+            __date = self.to_utc(__date)
+        except Exception:
+            LOGGER_UPLOADS.exception(f"{self.upload_dir} | Coudn't convert to utc: {__date}")
+
         date = __date.strftime("%y-%m-%d--%H-%M")
 
         logs_author_info = get_logs_author_info(logs_slice)
@@ -567,6 +585,7 @@ class FileSave:
             "archive": full_file_path,
             "server": j.get('server'),
             "ip": IP,
+            "timezone": j.get('timezone'),
         }
 
         LOGGER_UPLOADS.info(f"{constants.get_ms_str(self.started)} | {new_upload_dir} | {len(self.chunks):>3} | {self.current_chunk:>3}")

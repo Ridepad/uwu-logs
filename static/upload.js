@@ -100,6 +100,7 @@ fileSubmit.onclick = () => {
   const filedata = JSON.stringify({
     filename: file.name,
     server: serverInput.value,
+    timezone:  Intl.DateTimeFormat().resolvedOptions().timeZone,
   })
   
   async function sendnewchunk(retry) {
