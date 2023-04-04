@@ -467,7 +467,7 @@ def freya_useful(logs_slice: list[str]):
 # 8/31 20:12:36.834  SPELL_PERIODIC_HEAL,0xF13000808A000A6D,"Freya",0x10a48,0xF13000808A000A6D,"Freya",0x10a48,62528,"Touch of Eonar",0x1,42000,14075,0,nil
 # 9/ 1 20:26:43.762  SPELL_PERIODIC_HEAL,0xF13000808A000CC3,"Freya",0x10a48,0xF13000808A000CC3,"Freya",0x10a48,62892,"Touch of Eonar",0x1,218400,143919,0,nil
 def specific_useful(logs_slice, boss_name):
-    data = {}
+    data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
         valks_dmg = get_valks_dmg(logs_slice)
         data['Valks Useful'] = valks_dmg['useful']
