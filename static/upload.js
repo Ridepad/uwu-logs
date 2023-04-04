@@ -1,5 +1,6 @@
 const POST_URL = "/upload";
 const CHUNK_SIZE = 256*1024;
+const ALLOWED_EXTENSIONS = ["7z", "zip"]
 
 const infoSection = document.getElementById('upload-info');
 const fileSection = document.getElementById("upload-section");
@@ -78,8 +79,11 @@ function upload_progress() {
 fileSelect.onchange = () => {
   const file = fileSelect.files[0];
   const ext = file.name.split('.').pop();
-  if (ext != '7z' && ext != "zip" || file.type == "text/plain") {
-    alert('File is not an archive.\nPlease archive the logs first.');
+  if (!ALLOWED_EXTENSIONS.includes(ext) || file.type == "text/plain") {
+    alert('File is not an archive.\nPlease archive the file first.');
+    fileSelect.value = "";
+  } else if (file.size < 16384) {
+    alert('Archive is too small, did you archive correct file?');
     fileSelect.value = "";
   }
 }
