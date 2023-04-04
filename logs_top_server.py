@@ -65,7 +65,7 @@ def update_top(top: dict, data: list[dict[str, str]]):
     for item in data:
         player_id = get_player_id(item)
         cached_report = top.get(player_id)
-        if not cached_report or cached_report['ud'] < item['ud']:
+        if not cached_report or cached_report['ud'] <= item['ud']:
             modified = True
             top[player_id] = item
     return modified
