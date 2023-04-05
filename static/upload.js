@@ -49,6 +49,10 @@ function logsProcessingCheck() {
 function upload_progress() {
   console.log('upload_progress', requestLogsProcessingInfo.readyState, requestLogsProcessingInfo.status);
   if (requestLogsProcessingInfo.readyState !== 4) return;
+  if (requestLogsProcessingInfo.status === 500) {
+    processingStatus.innerText = "Server error...";
+    return;
+  }
   if (requestLogsProcessingInfo.status !== 200) {
     processingStatus.innerText = "Aborted!";
     return;

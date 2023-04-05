@@ -274,6 +274,9 @@ def upload_progress():
     if new_upload.upload_thread is None:
         return '', 204
     
+    if not new_upload.upload_thread.is_alive():
+        return '', 500
+    
     print(new_upload.upload_thread.status_dict)
     status_str = new_upload.upload_thread.status_json
     if new_upload.upload_thread.status_dict.get('done') == 1:
