@@ -1,6 +1,6 @@
 const POST_URL = "/upload";
 const CHUNK_SIZE = 256*1024;
-const ALLOWED_EXTENSIONS = ["7z", "zip"]
+const ALLOWED_EXTENSIONS = ["7z", "zip", "rar", "xz", "tar", "lzma", "bzip2", "gzip"]
 
 const infoSection = document.getElementById('upload-info');
 const fileSection = document.getElementById("upload-section");
@@ -72,7 +72,7 @@ function upload_progress() {
   progressBarWrapper.style.display = "none";
   processingTable.style.display = "";
   processingTableBody.innerHTML = "";
-  processingStatus.innerText = res.status || "Preparing...";
+  processingStatus.innerText = res.status ?? "Preparing...";
 
   for (let slice_name in res.slices) {
     const slice = res.slices[slice_name];
@@ -82,7 +82,7 @@ function upload_progress() {
 
 fileSelect.onchange = () => {
   const file = fileSelect.files[0];
-  const ext = file.name.split('.').pop();
+  const ext = file.name.split('.').pop().toLowerCase();
   if (!ALLOWED_EXTENSIONS.includes(ext) || file.type == "text/plain") {
     alert('File is not an archive.\nPlease archive the file first.');
     fileSelect.value = "";
@@ -108,7 +108,7 @@ fileSubmit.onclick = () => {
   const filedata = JSON.stringify({
     filename: file.name,
     server: serverInput.value,
-    timezone:  Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   })
   
   async function sendnewchunk(retry) {
