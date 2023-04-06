@@ -265,24 +265,24 @@ def file_is_proccessing(ip):
 @SERVER.route("/upload_progress")
 def upload_progress():
     ip = request.remote_addr
-    print("upload_progress ip not in NEW_UPLOADS")
     if ip not in NEW_UPLOADS:
+        print("upload_progress ip not in NEW_UPLOADS")
         return '', 204
     
+    print("upload_progress ip in NEW_UPLOADS")
     new_upload = NEW_UPLOADS[ip]
-    print("new_upload.upload_thread", new_upload.upload_thread)
     if new_upload.upload_thread is None:
         return '', 204
-    
-    if not new_upload.upload_thread.is_alive():
-        return '', 500
-    
+
     print(new_upload.upload_thread.status_dict)
     status_str = new_upload.upload_thread.status_json
     if new_upload.upload_thread.status_dict.get('done') == 1:
         del NEW_UPLOADS[ip]
+    elif not new_upload.upload_thread.is_alive():
+        del NEW_UPLOADS[ip]
+        return '', 500
     
-    return status_str
+    return status_str, 200
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
 def upload():
