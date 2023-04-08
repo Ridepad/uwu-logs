@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from constants import SPECS_LIST, TOP_DIR, CLASSES, running_time
 CLASSES_LIST = list(CLASSES)
 
-ONE_HOUR = timedelta(hours=1)
+ONE_HOUR = timedelta(hours=12)
 DATA_CACHE = {}
 DATA_CACHE_RENEW = {}
 
