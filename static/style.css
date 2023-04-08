@@ -46,6 +46,25 @@ html::-webkit-scrollbar {
   display: none; /*Chrome Safari Opera*/
 }
 
+#home-button {
+  text-align: center;
+  font-size: 250%;
+  color: var(--third-color);
+  padding: 0 1em;
+  text-shadow: 0 0 2em silver, 0 0 1em currentColor;
+  animation-name: homebutton;
+  animation-duration: 4s;
+  animation-iteration-count: infinite;
+}
+@keyframes homebutton {
+  0%,
+  100% {color: var(--third-color);}
+  50%  {color: var(--primary-color);}
+}
+#home-button:hover {
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+
 /* class colors */
 .death-knight {color:crimson}
 .mage {color:lightskyblue}
@@ -98,7 +117,7 @@ a:not([class]) {
 }
 a:not([class]):hover {
   color: var(--link-hover);
-  text-shadow: 0 0 1.5em var(--link-text-shadow), .1em .1em .5em var(--link-text-shadow-hover);
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
 }
 
 ul {
@@ -158,32 +177,6 @@ ul {
   margin: 1rem;
 }
 
-#home-button {
-  /* position: fixed; */
-  /* margin-right: 50%;
-  margin-left: 50%; */
-  text-align: center;
-  font-size: 250%;
-  color:var(--third-color);
-  /* border: currentColor .08em solid; */
-  padding: 0 1em;
-  /* margin: 0 1em; */
-  /* border-radius: 0.3em; */
-  text-shadow: 0 0 2em silver, 0 0 1em currentColor;
-  /* box-shadow: inset 0 0 .5em currentColor, 0 0 .5em currentColor; */
-  animation-name: homebutton;
-  animation-duration: 4s;
-  animation-iteration-count: infinite;
-}
-@keyframes homebutton {
-  0%,
-  100% {color: var(--third-color);}
-  50%  {color: var(--primary-color);}
-}
-#home-button:hover {
-  /* box-shadow: inset 0 0 .65em currentColor, 0 0 1em currentColor; */
-  text-shadow: 0 0 2em silver, 0 0 .5em currentColor;
-}
 
 
 nav,

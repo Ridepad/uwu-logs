@@ -36,6 +36,51 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
     
     <script type="module" src="static/top.js"></script>
+    <style>
+      * {
+        color: gainsboro;
+        font-family: Ubuntu;
+        font-size: 1.6vh;
+        text-decoration: none;
+        font-weight: 500;
+        margin: 0;
+      }
+      
+      @media (min-width: 30em) and (orientation: landscape) {
+        * {
+          font-size: 2vh;
+        }
+      }
+      
+      /* Hide scrollbar */
+      html {
+        background-color: var(--background);
+        overflow: none;
+        -ms-overflow-style: none; /*IE Edge*/
+        scrollbar-width: none;  /*Firefox*/
+      }
+      html::-webkit-scrollbar {
+        display: none; /*Chrome Safari Opera*/
+      }
+      
+      #home-button {
+        text-align: center;
+        color: var(--third-color);
+        padding: 0 1em;
+        text-shadow: 0 0 2em silver, 0 0 1em currentColor;
+        animation-name: homebutton;
+        animation-duration: 4s;
+        animation-iteration-count: infinite;
+      }
+      @keyframes homebutton {
+        0%,
+        100% {color: var(--third-color);}
+        50%  {color: var(--primary-color);}
+      }
+      #home-button:hover {
+        text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+      }
+    </style>
   </head>
   <body>
     <main id="ladder">
@@ -85,7 +130,7 @@
       </section>
       <footer>
         <section>
-          <a id="link-home" href="/">Main website</a>
+          <a id="home-button" href="/">UwU LOGS</a>
           <input id="toggle-total-damage" type="checkbox" checked>
           <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
           <input id="toggle-useful-damage" type="checkbox" checked>

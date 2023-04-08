@@ -10,6 +10,7 @@ from flask import (
 from werkzeug.exceptions import TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import logs_top_statistics
 import file_functions
 import logs_calendar
 import logs_main
@@ -606,6 +607,24 @@ def top():
     response.headers['Content-length'] = len(content)
     response.headers['X-Full-Content-length'] = getuncompressedsize(p)
     return response
+
+@SERVER.route('/top_stats', methods=["GET", "POST"])
+def top_stats():
+    if request.method == "GET":
+        servers = file_functions.get_folders(TOP_DIR)
+        return render_template(
+            'top_stats.html',
+            SPECS_BASE=logs_top_statistics.get_specs_data(),
+            SERVERS=servers,
+        )
+    
+    _data: dict = request.get_json()
+
+    server = _data.get("server")
+    boss = _data.get("boss")
+    diff = _data.get("diff")
+    
+    return logs_top_statistics.get_boss_data(server, boss, diff)
 
 
 def connections():
