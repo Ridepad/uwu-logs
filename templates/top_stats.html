@@ -83,13 +83,21 @@ table {
 .chart-column::after {
 	content: attr(data-dps);
 	position: fixed;
-	transform: translate(-50%, -100%);
+	transform: translate(-40%, -100%);
+}
+@media (orientation: portrait) {
+  .chart-column:nth-child(even):after {
+    visibility: hidden;
+  }
 }
 
 #table-info {
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
+}
+#table-info span {
+  font-size: 75%;
 }
 span span {
   display: inline-block;
@@ -184,10 +192,10 @@ span span {
       </table>
     </div>
     <div id="table-info">
-      <span>|——— Bottom 50% ———</span>
+      <span>|——Bottom 50%——</span>
       <span><span class="p50"></span>50-75 percentile</span>
       <span><span class="p75"></span>75-99 percentile</span>
-      <span>———— Top 1% ————|</span>
+      <span>———Top 1%———|</span>
     </div>
 	</section>
   <aside id="the-tooltip" style="display: none;">

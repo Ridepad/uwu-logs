@@ -26,6 +26,10 @@ SPELLS = {
     "name": "Bloodrage",
     "icon": "ability_racial_bloodrage"
   },
+  "2800": {
+    "name": "Lay on Hands",
+    "icon": "spell_holy_layonhands"
+  },
   "5229": {
     "name": "Enrage",
     "icon": "ability_druid_enrage"
@@ -41,6 +45,10 @@ SPELLS = {
   "10310": {
     "name": "Lay on Hands",
     "icon": "spell_holy_layonhands"
+  },
+  "11903": {
+    "name": "Greater Mana Potion",
+    "icon": "inv_potion_73"
   },
   "12051": {
     "name": "Evocation",
@@ -321,6 +329,14 @@ SPELLS = {
   "51637": {
     "name": "Focused Attacks",
     "icon": "ability_rogue_focusedattacks"
+  },
+  "52132": {
+    "name": "Water Shield",
+    "icon": "ability_shaman_watershield"
+  },
+  "52133": {
+    "name": "Water Shield",
+    "icon": "ability_shaman_watershield"
   },
   "52697": {
     "name": "Noth's Special Brew",
