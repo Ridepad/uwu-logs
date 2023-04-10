@@ -322,7 +322,7 @@ function tableAddNewData(data) {
     new_dps_line(i);
   }
 
-  rows.sort((a, b) => b.getAttribute("data-sort") > a.getAttribute("data-sort"))
+  rows.sort((a, b) => b.getAttribute("data-sort") - a.getAttribute("data-sort"))
       .forEach(row => statsTableBody.appendChild(row));
 }
 
@@ -385,7 +385,7 @@ function update_row(row, data) {
     row.setAttribute("data-sort", 0);
     return;
   }
-  row.setAttribute("data-sort", data.p99.p/100000);
+  row.setAttribute("data-sort", data.p99.p);
   
   let _values = {};
   for (let x of DATA_KEYS) {
