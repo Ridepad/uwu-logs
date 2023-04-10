@@ -59,8 +59,15 @@ def get_specs_data():
         SPECS_DATA.append((_class, _class.replace(' ', '-').lower(), spec, SPECS_TO_HTML_LIST[spec_index], icon))
     return SPECS_DATA
 
+def n_greater_than(data: numpy.ndarray, value: float):
+    return int((data > value).sum())
+
 def get_percentile(data, percentile):
-    return round(numpy.percentile(data, percentile), 2)
+    _percentile = round(numpy.percentile(data, percentile), 2)
+    return {
+        "p": _percentile,
+        "n": n_greater_than(data, _percentile),
+    }
 
 def _get_boss_data(boss_file: str):
     if not os.path.isfile(boss_file):
@@ -79,11 +86,12 @@ def _get_boss_data(boss_file: str):
             continue
         data_s = numpy.sort(data_s)
         new_data[SPECS_TO_HTML_LIST[spec_index]] = {
-            "max": max(data_s),
+            "max": {"p": max(data_s), "n": 0},
             "p99": get_percentile(data_s, 99),
             "p75": get_percentile(data_s, 75),
             "p50": get_percentile(data_s, 50),
             "p10": get_percentile(data_s, 10),
+            "all": {"p": 0, "n": len(data_s)},
         }
     return new_data
 

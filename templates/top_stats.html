@@ -9,7 +9,7 @@ img {
 	max-width: 1em;
 	vertical-align: middle;
 	margin-bottom: 1px;
-  margin-left: .5em;
+  margin-inline: .25em;
 }
 section > div {
   --left-column: 9rem;
@@ -131,7 +131,18 @@ span span {
   justify-content: space-between;
   gap: 1rem;
 }
-
+#the-tooltip .percentile {
+  width: 6ch;
+  text-align: right;
+}
+#the-tooltip .npoints {
+  width: 5ch;
+  text-align: right;
+}
+#the-tooltip td:first-of-type {
+  text-align: left;
+  min-width: 8ch;
+}
 #select-server {grid-area: serv;}
 #select-instance {grid-area: inst;}
 #select-boss {grid-area: boss;}
@@ -199,12 +210,20 @@ span span {
     </div>
 	</section>
   <aside id="the-tooltip" style="display: none;">
-    <p><img></p>
-    <p>Top 1:<span></span></p>
-    <p>Top 1%:<span></span></p>
-    <p>Top 25%:<span></span></p>
-    <p>Top 50%:<span></span></p>
-    <p>Low 10%:<span></span></p>
+    <table>
+      <thead>
+        <tr><td colspan="3"></td></tr>
+        <tr><td></td><td class="npoints">n</td><td class="percentile">DPS</td></tr>
+      </thead>
+      <tbody>
+        <tr><td>Top 1:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr><td>Top 1%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr><td>Top 25%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr><td>Top 50%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr><td>Low 10%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr><td>Total:</td><td class="npoints"></td><td class="percentile"></td></tr>
+      </tbody>
+    </table>
   </aside>
 </main>
 {% endblock the_main %}
@@ -236,25 +255,35 @@ const BOSSES = {
   "The Eye of Eternity": ["Malygos"],
   "The Obsidian Sanctum": ["Sartharion"],
 };
-const DATA_KEYS = ["max", "p99", "p75", "p50", "p10"];
+const CACHE = {};
+const xrequest = new XMLHttpRequest();
+const DATA_KEYS = ["max", "p99", "p75", "p50", "p10", "all"];
 const serverSelect = document.getElementById("select-server");
 const instanceSelect = document.getElementById("select-instance");
 const bossSelect = document.getElementById("select-boss");
 const sizeSelect = document.getElementById("select-mode");
 const difficultyCheckbox = document.getElementById("difficulty-checkbox");
 const submitButton = document.getElementById("submit-button");
+const chartTimeline = document.getElementById("chart-timeline-wrap");
+const statsTableBody = document.getElementById("stats-tbody");
 const theTooltip = document.getElementById("the-tooltip");
+const first_row = theTooltip.querySelector("tr td");
+const theTooltipBody = theTooltip.querySelector("tbody");
 const INTERACTABLES = {
   server: serverSelect,
   raid: instanceSelect,
   boss: bossSelect,
   size: sizeSelect,
-}
+};
+
+let maxvalue = 20000;
+const dps_jump = 2500;
+
 function newOption(value, index) {
   const _option = document.createElement('option');
   _option.value = index === undefined ? value : index;
   _option.innerHTML = value;
-  return _option
+  return _option;
 }
 
 function addBosses() {
@@ -275,12 +304,11 @@ function makeQuery() {
   return JSON.stringify(q);
 }
 
-const CACHE = {};
 
 function tableAddNewData(data) {
   let max_v = 0;
   for (let classname in data) {
-    const cur_max = data[classname].max;
+    const cur_max = data[classname].max.p;
     if (cur_max > max_v) max_v = cur_max;
   }
   maxvalue = Math.ceil((max_v+500)/1000)*1000;
@@ -291,7 +319,7 @@ function tableAddNewData(data) {
   }
   chartTimeline.innerHTML = "";
   for (let i of Array(Math.ceil(maxvalue/dps_jump)).keys()) {
-    new_dps_line(i)
+    new_dps_line(i);
   }
 
   rows.sort((a, b) => b.getAttribute("data-sort") > a.getAttribute("data-sort"))
@@ -330,16 +358,8 @@ function searchChanged() {
   fetchData();
 }
 
-submitButton.addEventListener("click", searchChanged)
+submitButton.addEventListener("click", searchChanged);
 
-
-
-const chartTimeline = document.getElementById("chart-timeline-wrap");
-const statsTableBody = document.getElementById("stats-tbody");
-const xrequest = new XMLHttpRequest();
-
-let maxvalue = 20000;
-const dps_jump = 2500;
 
 const to_width_percent = v => `${v}%`;
 
@@ -365,13 +385,16 @@ function update_row(row, data) {
     row.setAttribute("data-sort", 0);
     return;
   }
-  row.setAttribute("data-sort", data.p99/100000);
+  row.setAttribute("data-sort", data.p99.p/100000);
   
   let _values = {};
   for (let x of DATA_KEYS) {
-    row.setAttribute(`data-${x}`, Math.round(data[x]));
+    const _percentile = data[x].p;
+    const _amount = data[x].n;
+    row.setAttribute(`data-${x}-p`, Math.round(_percentile));
+    row.setAttribute(`data-${x}-n`, _amount);
 
-    const _pos = data[x]/maxvalue*100
+    const _pos = _percentile/maxvalue*100;
     const _div = new_div(x, _pos);
     if (x == "p75") {
       _div.style.width = to_width_percent(_values["p99"] - _pos);
@@ -389,21 +412,22 @@ function update_row(row, data) {
 
 xrequest.onreadystatechange = () => {
   if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  const data = JSON.parse(xrequest.response)
+  const data = JSON.parse(xrequest.response);
   const query = makeQuery();
   CACHE[query] = data;
   tableAddNewData(data);
 }
-
 function add_tooltip_info(tr) {
-  const first_row = theTooltip.children[0]
   first_row.innerHTML = "";
   first_row.appendChild(tr.querySelector("img").cloneNode());
   first_row.innerHTML += `${tr.getAttribute("data-spec")} ${tr.getAttribute("data-class")}`;
+  first_row.className = tr.classList[1];
 
   for (let i=0; i < DATA_KEYS.length; i++) {
-    const attr_name = DATA_KEYS[i]
-    theTooltip.children[i+1].querySelector("span").innerText = tr.getAttribute(`data-${attr_name}`);
+    const attr_name = DATA_KEYS[i];
+    const _row = theTooltipBody.children[i];
+    if (i) _row.querySelector(".npoints").innerText = tr.getAttribute(`data-${attr_name}-n`);
+    if (i<DATA_KEYS.length-1) _row.querySelector(".percentile").innerText = tr.getAttribute(`data-${attr_name}-p`);
   }
 }
 function move_tooltip_to(tr) {
@@ -412,7 +436,8 @@ function move_tooltip_to(tr) {
 
   const bodyRect = document.body.getBoundingClientRect();
   const elemRect = first_child.getBoundingClientRect();
-  theTooltip.style.top = elemRect.bottom - bodyRect.top + 'px';
+  const trRect = tr.getBoundingClientRect();
+  theTooltip.style.top = trRect.bottom - bodyRect.top + 'px';
   theTooltip.style.right = bodyRect.right - elemRect.left + 'px';
   theTooltip.style.display = "";
 }
@@ -423,7 +448,7 @@ function add_tooltip_events() {
       add_tooltip_info(tr);
       move_tooltip_to(tr);
     });
-  })
+  });
 }
 
 
