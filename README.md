@@ -1,8 +1,11 @@
 # UwU Logs
 
 <https://uwu-logs.xyz/>
+
 UwU Logs is a World of Warcraft combat log parser.
+
 Supports any Wrath of the Lich King (3.3.5) server.
+
 ❤️ Inspired by World of Logs, LegacyPlayers and Warcraft Logs.
 
 ## Showcase
