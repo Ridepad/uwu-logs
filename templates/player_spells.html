@@ -2,25 +2,6 @@
 
 {% block add_style %}
 <style>
-.spell-history {
-  position: relative;
-}
-.casts-section-wrap {
-  --tenth-width: calc(var(--mult) * .1rem);
-  width: calc(var(--mult) * var(--duration) * 1rem);
-}
-
-.cleu {
-  position: absolute;
-  top: 0;
-  left: var(--margin);
-  height: 100%;
-  width: var(--tenth-width);
-  background-color: currentColor;
-  box-shadow: -1px 0 white;
-  z-index: 1;
-}
-
 #flag-filter-wrap {
   position: fixed;
   bottom: var(--bottom-row-two);
@@ -37,19 +18,18 @@
   background-color: var(--background)
 }
 #flag-filter-wrap > #flag-filter {
-  padding: .1rem;
-  display: none;
-  width: max-content;
+  visibility: hidden;
   position: absolute;
   bottom: 100%;
   left: 0;
-  z-index: 1;
+  padding: .1rem;
+  width: max-content;
   background-color: var(--background);
   box-shadow: inset 0 0 .5em var(--primary-color);
   border-radius: .5em;
 }
 #flag-filter-wrap:hover > #flag-filter {
-  display: block;
+  visibility: visible;
 }
 .flag-color-picker {
   width: 2em;
@@ -58,14 +38,50 @@
 .flag-checkbox:checked + label {
   color: var(--secondary-color);
 }
+
 #spell-timeline-wrap {
-  width: 30vw;
+  width: clamp(10rem, 100vw, 30rem);
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
 }
-.spell-count {
-  width: 5ch;
+#spell-timeline-mult {
+  width: 100%;
 }
+
+.spell-history {
+  position: relative;
+}
+.casts-section-wrap {
+  --tenth-width: calc(var(--mult) * 1px);
+  width: calc(var(--mult) * var(--duration) * 10px);
+}
+table {
+  width: 100%;
+}
+.dummy-cell {
+  /* fixes row height */
+  min-width: 0;
+  width: 0;
+  visibility: hidden;
+}
+img {
+  --size: 1.2em;
+  min-width: var(--size);
+  max-width: var(--size);
+  min-height: var(--size);
+  max-height: var(--size);
+}
+
+.cleu {
+  position: absolute;
+  top: 0;
+  left: var(--margin);
+  height: 100%;
+  width: var(--tenth-width);
+  background-color: currentColor;
+  box-shadow: -1px 0 gainsboro;
+}
+
 .spell-name {
   display: flex;
 }
@@ -74,46 +90,25 @@
 }
 .spell-name::after {
   content: attr(data-count);
-  min-width: 5ch;
+  padding-left: 1ch;
   text-align: right;
   display: inline-block;
   margin-left: auto;
 }
-table {
-  width: 100%;
-}
-.dummy-cell {
-  /* fixes height */
-  min-width: 0;
-  width: 0;
-  visibility: hidden;
-}
 
 #the-tooltip {
-  width: fit-content;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  padding: 5px 0;
-  border-radius: 6px;
-
   position: absolute;
+  width: fit-content;
+  background-color: var(--background);
+  text-align: center;
+  padding: .5em;
+  border-radius: 6px;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
   z-index: 5;
 }
-img {
-  min-height: 1em;
-  min-width: 1em;
-  max-width: 1em;
-  vertical-align: middle;
-  margin-bottom: 1px;
-}
-
 
 #casts-table-timeline {
 	position: relative;
-  z-index: 2;
-}
-.casts-table-timeline-row td {
   padding-top: 1rem;
 }
 #casts-table-timeline > div {
@@ -123,16 +118,15 @@ img {
 }
 .timeline-ruler-tick {
 	position: relative;
-	color: #fff;
 	display: inline-block;
-  box-shadow: -1px 1px white;
+  box-shadow: -1px 1px currentColor;
 	width: var(--tenth-width);
 }
 .timeline-ruler-second {
 	height: 1rem;
 }
 .timeline-ruler-half-second {
-	height: .5rem;
+	height: .75rem;
   font-size: 75%;
 }
 .timeline-ruler-hundredth-second {
@@ -143,7 +137,7 @@ img {
   font-size: inherit;
 	position: absolute;
   bottom: 100%;
-  left: -1rem;
+  transform: translate(-50%, 0);
 }
 </style>
 {% endblock add_style %}
@@ -179,15 +173,15 @@ img {
 </section>
 <section id="spell-timeline-wrap">
   <span>ZOOM:</span>
-  <input id="spell-timeline-mult" type="range" min="1" max="50" value="3">
-  <span id="spell-timeline-mult-label"></span>
+  <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
+  <span id="spell-timeline-mult-label">3x</span>
 </section>
-<section id="casts-section" style="display: none; --duration: {{ DURATION }}" class="table-wrap wrap-spell">
+<section id="casts-section" style="display: none; --duration: {{ DURATION*10//10 }}" class="table-wrap wrap-spell">
   <div class="casts-section-wrap">
     <table>
       <tbody class="casts-section-tbody">
         <tr class="casts-table-timeline-row">
-          <td class="spell-name">.</td>
+          <td class="spell-name"></td>
           <td id="casts-table-timeline" data-duration="{{ DURATION }}">
             <div></div>
           </td>
@@ -221,264 +215,265 @@ img {
 
 {% block the_scripts %}
 <script>
-  const castsSection = document.getElementById("casts-section");
-  const timelineMultRange = document.getElementById("spell-timeline-mult");
-  const timelineMultLabel = document.getElementById("spell-timeline-mult-label");
-  const timelineWrap = document.getElementById("casts-table-timeline");
-  const timeline = timelineWrap.querySelector("div");
-  const DEFAULT_COLORS = {
-    "SWING_DAMAGE": "#DCDCDC",
-    "SPELL_DAMAGE": "#3F3FCF",
-    "SPELL_MISSED": "#5B5A99",
-    "SPELL_PERIODIC_DAMAGE": "#783C9F",
-    "SPELL_AURA_APPLIED": "#179900",
-    "SPELL_AURA_APPLIED_DOSE": "#C0B300",
-    "SPELL_AURA_REMOVED_DOSE": "#C0B300",
-    "SPELL_AURA_REFRESH": "#C0B300",
-    "SPELL_AURA_REMOVED": "#FF631A",
-    "SPELL_CAST_SUCCESS": "#9200CC",
-    "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
+const castsSection = document.getElementById("casts-section");
+const timelineMultRange = document.getElementById("spell-timeline-mult");
+const timelineMultLabel = document.getElementById("spell-timeline-mult-label");
+const timelineWrap = document.getElementById("casts-table-timeline");
+const timeline = timelineWrap.querySelector("div");
+const DEFAULT_COLORS = {
+  "SWING_DAMAGE": "#DCDCDC",
+  "SPELL_DAMAGE": "#3F3FCF",
+  "SPELL_MISSED": "#5B5A99",
+  "SPELL_PERIODIC_DAMAGE": "#783C9F",
+  "SPELL_AURA_APPLIED": "#179900",
+  "SPELL_AURA_APPLIED_DOSE": "#C0B300",
+  "SPELL_AURA_REMOVED_DOSE": "#C0B300",
+  "SPELL_AURA_REFRESH": "#C0B300",
+  "SPELL_AURA_REMOVED": "#FF631A",
+  "SPELL_CAST_SUCCESS": "#9200CC",
+  "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
+}
+
+const get_pad_value = e => Number(e.getAttribute("data-pad").slice(0, 5));
+
+function add_fake_applied(row, new_array) {
+  if (new_array.length < 1) return;
+  
+  const spellHistory = row.querySelector(".spell-history");
+  
+  const firstEvent = new_array[0];
+  if (firstEvent.classList[1] == "SPELL_AURA_REMOVED") {
+    const div = document.createElement("div");
+    div.style.setProperty("--margin", 0);
+    div.style.width = get_pad_value(firstEvent) + "%";
+    div.classList.add("cleu", "SPELL_AURA_APPLIED");
+    spellHistory.insertBefore(div, spellHistory.firstChild);
   }
   
-  const get_pad_value = e => Number(e.getAttribute("data-pad").slice(0, 5));
+  const lastEvent = new_array.at(-1);
+  if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
+    lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
+  }
+}
 
-  function add_dummy_applied(row, new_array) {
-    if (new_array.length < 1) return;
-    
-    const spellHistory = row.querySelector(".spell-history");
-    
-    if (new_array[0].classList[1] == "SPELL_AURA_REMOVED") {
-      const div = document.createElement("div");
-      div.style.setProperty("--margin", 0);
-      div.style.width = get_pad_value(new_array[0]) + "%";
-      div.classList.add("cleu", "SPELL_AURA_APPLIED");
-      spellHistory.insertBefore(div, spellHistory.firstChild);
-    }
-    
-    const lastEvent = new_array.at(-1);
-    if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
-      lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
+function change_applied_width(new_array) {
+  let start = null;
+  for (let i=0; i<new_array.length; i++) {
+    const div = new_array[i];
+    const flag = div.classList[1];
+    if (flag == "SPELL_AURA_APPLIED") {
+      if (!start) start = div;
+    } else if (start && flag == "SPELL_AURA_REMOVED") {
+      start.style.width = get_pad_value(div) - get_pad_value(start) + "%";
+      start = null;
     }
   }
+}
 
-  function change_applied_width(new_array) {
-    let start = null;
-    for (let i=0; i<new_array.length; i++) {
-      const div = new_array[i];
-      const flag = div.classList[1];
-      if (flag == "SPELL_AURA_APPLIED") {
-        if (!start) start = div;
-      } else if (start && flag == "SPELL_AURA_REMOVED") {
-        start.style.width = get_pad_value(div) - get_pad_value(start) + "%";
-        start = null;
-      }
+function toggle_aura_duration(row) {
+  const new_array = [];
+  const spellHistory = row.querySelector(".spell-history");
+
+  ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"].forEach(flag => {
+    for (let div of row.getElementsByClassName(flag)) {
+      new_array.push(div);
+    }
+  })
+
+  new_array.sort((a, b) => get_pad_value(a) - get_pad_value(b));
+
+  add_fake_applied(row, new_array);
+
+  change_applied_width(new_array);
+}
+
+function toggle_aura_duration_wrap() {
+  for (let row of document.getElementsByClassName("spell-row")) {
+    toggle_aura_duration(row);
+  }
+}
+
+function spell_count(row) {
+  let c = 0;
+  for (let cleu of row.getElementsByClassName("cleu")) {
+    if (cleu.style.visibility != "hidden") c = c + 1;
+  }
+  return c
+}
+
+function toggle_rows(tbody) {
+  Array.from(tbody.getElementsByClassName("spell-row"))
+        .sort((a, b) => b.getAttribute("data-spell-name") < a.getAttribute("data-spell-name"))
+        .forEach(row => tbody.appendChild(row));
+  
+  const to_hide = [];
+  for (let row of document.getElementsByClassName("spell-row")) {
+    const count = spell_count(row);
+    row.firstElementChild.setAttribute('data-count', count);
+    if (count == 0) {
+      to_hide.push(row);
+      row.style.display = "none";
+    } else {
+      row.style.display = "";
     }
   }
+  
+  to_hide.forEach(row => tbody.appendChild(row));
+}
 
-  function toggle_aura_duration(row) {
-    const new_array = [];
-    const spellHistory = row.querySelector(".spell-history");
+function toggle_rows_wrap() {
+  for (let tbody of document.getElementsByClassName("casts-section-tbody")) {
+    toggle_rows(tbody);
+  }
+}
 
-    ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"].forEach(flag => {
-      for (let div of row.getElementsByClassName(flag)) {
-        new_array.push(div);
-      }
+function toggle_nodes(input) {
+  for (let div of document.getElementsByClassName(input.id)) {
+    div.style.visibility = input.checked ? "visible" : "hidden";
+  }
+}
+
+function change_color(flag, color) {
+  for (let cleu of document.getElementsByClassName(flag)) {
+    cleu.style.color = color;
+  }
+}
+
+const theTooltip = document.getElementById("the-tooltip");
+const tooltipTime = document.getElementById("tooltip-time");
+const tooltipFlag = document.getElementById("tooltip-flag");
+const tooltipTarget = document.getElementById("tooltip-target");
+const tooltipData = document.getElementById("tooltip-data");
+
+function init_flag_filter() {
+  document.querySelectorAll("#flag-filter li").forEach(li => {
+    const label = li.querySelector("label");
+    const checkbox = li.querySelector(".flag-checkbox");
+    const colorPicker = li.querySelector(".flag-color-picker");
+    const color_ID = `${checkbox.id}_COLOR`
+
+    checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
+    colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#DCDCDC";
+    label.style.setProperty('--secondary-color', colorPicker.value);
+    change_color(checkbox.id, colorPicker.value);
+    toggle_nodes(checkbox);
+    
+    checkbox.addEventListener("change", () => {
+      toggle_nodes(checkbox);
+      toggle_rows_wrap();
+      localStorage.setItem(checkbox.id, checkbox.checked);
     })
-
-    new_array.sort((a, b) => get_pad_value(a) - get_pad_value(b));
-
-    add_dummy_applied(row, new_array);
-
-    change_applied_width(new_array);
-  }
-  
-  function toggle_aura_duration_wrap() {
-    for (let row of document.getElementsByClassName("spell-row")) {
-      toggle_aura_duration(row);
-    }
-  }
-
-  function spell_count(row) {
-    let c = 0;
-    for (let cleu of row.getElementsByClassName("cleu")) {
-      if (cleu.style.visibility != "hidden") c = c + 1;
-    }
-    return c
-  }
-
-  function toggle_rows(tbody) {
-    Array.from(tbody.getElementsByClassName("spell-row"))
-         .sort((a, b) => b.getAttribute("data-spell-name") < a.getAttribute("data-spell-name"))
-         .forEach(row => tbody.appendChild(row));
-    
-    const to_hide = [];
-    for (let row of document.getElementsByClassName("spell-row")) {
-      const count = spell_count(row);
-      row.firstElementChild.setAttribute('data-count', count);
-      if (count == 0) {
-        to_hide.push(row);
-        row.style.display = "none";
-      } else {
-        row.style.display = "";
-      }
-    }
-    
-    to_hide.forEach(row => tbody.appendChild(row));
-  }
-
-  function toggle_rows_wrap() {
-    for (let tbody of document.getElementsByClassName("casts-section-tbody")) {
-      toggle_rows(tbody);
-    }
-  }
-  
-  function toggle_nodes(input) {
-    for (let div of document.getElementsByClassName(input.id)) {
-      div.style.visibility = input.checked ? "visible" : "hidden";
-    }
-  }
-
-  function change_color(flag, color) {
-    for (let cleu of document.getElementsByClassName(flag)) {
-      cleu.style.color = color;
-    }
-  }
-
-  const theTooltip = document.getElementById("the-tooltip");
-  const tooltipTime = document.getElementById("tooltip-time");
-  const tooltipFlag = document.getElementById("tooltip-flag");
-  const tooltipTarget = document.getElementById("tooltip-target");
-  const tooltipData = document.getElementById("tooltip-data");
-
-  function init_flag_filter() {
-    document.querySelectorAll("#flag-filter li").forEach(li => {
-      const label = li.querySelector("label");
-      const checkbox = li.querySelector(".flag-checkbox");
-      const colorPicker = li.querySelector(".flag-color-picker");
-      const color_ID = `${checkbox.id}_COLOR`
-
-      checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
-      colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#DCDCDC";
+    colorPicker.addEventListener("change", () => {
+      localStorage.setItem(color_ID, colorPicker.value);
       label.style.setProperty('--secondary-color', colorPicker.value);
       change_color(checkbox.id, colorPicker.value);
-      toggle_nodes(checkbox);
-      
-      checkbox.addEventListener("change", () => {
-        toggle_nodes(checkbox);
-        toggle_rows_wrap();
-        localStorage.setItem(checkbox.id, checkbox.checked);
-      })
-      colorPicker.addEventListener("change", () => {
-        localStorage.setItem(color_ID, colorPicker.value);
-        label.style.setProperty('--secondary-color', colorPicker.value);
-        change_color(checkbox.id, colorPicker.value);
-      })
     })
-  }
-  function add_tooltip_info(cleu) {
-    tooltipFlag.innerText = cleu.classList[1];
-    tooltipTime.innerText = cleu.getAttribute("data-time") ?? "00:00.0";
-    tooltipTarget.innerText = cleu.getAttribute("data-target");
-    tooltipData.innerText = cleu.getAttribute("data-etc");
-  }
-  function move_tooltip_to(cleu) {
-    let rect = cleu.getBoundingClientRect();
-    const bodyRect = document.body.getBoundingClientRect();
-    const elemRect = cleu.getBoundingClientRect();
-    const elemRect2 = cleu.parentElement.previousElementSibling.getBoundingClientRect();
-    const _left = Math.max(elemRect.left, elemRect2.right)
-    theTooltip.style.top = elemRect.bottom - bodyRect.top + 'px';
-    theTooltip.style.right = bodyRect.right - _left + 'px';
-  }
-  function add_tooltip_events() {
-    document.querySelectorAll(".cleu").forEach(cleu => {
-      cleu.addEventListener("mouseleave", () => theTooltip.style.display = "none");
-      cleu.addEventListener("mouseenter", () => {
-        move_tooltip_to(cleu);
-        add_tooltip_info(cleu);
-        theTooltip.style.display = "";
-      });
-    })
-  }
+  })
+}
+function add_tooltip_info(cleu) {
+  tooltipFlag.innerText = cleu.classList[1];
+  tooltipTime.innerText = cleu.getAttribute("data-time") ?? "00:00.0";
+  tooltipTarget.innerText = cleu.getAttribute("data-target");
+  tooltipData.innerText = cleu.getAttribute("data-etc");
+}
+function move_tooltip_to(cleu) {
+  let rect = cleu.getBoundingClientRect();
+  const bodyRect = document.body.getBoundingClientRect();
+  const elemRect = cleu.getBoundingClientRect();
+  const elemRect2 = cleu.parentElement.previousElementSibling.getBoundingClientRect();
+  const _left = Math.max(elemRect.left, elemRect2.right)
+  theTooltip.style.top = elemRect.bottom - bodyRect.top + 'px';
+  theTooltip.style.right = bodyRect.right - _left + 'px';
+}
+function add_tooltip_events() {
+  document.querySelectorAll(".cleu").forEach(cleu => {
+    cleu.addEventListener("mouseleave", () => theTooltip.style.display = "none");
+    cleu.addEventListener("mouseenter", () => {
+      move_tooltip_to(cleu);
+      add_tooltip_info(cleu);
+      theTooltip.style.display = "";
+    });
+  })
+}
 
-  function toggle_timeline_labels_big(lessthan) {
-    const zoom = timelineMultRange.value;
-    const visibility = zoom < lessthan ? "hidden" : "visible";
-    const divs = document.getElementsByClassName("timeline-ruler-second");
-    for (let i = 0; i < divs.length; i++) {
-      if (i%5 == 0) continue;
-      divs[i].firstElementChild.style.visibility = visibility;
-    }
+function toggle_timeline_labels_big(lessthan) {
+  const zoom = timelineMultRange.value;
+  const visibility = zoom < lessthan ? "hidden" : "visible";
+  const divs = document.getElementsByClassName("timeline-ruler-second");
+  for (let i = 0; i < divs.length; i++) {
+    if (i%5 == 0) continue;
+    divs[i].firstElementChild.style.visibility = visibility;
   }
+}
 
-  function toggle_timeline_labels(classname, lessthan) {
-    const zoom = timelineMultRange.value;
-    const visibility = zoom < lessthan ? "hidden" : "visible";
-    for (let div of document.getElementsByClassName(classname)) {
-      div.firstElementChild.style.visibility = visibility;
-    }
+function toggle_timeline_labels(classname, lessthan) {
+  const zoom = timelineMultRange.value;
+  const visibility = zoom < lessthan ? "hidden" : "visible";
+  for (let div of document.getElementsByClassName(classname)) {
+    div.firstElementChild.style.visibility = visibility;
   }
-  
-  function change_zoom() {
-    console.time('zoom');
-    const zoom = timelineMultRange.value;
-    localStorage.setItem("ZOOM", zoom);
-    timelineMultLabel.innerText = `${zoom}x`;
-    castsSection.style.setProperty("--mult", zoom);
-    console.timeEnd('zoom');
-    console.time('toggle');
-    toggle_timeline_labels("timeline-ruler-hundredth-second", 25);
-    toggle_timeline_labels("timeline-ruler-half-second", 5);
-    toggle_timeline_labels_big(3);
-    console.timeEnd('toggle');
-  }
+}
 
-  const TICK_TYPES = {
-    0: "timeline-ruler-second",
-    5: "timeline-ruler-half-second"
-  }
+function change_zoom() {
+  console.time('zoom');
+  const zoom = timelineMultRange.value;
+  localStorage.setItem("ZOOM", zoom);
+  timelineMultLabel.innerText = `${zoom}x`;
+  castsSection.style.setProperty("--mult", zoom);
+  console.timeEnd('zoom');
+  console.time('toggle');
+  toggle_timeline_labels("timeline-ruler-hundredth-second", 35);
+  toggle_timeline_labels("timeline-ruler-half-second", 10);
+  toggle_timeline_labels_big(6);
+  console.timeEnd('toggle');
+}
 
-  function time_to_text(t, m) {
-    const minutes = `${Math.floor(t/60)}`.padStart(2, '0');
-    const seconds = `${t%60}`.padStart(2, '0');
-    if (m != 0) {
-      return `${minutes}:${seconds}.${m}`
-    }
-    return `${minutes}:${seconds}`
-  }
+const TICK_TYPES = {
+  0: "timeline-ruler-second",
+  5: "timeline-ruler-half-second"
+}
 
-  function create_timeline_tick(seconds, miliseconds) {
-    const tick = document.createElement("div");
-    const tick_type = TICK_TYPES[miliseconds%10] ?? "timeline-ruler-hundredth-second";
-    tick.classList.add("timeline-ruler-tick", tick_type);
-    const number = document.createElement("div");
-    number.classList.add("timeline-ruler-number");
-    number.innerText = time_to_text(seconds, miliseconds);
-    tick.appendChild(number);
-    return tick
+function time_to_text(sec, tenth) {
+  const minutes = `${Math.floor(sec/60)}`.padStart(2, '0');
+  const seconds = `${sec%60}`.padStart(2, '0');
+  if (tenth != 0) {
+    return `${minutes}:${seconds}.${tenth}`
   }
+  return `${minutes}:${seconds}`
+}
 
-  function make_timeline() {
-    const duration = timelineWrap.getAttribute("data-duration");
-    for (let seconds=0; seconds<duration+1; seconds++) {
-      for (let miliseconds=0; miliseconds<10; miliseconds++) {
-        timeline.appendChild(create_timeline_tick(seconds, miliseconds));
-      }
-    }
-  }
-  
-  function init() {
-    make_timeline();
-    timelineMultRange.value = localStorage.getItem("ZOOM") ?? "3";
-    change_zoom();
-    timelineMultRange.addEventListener("change", change_zoom);
-    toggle_aura_duration_wrap();
-    toggle_rows_wrap();
-    init_flag_filter();
-    add_tooltip_events();
-    document.getElementById("casts-section").style.display = "";
-  }
+function create_timeline_tick(milliseconds) {
+  const tenth_of_sec = milliseconds%10;
+  const seconds = Math.floor(milliseconds/10);
+  const tick = document.createElement("div");
+  const tick_type = TICK_TYPES[tenth_of_sec] ?? "timeline-ruler-hundredth-second";
+  tick.classList.add("timeline-ruler-tick", tick_type);
+  const number = document.createElement("div");
+  number.classList.add("timeline-ruler-number");
+  number.innerText = time_to_text(seconds, tenth_of_sec);
+  tick.appendChild(number);
+  return tick
+}
 
-  window.addEventListener('DOMContentLoaded', init);
+function make_timeline() {
+  const duration = timelineWrap.getAttribute("data-duration") * 10 - 1;
+  for (let milliseconds=0; milliseconds<=duration; milliseconds++) {
+    timeline.appendChild(create_timeline_tick(milliseconds));
+  }
+}
+
+function init() {
+  make_timeline();
+  timelineMultRange.value = localStorage.getItem("ZOOM") ?? "3";
+  change_zoom();
+  timelineMultRange.addEventListener("change", change_zoom);
+  toggle_aura_duration_wrap();
+  toggle_rows_wrap();
+  init_flag_filter();
+  add_tooltip_events();
+  document.getElementById("casts-section").style.display = "";
+}
+
+window.addEventListener('DOMContentLoaded', init);
 </script>
 {% endblock the_scripts %}
