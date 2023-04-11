@@ -17,7 +17,7 @@ Supports any Wrath of the Lich King (3.3.5) server.
 
 <https://uwu-logs.xyz/top_stats>
 
-![Showcase PvE statistics](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/static/pve_stats.png)
+![Showcase PvE statistics](https://raw.githubusercontent.com/Ridepad/uwu-logs/main/showcase/pve_stats.png)
 
 ### Player total and per target spell info
 
