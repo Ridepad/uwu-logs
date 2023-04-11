@@ -101,7 +101,9 @@ class NewUpload(Thread):
         super().__init__()
         self.upload_data = upload_data
         self.upload_dir: str = upload_data["upload_dir"]
-        self.server: str = upload_data.get("server") or "Unknown"
+        self.server: str = upload_data.get("server")
+        if not self.server or self.server in SERVERS.values():
+            self.server = "Unknown"
         self.forced = forced
         self.only_slices = only_slices
         self.keep_temp_folder = keep_temp_folder
@@ -110,7 +112,7 @@ class NewUpload(Thread):
         _timezone = upload_data.get("timezone")
         try:
             self.timezone = pytz.timezone(_timezone)
-        except pytz.exceptions.UnknownTimeZoneError:
+        except (ValueError, pytz.exceptions.UnknownTimeZoneError):
             self.timezone = pytz.utc
             LOGGER_UPLOADS.exception(f"{self.upload_dir} | Can't parse timezone: {_timezone}")
 
@@ -236,10 +238,7 @@ class NewUpload(Thread):
             if _slice_info.get("length") == len(segment):
                 return self.slice_cache[first_line]
         
-        # timestamp = perf_counter()
         slice_info = self.get_slice_info(segment)
-        # self.add_logger_msg("Got slice info", timestamp)
-
         self.slice_cache[first_line] = slice_info
         return slice_info
 

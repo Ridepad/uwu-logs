@@ -290,7 +290,8 @@ def upload():
     IP = request.remote_addr
 
     if request.method == 'GET':
-        return render_template('upload.html')
+        servers = file_functions.get_folders(TOP_DIR)
+        return render_template('upload.html', SERVERS=servers)
 
     new_upload = NEW_UPLOADS.get(IP)
     if new_upload is None:

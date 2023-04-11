@@ -10,51 +10,64 @@ ARCHIVE_INFO_LABELS = ["date", "time", "attr", "size", "compressed", "name"]
 PATH_7Z = None
 
 def get_7zip_linux():
-    path_7z_tarxz = os.path.join(PATH_DIR, "7z.tar.xz")
-    cmd = ["wget", "https://www.7-zip.org/a/7z2201-linux-x64.tar.xz", "-O", path_7z_tarxz]
+    executable = "7zz"
+    executable_path = os.path.join(PATH_DIR, executable)
+    if os.path.isfile(executable_path):
+        return executable_path
+
+    print("Downloading 7z...")
+    temp_archive_name = os.path.join(PATH_DIR, "7z.tar.xz")
+    cmd = ["wget", "https://www.7-zip.org/a/7z2201-linux-x64.tar.xz", "-O", temp_archive_name]
     code = subprocess.call(cmd)
     if code != 0:
         LOGGER_UPLOADS.error(f'Error downloading 7z with code: {code}')
         return
     
-    path_7z = os.path.join(PATH_DIR, "7zz")
-    cmd = ["tar", "-xf", path_7z_tarxz, path_7z]
+    cmd = ["tar", "-xf", temp_archive_name, executable]
     code = subprocess.call(cmd)
     if code != 0:
         LOGGER_UPLOADS.error(f'Error extracting 7z with code: {code}')
         return
-
-    cmd = ["unlink", path_7z_tarxz]
-    code = subprocess.call(cmd)
-    if code != 0:
-        LOGGER_UPLOADS.error(f'Error deleting 7z with code: {code}')
-        return
     
-    return True
+    os.remove(temp_archive_name)
+    
+    return executable_path
 
 def get_7zip_windows():
+    executable = "7za.exe"
+    executable_path = os.path.join(PATH_DIR, executable)
+    if os.path.isfile(executable_path):
+        return executable_path
+    
     print("Downloading 7z...")
-    cmd = ["powershell", "-command", "wget", "https://www.7-zip.org/a/7zr.exe", "-O", "7zr.exe"]
+    temp_archive_name = os.path.join(PATH_DIR, "7z.zip")
+    cmd = ["powershell", "-command", "wget", "https://www.7-zip.org/a/7za920.zip", "-O", temp_archive_name]
     code = subprocess.call(cmd)
     if code != 0:
         LOGGER_UPLOADS.error(f'Error downloading 7z with code: {code}')
         return
     
-    return True
+    cmd = ["tar", "-xf", temp_archive_name, executable]
+    code = subprocess.call(cmd)
+    if code != 0:
+        LOGGER_UPLOADS.error(f'Error extracting 7z with code: {code}')
+        return
+    
+    os.remove(temp_archive_name)
+
+    return executable_path
 
 def get_7z_path():
     global PATH_7Z
     
-    if PATH_7Z is not None:
+    if PATH_7Z is not None and os.path.isfile(PATH_7Z):
         pass
     elif platform.startswith("linux"):
-        PATH_7Z = os.path.join(PATH_DIR, "7zz")
-        if not os.path.isfile(PATH_7Z):
-            get_7zip_linux()
+        PATH_7Z = get_7zip_linux()
     elif platform == "win32":
-        PATH_7Z = os.path.join(PATH_DIR, "7zr.exe")
-        if not os.path.isfile(PATH_7Z):
-            get_7zip_windows()
+        PATH_7Z = get_7zip_windows()
+    else:
+        raise RuntimeError("Unsupported OS")
 
     return PATH_7Z
 
