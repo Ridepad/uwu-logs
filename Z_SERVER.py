@@ -389,16 +389,11 @@ def casts(report_id, source_name):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    # sGUID = report.name_to_guid(source_name)
-    # tGUID = request.args.get('target')
-    # data_gen = report.player_heal_gen(segments, sGUID, tGUID)
-    # data_sum = report.player_damage_sum(data_gen)
-    # print(data_sum["units"])
     data = report.get_spell_history_wrap(segments, source_name)
-
+    rounded_duration = round(default_params.get("DURATION", 0), 1)
     return render_template_wrap(
         'player_spells.html', **default_params, **data,
-        SOURCE_NAME=source_name,
+        SOURCE_NAME=source_name, RDURATION=rounded_duration,
     )
 
 @SERVER.route("/reports/<report_id>/spellsearch", methods=["POST"])

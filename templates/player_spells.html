@@ -176,13 +176,13 @@ img {
   <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
   <span id="spell-timeline-mult-label">3x</span>
 </section>
-<section id="casts-section" style="display: none; --duration: {{ DURATION*10//10 }}" class="table-wrap wrap-spell">
+<section id="casts-section" style="display: none; --duration: {{ RDURATION }}" class="table-wrap wrap-spell">
   <div class="casts-section-wrap">
     <table>
       <tbody class="casts-section-tbody">
         <tr class="casts-table-timeline-row">
           <td class="spell-name"></td>
-          <td id="casts-table-timeline" data-duration="{{ DURATION }}">
+          <td id="casts-table-timeline" data-duration="{{ RDURATION }}">
             <div></div>
           </td>
         </tr>
@@ -197,7 +197,7 @@ img {
             <div class="cleu {{ flag }}" style="--margin: {{ ts }}" data-time="{{ from_start }}" data-target="{{ target }}" data-etc="{{ etc }}" data-pad="{{ ts }}"></div>
             {% endfor %}
           </td>
-          <td class="dummy-cell">-</td>
+          <td class="dummy-cell">.</td>
         </tr>
         {% endfor %}
       </tbody>
