@@ -1,24 +1,24 @@
 import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
 
-const serverSelect = document.getElementById('server-select');
-const instanceSelect = document.getElementById('instance-select');
-const bossSelect = document.getElementById('boss-select');
-const sizeSelect = document.getElementById('size-select');
-const difficultyCheckbox = document.getElementById('difficulty-checkbox');
-const combineCheckbox = document.getElementById('combine-checkbox');
-const classSelect = document.getElementById('class-select');
-const specSelect = document.getElementById('spec-select');
+const selectServer = document.getElementById('select-server');
+const selectInstance = document.getElementById('select-instance');
+const selectBoss = document.getElementById('select-boss');
+const selectSize = document.getElementById('select-size');
+const selectClass = document.getElementById('select-class');
+const selectSpec = document.getElementById('select-spec');
+const checkboxDifficulty = document.getElementById('checkbox-difficulty');
+const checkboxCombine = document.getElementById('checkbox-combine');
 
 const INTERACTABLES = {
-  server: serverSelect,
-  raid: instanceSelect,
-  boss: bossSelect,
-  size: sizeSelect,
-  mode: difficultyCheckbox,
-  best: combineCheckbox,
-  cls: classSelect,
-  spec: specSelect,
-}
+  server: selectServer,
+  raid: selectInstance,
+  boss: selectBoss,
+  size: selectSize,
+  mode: checkboxDifficulty,
+  best: checkboxCombine,
+  cls: selectClass,
+  spec: selectSpec,
+};
 
 const mainTableBody = document.getElementById("main-table-body");
 const headDPS = document.getElementById('head-dps');
@@ -66,39 +66,30 @@ function newOption(value, index) {
   const _option = document.createElement('option');
   _option.value = index === undefined ? value : index;
   _option.innerHTML = value;
-  return _option
+  return _option;
 }
 
 function addBosses() {
-  bossSelect.innerHTML = "";
-  BOSSES[instanceSelect.value].forEach(boss_name => bossSelect.appendChild(newOption(boss_name)));
+  selectBoss.innerHTML = "";
+  BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(newOption(boss_name)));
 };
 
 function addSpecs() {
-  specSelect.innerHTML = "";
-  const class_index = CLASSES[classSelect.value];
+  selectSpec.innerHTML = "";
+  const class_index = CLASSES[selectClass.value];
   const specs = SPECS_SELECT_OPTIONS[class_index];
-  specSelect.appendChild(newOption('All specs', -1));
+  selectSpec.appendChild(newOption('All specs', -1));
   if (!specs) return;
 
-  specs.forEach((spec_name, i) => specSelect.appendChild(newOption(spec_name, i+1)));
+  specs.forEach((spec_name, i) => selectSpec.appendChild(newOption(spec_name, i+1)));
 };
-
-function newLink(report_ID) {
-  const _a = document.createElement('a');
-  _a.href = `/reports/${report_ID}/`;
-  _a.target = "_blank";
-  return _a
-}
 
 function numberWithSeparator(x, sep=" ") {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 }
 function add_inner_text(cell, text) {
   if (!isNaN(text)) text = numberWithSeparator(text);
-  
-  const innerText = document.createTextNode(text);
-  cell.appendChild(innerText);
+  cell.append(text);
 }
 
 function addNameCell(row, data, key) {
@@ -106,8 +97,10 @@ function addNameCell(row, data, key) {
   const data_value = data[key];
 
   const [spec_name, spec_icon, spec_class_id] = SPECS[data[DATA_KEYS.spec]];
-  const imgsrc = `${ICON_CDN_URL}/${spec_icon}.jpg`;
-  cell.innerHTML = `<img src="${imgsrc}">${data_value}`;
+  const img = document.createElement("img");
+  img.src = `${ICON_CDN_URL}/${spec_icon}.jpg`;
+  cell.appendChild(img);
+  cell.append(data_value);
   cell.title = spec_name;
   cell.className = `${spec_class_id} table-n`;
   row.appendChild(cell);
@@ -152,68 +145,82 @@ function addDurationCell(row, data, key) {
   const data_value = data[key];
   cell.value = data_value;
   cell.className = `table-${key}`;
-  const _inside_data = formatDuration(data_value);
-  add_inner_text(cell, _inside_data);
+  cell.append(formatDuration(data_value));
   row.appendChild(cell);
 }
 
 function addDateCell(row, data, key) {
-  const cell = document.createElement('td');
-  const data_value = data[key];
-
-  const report_date = data_value.toString().slice(0, 15);
-  cell.value = report_date.replaceAll('-', '');
-  
-  const _link = newLink(data_value);
+  const report_ID = data[key];
+  const report_date = report_ID.toString().slice(0, 15);
   const [year, month, day, _, hour, minute] = report_date.split('-');
-  const months_str = MONTHS[Number(month) - 1];
-  _link.innerText = screenX.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
-  cell.appendChild(_link);
-  
+  const months_str = MONTHS[month - 1];
+  const date_text = screenX.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
+
+  const _a = document.createElement('a');
+  _a.href = `/reports/${report_ID}/`;
+  _a.target = "_blank";
+  _a.append(date_text);
+
+  const cell = document.createElement('td');
+  cell.appendChild(_a);
   cell.className = `table-${key}`;
+  cell.value = report_date.replaceAll('-', '');
   row.appendChild(cell);
 }
 
 function new_li(spell_id, count, uptime) {
   const li = document.createElement('li');
-  const imgsrc = `${ICON_CDN_URL}/${AURAS_ICONS[spell_id]}.jpg`;
-  li.innerHTML = `<img src="${imgsrc}" alt="${spell_id}"><span>${count}</span><span>${uptime}%</span>`;
-  return li
+  
+  const img = document.createElement("img");
+  img.src = `${ICON_CDN_URL}/${AURAS_ICONS[spell_id]}.jpg`;
+  img.alt = spell_id;
+  li.appendChild(img);
+  
+  const span1 = document.createElement("span");
+  span1.append(count)
+  li.appendChild(span1);
+  
+  const span2 = document.createElement("span");
+  span2.append(uptime)
+  li.appendChild(span2);
+  
+  return li;
 }
 
 function addAurasCells(row, data, key) {
   const data_value = data[key];
 
   const AURAS_COUNT = [];
-  const AURAS_TABLE = [];
   const AURAS_CELLS = [];
+  const AURAS_ROWS  = [];
   for (let i=0; i<AURAS_COLUMNS.length; i++) {
     AURAS_COUNT.push(0);
     const td = document.createElement('td');
     AURAS_CELLS.push(td);
     const fragment = new DocumentFragment();
-    AURAS_TABLE.push(fragment);
+    AURAS_ROWS.push(fragment);
   }
 
   for (let spell_id in data_value) {
     const [count, uptime, type] = data_value[spell_id];
     const li = new_li(spell_id, count, uptime);
     AURAS_COUNT[type] += count;
-    AURAS_TABLE[type].append(li);
+    AURAS_ROWS[type].append(li);
   }
   
   for (let i=0; i<AURAS_COLUMNS.length; i++) {
     const cell = AURAS_CELLS[i];
-    cell.value = AURAS_COUNT[i];
+    const count = AURAS_COUNT[i];
+    cell.value = count;
 
-    if (AURAS_COUNT[i] > 0) {
-      const table = document.createElement('ul');
-      table.append(AURAS_TABLE[i])
-      cell.appendChild(table);
+    if (count > 0) {
+      const ul = document.createElement('ul');
+      ul.append(AURAS_ROWS[i])
+      cell.appendChild(ul);
     }
-    
-    add_inner_text(cell, AURAS_COUNT[i]);
-    cell.classList.add(`table-${AURAS_COLUMNS[i]}`);
+
+    cell.append(count);
+    cell.className = `table-${AURAS_COLUMNS[i]}`;
     row.appendChild(cell);
   }
 }
@@ -233,17 +240,17 @@ function newRow(data) {
   return row
 }
 
-const SORT_VARS = {column: headUsefulDps, order: 1}
-const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"]
+const SORT_VARS = {column: headUsefulDps, order: 1};
+const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"];
 const getCellValue = (tr, idx) => tr.children[idx].value;
 const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
 function sort_table_by_column(event) {
   const th = event ? event.target : headDPS;
   SORT_VARS.order = th == SORT_VARS.column ? -SORT_VARS.order : REVERSE_SORTED.includes(th.id) ? -1 : 1;
   SORT_VARS.column = th;
-  if (DATA_KEYS2[th.id] && (toggleLimit.checked || combineCheckbox.checked)) {
+  if (DATA_KEYS2[th.id] && (toggleLimit.checked || checkboxCombine.checked)) {
     const data = CACHE.getCurrent();
-    tableAddNewDataWrap(data);
+    tableAddNewData(data);
     return;
   }
 
@@ -256,18 +263,18 @@ const newClassFilter = class_i => x => class_i <= x[DATA_KEYS.spec] && x[DATA_KE
 const newSpecFilter = spec_i => x => x[DATA_KEYS.spec] == spec_i;
 
 function filterDataByClass(data) {
-  const class_i = Number(classSelect.value);
+  const class_i = Number(selectClass.value);
   if (class_i === -1) return data;
-  const spec_i = Number(specSelect.value);
+  const spec_i = Number(selectSpec.value);
   const _filter = spec_i === -1 ? newClassFilter(class_i*4) : newSpecFilter(class_i*4 + spec_i);
   return data.filter(_filter);
 }
 
 const getbest = () => SORT_VARS.order == 1 ? (a, b) => a > b : (a, b) => a < b;
 function noDublicates(data) {
-  const getbest_f = getbest()
+  const getbest_f = getbest();
   const key = DATA_KEYS2[SORT_VARS.column.id];
-  const best_data = {}
+  const best_data = {};
   for (let i=0; i < data.length; i++) {
     const current = data[i];
     const guid = current[DATA_KEYS.guid];
@@ -285,11 +292,11 @@ const DATA_KEYS2 = {
   "head-total-amount": 'ta',
   "head-total-dps": 'td',
   "head-duration": 't',
-}
+};
 
 function update_progress(done, total) {
   const percent = Math.round(done / total * 100);
-  progressBarPercentage.innerText = `${done} / ${total} (${percent}%)`;
+  progressBarPercentage.textContent = `${done} / ${total} (${percent}%)`;
   progressBar.style.width = `${percent}%`;
 }
 
@@ -300,57 +307,58 @@ function tableAddNewData(data) {
   mainTableBody.innerHTML = "";
   if (!data) return;
   
-  data = filterDataByClass(data)
+  data = filterDataByClass(data);
   if (!data) return;
   
   const key = DATA_KEYS2[SORT_VARS.column.id];
   const sortFunc = sortNewData(key);
-  data = data.sort(sortFunc)
+  data = data.sort(sortFunc);
   if (!data) return;
   
-  data = combineCheckbox.checked ? noDublicates(data) : data;
+  data = checkboxCombine.checked ? noDublicates(data) : data;
   if (!data) return;
 
-  loadingInfo.innerText = "Building table:";
+  console.time("tableAddRows1");
+  loadingInfo.textContent = "Building table...";
   tableContainer.style.display = "none";
   loadingInfoPanel.style.display = "";
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
+  const fragment = new DocumentFragment();
   let i = 0;
   (function chunk() {
     const end = Math.min(i+250, LIMIT);
     for ( ; i < end; i++) {
       const row = newRow(data[i]);
-      mainTableBody.appendChild(row);
+      fragment.appendChild(row);
     }
     update_progress(i, LIMIT);
+    
     if (i < LIMIT) {
       mainTimeout = setTimeout(chunk);
-    } else {
-      progressBarPercentage.innerText = "Done!";
-      loadingInfo.innerText = "Rendering table:";
-      setTimeout(() => {
-        toggleUsefulColumns();
-        toggleTotalColumns();
-        loadingInfoPanel.style.display = "none";
-        tableContainer.style.display = "";
-      });
+      return;
     }
+
+    loadingInfo.textContent = "Rendering table...";
+    progressBarPercentage.textContent = "Done!";
+
+    setTimeout(() => {
+      toggleUsefulColumns();
+      toggleTotalColumns();
+      loadingInfoPanel.style.display = "none";
+      tableContainer.style.display = "";
+      mainTableBody.append(fragment);
+      console.timeEnd("tableAddRows1");
+    });
   })();
 }
 
-function tableAddNewDataWrap(data) {
-  console.time("tableAddNewData");
-  tableAddNewData(data);
-  console.timeEnd("tableAddNewData");
-}
-
 function makeQuery() {
-  const sizeValue = sizeSelect.value;
-  const diffValue = difficultyCheckbox.checked ? 'H' : 'N';
+  const sizeValue = selectSize.value;
+  const diffValue = checkboxDifficulty.checked ? 'H' : 'N';
   const diff_str = `${sizeValue}${diffValue}`;
   const q = {
-    server: serverSelect.value,
-    boss: bossSelect.value,
+    server: selectServer.value,
+    boss: selectBoss.value,
     diff: diff_str,
   };
   return JSON.stringify(q);
@@ -392,11 +400,11 @@ xrequest.onreadystatechange = () => {
 
   CACHE.setNewData(parsed_json);
 
-  tableAddNewDataWrap(parsed_json);
+  tableAddNewData(parsed_json);
 }
 
 function queryServer(query) {
-  loadingInfo.innerText = "Downloading top:";
+  loadingInfo.textContent = "Downloading top:";
   tableContainer.style.display = "none";
   loadingInfoPanel.style.display = "";
   console.time("query");
@@ -409,23 +417,23 @@ function fetchData() {
   const query = makeQuery();
   CACHE.lastQuery = query;
   const data = CACHE[query];
-  data ? tableAddNewDataWrap(data) : queryServer(query);
+  data ? tableAddNewData(data) : queryServer(query);
 }
 
 function searchChanged() {
-  const __diff = difficultyCheckbox.checked ? 'H' : "N";
-  const title = `UwU Logs - Top - ${bossSelect.value} - ${sizeSelect.value}${__diff}`;
+  const __diff = checkboxDifficulty.checked ? 'H' : "N";
+  const title = `UwU Logs - Top - ${selectBoss.value} - ${selectSize.value}${__diff}`;
   document.title = title;
 
   const parsed = {
-    server: serverSelect.value,
-    raid: instanceSelect.value,
-    boss: bossSelect.value,
-    size: sizeSelect.value,
-    mode: difficultyCheckbox.checked ? 1 : 0,
-    best: combineCheckbox.checked ? 1 : 0,
-    cls: classSelect.value,
-    spec: specSelect.value,
+    server: selectServer.value,
+    raid: selectInstance.value,
+    boss: selectBoss.value,
+    size: selectSize.value,
+    mode: checkboxDifficulty.checked ? 1 : 0,
+    best: checkboxCombine.checked ? 1 : 0,
+    cls: selectClass.value,
+    spec: selectSpec.value,
   };
 
   const new_params = new URLSearchParams(parsed).toString();
@@ -441,13 +449,21 @@ function isValidParam(elm, par) {
 
 function findValueIndex(select, option_name) {
   for (let i=0; i < select.childElementCount; i++) {
-    if (select[i].innerText == option_name) return i;
+    if (select[i].textContent == option_name) return i;
   }
+}
+function getDefaultIndex(select) {
+  if (select == selectClass) {
+    return findValueIndex(select, "Priest");
+  } else if (select == selectServer) {
+    return findValueIndex(select, "Lordaeron");
+  }
+  return 0;
 }
 
 function init() {
-  Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(newOption(name)));
-  CLASSES.forEach((name, i) => classSelect.appendChild(newOption(name, i)));
+  Object.keys(BOSSES).forEach(name => selectInstance.appendChild(newOption(name)));
+  CLASSES.forEach((name, i) => selectClass.appendChild(newOption(name, i)));
 
   const currentParams = new URLSearchParams(LOC.search);
   for (let key in INTERACTABLES) {
@@ -455,37 +471,43 @@ function init() {
     const elm = INTERACTABLES[key];
     if (elm.nodeName == "INPUT") {
       elm.checked = par != 0;
-    } else if (!isValidParam(elm, par)) {
-      if (elm == classSelect) {
-        elm.selectedIndex = findValueIndex(elm, "Priest");
-      } else if (elm == serverSelect) {
-        elm.selectedIndex = findValueIndex(elm, "Lordaeron");
-      } else {
-        elm.selectedIndex = 0;
-      }
-    } else if (par) {
+    } else if (isValidParam(elm, par)) {
       elm.value = par;
+    } else {
+      elm.selectedIndex = getDefaultIndex(elm);
     }
 
-    if (elm == instanceSelect) {
+    if (elm == selectInstance) {
       elm.addEventListener('change', addBosses);
       addBosses();
-    } else if (elm == classSelect) {
+    } else if (elm == selectClass) {
       elm.addEventListener('change', addSpecs);
       addSpecs();
     }
     elm.addEventListener('change', searchChanged);
   }
-
-  toggleTotalDamage.addEventListener('change', toggleTotalColumns);
-  toggleUsefulDamage.addEventListener('change', toggleUsefulColumns);
-  toggleLimit.addEventListener('change', () => {
-    const data = CACHE.getCurrent();
-    tableAddNewDataWrap(data);
-  });
   
+  toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : screenX.matches;
+  toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
+  toggleLimit.checked = localStorage.getItem("showlimit") == "false" ? false : true;
+  
+  toggleTotalDamage.addEventListener('change', event => {
+    localStorage.setItem("showtotal", toggleTotalDamage.checked);
+    toggleTotalColumns(event);
+  });
+  toggleUsefulDamage.addEventListener('change', event => {
+    localStorage.setItem("showuseful", toggleUsefulDamage.checked);
+    toggleUsefulColumns(event);
+  });
+  toggleLimit.addEventListener('change', () => {
+    localStorage.setItem("showlimit", toggleLimit.checked);
+    const data = CACHE.getCurrent();
+    tableAddNewData(data);
+  });
+
   searchChanged();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));
 }
 
 document.readyState !== 'loading' ? init() : document.addEventListener('DOMContentLoaded', init);
+// window.addEventListener('DOMContentLoaded', init);

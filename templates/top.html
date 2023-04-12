@@ -40,13 +40,13 @@
       * {
         color: gainsboro;
         font-family: Ubuntu;
-        font-size: 1.6vh;
+        font-size: 1.5vh;
         text-decoration: none;
         font-weight: 500;
         margin: 0;
       }
       
-      @media (min-width: 30em) and (orientation: landscape) {
+      @media (min-width: 1100px) and (orientation: landscape) {
         * {
           font-size: 2vh;
         }
@@ -85,20 +85,20 @@
   <body>
     <main id="ladder">
       <section id="controls">
-        <select id="server-select">
+        <select id="select-server">
           {% for server_name in SERVERS %}
           <option value="{{ server_name }}">{{ server_name }}</option>
           {% endfor %}
         </select>
-        <select id="instance-select"></select>
-        <select id="boss-select"></select>
-        <input id="combine-checkbox" type="checkbox" checked>
-        <label id="combine-label" for="combine-checkbox">Best</label>
-        <select id="size-select"><option value="25">25</option><option value="10">10</option></select>
-        <input id="difficulty-checkbox" type="checkbox" checked>
-        <label id="difficulty-label" for="difficulty-checkbox">Heroic</label>
-        <select id="class-select"><option value="-1">All classes</option></select>
-        <select id="spec-select"></select>
+        <select id="select-instance"></select>
+        <select id="select-boss"></select>
+        <input id="checkbox-combine" type="checkbox">
+        <label id="combine-label" for="checkbox-combine">Best</label>
+        <select id="select-size"><option value="25">25</option><option value="10">10</option></select>
+        <input id="checkbox-difficulty" type="checkbox">
+        <label id="difficulty-label" for="checkbox-difficulty">Heroic</label>
+        <select id="select-class"><option value="-1">All classes</option></select>
+        <select id="select-spec"></select>
       </section>
       <section id="table-container">
         <table id="main-table">
@@ -131,11 +131,11 @@
       <footer>
         <section>
           <a id="home-button" href="/">UwU LOGS</a>
-          <input id="toggle-total-damage" type="checkbox" checked>
+          <input id="toggle-total-damage" type="checkbox">
           <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
-          <input id="toggle-useful-damage" type="checkbox" checked>
+          <input id="toggle-useful-damage" type="checkbox">
           <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
-          <input id="toggle-limit" type="checkbox" checked>
+          <input id="toggle-limit" type="checkbox">
           <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
         </section>
       </footer>

@@ -21,7 +21,7 @@
   margin: 0;
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1100px) and (orientation: landscape) {
   * {
     font-size: 2vh;
   }
@@ -92,7 +92,7 @@ tbody > tr:hover > td {
   background-color: hsl(285, 100%, 5%);
 }
 td {
-  min-width: 3ch;
+  /* min-width: 3ch; */
   background-color: var(--background);
   background-clip: padding-box;
 }
@@ -149,21 +149,21 @@ input[type=checkbox] {
   align-items: center;
 }
 
-#server-select {grid-area: serv;}
-#instance-select {grid-area: inst;}
-#boss-select {grid-area: boss;}
-#size-select {grid-area: size;}
+#select-server {grid-area: serv;}
+#select-instance {grid-area: inst;}
+#select-boss {grid-area: boss;}
+#select-size {grid-area: size;}
 #combine-label {grid-area: comb;}
 #difficulty-label {grid-area: diff;}
-#class-select {grid-area: clss;}
-#spec-select {grid-area: spec;}
+#select-class {grid-area: clss;}
+#select-spec {grid-area: spec;}
 
-#spec-select,
-#class-select {
-  min-width: 14ch;
+#select-spec,
+#select-class {
+  /* min-width: 14ch; */
 }
-#instance-select,
-#boss-select {
+#select-instance,
+#select-boss {
   min-width: 21ch;
 }
 
@@ -244,17 +244,19 @@ input[type=checkbox] {
 #main-table > tbody tr td.table-n::before {
   display: inline-block;
   content: counter(rowNumber);
-  min-width: 2ch;
-  width: 5ch;
-  text-align: center;
+  /* min-width: 2ch; */
+  width: 4ch;
+  text-align: right;
   color: var(--main-white);
 }
 #main-table > tbody img {
   min-height: 1em;
+  max-height: 1em;
   min-width: 1em;
   max-width: 1em;
   vertical-align: middle;
-  margin-bottom: 1px;
+  /* margin-bottom: 1px; */
+  padding-inline: .1em;
 }
 #main-table > tbody .table-n {
   width: 21ch;
@@ -264,29 +266,31 @@ input[type=checkbox] {
 }
 @media (max-width: 1100px) {
   #main-table > tbody .table-n {
-    max-width: 16ch;
+    max-width: 15ch;
   }
 }
 
 #main-table > tbody :is(.table-ud, .table-td) {
-  min-width: 7.5ch;
+  min-width: 7.25ch;
   width: 9ch;
   text-align: right;
 }
 
 #main-table > tbody :is(.table-ua, .table-ta) {
-  min-width: 9.5ch;
+  min-width: 9.25ch;
   width: 10ch;
   text-align: right;
 }
 
 #main-table > tbody tr td.table-r {
-  min-width: 8ch;
+  /* min-width: 8ch; */
   width: 14ch;
 }
 
 #main-table > tbody tr td.table-t {
-  min-width: 6ch;
+  /* min-width: 6ch; */
+  width: 6ch;
+  padding-inline: .2em;
 }
 
 
