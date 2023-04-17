@@ -180,10 +180,10 @@ class NewUpload(Thread):
             except Exception:
                 del logs_slice[0]
         
-        try:
-            __date = self.to_utc(__date)
-        except Exception:
-            LOGGER_UPLOADS.exception(f"{self.upload_dir} | Coudn't convert to utc: {__date}")
+        # try:
+        #     __date = self.to_utc(__date)
+        # except Exception:
+        #     LOGGER_UPLOADS.exception(f"{self.upload_dir} | Coudn't convert to utc: {__date}")
 
         date = __date.strftime("%y-%m-%d--%H-%M")
 
