@@ -125,7 +125,7 @@ def get_boss_top_wrap(top, boss_f_n, server_folder):
     _top = top[boss_f_n] = get_boss_top(server_folder, boss_f_n)
     return _top
 
-def remove_report(top, boss_data):
+def remove_report_from_top(top, boss_data):
     modified = False
     for item in boss_data:
         player_id = get_player_id(item)
@@ -135,7 +135,7 @@ def remove_report(top, boss_data):
     return modified
 
 @running_time
-def delete_reports(server: str, reports: list[str]):
+def delete_reports(server: str, reports: list[str], bosses=None):
     print()
     print()
     print(server)
@@ -148,31 +148,17 @@ def delete_reports(server: str, reports: list[str]):
         print()
         print(report_name)
         for boss_f_n, data in data_gen(report_name):
+            if bosses and boss_f_n not in bosses:
+                continue
             print(boss_f_n)
             _top = get_boss_top_wrap(TOP, boss_f_n, SERVER_FOLDER)
-            _modified = remove_report(_top, data)
+            _modified = remove_report_from_top(_top, data)
             if _modified:
                 modified = True
 
     if modified:
         save_tops(TOP, server)
 
-def delete_reports_wrap(reports: list[str]):
+def delete_reports_wrap(reports: list[str], bosses=None):
     for server, server_reports in group_reports(reports).items():
-        delete_reports(server, server_reports)
-
-
-def modify_report(report_name: str, remove=False):
-    modified = False
-    TOP_D: dict[str, dict[str, dict]] = {}
-    REPORT_SERVER = get_report_server(report_name)
-    SERVER_FOLDER = get_server_top_folder(REPORT_SERVER)
-    modify_function = remove_report if remove else update_top
-    for boss_f_n, boss_data in data_gen(report_name):
-        _top = TOP_D[boss_f_n] = get_boss_top(SERVER_FOLDER, boss_f_n)
-        _modified = modify_function(_top, boss_data)
-        if _modified:
-            modified = True
-    
-    if modified:
-        save_tops(TOP_D, REPORT_SERVER)
+        delete_reports(server, server_reports, bosses=bosses)
