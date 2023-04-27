@@ -1,6 +1,7 @@
 _*
 legacy*
 test*
+q_*
 *.7z
 *.exe
 *.ini
