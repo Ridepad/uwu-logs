@@ -7,7 +7,6 @@ from time import perf_counter
 from constants import LOGGER_UPLOADS, LOGS_RAW_DIR, PATH_DIR, get_ms_str, logs_edit_time
 
 ARCHIVE_INFO_LABELS = ["date", "time", "attr", "size", "compressed", "name"]
-PATH_7Z = None
 
 def get_7zip_linux():
     executable = "7zz"
@@ -58,19 +57,21 @@ def get_7zip_windows():
     return executable_path
 
 def get_7z_path():
-    global PATH_7Z
-    
-    if PATH_7Z is not None and os.path.isfile(PATH_7Z):
-        pass
-    elif platform.startswith("linux"):
-        PATH_7Z = get_7zip_linux()
-    elif platform == "win32":
-        PATH_7Z = get_7zip_windows()
-    else:
-        raise RuntimeError("Unsupported OS")
+    path_7z = None
+    def inner():
+        nonlocal path_7z
+        if path_7z is not None and os.path.isfile(path_7z):
+            pass
+        elif platform.startswith("linux"):
+            path_7z = get_7zip_linux()
+        elif platform == "win32":
+            path_7z = get_7zip_windows()
+        else:
+            raise RuntimeError("Unsupported OS")
+        return path_7z
+    return inner
 
-    return PATH_7Z
-
+get_7z_path = get_7z_path()
 
 def get_archive_info(full_archive_path):
     cmd_list = [get_7z_path(), "l", full_archive_path]
@@ -99,7 +100,9 @@ def get_archive_id(full_archive_path: str):
     last_line = archive_output[-1]
     print(last_line)
     if "file" not in last_line:
-        return
+        last_line = archive_output[-3]
+        if "file" not in last_line:
+            return
     
     a = last_line.split(maxsplit=4)
     date = a[0]
