@@ -56,7 +56,13 @@ def get_specs_data():
     for spec_index in set(range(40)) - set(IGNORED_SPECS):
         spec, icon = SPECS_LIST[spec_index]
         _class = CLASSES_LIST[spec_index//4]
-        SPECS_DATA.append((_class, _class.replace(' ', '-').lower(), spec, SPECS_TO_HTML_LIST[spec_index], icon))
+        SPECS_DATA.append({
+            "class_name": _class,
+            "class_html": _class.replace(' ', '-').lower(),
+            "spec_name": spec,
+            "spec_html": SPECS_TO_HTML_LIST[spec_index],
+            "icon": icon,
+        })
     return SPECS_DATA
 
 def n_greater_than(data: numpy.ndarray, value: float):
@@ -88,6 +94,8 @@ def _get_boss_data(boss_file: str):
         new_data[SPECS_TO_HTML_LIST[spec_index]] = {
             "max": {"p": max(data_s), "n": 0},
             "p99": get_percentile(data_s, 99),
+            "p95": get_percentile(data_s, 95),
+            "p90": get_percentile(data_s, 90),
             "p75": get_percentile(data_s, 75),
             "p50": get_percentile(data_s, 50),
             "p10": get_percentile(data_s, 10),

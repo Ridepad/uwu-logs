@@ -32,25 +32,30 @@ table {
 .stats-cell-data {
   position: relative;
   vertical-align: middle;
-  margin-top: auto; 
-  margin-top: auto; 
+  margin-top: auto;
   color: inherit;
 }
 .stats-cell-data div {
-  width: .2em;
-	height: 1em;
 	position: absolute;
   bottom: 0;
+  width: .2em;
+	height: 1em;
   z-index: 2;
 }
 .passthrudiv,
 .max,
 .p10 {
   color: inherit;
-  background-color: currentColor; 
+  background-color: currentColor;
+}
+.p95 {
+  background-color: lime;
+}
+.p90 {
+  background-color: lawngreen;
 }
 .p75 {
-  background-color: lime;
+  background-color: yellow;
 }
 .p50 {
   background-color: orange;
@@ -96,10 +101,12 @@ table {
   flex-direction: row;
   justify-content: space-evenly;
 }
-#table-info span {
-  font-size: 75%;
+@media (max-width: 1600px) {
+  #table-info button {
+    font-size: 75%;
+  }
 }
-span span {
+#table-info button span {
   display: inline-block;
   height: 1em;
   width: 1em;
@@ -116,14 +123,12 @@ span span {
 }
 
 #the-tooltip {
+  position: absolute;
   width: fit-content;
-  color: #fff;
   background-color: var(--background);
   padding: .5em;
   border-radius: 6px;
   box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
-
-  position: absolute;
   z-index: 5;
 }
 #the-tooltip p {
@@ -140,8 +145,8 @@ span span {
   text-align: right;
 }
 #the-tooltip td:first-of-type {
-  text-align: left;
   min-width: 8ch;
+  text-align: left;
 }
 #select-server {grid-area: serv;}
 #select-instance {grid-area: inst;}
@@ -157,7 +162,7 @@ span span {
   'serv serv size diff subm subm';
   gap: .5rem;
 }
-@media (orientation: landscape) {
+@media (min-width: 1100px) {
   #controls {
     margin-inline: 10rem;
     display: flex;
@@ -193,9 +198,9 @@ span span {
       <div id="chart-timeline-wrap"></div>
       <table>
         <tbody id="stats-tbody">
-          {% for _class, _class_html, spec, spec_html, icon in SPECS_BASE %}
-          <tr class="stats-cell-row {{ _class_html }}" id="{{ spec_html }}" data-class="{{ _class }}" data-spec="{{ spec }}">
-            <td class="stats-cell-name" title="{{ _class }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ icon }}.jpg">{{ spec }}</td>
+          {% for spec_info in SPECS_BASE %}
+          <tr class="stats-cell-row {{ spec_info['class_html'] }}" id="{{ spec_info['spec_html'] }}" data-class="{{ spec_info['class_name'] }}" data-spec="{{ spec_info['spec_name'] }}">
+            <td class="stats-cell-name" title="{{ spec_info['class_name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spec_info['icon'] }}.jpg">{{ spec_info['spec_name']  }}</td>
             <td class="stats-cell-data"></td>
           </tr>
           {% endfor %}
@@ -203,10 +208,12 @@ span span {
       </table>
     </div>
     <div id="table-info">
-      <span>|——Bottom 50%——</span>
-      <span><span class="p50"></span>50-75 percentile</span>
-      <span><span class="p75"></span>75-99 percentile</span>
-      <span>———Top 1%———|</span>
+      <button data-sort-by="data-p10-p">|——Bottom 50%——</button>
+      <button data-sort-by="data-p50-p"><span class="p50"></span>50-75</button>
+      <button data-sort-by="data-p75-p"><span class="p75"></span>75-95</button>
+      <button data-sort-by="data-p90-p"><span class="p90"></span>75-95</button>
+      <button data-sort-by="data-p95-p"><span class="p95"></span>95-99</button>
+      <button data-sort-by="data-p99-p">———Top 1%———|</button>
     </div>
 	</section>
   <aside id="the-tooltip" style="display: none;">
@@ -216,12 +223,14 @@ span span {
         <tr><td></td><td class="npoints">n</td><td class="percentile">DPS</td></tr>
       </thead>
       <tbody>
-        <tr><td>Top 1:</td><td class="npoints"></td><td class="percentile"></td></tr>
-        <tr><td>Top 1%:</td><td class="npoints"></td><td class="percentile"></td></tr>
-        <tr><td>Top 25%:</td><td class="npoints"></td><td class="percentile"></td></tr>
-        <tr><td>Top 50%:</td><td class="npoints"></td><td class="percentile"></td></tr>
-        <tr><td>Low 10%:</td><td class="npoints"></td><td class="percentile"></td></tr>
-        <tr><td>Total:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="max"><td>Top 1:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p99"><td>Top 1%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p95"><td>Top 5%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p90"><td>Top 10%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p75"><td>Top 25%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p50"><td>Top 50%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="p10"><td>Low 10%:</td><td class="npoints"></td><td class="percentile"></td></tr>
+        <tr class="all"><td>Total:</td><td class="npoints"></td><td class="percentile"></td></tr>
       </tbody>
     </table>
   </aside>
@@ -257,7 +266,6 @@ const BOSSES = {
 };
 const CACHE = {};
 const xrequest = new XMLHttpRequest();
-const DATA_KEYS = ["max", "p99", "p75", "p50", "p10", "all"];
 const serverSelect = document.getElementById("select-server");
 const instanceSelect = document.getElementById("select-instance");
 const bossSelect = document.getElementById("select-boss");
@@ -279,6 +287,10 @@ const INTERACTABLES = {
 let maxvalue = 20000;
 const dps_jump = 2500;
 
+function removeChildren(node) {
+  while(node.firstChild) node.removeChild(node.firstChild);
+}
+
 function newOption(value, index) {
   const _option = document.createElement('option');
   _option.value = index === undefined ? value : index;
@@ -287,10 +299,9 @@ function newOption(value, index) {
 }
 
 function addBosses() {
-  bossSelect.innerHTML = "";
+  removeChildren(bossSelect);
   BOSSES[instanceSelect.value].forEach(boss_name => bossSelect.appendChild(newOption(boss_name)));
 };
-instanceSelect.addEventListener('change', addBosses);
 
 function makeQuery() {
   const sizeValue = sizeSelect.value;
@@ -317,7 +328,7 @@ function tableAddNewData(data) {
   for (let tr of rows) {
     update_row(tr, data[tr.id]);
   }
-  chartTimeline.innerHTML = "";
+  removeChildren(chartTimeline);
   for (let i of Array(Math.ceil(maxvalue/dps_jump)).keys()) {
     new_dps_line(i);
   }
@@ -358,9 +369,6 @@ function searchChanged() {
   fetchData();
 }
 
-submitButton.addEventListener("click", searchChanged);
-
-
 const to_width_percent = v => `${v}%`;
 
 function new_dps_line(v) {
@@ -380,32 +388,36 @@ function new_div(classname, pos) {
 
 function update_row(row, data) {
   const cell = row.querySelector(".stats-cell-data");
-  cell.innerHTML = "";
+  removeChildren(cell);
   if (!data) {
     row.setAttribute("data-sort", 0);
     return;
   }
+
   row.setAttribute("data-sort", data.p99.p);
   
-  let _values = {};
-  for (let x of DATA_KEYS) {
-    const _percentile = data[x].p;
-    const _amount = data[x].n;
-    row.setAttribute(`data-${x}-p`, Math.round(_percentile));
-    row.setAttribute(`data-${x}-n`, _amount);
+  const _divs = {};
+  const _values = {};
+  for (let k in data) {
+    const _percentile = data[k].p;
+    const _amount = data[k].n;
+    row.setAttribute(`data-${k}-p`, Math.round(_percentile));
+    row.setAttribute(`data-${k}-n`, _amount);
 
     const _pos = _percentile/maxvalue*100;
-    const _div = new_div(x, _pos);
-    if (x == "p75") {
-      _div.style.width = to_width_percent(_values["p99"] - _pos);
-    } else if (x == "p50") {
-      _div.style.width = to_width_percent(_values["p75"] - _pos);
-    }
+    const _div = new_div(k, _pos);
     cell.appendChild(_div);
-    _values[x] = _pos;
+
+    _divs[k] = _div;
+    _values[k] = _pos;
   }
+
+  let a = Array.from(Object.keys(data)).sort((a, b) => b > a);
+  for (let i=1; i<a.length-3; i++) {
+    _divs[a[i]].style.width = to_width_percent(_values[a[i-1]] - _values[a[i]]);
+  }
+
   const passthrudiv = new_div("passthrudiv", _values["p10"]);
-  
   passthrudiv.style.width = to_width_percent(_values["max"] - _values["p10"]);
   cell.insertBefore(passthrudiv, cell.children[0]);
 }
@@ -418,16 +430,15 @@ xrequest.onreadystatechange = () => {
   tableAddNewData(data);
 }
 function add_tooltip_info(tr) {
-  first_row.innerHTML = "";
+  while(first_row.firstChild) first_row.removeChild(first_row.firstChild);
   first_row.appendChild(tr.querySelector("img").cloneNode());
-  first_row.innerHTML += `${tr.getAttribute("data-spec")} ${tr.getAttribute("data-class")}`;
+  first_row.append(`${tr.getAttribute("data-spec")} ${tr.getAttribute("data-class")}`);
   first_row.className = tr.classList[1];
-
-  for (let i=0; i < DATA_KEYS.length; i++) {
-    const attr_name = DATA_KEYS[i];
-    const _row = theTooltipBody.children[i];
-    if (i) _row.querySelector(".npoints").innerText = tr.getAttribute(`data-${attr_name}-n`);
-    if (i<DATA_KEYS.length-1) _row.querySelector(".percentile").innerText = tr.getAttribute(`data-${attr_name}-p`);
+  
+  for (let _row of theTooltipBody.children) {
+    const _name = _row.className;
+    if (_name != "max") _row.querySelector(".npoints").innerText = tr.getAttribute(`data-${_name}-n`);
+    if (_name != "all") _row.querySelector(".percentile").innerText = tr.getAttribute(`data-${_name}-p`);
   }
 }
 function move_tooltip_to(tr) {
@@ -453,15 +464,9 @@ function add_tooltip_events() {
 
 
 function init() {
-  function isValidParam(elm, par) {
-    return [...elm.options].map(o => o.value).includes(par);
-  }
-  
-  function findValueIndex(select, option_name) {
-    for (let i=0; i < select.childElementCount; i++) {
-      if (select[i].innerText == option_name) return i;
-    }
-  }
+  const isValidParam = (elm, par) => Array.from(elm.children).map(e => e.value).includes(par);
+  const findValueIndex = (select, option_name) => Array.from(select.children).map(e => e.innerText).indexOf(option_name);
+
   Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(newOption(name)));
 
   const currentParams = new URLSearchParams(window.location.search);
@@ -483,10 +488,23 @@ function init() {
     }
   }
 
+  instanceSelect.addEventListener("change", addBosses);
+  submitButton.addEventListener("click", searchChanged);
   add_tooltip_events();
   fetchData();
+
+  const button_click = e => {
+    const sortby = e.target.getAttribute("data-sort-by");
+    Array.from(statsTableBody.children)
+    .sort((a,b) => b.getAttribute(sortby) - a.getAttribute(sortby))
+    .forEach(tr => statsTableBody.appendChild(tr));
+  }
+  const tableInfo = document.getElementById("table-info");
+  for (let button of tableInfo.getElementsByTagName('button')) {
+    button.addEventListener("click", button_click);
+  }
 }
 
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener("DOMContentLoaded", init);
 </script>
 {% endblock the_scripts %}
