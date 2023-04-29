@@ -69,6 +69,7 @@
   </form>
   <div id="server-select">
     <input id="server-input" type="text" placeholder="Optional: Type in any server name (if not Warmane)" list="server-list">
+    <p>Just the server name, don't add date, raid name, etc.</p>
     <datalist id="server-list">
       {% for server in SERVERS %}
       <option value="{{ server }}"></option>
