@@ -363,7 +363,6 @@ SPELL_BOOK = {
     "58597": [4, "Sacred Shield"],
     "26017": [4, "Vindication"],
     "21084": [4, "Seal of Righteousness"],
-    "25780": [4, "Righteous Fury"],
     "31884": [4, "Avenging Wrath"],
     "54172": [4, "Divine Storm"],
     "59578": [4, "The Art of War"],
