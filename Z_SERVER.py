@@ -574,10 +574,13 @@ def player_auras(report_id, player_name):
         # checkboxes=checkboxes, intable=intable, 
     )
 
-def getuncompressedsize(filename):
-    with open(filename, 'rb') as f:
-        f.seek(-4, 2)
-        return unpack('I', f.read(4))[0]
+def get_uncompressed_size(filename):
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(-4, 2)
+            return unpack('I', f.read(4))[0]
+    except FileNotFoundError:
+        return 0
 
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
@@ -601,7 +604,7 @@ def top():
     response = make_response(content)
     response.headers['Content-Encoding'] = 'gzip'
     response.headers['Content-length'] = len(content)
-    response.headers['X-Full-Content-length'] = getuncompressedsize(p)
+    response.headers['X-Full-Content-length'] = get_uncompressed_size(p)
     return response
 
 @SERVER.route('/top_stats', methods=["GET", "POST"])
