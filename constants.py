@@ -41,6 +41,7 @@ LOGGER_CONNECTIONS = setup_logger('connections')
 LOGGER_REPORTS = setup_logger('reports')
 LOGGER_UPLOADS = setup_logger('uploads')
 LOGGER_UNUSUAL_SPELLS = setup_logger('unusual_spells')
+LOGGER_MEMORY = setup_logger('memory')
 
 
 T_DELTA = {

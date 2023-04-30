@@ -6,6 +6,7 @@ from struct import unpack
 from flask import (
     Flask, request,
     make_response, render_template, send_from_directory)
+import psutil
 
 from werkzeug.exceptions import TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -16,7 +17,7 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR,
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR,
     REPORTS_PRIVATE, STATIC_DIR, T_DELTA, TOP_DIR
 )
 
@@ -32,50 +33,52 @@ SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 LOGGER_CONNECTIONS.debug("Starting server...")
 
-CLEANER: threading.Thread = None
 USE_FILTER = True
-MAX_SURVIVE_LOGS = T_DELTA["30SEC"]
-ALLOWED_EXTENSIONS = {'zip', '7z', }
+MAX_SURVIVE_LOGS = T_DELTA["5MIN"]
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 CACHED_PAGES = {}
 IGNORED_PATHS = {"upload", "upload_progress"}
 
-def add_log_entry(ip, method, msg):
-    LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
-
-RL = {}
-rl_td = {
-    timedelta(seconds=30): 5,
+RL: dict[str, dict[str, datetime]] = {}
+RL_TD = {
+    timedelta(seconds=30): 115,
     timedelta(minutes=1): 10,
-    timedelta(hours=1): 20,
+    timedelta(hours=1): 30,
     timedelta(days=1): 100,
 }
 def wait_for_new(ip):
-    openned_times = RL.get(ip)
-    if not openned_times: return
+    openned_times_ip = RL.get(ip)
+    if not openned_times_ip: return
+
+    openned_times = openned_times_ip.values()
 
     now = datetime.now()
-    for _delta, open_max in rl_td.items():
+    for _delta, open_max in RL_TD.items():
         rlimit = now - _delta
         openned = sum(openned_on > rlimit for openned_on in openned_times)
-        if openned >= open_max:
+        print(ip, _delta, openned)
+        if openned > open_max:
             _min_opened = min(x for x in openned_times if x > rlimit)
             return _min_opened + _delta
 
-def load_report(name: str):
+def add_log_entry(ip, method, msg):
+    LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
+
+def load_report(report_id: str):
     now = datetime.now()
     ip = request.remote_addr
-    if name in OPENED_LOGS:
-        report = OPENED_LOGS[name]
+    if report_id in OPENED_LOGS:
+        report = OPENED_LOGS[report_id]
     elif wait_for_new(ip):
-        add_log_entry(ip, "SPAM", name)
+        add_log_entry(ip, "SPAM", report_id)
         raise TooManyRequests(retry_after=wait_for_new(ip))
     else:
-        report = logs_main.THE_LOGS(name)
-        OPENED_LOGS[name] = report
-        RL.setdefault(ip, []).append(now)
-        add_log_entry(ip, "OPENNED", name)
+        report = logs_main.THE_LOGS(report_id)
+        OPENED_LOGS[report_id] = report
+        RL.setdefault(ip, {})[report_id] = now
+        add_log_entry(ip, "OPENNED", report_id)
+        LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | OPEN    | {report_id:50} | {ip:>15}")
     
     report.last_access = now
     return report
@@ -132,23 +135,43 @@ def method429(e):
 
 @SERVER.errorhandler(500)
 def method500(e):
+    LOGGER_CONNECTIONS.exception(f"{request.remote_addr:>15} | {request.method:<7} | {get_incoming_connection_info()}")
     return render_template("500.html")
 
-def _cleaner():
-    now = datetime.now()
-    for name, report in dict(OPENED_LOGS).items():
-        if now - report.last_access > MAX_SURVIVE_LOGS:
-            del OPENED_LOGS[name]
+
+def __cleaner():
+    cleaner_thread: threading.Thread = None
+
+    def cleaner2():
+        print(psutil.virtual_memory().available)
+        LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | CLEANER")
+        now = datetime.now()
+        for report_id, report in dict(OPENED_LOGS).items():
+            if now - report.last_access > MAX_SURVIVE_LOGS:
+                del OPENED_LOGS[report_id]
+                LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
+        
+        a = sorted((report.last_access, report_id) for report_id, report in OPENED_LOGS.items())
+        while a and psutil.virtual_memory().available < 400*1024*1024:
+            _, report_id = a.pop(0)
+            del OPENED_LOGS[report_id]
+            LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
+
+    def cleaner():
+        nonlocal cleaner_thread
+        if cleaner_thread is None:
+            cleaner_thread = threading.Thread(target=cleaner2)
+            cleaner_thread.start()
+        elif not cleaner_thread.is_alive():
+            cleaner_thread = None
+    
+    return cleaner
+
+cleaner = __cleaner()
 
 @SERVER.teardown_request
 def after_request_callback(response):
-    global CLEANER
-
-    if CLEANER is None:
-        CLEANER = threading.Thread(target=_cleaner)
-        CLEANER.start()
-    elif not CLEANER.is_alive():
-        CLEANER = None
+    cleaner()
     
     return response
 
@@ -162,10 +185,8 @@ def pw_validate():
     attempts_left = wrong_pw(request.remote_addr)
     return f'{attempts_left}', 401
 
-def log_incoming_connection():
+def get_incoming_connection_info():
     path = request.path
-    if path in IGNORED_PATHS:
-        return
     
     if request.query_string:
         path = f"{path}?{request.query_string.decode()}"
@@ -176,7 +197,13 @@ def log_incoming_connection():
         except UnicodeDecodeError:
             pass
     
-    msg = f"{path} | {request.headers.get('User-Agent')}"
+    return f"{path} | {request.headers.get('User-Agent')}"
+
+def log_incoming_connection():
+    path = request.path
+    if path in IGNORED_PATHS:
+        return
+    msg = get_incoming_connection_info()
     add_log_entry(request.remote_addr, request.method, msg)
 
 @SERVER.before_request
