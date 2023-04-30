@@ -42,7 +42,7 @@ IGNORED_PATHS = {"upload", "upload_progress"}
 
 RL: dict[str, dict[str, datetime]] = {}
 RL_TD = {
-    timedelta(seconds=30): 115,
+    timedelta(seconds=30): 5,
     timedelta(minutes=1): 10,
     timedelta(hours=1): 30,
     timedelta(days=1): 100,
