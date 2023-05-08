@@ -118,39 +118,41 @@
       </tbody>
     </table>
   </section>
-  <script>
-    const p = new URLSearchParams(window.location.search);
-    const searchInputServer = document.getElementById("calendar-server");
-    const searchInputFree = document.getElementById("calendar-free");
-    const searchInputMonth = document.getElementById("calendar-month");
-    const searchInputYear = document.getElementById("calendar-year");
-    const toggleMore = document.getElementById("toggle-more");
-    const calendarControlsBot = document.getElementById("calendar-controls-bot");
-
-    function change_parameter(param, value) {
-      value ?  p.set(param, value) : p.delete(param);
-    }
-    function make_request_data() {
-      const d = new Date();
-      const month = searchInputMonth.value - d.getMonth();
-      const year = searchInputYear.value - d.getFullYear();
-      const page = year * 12 + month - 1;
-      change_parameter("page", page);
-      change_parameter("server", searchInputServer.value);
-      change_parameter("free", searchInputFree.value);
-      window.location.replace(`?${p}`);
-    }
-    searchInputServer.addEventListener("input", make_request_data);
-    searchInputMonth.addEventListener("input", make_request_data);
-    searchInputYear.addEventListener("input", make_request_data);
-    searchInputFree.addEventListener("keypress", event => event.key == "Enter" && make_request_data());
-
-    searchInputFree.value = p.get("free");
-
-    toggleMore.addEventListener("click", () => {
-      const is_shown = calendarControlsBot.style.display == "block";
-      calendarControlsBot.style.display = is_shown ? "none" : "block";
-    })
-  </script>
 </main>
 {% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+const p = new URLSearchParams(window.location.search);
+const searchInputServer = document.getElementById("calendar-server");
+const searchInputFree = document.getElementById("calendar-free");
+const searchInputMonth = document.getElementById("calendar-month");
+const searchInputYear = document.getElementById("calendar-year");
+const toggleMore = document.getElementById("toggle-more");
+const calendarControlsBot = document.getElementById("calendar-controls-bot");
+
+searchInputFree.value = p.get("free");
+
+function change_parameter(param, value) {
+  value ?  p.set(param, value) : p.delete(param);
+}
+function make_request_data() {
+  const d = new Date();
+  const month = searchInputMonth.value - d.getMonth();
+  const year = searchInputYear.value - d.getFullYear();
+  const page = year * 12 + month - 1;
+  change_parameter("page", page);
+  change_parameter("server", searchInputServer.value);
+  change_parameter("free", searchInputFree.value);
+  window.location.replace(`?${p}`);
+}
+searchInputServer.addEventListener("input", make_request_data);
+searchInputMonth.addEventListener("input", make_request_data);
+searchInputYear.addEventListener("input", make_request_data);
+searchInputFree.addEventListener("keypress", event => event.key == "Enter" && make_request_data());
+toggleMore.addEventListener("click", () => {
+  const is_shown = calendarControlsBot.style.display == "block";
+  calendarControlsBot.style.display = is_shown ? "none" : "block";
+})
+</script>
+{% endblock the_scripts %}
