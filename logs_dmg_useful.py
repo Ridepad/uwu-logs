@@ -324,7 +324,7 @@ ALL_GUIDS = {
     },
 }
 
-CUSTOM_GROUPS = {
+CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     "Lady Deathwhisper": {
         "Adds": ("0xF130009402", "0xF13000943D", "0xF130009655"),
     },
@@ -466,14 +466,25 @@ def freya_useful(logs_slice: list[str]):
 
 # 8/31 20:12:36.834  SPELL_PERIODIC_HEAL,0xF13000808A000A6D,"Freya",0x10a48,0xF13000808A000A6D,"Freya",0x10a48,62528,"Touch of Eonar",0x1,42000,14075,0,nil
 # 9/ 1 20:26:43.762  SPELL_PERIODIC_HEAL,0xF13000808A000CC3,"Freya",0x10a48,0xF13000808A000CC3,"Freya",0x10a48,62892,"Touch of Eonar",0x1,218400,143919,0,nil
+useful_names = {
+    "0xF150008F01": "Valks Useful",
+    "0xF13000808A": "Freya Useful",
+}
+def guid_to_useful_name(data):
+    return {
+        useful_names[q]: w
+        for q,w in data.items()
+        if q in useful_names
+    }
+
 def specific_useful(logs_slice, boss_name):
     data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
         valks_dmg = get_valks_dmg(logs_slice)
-        data['Valks Useful'] = valks_dmg['useful']
-        # data['0xF150008F01'] = valks_dmg['useful']
+        # data['Valks Useful'] = valks_dmg['useful']
+        data['0xF150008F01'] = valks_dmg['useful']
     elif boss_name == "Freya":
-        data['Freya Useful'] = freya_useful(logs_slice)
+        data['0xF13000808A'] = freya_useful(logs_slice)
         
     return data
 
@@ -485,15 +496,18 @@ def specific_useful_combined(logs_slice, boss_name):
             new_data[guid] += d
     return new_data
 
+def no_units_from_custom_group(guids, all_units):
+    return not set(guids) & all_units
 
-def add_custom_units(data, encounter_name):
+def add_custom_units(data: dict[str, defaultdict[str, int]], encounter_name: str):
     _custom_groups = CUSTOM_GROUPS.get(encounter_name)
     if not _custom_groups:
         return {}
 
+    all_units = set(data)
     custom_data = {}
     for group_name, guids in _custom_groups.items():
-        if not any(guid in guids for guid in data):
+        if no_units_from_custom_group(guids, all_units):
             continue
         q = custom_data[group_name] = defaultdict(int)
         for guid in guids:

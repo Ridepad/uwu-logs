@@ -20,12 +20,12 @@
           </tr>
         </thead>
         <tbody class="table-has-total">
-          {% for player_name, player_total in TOTAL_USEFUL.items() %}
+          {% for player_name in PLAYERS %}
           <tr>
             <td class="player-cell">
               <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
             </td>
-            <td class="total-cell">{{ player_total }}</td>
+            <td class="total-cell">{{ TOTAL_USEFUL[player_name] }}</td>
             <td class="total-cell">{{ TOTAL[player_name] }}</td>
             {% for tguid, players_damage in TARGETS.items() %}
             <td class="total-cell">{{ players_damage.get(player_name, 0) }}</td>

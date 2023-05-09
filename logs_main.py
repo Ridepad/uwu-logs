@@ -1099,29 +1099,39 @@ class THE_LOGS:
 
         logs_slice = self.get_logs(s, f)
 
-        specific = logs_dmg_useful.specific_useful(logs_slice, boss_name)
+        useful = logs_dmg_useful.specific_useful(logs_slice, boss_name)
         damage = logs_dmg_useful.get_dmg(logs_slice, targets)
         data = {
-            "damage": specific | damage,
-            "specific": set(specific),
+            "damage": damage,
+            "useful": useful,
         }
         cached_data[slice_ID] = data
         return data
 
     def convert_data_to_names(self, data: dict):
         guids = self.get_all_guids()
-        data = sort_dict_by_value(data)
-        return [(guids[guid]["name"], separate_thousands(v)) for guid, v in data.items()]
+        return {
+            guids[guid]["name"]: v
+            for guid, v in data.items()
+            if guid in guids
+        }
     
     def add_total_and_names(self, data: dict):
         data_names = self.convert_data_to_names(data)
-        data_sum = sum(data.values())
-        data_names.insert(0, ("Total", separate_thousands(data_sum)))
-        return dict(data_names)
+        data_names["Total"] = sum(data.values())
+        return sort_dict_by_value(data_names)
+    
+    def data_visual_format(self, data):
+        data_names = self.add_total_and_names(data)
+        return {
+            name: separate_thousands(v)
+            for name, v in data_names.items()
+        }
 
     @running_time
     def useful_damage_all(self, segments, boss_name):
         all_data = defaultdict(lambda: defaultdict(int))
+        all_data_useful = defaultdict(lambda: defaultdict(int))
 
         boss_guid_id = self.name_to_guid(boss_name)
         targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
@@ -1131,38 +1141,50 @@ class THE_LOGS:
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
-            for target_name in data["specific"]:
+            for target_name in data["useful"]:
                 targets_useful[target_name] = target_name
             
             _damage: dict[str, dict[str, int]] = data["damage"]
             for guid_id, _dmg_new in _damage.items():
                 add_new_numeric_data(all_data[guid_id], _dmg_new)
+            
+            _damage: dict[str, dict[str, int]] = data["damage"] | data["useful"]
+            for guid_id, _dmg_new in _damage.items():
+                add_new_numeric_data(all_data_useful[guid_id], _dmg_new)
 
         guids = self.get_all_guids()
         all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
+        all_data_useful = logs_dmg_useful.combine_pets_all(all_data_useful, guids, trim_non_players=True)
 
-        dmg_useful = logs_dmg_useful.get_total_damage(all_data, targets_useful)
-        dmg_useful = self.add_total_and_names(dmg_useful)
-        table_heads.append("Total Useful")
         dmg_total = logs_dmg_useful.get_total_damage(all_data)
-        dmg_total = self.add_total_and_names(dmg_total)
+        dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
+
+        players = dmg_total | dmg_useful
+        players = self.add_total_and_names(players)
+
+        dmg_useful = self.data_visual_format(dmg_useful)
+        table_heads.append("Total Useful")
+        
+        dmg_total = self.data_visual_format(dmg_total)
         table_heads.append("Total")
     
         custom_units = logs_dmg_useful.add_custom_units(all_data, boss_name)
         all_data = custom_units | all_data
 
         dmg_to_target = {}
-        for guid_id, _data in all_data.items():
+        ____data = logs_dmg_useful.guid_to_useful_name(all_data_useful) | all_data
+        for guid_id, _data in ____data.items():
             if not _data:
                 continue
             table_heads.append(targets_all.get(guid_id, guid_id))
-            dmg_to_target[guid_id] = self.add_total_and_names(_data)
+            dmg_to_target[guid_id] = self.data_visual_format(_data)
 
         return {
             "HEADS": table_heads,
             "TOTAL": dmg_total,
             "TOTAL_USEFUL": dmg_useful,
             "TARGETS": dmg_to_target,
+            "PLAYERS": players,
         }
 
     @running_time
@@ -1188,10 +1210,10 @@ class THE_LOGS:
         all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
     
         targets_useful_dmg = logs_dmg_useful.get_total_damage(all_data, targets_useful)
-        targets_useful_dmg = self.add_total_and_names(targets_useful_dmg)
+        targets_useful_dmg = self.data_visual_format(targets_useful_dmg)
 
         _formatted_dmg = {
-            guid_id: self.add_total_and_names(_data)
+            guid_id: self.data_visual_format(_data)
             for guid_id, _data in all_data.items()
             if _data
         }
