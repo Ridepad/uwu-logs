@@ -152,7 +152,7 @@ def __cleaner():
                 LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
         
         a = sorted((report.last_access, report_id) for report_id, report in OPENED_LOGS.items())
-        while a and psutil.virtual_memory().available < 400*1024*1024:
+        while a and psutil.virtual_memory().available < 800*1024*1024:
             _, report_id = a.pop(0)
             del OPENED_LOGS[report_id]
             LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
