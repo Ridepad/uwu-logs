@@ -62,7 +62,8 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
     targets_useful = targets["useful"]
 
     useful_data = report.useful_damage(S, F, targets["all"], boss_name)
-    for target_name in useful_data["useful"]:
+    _useful = useful_data["damage"] | useful_data["useful"]
+    for target_name in _useful:
         targets_useful[target_name] = target_name
     useful_damage_combined = logs_dmg_useful.combine_pets_all(useful_data["damage"], GUIDS, trim_non_players=True, ignore_abom=True)
     targets_useful_dmg = logs_dmg_useful.get_total_damage(useful_damage_combined, targets_useful)
