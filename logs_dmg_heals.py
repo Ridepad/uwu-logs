@@ -95,6 +95,16 @@ def parse_both(logs: list[str], players_and_pets: set[str]):
         "taken": TAKEN
     }
 
+def parse_dmg_all_no_friendly(logs: list[str], players_and_pets: set[str]):
+    data = defaultdict(int)
+    for line in logs:
+        if "_DAMAGE" not in line:
+            continue
+        _line = line.split(',', 10)
+        if _line[2] in players_and_pets and _line[4] not in players_and_pets:
+            data[_line[2]] += int(_line[9])
+    return data
+
 CUSTOM_UNITS = {"00958D"}
 
 def add_pets_guids(data: dict[str, int], guids: dict[str, dict[str, str]]):
