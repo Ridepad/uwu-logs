@@ -35,14 +35,18 @@ def f_auras(auras: dict[str, tuple[int, float]], spec: int):
                 uptime += zz[spell_id][1]
             zz[spell_id] = [count, uptime, n]
             break
+
     return zz
+    # return [
+    #     [int(spell_id), *spell_data]
+    #     for spell_id, spell_data in zz.items()
+    # ]
 
 def find_kill(segments):
     for segment_info in segments:
         if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
             yield segment_info
 
-@running_time
 def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
     def is_player(guid):
         if guid in PLAYERS:
@@ -59,20 +63,24 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
 
     boss_guid_id = report.name_to_guid(boss_name)
     targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
+    targets_all = targets["all"]
     targets_useful = targets["useful"]
 
-    useful_data = report.useful_damage(S, F, targets["all"], boss_name)
-    _useful = useful_data["damage"] | useful_data["useful"]
-    for target_name in _useful:
+    data = report.useful_damage(S, F, targets_all, boss_name)
+    for target_name in data["useful"]:
         targets_useful[target_name] = target_name
-    useful_damage_combined = logs_dmg_useful.combine_pets_all(useful_data["damage"], GUIDS, trim_non_players=True, ignore_abom=True)
-    targets_useful_dmg = logs_dmg_useful.get_total_damage(useful_damage_combined, targets_useful)
     
+    useful_damage = data["damage"] | data["useful"]
+    all_data_useful = logs_dmg_useful.combine_pets_all(useful_damage, GUIDS, trim_non_players=True, ignore_abom=True)
+    dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
+
+    # all_data = logs_dmg_useful.combine_pets_all(data["damage"], GUIDS, trim_non_players=True)
+    # dmg_total = logs_dmg_useful.get_total_damage(all_data)
+
     logs_slice = report.get_logs(S, F)
-    players_and_pets = report.get_players_and_pets_guids()
-    total_dmg = logs_dmg_heals.parse_only_dmg_no_friendly(logs_slice, players_and_pets)
-    data_with_pets_d = logs_dmg_heals.add_pets_guids(total_dmg, GUIDS)
-    data_with_pets = data_with_pets_d["players"]
+    pp = report.get_players_and_pets_guids()
+    dmg_total = logs_dmg_heals.parse_dmg_all_no_friendly(logs_slice, pp)
+    dmg_total = logs_dmg_useful.combine_pets(dmg_total, GUIDS, trim_non_players=True)
 
     return [
         {
@@ -81,13 +89,15 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
             'r': report.NAME,
             'ua': useful,
             'ud': round(useful/DURATION, 2),
-            'ta': data_with_pets[guid],
-            'td': round(data_with_pets[guid]/DURATION, 2),
+            'ta': dmg_total[guid],
+            'td': round(dmg_total[guid]/DURATION, 2),
+            # 'u': useful,
+            # 'f': dmg_total[guid],
             't': DURATION,
             's': SPECS[guid],
             'a': f_auras(AURAS[guid], SPECS[guid])
         }
-        for guid, useful in targets_useful_dmg.items()
+        for guid, useful in dmg_useful.items()
         if is_player(guid)
     ]
 
@@ -118,3 +128,34 @@ def main_wrap(name):
         make_report_top(name)
     except Exception:
         LOGGER_REPORTS.exception(name)
+
+if __name__ == "__main__":
+    def get_player(data, name):
+        for x in data:
+            if x["n"] == name:
+                return x
+        return data[0]
+    a = make_report_top("23-04-28--21-07--Safiyah--Lordaeron", rewrite=True)
+    # print(a)
+    a = r"F:\Python\uwulogs\LogsDir\23-04-28--21-07--Safiyah--Lordaeron\top.json"
+    b = r"F:\Python\uwulogs\LogsDir\23-04-28--21-07--Safiyah--Lordaeron\top - Copy.json"
+    import json
+    with open(a) as f:
+        aj = json.load(f)
+    with open(b) as f:
+        bj = json.load(f)
+
+    # print(aj['The Lich King'])
+    print(get_player(aj['The Lich King']['25H'], "Safiyah"))
+    print(get_player(bj['The Lich King']['25H'], "Safiyah"))
+    print()
+    print(get_player(aj['Blood Prince Council']['25H'], "Safiyah"))
+    print(get_player(bj['Blood Prince Council']['25H'], "Safiyah"))
+    print()
+    print(get_player(aj['Professor Putricide']['25H'], "Safiyah"))
+    print(get_player(bj['Professor Putricide']['25H'], "Safiyah"))
+    print()
+    print(get_player(aj['Professor Putricide']['25H'], "Zpevacik"))
+    print(get_player(bj['Professor Putricide']['25H'], "Zpevacik"))
+    # print(aj['The Lich King']['25H'][0])
+    # print(bj['The Lich King']['25H'][0])
