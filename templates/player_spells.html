@@ -1,7 +1,7 @@
 {% extends "layout_report.html" %}
 
 {% block scripts_head %}
-<script src="/static/casts.js?v=1" defer></script>
+<script src="/static/casts.js?v=2" defer></script>
 {% endblock scripts_head %}
 
 {% block add_style %}
@@ -245,11 +245,8 @@ spells-fav > spell-row:last-of-type > * {
   <p id="tooltip-data"></p>
 </aside>
 <aside id="aura-controls" style="display: none;">
-  <button id="aura-top">⇅</button>
-  <!-- <button id="aura-top">⇑</button> -->
+  <button id="aura-fav">▲</button>
   <button id="aura-del">✖</button>
-  <!-- <button id="aura-up">▲</button> -->
-  <!-- <button id="aura-down">▼</button> -->
 </aside>
 </main>
 {% endblock the_main %}

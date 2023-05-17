@@ -176,7 +176,6 @@ function add_tooltip_info(cleu) {
   tooltipData.textContent = cleu.getAttribute("data-etc");
 }
 function move_tooltip_to(cleu) {
-  let rect = cleu.getBoundingClientRect();
   const bodyRect = document.body.getBoundingClientRect();
   const elemRect = cleu.getBoundingClientRect();
   const elemRect2 = cleu.parentElement.previousElementSibling.getBoundingClientRect();
@@ -268,9 +267,9 @@ function make_timeline() {
 
 function add_control_events() {
   const castsSection = castsSectionWrap.querySelector(".casts-section");
-  const spellsMain = castsSection.querySelector("spells-main");
+  const sectionMain = castsSection.querySelector("spells-main");
   const auraControls = document.getElementById("aura-controls");
-  const auraTop = document.getElementById("aura-top");
+  const auraFav = document.getElementById("aura-fav");
   const auraDel = document.getElementById("aura-del");
 
   const _data = {
@@ -278,24 +277,13 @@ function add_control_events() {
     hide: {},
   }
 
-  spellsMain.querySelectorAll(".spell-name").forEach(e => {
-    const div = e.querySelector("div");
-    e.addEventListener('mouseover', () => {
-      div.appendChild(auraControls);
-      auraControls.style.display = "";
-    });
-    e.addEventListener("mouseleave", () => {
-      auraControls.style.display = "none";
-    });
-  });
-
   for (let z in _data) {
     const spells = localStorage.getItem(z) ? localStorage.getItem(z).split(",") : [];
     _data[z]["spells"] = Array.from(new Set(spells));
     _data[z]["element"] = castsSection.querySelector(`spells-${z}`);
   }
 
-  for (let row of spellsMain.querySelectorAll("spell-row")) {
+  for (let row of sectionMain.querySelectorAll("spell-row")) {
     const spell_id = row.getAttribute("data-spell-id");
     for (let z in _data) {
       if (_data[z]["spells"].includes(spell_id)) {
@@ -316,33 +304,52 @@ function add_control_events() {
     for (let row of parent.children) {
       if (row.getAttribute("data-spell-name") > spellname) return parent.insertBefore(element, row);
     }
+    parent.appendChild(element);
   }
+  const spellsFav = _data["fav"]["spells"];
+  const spellsHide = _data["hide"]["spells"];
   const onevent = e => {
     const row = e.target.closest("spell-row");
     const spell_id = row.getAttribute("data-spell-id");
-    const key = e.target == auraTop ? "fav" : "hide";
+    array_remove(spellsFav, spell_id);
+    array_remove(spellsHide, spell_id);
+    
+    const key = e.target == auraFav ? "fav" : "hide";
     const section = _data[key]["element"];
-    const array = _data[key]["spells"];
-    array_remove(_data["fav"]["spells"], spell_id);
-    array_remove(_data["hide"]["spells"], spell_id);
-    if (row.parentElement == section) {
-      insert_before(spellsMain, row);
-    } else {
+    if (row.parentElement != section) {
+      const array = _data[key]["spells"];
       array.push(spell_id);
       insert_before(section, row);
+    } else {
+      insert_before(sectionMain, row);
     }
-    localStorage.setItem("fav", _data["fav"]["spells"].toString());
-    localStorage.setItem("hide", _data["hide"]["spells"].toString());
+
+    localStorage.setItem("fav", spellsFav.toString());
+    localStorage.setItem("hide", spellsHide.toString());
   }
-  auraTop.addEventListener("click", onevent);
+  auraFav.addEventListener("click", onevent);
   auraDel.addEventListener("click", onevent);
+
+  castsSection.querySelectorAll(".spell-name").forEach(e => {
+    const div = e.querySelector("div");
+    e.addEventListener('mouseover', () => {
+      const section = e.closest("spell-row").parentElement;
+      auraFav.textContent = section == _data["fav"]["element"] ? "▼" : "▲";
+      auraDel.textContent = section == _data["hide"]["element"] ? "✚" : "✖";
+      div.appendChild(auraControls);
+      auraControls.style.display = "";
+    });
+    e.addEventListener("mouseleave", () => {
+      auraControls.style.display = "none";
+    });
+  });
 
   const spellToggleHidden = document.getElementById("spell-toggle-hidden");
   spellToggleHidden.checked = localStorage.getItem("show-hidden") === "true";
   const onchange = () => {
     for (let spellsHide of castsSectionWrap.querySelectorAll("spells-hide")) {
       spellsHide.style.display = spellToggleHidden.checked ? "" : "none";
-      localStorage.setItem("show-hidden", spellToggleHidden.checked)
+      localStorage.setItem("show-hidden", spellToggleHidden.checked);
     }
   }
   onchange();
