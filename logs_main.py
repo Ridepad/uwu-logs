@@ -1492,7 +1492,8 @@ class THE_LOGS:
             return cached_data[slice_ID]
         
         logs_slice = self.get_logs(s, f)
-        data = logs_spells_order.get_history(logs_slice, guid)
+        players_and_pets = self.get_players_and_pets_guids()
+        data = logs_spells_order.get_history(logs_slice, guid, players_and_pets)
         _spells = self.get_spells()
         _flags = [flag for flag in FLAG_ORDER if flag in data["FLAGS"]]
         _other = sorted(set(data["FLAGS"]) - set(_flags))
@@ -1513,10 +1514,9 @@ class THE_LOGS:
         for spell_id in _data["SPELLS"]:
             try:
                 _spells[spell_id] = logs_spells_order.SPELLS3[spell_id]
-                # _spells[spell_id] = logs_spells_order.SPELLS[spell_id]['icon']
             except KeyError:
                 _spells[spell_id] = "inv_misc_questionmark"
-                print(f'MISSING ICON "{spell_id:>5}"')
         _data["SPELL_ICONS"] = _spells
+        _data["RDURATION"] = self.get_slice_duration(s, f)
         return _data
     

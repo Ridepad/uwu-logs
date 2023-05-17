@@ -417,10 +417,9 @@ def casts(report_id, source_name):
     segments = default_params["SEGMENTS"]
 
     data = report.get_spell_history_wrap(segments, source_name)
-    rounded_duration = round(default_params.get("DURATION", 0), 1)
     return render_template_wrap(
         'player_spells.html', **default_params, **data,
-        SOURCE_NAME=source_name, RDURATION=rounded_duration,
+        SOURCE_NAME=source_name,
     )
 
 @SERVER.route("/reports/<report_id>/spellsearch", methods=["POST"])

@@ -1,7 +1,14 @@
 {% extends "layout_report.html" %}
 
+{% block scripts_head %}
+<script src="/static/casts.js?v=1" defer></script>
+{% endblock scripts_head %}
+
 {% block add_style %}
 <style>
+main {
+  padding-bottom: 5rem;
+}
 #flag-filter-wrap {
   position: fixed;
   bottom: var(--bottom-row-two);
@@ -48,52 +55,58 @@
   width: 100%;
 }
 
-.spell-history {
-  position: relative;
-}
-.casts-section-wrap {
+#casts-section-wrap {
   --tenth-width: calc(var(--mult) * 1px);
-  width: calc(var(--mult) * var(--duration) * 10px);
+  width: calc(var(--mult) * var(--duration) * 10px + 2px);
+  margin-left: 2px;
 }
-table {
-  width: 100%;
+.spell-row {
+  --size: 1.15em;
 }
-.dummy-cell {
-  /* fixes row height */
-  min-width: 0;
-  width: 0;
-  visibility: hidden;
+.spell-row > div {
+  height: var(--size);
+  border: 1px solid var(--table-border);
+  background-color: black;
 }
-img {
-  --size: 1.2em;
-  min-width: var(--size);
-  max-width: var(--size);
-  min-height: var(--size);
-  max-height: var(--size);
-}
-
-.cleu {
-  position: absolute;
-  top: 0;
-  left: var(--margin);
-  height: 100%;
-  width: var(--tenth-width);
-  background-color: currentColor;
-  box-shadow: -1px 0 gainsboro;
+.spell-row:nth-of-type(even) > div {
+	background-color: hsl(0, 0%, 5%);
 }
 
 .spell-name {
   display: flex;
 }
-.spell-name > a {
-  overflow: hidden;
-}
-.spell-name::after {
+.spell-name::before {
   content: attr(data-count);
-  padding-left: 1ch;
   text-align: right;
   display: inline-block;
+  min-width: 4ch;
+}
+.spell-name img {
+  min-width: var(--size);
+  max-width: var(--size);
+  min-height: var(--size);
+  max-height: var(--size);
+  padding-inline: .25em;
+}
+.spell-name a {
+  overflow: hidden;
+}
+.spell-name div {
+  position: relative;
   margin-left: auto;
+}
+
+.spell-history {
+  position: relative;
+}
+.cleu {
+  position: absolute;
+  top: 0;
+  left: var(--left);
+  height: 100%;
+  width: var(--tenth-width);
+  background-color: currentColor;
+  box-shadow: -1px 0 gainsboro;
 }
 
 #the-tooltip {
@@ -107,14 +120,10 @@ img {
   z-index: 5;
 }
 
-#casts-table-timeline {
-	position: relative;
+.casts-table-timeline {
   padding-top: 1rem;
-}
-#casts-table-timeline > div {
-  display: flex;
-  width: 100%;
-  align-items: baseline;
+  background-color: black;
+  margin-left: 1px;
 }
 .timeline-ruler-tick {
 	position: relative;
@@ -129,7 +138,7 @@ img {
 	height: .75rem;
   font-size: 75%;
 }
-.timeline-ruler-hundredth-second {
+.timeline-ruler-tenth-second {
 	height: .25rem;
   font-size: 50%;
 }
@@ -139,11 +148,36 @@ img {
   bottom: 100%;
   transform: translate(-50%, 0);
 }
+
+spells-hide > spell-row:first-of-type > * {
+ border-top: 1px solid var(--primary-color);
+}
+
+spells-fav > spell-row:last-of-type > * {
+ border-bottom: 1px solid var(--primary-color);
+}
+
+#aura-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+#aura-controls button {
+  min-width: unset;
+  font-size: 75%;
+  padding: 0 .5em;
+}
+#spell-toggle-hidden + label {
+  min-width: 11ch;
+}
+.hidden {
+  visibility: hidden;
+}
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
-<main id="dmg-done">
+<main>
 <section id="player-nav-wrap">
   <ul id="player-nav">
     <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
@@ -175,305 +209,47 @@ img {
   <span>ZOOM:</span>
   <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
   <span id="spell-timeline-mult-label">3x</span>
+  <input id="spell-toggle-hidden" type="checkbox">
+  <label for="spell-toggle-hidden">Show hidden</label>
 </section>
-<section id="casts-section" style="display: none; --duration: {{ RDURATION }}" class="table-wrap wrap-spell">
-  <div class="casts-section-wrap">
-    <table>
-      <tbody class="casts-section-tbody">
-        <tr class="casts-table-timeline-row">
-          <td class="spell-name"></td>
-          <td id="casts-table-timeline" data-duration="{{ RDURATION }}">
-            <div></div>
-          </td>
-        </tr>
+<section class="table-wrap wrap-spell" style="display: none; --duration: {{ RDURATION }}">
+  <div id="casts-section-wrap">
+    <div class="casts-table-timeline" data-duration="{{ RDURATION }}"></div>
+    <div class="casts-section">
+      <spells-fav class="casts-section-fav"></spells-fav>
+      <spells-main class="casts-section-main">
         {% for spell_id, _asdasd in DATA.items() %}
-        <tr class="spell-row" data-spell-id="{{ spell_id }}" data-spell-name="{{ SPELLS[spell_id]['name'] }} }}">
-          <td class="spell-name">
+        <spell-row class="spell-row" data-spell-id="{{ spell_id }}" data-spell-name="{{ SPELLS[spell_id]['name'] }}">
+          <div class="spell-name">
             <img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ SPELL_ICONS[spell_id] }}.jpg" alt="{{ spell_id }}">
             <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
-          </td>
-          <td class="spell-history">
-            {% for ts, from_start, flag, target, etc in _asdasd %}
-            <div class="cleu {{ flag }}" style="--margin: {{ ts }}" data-time="{{ from_start }}" data-target="{{ target }}" data-etc="{{ etc }}" data-pad="{{ ts }}"></div>
+            <div></div>
+          </div>
+          <div class="spell-history">
+            {% for ts, from_start, flag, source, target, etc in _asdasd %}
+            <div class="cleu {{ flag }}" style="--left: {{ ts }}%" data-time="{{ from_start }}" data-source="{{ source }}" data-target="{{ target }}" data-etc="{{ etc }}" data-pad="{{ ts }}"></div>
             {% endfor %}
-          </td>
-          <td class="dummy-cell">.</td>
-        </tr>
+          </div>
+        </spell-row>
         {% endfor %}
-      </tbody>
-    </table>
+      </spells-main>
+      <spells-hide class="spells-hide" style="display: none;"></spells-hide>
+    </div>
   </div>
 </section>
 <aside id="the-tooltip" style="display: none">
   <p id="tooltip-time"></p>
   <p id="tooltip-flag"></p>
+  <p id="tooltip-source"></p>
   <p id="tooltip-target"></p>
   <p id="tooltip-data"></p>
 </aside>
+<aside id="aura-controls" style="display: none;">
+  <button id="aura-top">⇅</button>
+  <!-- <button id="aura-top">⇑</button> -->
+  <button id="aura-del">✖</button>
+  <!-- <button id="aura-up">▲</button> -->
+  <!-- <button id="aura-down">▼</button> -->
+</aside>
 </main>
 {% endblock the_main %}
-
-{% block the_scripts %}
-<script>
-const castsSection = document.getElementById("casts-section");
-const timelineMultRange = document.getElementById("spell-timeline-mult");
-const timelineMultLabel = document.getElementById("spell-timeline-mult-label");
-const timelineWrap = document.getElementById("casts-table-timeline");
-const timeline = timelineWrap.querySelector("div");
-const DEFAULT_COLORS = {
-  "SWING_DAMAGE": "#DCDCDC",
-  "SPELL_DAMAGE": "#3F3FCF",
-  "SPELL_MISSED": "#5B5A99",
-  "SPELL_PERIODIC_DAMAGE": "#783C9F",
-  "SPELL_AURA_APPLIED": "#179900",
-  "SPELL_AURA_APPLIED_DOSE": "#C0B300",
-  "SPELL_AURA_REMOVED_DOSE": "#C0B300",
-  "SPELL_AURA_REFRESH": "#C0B300",
-  "SPELL_AURA_REMOVED": "#FF631A",
-  "SPELL_CAST_SUCCESS": "#9200CC",
-  "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
-}
-
-const get_pad_value = e => Number(e.getAttribute("data-pad").slice(0, 5));
-
-function add_fake_applied(row, new_array) {
-  if (new_array.length < 1) return;
-  
-  const spellHistory = row.querySelector(".spell-history");
-  
-  const firstEvent = new_array[0];
-  if (firstEvent.classList[1] == "SPELL_AURA_REMOVED") {
-    const div = document.createElement("div");
-    div.style.setProperty("--margin", 0);
-    div.style.width = get_pad_value(firstEvent) + "%";
-    div.classList.add("cleu", "SPELL_AURA_APPLIED");
-    spellHistory.insertBefore(div, spellHistory.firstChild);
-  }
-  
-  const lastEvent = new_array.at(-1);
-  if (lastEvent.classList[1] == "SPELL_AURA_APPLIED") {
-    lastEvent.style.width = 100 - get_pad_value(lastEvent) + "%";
-  }
-}
-
-function change_applied_width(new_array) {
-  let start = null;
-  for (let i=0; i<new_array.length; i++) {
-    const div = new_array[i];
-    const flag = div.classList[1];
-    if (flag == "SPELL_AURA_APPLIED") {
-      if (!start) start = div;
-    } else if (start && flag == "SPELL_AURA_REMOVED") {
-      start.style.width = get_pad_value(div) - get_pad_value(start) + "%";
-      start = null;
-    }
-  }
-}
-
-function toggle_aura_duration(row) {
-  const new_array = [];
-  const spellHistory = row.querySelector(".spell-history");
-
-  ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"].forEach(flag => {
-    for (let div of row.getElementsByClassName(flag)) {
-      new_array.push(div);
-    }
-  })
-
-  new_array.sort((a, b) => get_pad_value(a) - get_pad_value(b));
-
-  add_fake_applied(row, new_array);
-
-  change_applied_width(new_array);
-}
-
-function toggle_aura_duration_wrap() {
-  for (let row of document.getElementsByClassName("spell-row")) {
-    toggle_aura_duration(row);
-  }
-}
-
-function spell_count(row) {
-  let c = 0;
-  for (let cleu of row.getElementsByClassName("cleu")) {
-    if (cleu.style.visibility != "hidden") c = c + 1;
-  }
-  return c
-}
-
-function toggle_rows(tbody) {
-  Array.from(tbody.getElementsByClassName("spell-row"))
-        .sort((a, b) => b.getAttribute("data-spell-name") < a.getAttribute("data-spell-name"))
-        .forEach(row => tbody.appendChild(row));
-  
-  const to_hide = [];
-  for (let row of document.getElementsByClassName("spell-row")) {
-    const count = spell_count(row);
-    row.firstElementChild.setAttribute('data-count', count);
-    if (count == 0) {
-      to_hide.push(row);
-      row.style.display = "none";
-    } else {
-      row.style.display = "";
-    }
-  }
-  
-  to_hide.forEach(row => tbody.appendChild(row));
-}
-
-function toggle_rows_wrap() {
-  for (let tbody of document.getElementsByClassName("casts-section-tbody")) {
-    toggle_rows(tbody);
-  }
-}
-
-function toggle_nodes(input) {
-  for (let div of document.getElementsByClassName(input.id)) {
-    div.style.visibility = input.checked ? "visible" : "hidden";
-  }
-}
-
-function change_color(flag, color) {
-  for (let cleu of document.getElementsByClassName(flag)) {
-    cleu.style.color = color;
-  }
-}
-
-const theTooltip = document.getElementById("the-tooltip");
-const tooltipTime = document.getElementById("tooltip-time");
-const tooltipFlag = document.getElementById("tooltip-flag");
-const tooltipTarget = document.getElementById("tooltip-target");
-const tooltipData = document.getElementById("tooltip-data");
-
-function init_flag_filter() {
-  document.querySelectorAll("#flag-filter li").forEach(li => {
-    const label = li.querySelector("label");
-    const checkbox = li.querySelector(".flag-checkbox");
-    const colorPicker = li.querySelector(".flag-color-picker");
-    const color_ID = `${checkbox.id}_COLOR`
-
-    checkbox.checked = localStorage.getItem(checkbox.id) !== "false";
-    colorPicker.value = localStorage.getItem(color_ID) ?? DEFAULT_COLORS[checkbox.id] ?? "#DCDCDC";
-    label.style.setProperty('--secondary-color', colorPicker.value);
-    change_color(checkbox.id, colorPicker.value);
-    toggle_nodes(checkbox);
-    
-    checkbox.addEventListener("change", () => {
-      toggle_nodes(checkbox);
-      toggle_rows_wrap();
-      localStorage.setItem(checkbox.id, checkbox.checked);
-    })
-    colorPicker.addEventListener("change", () => {
-      localStorage.setItem(color_ID, colorPicker.value);
-      label.style.setProperty('--secondary-color', colorPicker.value);
-      change_color(checkbox.id, colorPicker.value);
-    })
-  })
-}
-function add_tooltip_info(cleu) {
-  tooltipFlag.innerText = cleu.classList[1];
-  tooltipTime.innerText = cleu.getAttribute("data-time") ?? "00:00.0";
-  tooltipTarget.innerText = cleu.getAttribute("data-target");
-  tooltipData.innerText = cleu.getAttribute("data-etc");
-}
-function move_tooltip_to(cleu) {
-  let rect = cleu.getBoundingClientRect();
-  const bodyRect = document.body.getBoundingClientRect();
-  const elemRect = cleu.getBoundingClientRect();
-  const elemRect2 = cleu.parentElement.previousElementSibling.getBoundingClientRect();
-  const _left = Math.max(elemRect.left, elemRect2.right)
-  theTooltip.style.top = elemRect.bottom - bodyRect.top + 'px';
-  theTooltip.style.right = bodyRect.right - _left + 'px';
-}
-function add_tooltip_events() {
-  document.querySelectorAll(".cleu").forEach(cleu => {
-    cleu.addEventListener("mouseleave", () => theTooltip.style.display = "none");
-    cleu.addEventListener("mouseenter", () => {
-      move_tooltip_to(cleu);
-      add_tooltip_info(cleu);
-      theTooltip.style.display = "";
-    });
-  })
-}
-
-function toggle_timeline_labels_big(lessthan) {
-  const zoom = timelineMultRange.value;
-  const visibility = zoom < lessthan ? "hidden" : "visible";
-  const divs = document.getElementsByClassName("timeline-ruler-second");
-  for (let i = 0; i < divs.length; i++) {
-    if (i%5 == 0) continue;
-    divs[i].firstElementChild.style.visibility = visibility;
-  }
-}
-
-function toggle_timeline_labels(classname, lessthan) {
-  const zoom = timelineMultRange.value;
-  const visibility = zoom < lessthan ? "hidden" : "visible";
-  for (let div of document.getElementsByClassName(classname)) {
-    div.firstElementChild.style.visibility = visibility;
-  }
-}
-
-function change_zoom() {
-  console.time('zoom');
-  const zoom = timelineMultRange.value;
-  localStorage.setItem("ZOOM", zoom);
-  timelineMultLabel.innerText = `${zoom}x`;
-  castsSection.style.setProperty("--mult", zoom);
-  console.timeEnd('zoom');
-  console.time('toggle');
-  toggle_timeline_labels("timeline-ruler-hundredth-second", 35);
-  toggle_timeline_labels("timeline-ruler-half-second", 10);
-  toggle_timeline_labels_big(6);
-  console.timeEnd('toggle');
-}
-
-const TICK_TYPES = {
-  0: "timeline-ruler-second",
-  5: "timeline-ruler-half-second"
-}
-
-function time_to_text(sec, tenth) {
-  const minutes = `${Math.floor(sec/60)}`.padStart(2, '0');
-  const seconds = `${sec%60}`.padStart(2, '0');
-  if (tenth != 0) {
-    return `${minutes}:${seconds}.${tenth}`
-  }
-  return `${minutes}:${seconds}`
-}
-
-function create_timeline_tick(milliseconds) {
-  const tenth_of_sec = milliseconds%10;
-  const seconds = Math.floor(milliseconds/10);
-  const tick = document.createElement("div");
-  const tick_type = TICK_TYPES[tenth_of_sec] ?? "timeline-ruler-hundredth-second";
-  tick.classList.add("timeline-ruler-tick", tick_type);
-  const number = document.createElement("div");
-  number.classList.add("timeline-ruler-number");
-  number.innerText = time_to_text(seconds, tenth_of_sec);
-  tick.appendChild(number);
-  return tick
-}
-
-function make_timeline() {
-  const duration = timelineWrap.getAttribute("data-duration") * 10 - 1;
-  for (let milliseconds=0; milliseconds<=duration; milliseconds++) {
-    timeline.appendChild(create_timeline_tick(milliseconds));
-  }
-}
-
-function init() {
-  make_timeline();
-  timelineMultRange.value = localStorage.getItem("ZOOM") ?? "3";
-  change_zoom();
-  timelineMultRange.addEventListener("change", change_zoom);
-  toggle_aura_duration_wrap();
-  toggle_rows_wrap();
-  init_flag_filter();
-  add_tooltip_events();
-  document.getElementById("casts-section").style.display = "";
-}
-
-window.addEventListener('DOMContentLoaded', init);
-</script>
-{% endblock the_scripts %}
