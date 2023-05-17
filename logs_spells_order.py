@@ -68,7 +68,9 @@ def get_history(logs: list[str], guid: str, other_players_and_pets: set[str]):
     FIRST_KEY = to_float(logs[0].split(",", 1)[0])
     FIGHT_DURATION = get_delta(logs[-1].split(",", 1)[0])
 
-    other_players_and_pets.remove(guid)
+    if guid in other_players_and_pets:
+        other_players_and_pets.remove(guid)
+    
     for line in logs:
         if guid not in line:
             continue
