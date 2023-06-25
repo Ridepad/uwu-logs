@@ -387,7 +387,7 @@ def get_valks_dmg(logs: list[str]):
     valks_dmg_taken: defaultdict[str, int] = defaultdict(int)
 
     for sGUID, tGUID, amount in dmg_gen_valk(logs):
-        _dmg_taken = valks_dmg_taken.get(tGUID, 0)
+        _dmg_taken = valks_dmg_taken[tGUID]
         if _dmg_taken == -1:
             valks_overkill[sGUID] += amount
             continue
