@@ -1,14 +1,14 @@
 import os
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from struct import unpack
 
 from flask import (
     Flask, request,
-    make_response, render_template, send_from_directory)
+    make_response, redirect, render_template, send_from_directory)
 import psutil
 
-from werkzeug.exceptions import TooManyRequests
+from werkzeug.exceptions import NotFound, TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import logs_top_statistics
@@ -17,50 +17,32 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS, PATH_DIR,
-    REPORTS_PRIVATE, STATIC_DIR, T_DELTA, TOP_DIR
+    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
+    STATIC_DIR, T_DELTA, TOP_DIR
 )
 
 try:
     import _validate
 except ImportError:
-    pass
+    _validate = None
+
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
 SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
-LOGGER_CONNECTIONS.debug("Starting server...")
-
 USE_FILTER = True
 MAX_SURVIVE_LOGS = T_DELTA["5MIN"]
+IGNORED_PATHS = {"/upload", "/upload_progress"}
+LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
+
+CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
-CACHED_PAGES = {}
-IGNORED_PATHS = {"upload", "upload_progress"}
 
-RL: dict[str, dict[str, datetime]] = {}
-RL_TD = {
-    timedelta(seconds=30): 5,
-    timedelta(minutes=1): 10,
-    timedelta(hours=1): 30,
-    timedelta(days=1): 100,
-}
-def wait_for_new(ip):
-    openned_times_ip = RL.get(ip)
-    if not openned_times_ip: return
+LOGGER_CONNECTIONS.debug("Starting server...")
 
-    openned_times = openned_times_ip.values()
-
-    now = datetime.now()
-    for _delta, open_max in RL_TD.items():
-        rlimit = now - _delta
-        openned = sum(openned_on > rlimit for openned_on in openned_times)
-        print(ip, _delta, openned)
-        if openned > open_max:
-            _min_opened = min(x for x in openned_times if x > rlimit)
-            return _min_opened + _delta
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
@@ -70,16 +52,20 @@ def load_report(report_id: str):
     ip = request.remote_addr
     if report_id in OPENED_LOGS:
         report = OPENED_LOGS[report_id]
-    elif wait_for_new(ip):
-        add_log_entry(ip, "SPAM", report_id)
-        raise TooManyRequests(retry_after=wait_for_new(ip))
-    else:
-        report = logs_main.THE_LOGS(report_id)
-        OPENED_LOGS[report_id] = report
-        RL.setdefault(ip, {})[report_id] = now
-        add_log_entry(ip, "OPENNED", report_id)
-        LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | OPEN    | {report_id:50} | {ip:>15}")
+        report.last_access = now
+        return report
     
+    if _validate:
+        _limit = _validate.rate_limited(ip, report_id)
+        if _limit:
+            add_log_entry(ip, "SPAM", report_id)
+            raise TooManyRequests(retry_after=_limit)
+    
+    report = logs_main.THE_LOGS(report_id)
+    OPENED_LOGS[report_id] = report
+    add_log_entry(ip, "OPENNED", report_id)
+    LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | OPEN    | {report_id:50} | {ip:>15}")
+
     report.last_access = now
     return report
 
@@ -88,20 +74,6 @@ def get_formatted_query_string():
     if not query:
         return ""
     return f"?{query}"
-
-MAX_PW_ATTEMPTS = 5
-WRONG_PW_FILE = os.path.join(PATH_DIR, '_wrong_pw.json')
-WRONG_PW = file_functions.json_read(WRONG_PW_FILE)
-
-def wrong_pw(ip):
-    attempt = WRONG_PW.get(ip, 0) + 1
-    WRONG_PW[ip] = attempt
-    if attempt >= MAX_PW_ATTEMPTS:
-        file_functions.json_write(WRONG_PW_FILE, WRONG_PW, backup=True)
-    return MAX_PW_ATTEMPTS - attempt
-
-def banned(ip):
-    return WRONG_PW.get(ip, 0) >= MAX_PW_ATTEMPTS
 
 def render_template_wrap(file: str, **kwargs):
     path = kwargs.get("PATH", "")
@@ -147,19 +119,18 @@ def __cleaner():
     cleaner_thread: threading.Thread = None
 
     def cleaner2():
-        print(psutil.virtual_memory().available)
         LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | CLEANER")
         now = datetime.now()
         for report_id, report in dict(OPENED_LOGS).items():
             if now - report.last_access > MAX_SURVIVE_LOGS:
                 del OPENED_LOGS[report_id]
-                LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
+                LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED O | {report_id}")
         
         a = sorted((report.last_access, report_id) for report_id, report in OPENED_LOGS.items())
         while a and psutil.virtual_memory().available < 800*1024*1024:
             _, report_id = a.pop(0)
             del OPENED_LOGS[report_id]
-            LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED   | {report_id}")
+            LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED M | {report_id}")
 
     def cleaner():
         nonlocal cleaner_thread
@@ -181,12 +152,18 @@ def after_request_callback(response):
 
 @SERVER.route("/pw_validate", methods=["POST"])
 def pw_validate():
+    if not _validate:
+        return ""
+    
+    if _validate.pwcheck.banned(request.remote_addr):
+        return "", 403
+
     if _validate.pw(request):
         resp = make_response('Success')
         _validate.set_cookie(resp)
         return resp
     
-    attempts_left = wrong_pw(request.remote_addr)
+    attempts_left = _validate.pwcheck.attempts_left(request.remote_addr)
     return f'{attempts_left}', 401
 
 def get_incoming_connection_info():
@@ -214,9 +191,6 @@ def log_incoming_connection():
 def before_request():
     log_incoming_connection()
 
-    if banned(request.remote_addr):
-        return render_template('home.html')
-
     url_comp = request.path.split('/')
     if url_comp[1] != "reports":
         return
@@ -227,17 +201,27 @@ def before_request():
 
     report_path = os.path.join(LOGS_DIR, report_id)
     if not os.path.isdir(report_path):
-        return render_template("404.html")
+        raise NotFound()
     
-    elif USE_FILTER:
-        _filter = file_functions.get_logs_filter(REPORTS_PRIVATE)
-        if report_id in _filter and not _validate.cookie(request):
+    if not USE_FILTER:
+        pass
+    elif not _validate:
+        pass
+    elif report_id not in file_functions.get_privated_logs():
+        pass
+    elif _validate.pwcheck.banned(request.remote_addr):
+        if request.method == "GET":
+            return redirect("/")
+        return "", 403
+    elif not _validate.cookie(request):
+        if request.method == "GET":
             return render_template('protected.html')
+        return "", 403
 
-    if request.path in CACHED_PAGES:
+    if not SERVER.debug and request.path in CACHED_PAGES:
         query = get_formatted_query_string()
         pages = CACHED_PAGES[request.path]
-        if not SERVER.debug and query in pages:
+        if query in pages:
             return pages[query]
 
 
@@ -245,7 +229,6 @@ def before_request():
 def home():
     return render_template('home.html')
 
-LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
 # @SERVER.route("/logs_list", methods=['GET', 'POST'])
 @SERVER.route("/logs_list")
 def show_logs_list():
@@ -624,7 +607,7 @@ def top():
     boss = _data.get("boss")
     diff = _data.get("diff")
     if not any({server, boss, diff}):
-        return '', 404
+        return '', 400
     
     server_folder = file_functions.new_folder_path(TOP_DIR, server)
     fname = f"{boss} {diff}.gzip"
