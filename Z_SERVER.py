@@ -128,6 +128,10 @@ def class_icons():
 def method404(e):
     return render_template("404.html")
 
+@SERVER.errorhandler(405)
+def method405(e):
+    return render_template("404.html")
+
 @SERVER.errorhandler(429)
 def method429(e):
     retry_in = e.retry_after - datetime.now()
