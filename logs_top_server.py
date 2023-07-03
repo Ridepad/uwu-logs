@@ -18,15 +18,30 @@ def new_request(request: dict):
     p = os.path.join(server_folder, fname)
     return file_functions.bytes_read(p)
 
-def get_server_top_folder(server):
+def save_top(server_folder: str, boss_f_n: str, data):
+    print(boss_f_n)
+    bpath = os.path.join(server_folder, f"{boss_f_n}.gzip")
+    data = list(data.values())
+    data = json.dumps(data, separators=(',', ':'), ).encode()
+    data = gzip.compress(data, compresslevel=5)
+    file_functions.bytes_write(bpath, data)
+
+@running_time
+def save_tops(top: dict, server: str):
+    print("\nSaving top for", server)
+    server_folder = file_functions.new_folder_path(TOP_DIR, server)
+    for boss_f_n, data in top.items():
+        save_top(server_folder, boss_f_n, data)
+
+def get_server_top_folder(server: str):
     return file_functions.new_folder_path(TOP_DIR, server)
 
-def get_report_server(report_name):
+def get_report_server(report_name: str):
     return get_report_name_info(report_name)["server"]
 
 def get_player_id(item: dict[str, str]):
     report_name = item['r']
-    player_guid = item['i']
+    player_guid = item['i'][-7:]
     report_date = get_report_name_info(report_name)["date"]
     return f"{report_date}-{player_guid}"
 
@@ -36,20 +51,11 @@ def get_boss_top(server_folder: str, boss_f_n: str):
     if not f:
         return {}
     g = gzip.decompress(f)
-    data = json.loads(g)
-    return {get_player_id(item): item for item in data}
+    return json.loads(g)
 
-@running_time
-def save_tops(top: dict, server):
-    print("\nSaving top for", server)
-    server_folder = file_functions.new_folder_path(TOP_DIR, server)
-    for boss_f_n, data in top.items():
-        print(boss_f_n)
-        data = list(data.values())
-        data = json.dumps(data, separators=(',', ':'), ).encode()
-        data = gzip.compress(data, compresslevel=5)
-        bpath = os.path.join(server_folder, f"{boss_f_n}.gzip")
-        file_functions.bytes_write(bpath, data)
+def get_boss_top_wrap(server_folder: str, boss_f_n: str):
+    _top = get_boss_top(server_folder, boss_f_n)
+    return {get_player_id(item): item for item in _top}
 
 def data_gen(report_name: str):
     report_folder = os.path.join(LOGS_DIR, report_name)
@@ -103,7 +109,7 @@ def add_new_reports(server: str, reports: list[str]):
     server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in TOP_D.items():
         print(boss_f_n)
-        cached_top = get_boss_top(server_folder, boss_f_n)
+        cached_top = get_boss_top_wrap(server_folder, boss_f_n)
         new_top[boss_f_n] = cached_top
         new_list = data.values()
         _modified = update_top(cached_top, new_list)
@@ -119,19 +125,13 @@ def add_new_reports_wrap(reports: list[str]):
         add_new_reports(server, server_reports)
 
 
-def get_boss_top_wrap(top, boss_f_n, server_folder):
-    if boss_f_n in top:
-        return top[boss_f_n]
-    _top = top[boss_f_n] = get_boss_top(server_folder, boss_f_n)
-    return _top
-
-def remove_report_from_top(top, boss_data):
+def remove_report_from_top(top_data, reports):
     modified = False
-    for item in boss_data:
-        player_id = get_player_id(item)
-        if player_id in top:
+    for player_id in set(top_data):
+        if top_data[player_id]["r"] in reports:
+            del top_data[player_id]
             modified = True
-            del top[player_id]
+    
     return modified
 
 @running_time
@@ -139,26 +139,58 @@ def delete_reports(server: str, reports: list[str], bosses=None):
     print()
     print()
     print(server)
+    print(reports)
 
-    modified = False
     TOP: dict[str, dict[str, dict]] = {}
     SERVER_FOLDER = get_server_top_folder(server)
     
-    for report_name in reports:
-        print()
-        print(report_name)
-        for boss_f_n, data in data_gen(report_name):
-            if bosses and boss_f_n not in bosses:
-                continue
-            print(boss_f_n)
-            _top = get_boss_top_wrap(TOP, boss_f_n, SERVER_FOLDER)
-            _modified = remove_report_from_top(_top, data)
-            if _modified:
-                modified = True
+    boss_files = [x.rsplit(".", 1)[0] for x in file_functions.get_all_files(SERVER_FOLDER)]
+    try:
+        if bosses:
+            boss_files = (x for x in boss_files if x in bosses)
+    except TypeError:
+        pass
 
-    if modified:
-        save_tops(TOP, server)
+    for boss_f_n in boss_files:
+        print(boss_f_n)
+        _top = get_boss_top_wrap(SERVER_FOLDER, boss_f_n)
+        _modified = remove_report_from_top(_top, reports)
+        if _modified:
+            TOP[boss_f_n] = _top
+    
+    save_tops(TOP, server)
+
 
 def delete_reports_wrap(reports: list[str], bosses=None):
     for server, server_reports in group_reports(reports).items():
         delete_reports(server, server_reports, bosses=bosses)
+
+{
+    'i': '00C6665',
+    'n': 'Liruthi',
+    'r': '21-10-16--18-52--Capha--Lordaeron',
+    'ua': 460286,
+    'ud': 7991.91,
+    'ta': 461246,
+    'td': 8008.58,
+    't': 57.594,
+    's': 38,
+    'a': {'32182': [1, 69.5, 0],
+    '74509': [2, 10.2, 2],
+    '54758': [1, 20.9, 1]}
+}
+
+{
+    'i': '00C6665',
+    'n': 'Liruthi',
+    'r': '21-10-16--18-52--Capha--Lordaeron',
+    'u': 460286,
+    'f': 461246,
+    't': 57.594,
+    's': 38,
+    'a': [
+        [32182, 1, 69.5, 0],
+        [74509, 2, 10.2, 2],
+        [54758, 1, 20.9, 1]
+    ],
+}
