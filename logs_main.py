@@ -193,8 +193,8 @@ def regroup_targets(targets):
 
 def sort_by_name_type(targets):
     targets = sorted(targets)
-    targets = sorted(targets, key=lambda x: x[1])
     targets = sorted(targets, key=lambda x: x[0][:5])
+    targets = sorted(targets, key=lambda x: x[1])
     targets = sorted(targets, key=lambda x: _SORT[x[0][:3]])
     return dict(targets)
 
