@@ -1,7 +1,7 @@
 {% extends "layout_report.html" %}
 
 {% block scripts_head %}
-<script src="/static/casts.js?v=2" defer></script>
+<script src="/static/casts.js?v={{ V }}" defer></script>
 {% endblock scripts_head %}
 
 {% block add_style %}
@@ -9,31 +9,43 @@
 main {
   padding-bottom: 5rem;
 }
-#flag-filter-wrap {
-  position: fixed;
-  bottom: var(--bottom-row-two);
-  margin-inline: .3rem;
-  margin-block: 1rem;
-  z-index: 5;
+#graph-controls {
+  background: var(--background);
+  display: flex;
+  gap: .25rem;
 }
-#flag-filter-wrap > span {
-  font-size: 150%;
-  padding: .1em;
-  padding-left: 1ch;
-  border: .1em solid var(--primary-color);
-  border-radius: .3em;
-  background-color: var(--background)
+
+@media (orientation: portrait) {
+  #graph-controls {
+    position: fixed;
+    left: 0;
+    transform: translateY(-100%);
+  }
+}
+#spell-toggle-hidden + label {
+  padding: 0;
+}
+
+#flag-filter-wrap > div {
+  min-width: 7em;
+}
+@media (orientation: landscape) {
+  #flag-filter-wrap > div {
+    padding-inline: 2em;
+  }
 }
 #flag-filter-wrap > #flag-filter {
   visibility: hidden;
   position: absolute;
-  bottom: 100%;
-  left: 0;
+  bottom: 90%;
   padding: .1rem;
   width: max-content;
   background-color: var(--background);
   box-shadow: inset 0 0 .5em var(--primary-color);
   border-radius: .5em;
+}
+#flag-filter > li {
+  text-align: left;
 }
 #flag-filter-wrap:hover > #flag-filter {
   visibility: visible;
@@ -46,13 +58,15 @@ main {
   color: var(--secondary-color);
 }
 
-#spell-timeline-wrap {
-  width: clamp(10rem, 100vw, 30rem);
-  display: flex;
-  justify-content: space-between;
-}
 #spell-timeline-mult {
   width: 100%;
+}
+#spell-timeline-mult-label {
+  min-width: 4ch;
+}
+
+.casts-section {
+  padding-top: 5rem;
 }
 
 #casts-section-wrap {
@@ -62,6 +76,7 @@ main {
 }
 .spell-row {
   --size: 1.15em;
+  display: block;
 }
 .spell-row > div {
   height: var(--size);
@@ -99,7 +114,7 @@ main {
 .spell-history {
   position: relative;
 }
-.cleu {
+spell-cleu {
   position: absolute;
   top: 0;
   left: var(--left);
@@ -120,7 +135,7 @@ main {
   z-index: 5;
 }
 
-.casts-table-timeline {
+#timeline-ruler {
   padding-top: 1rem;
   background-color: black;
   margin-left: 1px;
@@ -135,7 +150,7 @@ main {
 	height: 1rem;
 }
 .timeline-ruler-half-second {
-	height: .75rem;
+	height: .6rem;
   font-size: 75%;
 }
 .timeline-ruler-tenth-second {
@@ -170,8 +185,73 @@ spells-fav > spell-row:last-of-type > * {
 #spell-toggle-hidden + label {
   min-width: 11ch;
 }
-.hidden {
-  visibility: hidden;
+
+.player-name {
+  font-size: 300%;
+}
+
+.player-info {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+#spells-fav > .char-0 > * {
+  background-color: hsl(0, 0%, 0%);
+}
+#spells-fav > .char-1 > * {
+  background-color: hsl(271, 100%, 10%);
+}
+#spells-fav > .char-2 > * {
+  background-color: hsl(0, 100%, 10%);
+}
+.char-tab {
+  display: block;
+  font-size: 300%;
+  max-width: 30ch;
+}
+.char-report-id {
+  display: block;
+}
+#tabs-wrap {
+  display: grid;
+  grid-column-gap: 1rem;
+  grid-auto-flow: column;
+  padding-bottom: 1rem;
+}
+#tabs-wrap > div {
+  display: grid;
+  border: 2px solid var(--primary-color);
+  border-radius: 1rem 1rem auto auto;
+}
+.char-report-id {
+  grid-column: span 3;
+}
+.char-tab {
+  grid-column: span 4;
+}
+@media (orientation: portrait) {
+  #tabs-wrap {
+    grid-auto-flow: row;
+  }
+}
+#add-character {
+  font-size: 350%;
+}
+dialog {
+  background-color: var(--background);
+  border: none;
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
+  left: 50%;
+  top: 50%;
+  transform:translate(-50%, -50%);
+}
+dialog select {
+  font-size: 200%;
+}
+#boss-reminder {
+  font-size: 500%;
 }
 </style>
 {% endblock add_style %}
@@ -185,56 +265,35 @@ spells-fav > spell-row:last-of-type > * {
     <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">CASTS</a></li>
-  </ul>
-</section>
-<section id="flag-filter-wrap">
-  <span>FLAG FILTER ≡</span>
-  <ul id="flag-filter">
-    {% for flag in FLAGS %}
-    <li>
-      <input type="color" class="flag-color-picker">
-      <input id="{{ flag }}" type="checkbox" class="flag-checkbox" checked>
-      <label class="tab" for="{{ flag }}">{{ flag }}</label>
+    <li id="graph-controls">
+      <section id="flag-filter-wrap">
+        <div>≡ FLAG FILTER</div>
+        <ul id="flag-filter">
+          {% for flag in FLAG_ORDER %}
+          <li id="{{ flag }}" style="display: none;">
+            <input type="color" class="flag-color-picker">
+            <input id="{{ flag }}_CHECKBOX" type="checkbox" class="flag-checkbox" checked>
+            <label class="tab" for="{{ flag }}_CHECKBOX">{{ flag }}</label>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      <span>ZOOM:</span>
+      <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
+      <span id="spell-timeline-mult-label">3x</span>
+      <input id="spell-toggle-hidden" type="checkbox">
+      <label for="spell-toggle-hidden">Show hidden</label>
     </li>
-    {% endfor %}
   </ul>
 </section>
-<section>
-  <ul id="player-info">
-    <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
-    <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
-  </ul>
+<section id="boss-reminder" style="display: none;">Select boss to see casts.</section>
+<section id="tabs-wrap" style="display: none;">
+  <button id="add-character">+</button>
 </section>
-<section id="spell-timeline-wrap">
-  <span>ZOOM:</span>
-  <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
-  <span id="spell-timeline-mult-label">3x</span>
-  <input id="spell-toggle-hidden" type="checkbox">
-  <label for="spell-toggle-hidden">Show hidden</label>
-</section>
-<section class="table-wrap wrap-spell" style="display: none; --duration: {{ RDURATION }}">
+<section class="table-wrap wrap-spell" style="display: none;">
   <div id="casts-section-wrap">
-    <div class="casts-table-timeline" data-duration="{{ RDURATION }}"></div>
-    <div class="casts-section">
-      <spells-fav class="casts-section-fav"></spells-fav>
-      <spells-main class="casts-section-main">
-        {% for spell_id, _asdasd in DATA.items() %}
-        <spell-row class="spell-row" data-spell-id="{{ spell_id }}" data-spell-name="{{ SPELLS[spell_id]['name'] }}">
-          <div class="spell-name">
-            <img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ SPELL_ICONS[spell_id] }}.jpg" alt="{{ spell_id }}">
-            <a class="{{ SPELLS[spell_id]['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ SPELLS[spell_id]['name'] }}</a>
-            <div></div>
-          </div>
-          <div class="spell-history">
-            {% for ts, from_start, flag, source, target, etc in _asdasd %}
-            <div class="cleu {{ flag }}" style="--left: {{ ts }}%" data-time="{{ from_start }}" data-source="{{ source }}" data-target="{{ target }}" data-etc="{{ etc }}" data-pad="{{ ts }}"></div>
-            {% endfor %}
-          </div>
-        </spell-row>
-        {% endfor %}
-      </spells-main>
-      <spells-hide class="spells-hide" style="display: none;"></spells-hide>
-    </div>
+    <div id="timeline-ruler"></div>
+    <div id="spells-fav"></div>
   </div>
 </section>
 <aside id="the-tooltip" style="display: none">
@@ -245,8 +304,29 @@ spells-fav > spell-row:last-of-type > * {
   <p id="tooltip-data"></p>
 </aside>
 <aside id="aura-controls" style="display: none;">
-  <button id="aura-fav">▲</button>
-  <button id="aura-del">✖</button>
+  <button id="button-fav">▲</button>
+  <button id="button-del">✖</button>
 </aside>
+
+<dialog id="add-character-dialog">
+    <p id="dialog-msg" style="visibility: hidden;">Report wasn't found</p>
+    <p>
+      <input id="input-report-id" type="text" placeholder="Input report ID">
+      <button id="fetch-report-slices" type="button">Load</button>
+    </p>
+    <p id="select-attempts-wrap">
+      <span>Select attempt:</span>
+      <select id="select-attempts"></select>
+    </p>
+    <p id="select-players-wrap">
+      <span>Select player:</span>
+      <select id="select-players"></select>
+    </p>
+    <div>
+      <button id="button-cancel" >Cancel</button>
+      <button id="button-confirm" value="default" style="visibility: hidden;">Confirm</button>
+    </div>
+</dialog>
+
 </main>
 {% endblock the_main %}
