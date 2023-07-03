@@ -368,6 +368,14 @@ class THE_LOGS:
     def get_classes(self):
         return self.get_guids()[2]
 
+    def guid_to_player_name(self):
+        try:
+            return self.PLAYERS_NAMES
+        except AttributeError:
+            players = self.get_players_guids()
+            self.PLAYERS_NAMES = {v:k for k,v in players.items()}
+            return self.PLAYERS_NAMES
+
     def name_to_guid(self, name: str) -> str:
         guids = self.get_all_guids()
         players_names = self.guid_to_player_name()
@@ -380,12 +388,22 @@ class THE_LOGS:
     
     def guid_to_name(self, guid: str) -> str:
         guids = self.get_all_guids()
+        players = self.get_players_guids()
         try:
+            if guid in players:
+                return players[guid]
             return guids[guid]["name"]
         except KeyError:
             for full_guid, p in guids.items():
                 if guid in full_guid:
                     return p['name']
+        
+    def convert_data_guids_to_names(self, data: dict[str]):
+        return {
+            self.guid_to_name(guid): value
+            for guid, value in data.items()
+        }
+    
         
     def get_master_guid(self, guid: str):
         guids = self.get_all_guids()
@@ -447,8 +465,8 @@ class THE_LOGS:
             return self.CLASSES_NAMES
         except AttributeError:
             classes = self.get_classes()
-            players = self.get_players_guids()
-            self.CLASSES_NAMES = {players[guid]: class_name for guid, class_name in classes.items()}
+            _classes_names: dict[str, str] = self.convert_data_guids_to_names(classes)
+            self.CLASSES_NAMES = _classes_names
             return self.CLASSES_NAMES
         
     
@@ -726,21 +744,18 @@ class THE_LOGS:
         data_sorted = sort_dict_by_value(data_with_pets)
         return convert_to_table(data_sorted, slice_duration)
 
-    def report_add_missing_specs(self, specs, data: dict[str, dict]):
+    def report_add_spec_info(self, specs: dict[str, int], data: dict[str, dict]):
         classes_names = self.get_classes_with_names()
 
+        new_specs: dict[str, tuple(str, str)] = {}
         for unit_name in data:
             if unit_name.endswith('-A'):
-                specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
+                new_specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
             elif unit_name == "Total":
-                specs[unit_name] = ('Total', 'ability_hunter_readiness')
-            elif unit_name not in specs and unit_name in classes_names:
-                player_class = classes_names[unit_name]
-                specs[unit_name] = logs_player_spec.get_spec_info(player_class)
-                LOGGER_REPORTS.error(f"{self.NAME} | {unit_name} doesn't have spec")
-            # elif unit_name not in classes_names:
-            #     print(f"{unit_name} not in classes_names!")
-
+                new_specs[unit_name] = ('Total', 'ability_hunter_readiness')
+            elif unit_name in classes_names:
+                new_specs[unit_name] = logs_player_spec.get_spec_info(specs[unit_name])
+        return new_specs
 
     def get_report_page_all(self, segments):
         DATA = {
@@ -782,7 +797,8 @@ class THE_LOGS:
         for k, v in total.items():
             total[k] = separate_thousands(v) 
         
-        self.report_add_missing_specs(SPECS, TABLE)
+        SPECS = self.convert_data_guids_to_names(SPECS)
+        SPECS = self.report_add_spec_info(SPECS, TABLE)
         for name, (spec_name, spec_icon) in SPECS.items():
             TABLE[name]['spec_name'] = spec_name
             TABLE[name]['spec_icon'] = spec_icon

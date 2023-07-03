@@ -1,57 +1,89 @@
-from constants import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC
+from constants import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC, running_time
 
 CLASSES = list(CLASS_FROM_HTML)
 
+# def get_spec_info(player_class: str, spec_index: int=0):
+#     classi = CLASSES.index(player_class)
+#     return SPECS_LIST[classi*4+spec_index]
+
+def get_spec_info(spec_index):
+    return SPECS_LIST[spec_index]
+
+# 40% faster to slice 3 times, if check and slice 4 more times, than to slice every loop 8 times
 def specs_gen(logs: list[str], players: dict[str, str], classes: dict[str, str]):
     class_spells = {guid: SPELL_BOOK_SPEC[classes[guid]] for guid in players if guid in classes}
     for line in logs:
-        line_split = line.split(',', 8)
-        if line_split[2] not in class_spells:
+        _, _, guid, etc = line.split(',', 3)
+        if guid not in class_spells:
             continue
         try:
-            if line_split[6] not in class_spells[line_split[2]]:
+            _spell_id = etc.split(',', 4)[3]
+            if _spell_id not in class_spells[guid]:
                 continue
         except IndexError:
             continue
-        guid = line_split[2]
-        spec_index = class_spells[guid][line_split[6]]
+        
+        _spells = class_spells.pop(guid)
+        spec_index = _spells[_spell_id]
         yield guid, spec_index
-        class_spells.pop(guid, None)
+
         if not class_spells:
             break
 
-
-def get_specs_guids(logs: list[str], players: dict[str, str], classes: dict[str, str]):
-    specs = {guid: 0 for guid in players}
-    for guid, spec_index in specs_gen(logs, players, classes):
-        specs[guid] = spec_index
-    return specs
-
-def get_spec_info(player_class, spec_index=0):
-    classi = CLASSES.index(player_class)
-    return SPECS_LIST[classi*4+spec_index]
-
+@running_time
 def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str], cut=True):
     if cut:
-        logs = logs[:50000]
+        logs = logs[:100_000]
     
-    specs = get_specs_guids(logs, players, classes)
-    
-    new_data: dict[str, tuple[str, str]] = {}
-    for guid, spec_index in specs.items():
-        player_class = classes[guid]
-        player_name = players[guid]
-        new_data[player_name] = get_spec_info(player_class, spec_index)
-    
-    return new_data
-
-def get_specs_no_names(logs: list[str], players: dict[str, str], classes: dict[str, str]):
-    specs = get_specs_guids(logs, players, classes)
-    
-    new_data: dict[str, tuple[str, str]] = {}
-    for guid, spec_index in specs.items():
+    SPECS = {}
+    for guid, spec_index in specs_gen(logs, players, classes):
         player_class = classes[guid]
         classi = CLASSES.index(player_class)
-        new_data[guid] = classi*4+spec_index
-    
-    return new_data
+        SPECS[guid] = classi*4+spec_index
+
+    for player_guid, player_class in classes.items():
+        if player_guid not in SPECS:
+            SPECS[player_guid] = CLASSES.index(player_class) * 4
+
+    return SPECS
+
+# def convert_specs_to_full_info(specs: dict[str, int], classes: dict[str, str]):
+#     new_data: dict[str, tuple[str, str]] = {}
+#     for guid, spec_index in specs.items():
+#         player_class = classes[guid]
+#         new_data[guid] = get_spec_info(player_class, spec_index)
+#     return new_data
+
+# def convert_specs_to_spec_index(specs: dict[str, int], classes: dict[str, str]):
+#     new_data: dict[str, int] = {}
+#     for guid, spec_index in specs.items():
+#         player_class = classes[guid]
+#         classi = CLASSES.index(player_class)
+#         new_data[guid] = classi*4+spec_index
+#     return new_data
+
+
+# TODO: change to bytes for 10% speed improvement
+# _SPELL_BOOK_SPEC = {
+#     q.encode(): {
+#         k.encode(): v
+#         for k,v in w.items() 
+#     }
+#     for q,w in SPELL_BOOK_SPEC.items()
+# }
+
+# def specs_gen_bytes(logs: list[bytes], players: dict[bytes, str], classes: dict[bytes, str]):
+#     class_spells = {guid: _SPELL_BOOK_SPEC[classes[guid]] for guid in players if guid in classes}
+#     for line in logs:
+#         _, _, guid, line = line.split(b',', 3)
+#         if guid not in class_spells:
+#             continue
+#         try:
+#             _spell_id = line.split(b',', 4)[3]
+#             spec_index = class_spells[guid][_spell_id]
+#             del class_spells[guid]
+#             yield guid, spec_index
+#             if not class_spells:
+#                 break
+#         except (IndexError, KeyError):
+#             continue
