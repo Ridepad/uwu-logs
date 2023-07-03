@@ -390,6 +390,10 @@ SPELLS = {
     "name": "Glyph of Innervate",
     "icon": "inv_glyph_majordruid"
   },
+  "54986": {
+    "name": "Glyph of Divinity",
+    "icon": "spell_holy_layonhands"
+  },
   "55382": {
     "name": "Mana Restore",
     "icon": "spell_holy_magicalsentry"
