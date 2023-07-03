@@ -3,19 +3,23 @@ from collections import defaultdict
 import file_functions
 from constants import running_time
 
+@running_time
 def get_spells():
     spells_json = file_functions.json_read("___spells_icons")
     return {
-        spell_id: icon_name
+        int(spell_id): icon_name
         for icon_name, _spells in spells_json.items()
         for spell_id in _spells
     }
 SPELLS3 = get_spells()
 
 IGNORED_FLAGS = {
-    'SPELL_HEAL',
-    'SPELL_PERIODIC_HEAL',
-    'ENCHANT_APPLIED',
+    "SPELL_HEAL",
+    "SPELL_PERIODIC_HEAL",
+    "ENCHANT_APPLIED",
+    "ENCHANT_REMOVED",
+    "SPELL_DRAIN",
+    "ENVIRONMENTAL_DAMAGE",
 }
 
 
@@ -45,7 +49,8 @@ def to_str(k: float):
 
 def to_float(s: str):
     minutes, seconds = s[-9:].split(":", 1)
-    return int(minutes) * 60 + float(seconds)
+    # return int(minutes) * 60 + float(seconds)
+    return int(minutes) * 60000 + float(seconds) * 1000
 
 def to_str(k: float):
     seconds = k % 60
@@ -57,8 +62,10 @@ def get_history(logs: list[str], guid: str, other_players_and_pets: set[str]):
     def get_delta(current_ts: str):
         new_key = to_float(current_ts) - FIRST_KEY
         if new_key < 0:
-            new_key = new_key + 3600
-        return new_key
+            # new_key = new_key + 3600
+            new_key = new_key + 3600000
+        # return new_key
+        return new_key / 1000
     
     def get_percentage(from_start: float):
         return from_start / FIGHT_DURATION * 100
@@ -75,21 +82,15 @@ def get_history(logs: list[str], guid: str, other_players_and_pets: set[str]):
         if guid not in line:
             continue
         try:
-            timestamp, flag, _, sName, tGUID, tName, spell_id, _, *o = line.split(',', 9)
-            if flag in IGNORED_FLAGS:
+            timestamp, flag, _, sName, tGUID, tName, spell_id, _, etc = line.split(',', 8)
+            if flag in IGNORED_FLAGS or tGUID in other_players_and_pets:
                 continue
-            if tGUID in other_players_and_pets:
-                continue
-            # if sGUID != guid:
-                # if o[-1] != "BUFF":
-                    # continue
-            if o[-1] == "BUFF":
-                if tGUID != guid and tGUID[:3] == "0x0":
-                    continue
             _delta = get_delta(timestamp)
-            history[spell_id].append([get_percentage(_delta), to_str(_delta), flag, sName, tName, o[-1]])
+            history[spell_id].append([_delta, flag, sName, tName, etc])
             flags.add(flag)
-        except:
+        except Exception as e:
+            print(e)
+            print(line)
             # PARTY_KILL UNIT_DIED
             continue
     

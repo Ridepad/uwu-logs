@@ -17,7 +17,7 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
+    FLAG_ORDER, ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
     STATIC_DIR, T_DELTA, TOP_DIR
 )
 
@@ -98,21 +98,29 @@ def class_icons():
 
 @SERVER.errorhandler(404)
 def method404(e):
-    return render_template("404.html")
+    if request.method == 'GET':
+        return render_template("404.html")
+    return '', 404
 
 @SERVER.errorhandler(405)
 def method405(e):
-    return render_template("404.html")
+    if request.method == 'GET':
+        return render_template("404.html")
+    return '', 405
 
 @SERVER.errorhandler(429)
 def method429(e):
     retry_in = e.retry_after - datetime.now()
-    return render_template("429.html", retry_in=retry_in)
+    if request.method == 'GET':
+        return render_template("429.html", retry_in=retry_in)
+    return str(retry_in), 405
 
 @SERVER.errorhandler(500)
 def method500(e):
     LOGGER_CONNECTIONS.exception(f"{request.remote_addr:>15} | {request.method:<7} | {get_incoming_connection_info()}")
-    return render_template("500.html")
+    if request.method == 'GET':
+        return render_template("500.html")
+    return '', 500
 
 
 def __cleaner():
@@ -281,15 +289,12 @@ def file_is_proccessing(ip):
 def upload_progress():
     ip = request.remote_addr
     if ip not in NEW_UPLOADS:
-        print("upload_progress ip not in NEW_UPLOADS")
         return '', 204
     
-    print("upload_progress ip in NEW_UPLOADS")
     new_upload = NEW_UPLOADS[ip]
     if new_upload.upload_thread is None:
         return '', 204
 
-    print(new_upload.upload_thread.status_dict)
     status_str = new_upload.upload_thread.status_json
     if new_upload.upload_thread.status_dict.get('done') == 1:
         del NEW_UPLOADS[ip]
@@ -401,13 +406,37 @@ def heal(report_id, source_name):
 def casts(report_id, source_name):
     report = load_report(report_id)
     default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
+    # segments = default_params["SEGMENTS"]
 
-    data = report.get_spell_history_wrap(segments, source_name)
+    # data = report.get_spell_history_wrap(segments, source_name)
     return render_template_wrap(
-        'player_spells.html', **default_params, **data,
+        'player_spells.html', **default_params,
+        # **data,
+        FLAG_ORDER=FLAG_ORDER,
         SOURCE_NAME=source_name,
+        # V=datetime.now()
     )
+
+@SERVER.route("/reports/<report_id>/casts/", methods=['POST'])
+def casts_post(report_id):
+    if not request.is_json:
+        return "", 400
+    
+    _data: dict = request.json
+    report = load_report(report_id)
+    _z = report.parse_request(request.path, _data)
+    data = report.get_spell_history_wrap_json(_z["SEGMENTS"], _data["name"])
+    return data
+
+@SERVER.route("/reports/<report_id>/report_slices/", methods=['POST'])
+def report_slices(report_id):
+    report = load_report(report_id)
+    return report.get_segments_data_json()
+
+@SERVER.route("/reports/<report_id>/players_classes/", methods=['POST'])
+def players_classes(report_id):
+    report = load_report(report_id)
+    return report.get_classes_with_names_json()
 
 @SERVER.route("/reports/<report_id>/spellsearch", methods=["POST"])
 def spellsearch(report_id):
