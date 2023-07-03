@@ -1248,12 +1248,20 @@ class THE_LOGS:
         for guid, value in data.items():
             print(f"{guids[guid]['name']:<12} {separate_thousands(value):>13}")
 
-    def get_players_specs_in_segments(self, s, f):
+    def get_players_specs_in_segments(self, s, f) -> dict[str, int]:
+        '''specs = {guid: spec_index}'''
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['get_players_specs_in_segments']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
         logs_slice = self.get_logs(s, f)
         players = self.get_players_guids()
         classes = self.get_classes()
-        return logs_player_spec.get_specs_no_names(logs_slice, players, classes)
-
+        data = logs_player_spec.get_specs(logs_slice, players, classes)
+        
+        cached_data[slice_ID] = data
+        return data
 
     def grabs_info(self, s, f):
         slice_ID = f"{s}_{f}"
