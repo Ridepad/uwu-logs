@@ -727,11 +727,7 @@ class THE_LOGS:
         players_and_pets = self.get_players_and_pets_guids()
         data = logs_dmg_heals.parse_both(logs_slice, players_and_pets)
         
-        units = set(data["damage"]) | set(data["heal"])
-        players = self.get_players_guids(filter_guids=units)
-        classes = self.get_classes()
-
-        data['specs'] = logs_player_spec.get_specs(logs_slice, players, classes)
+        data['specs'] = self.get_players_specs_in_segments(s, f)
         data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
         data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
 
