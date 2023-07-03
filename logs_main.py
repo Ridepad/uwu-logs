@@ -964,6 +964,9 @@ class THE_LOGS:
     
     def convert_dict_guids_to_name(self, data: dict):
         return {self.guid_to_name(guid): v for guid, v in data.items()}
+    
+    def sort_data_guids_by_name(self, data: dict):
+        return dict(sorted(data.items(), key=lambda x: self.guid_to_name(x[0])))
 
     def add_missing_players(self, data, default=0, players=None):
         if players is None:
@@ -975,30 +978,36 @@ class THE_LOGS:
     
     def potions_all(self, segments):
         potions = defaultdict(lambda: defaultdict(int))
-        players = set()
+        players: set[str] = set()
 
         for s, f in segments:
             _potions = self.potions_info(s, f)
             for spell_id, sources in _potions.items():
                 add_new_numeric_data(potions[spell_id], sources)
                 
-            _report_page = self.report_page(s, f)
-            players.update(_report_page["specs"])
+            _specs = self.get_players_specs_in_segments(s, f)
+            players.update(_specs)
         
-        pots = {x: self.convert_dict_guids_to_name(y) for x,y in potions.items()}
-        
+        p_value = logs_spell_info.count_valuable(potions)
+        for guid in players:
+            if guid not in p_value:
+                p_value[guid] = 0
+        p_value = self.sort_data_guids_by_name(p_value)
+
         p_total = logs_spell_info.count_total(potions)
-        p_total = self.convert_dict_guids_to_name(p_total)
-        for name in players:
-            if name not in p_total:
-                p_total[name] = 0
-        p_total = dict(sorted(p_total.items()))
+        p_total = self.sort_data_guids_by_name(p_total)
+
+        p_total |= p_value
         p_total = sort_dict_by_value(p_total)
+        p_total = self.convert_dict_guids_to_name(p_total)
+        
+        for spell_id, sources in potions.items():
+            potions[spell_id] = self.convert_dict_guids_to_name(sources)
 
         return {
             "ITEM_INFO": logs_spell_info.ITEM_INFO,
             "ITEMS_TOTAL": p_total,
-            "ITEMS": pots,
+            "ITEMS": potions,
         }
 
     def auras_info(self, s, f):

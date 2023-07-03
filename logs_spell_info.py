@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 from constants import to_dt_simple, running_time
 
 DEFAULT_DICT_FACTORY = lambda: {"sources": defaultdict(int), "targets": defaultdict(int)}
@@ -116,6 +115,10 @@ ITEM_INFO = {
         "name": "Flame Cap",
         "icon": "inv_misc_herb_flamecap",
     },
+    "43186": {
+        "name": "Runic Mana Potion",
+        "icon": "inv_alchemy_elixir_02",
+    },
     "54758": {
         "name": "Hyperspeed Acceleration",
         "icon": "spell_shaman_elementaloath",
@@ -136,9 +139,25 @@ ITEM_INFO = {
         "name": "Super Sapper Charge",
         "icon": "inv_gizmo_supersappercharge",
     },
+    "9512": {
+        "name": "Thistle Tea",
+        "icon": "inv_drink_milk_05",
+    },
     "53762": {
         "name": "Indestructible Potion",
         "icon": "inv_alchemy_elixir_empty",
+    },
+    "53750": {
+        "name": "Crazy Alchemist's Potion",
+        "icon": "inv_potion_27",
+    },
+    "28499": {
+        "name": "Endless Mana Potion",
+        "icon": "inv_alchemy_endlessflask_04",
+    },
+    "43185": {
+        "name": "Healing Potion",
+        "icon": "inv_alchemy_elixir_05",
     },
 }
 
@@ -424,11 +443,24 @@ AURAS_BOSS_MECHANICS = {
 AURAS = AURAS_EXTERNAL | AURAS_CONSUME | AURAS_BOSS_MECHANICS
 AURAS |= {spell_id: AURAS[spell_id_hm] for spell_id, spell_id_hm in MULTISPELLS_D.items()}
 
+POT_GROUP = {
+    "67490": "43186",
+    "67489": "43185",
+}
 
-ALL_POTS = set(ITEM_INFO) - {"28714", }
-POTS_VALUE = {'28714', '53909', '28494', '28507', '53908'}
+ALL_POTS = set(ITEM_INFO) | set(POT_GROUP)
+ALL_POTS.discard("28714")
+POTS_VALUE = {"53908", "53909", "28494", "28507", "28714", "43186"}
 
 def count_total(data: dict[str, dict[str, int]]):
+    total: defaultdict[str, int] = defaultdict(int)
+    for pot_id in ALL_POTS:
+        if pot_id in data:
+            for guid, value in data[pot_id].items():
+                total[guid] += value
+    return total
+
+def count_valuable(data: dict[str, dict[str, int]]):
     total: defaultdict[str, int] = defaultdict(int)
     for pot_id in POTS_VALUE:
         if pot_id in data:
@@ -440,9 +472,11 @@ def count_total(data: dict[str, dict[str, int]]):
 def get_potions_count(logs_slice: list[str]):
     potions: defaultdict[str, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
     for line in logs_slice:
-        if '_SUCCESS' in line:
+        if '_SUC' in line:
             _, _, source_guid, _, _, _, spell_id, _ = line.split(',', 7)
             if spell_id in ALL_POTS:
+                if spell_id in POT_GROUP:
+                    spell_id = POT_GROUP[spell_id]
                 potions[spell_id][source_guid] += 1
         elif "28714" in line and "_APPLIED" in line:
             source_guid = line.split(',', 5)[4]
@@ -463,35 +497,18 @@ def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
 
     return auras
 
-NON_DOSE = {"SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH"}
-def iter_spell(data, last_update, end):
+def iter_spell(data: list[str, str]):
     count = 0
-    uptime = 0
-    last_apply = None
+    uptime = 0.0
+    start = None
     for flag, timestamp in data:
-        if flag == "SPELL_AURA_REMOVED":
-            if last_apply is None:
-                last_apply = last_update
+        if start is None:
+            if flag == "SPELL_AURA_APPLIED":
+                start = to_dt_simple(timestamp)
                 count += 1
-            last_update = to_dt_simple(timestamp)
-            new_uptime = (last_update-last_apply).total_seconds()
-            if new_uptime < 1:
-                count -= 1
-            else:
-                uptime += new_uptime
-            last_apply = None
-        elif flag in NON_DOSE:
-            last_update = to_dt_simple(timestamp)
-            count += 1
-            if last_apply is None:
-                last_apply = last_update
-    
-    if last_apply is not None:
-        new_uptime = (end-last_apply).total_seconds()
-        if new_uptime < 1:
-            count -= 1
-        else:
-            uptime += new_uptime
+        elif flag == "SPELL_AURA_REMOVED":
+            uptime += (to_dt_simple(timestamp) - start).total_seconds()
+            start = None
     
     return count, uptime
 
@@ -504,7 +521,11 @@ def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
 
     for target_guid, spells in data.items():
         for spell_id, spell_data in spells.items():
-            count, uptime = iter_spell(spell_data, START, END)
+            if spell_data[0][0] != "SPELL_AURA_APPLIED":
+                spell_data.insert(0, ("SPELL_AURA_APPLIED", logs_slice[0]))
+            if spell_data[-1][0] != "SPELL_AURA_REMOVED":
+                spell_data.append(("SPELL_AURA_REMOVED", logs_slice[-1]))
+            count, uptime = iter_spell(spell_data)
             new_auras[target_guid][spell_id] = (count, uptime/DUR)
     
     return new_auras
@@ -515,18 +536,3 @@ def get_filtered_info(data):
         for spell_id, spell_info in AURAS.items()
         if spell_id in data
     }
-
-
-def __test():
-    import logs_main
-    report_name = "21-11-20--22-06--Paletress--Lordaeron"
-    report = logs_main.THE_LOGS(report_name)
-    enc_data = report.get_enc_data()
-    s, f = enc_data["Blood-Queen Lana'thel"][-1]
-    logs = report.get_logs(s, f)
-    q = get_raid_buff_count(logs)
-    q2 = get_auras_uptime(logs, q)
-    print(q2)
-    
-if __name__ == "__main__":
-    __test()
