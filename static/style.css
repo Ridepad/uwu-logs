@@ -1,4 +1,6 @@
 :root {
+  font-size: 1.6vh;
+
   --nav-height: 3rem;
   --background: black;
   --primary-color: hsl(271, 76%, 53%);
@@ -10,34 +12,35 @@
   --link-text-shadow-hover: hsl(0, 100%, 40%);
   --unfocused: hsl(271, 100%, 20%);
   --hover: hsl(271, 100%, 35%);
-  --highlight-color: rgb(24, 24, 24);
-  /* --highlight-alternate-color: rgb(128, 128, 128); */
+  --highlight-color: rgb(12, 12, 12);
   --slider-background: #4F00A9;
-  --table-border: rgb(32, 32, 32);
-  --bottom-row-one: 3rem;
+  --table-border: hsl(0, 0%, 8%);
+  --bottom-row-one: 2rem;
   --bottom-row-two: 7.5vh;
-  --bottom-row-one: 3ch;
-  --bottom-row-two: 6ch;
+  /* --bottom-row-one: 3ch; */
+  --bottom-row-two: 3.5rem;
 }
-
-* {
-  color: gainsboro;
-  font-family: Ubuntu;
-  font-size: 1.6vh;
-  text-decoration: none;
-  font-weight: 500;
-  margin: 0;
-}
-
-@media (min-width: 30em) and (orientation: landscape) {
-  * {
+@media (orientation: landscape) {
+  :root {
     font-size: 2vh;
   }
 }
+* {
+  text-decoration: none;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+body {
+  font-family: Ubuntu;
+  color: gainsboro;
+  background-color: var(--background);
+}
+
 
 /* Hide scrollbar */
 html {
-  background-color: var(--background);
   overflow: none;
   -ms-overflow-style: none; /*IE Edge*/
   scrollbar-width: none;  /*Firefox*/
@@ -48,13 +51,12 @@ html::-webkit-scrollbar {
 
 #home-button {
   text-align: center;
-  font-size: 250%;
   color: var(--third-color);
   padding: 0 1em;
   text-shadow: 0 0 2em silver, 0 0 1em currentColor;
-  animation-name: homebutton;
-  animation-duration: 4s;
-  animation-iteration-count: infinite;
+  /* animation-name: homebutton; */
+  /* animation-duration: 4s; */
+  /* animation-iteration-count: infinite; */
 }
 @keyframes homebutton {
   0%,
@@ -125,19 +127,6 @@ ul {
   padding: 0;
 }
 
-/* SELECTION */
-:is(div, label, #home-button)::-moz-selection {
-  background: none;
-  color:currentColor;
-}
-:is(div, label, #home-button)::-webkit-selection {
-  background: none;
-  color:currentColor;
-}
-:is(div, label, #home-button)::selection {
-  background: none;
-  color:currentColor;
-}
 
 /* HOME PAGE */
 #home-page {
@@ -181,64 +170,57 @@ ul {
 
 nav,
 footer {
-  z-index: 20;
   position: fixed;
   left: 0;
   width: 100%;
   background-color: var(--background);
+  z-index: 20;
 }
 nav {
-  display: grid;
   top: 0;
-  /* height: 4rem; */
-  height: var(--nav-height);
-  /* height: var(--nav-height); */
-  box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
-  /* box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color), 0 2vh var(--background); */
+  display: grid;
+  font-size: 250%;
+  box-shadow:
+    inset 0 -.5rem .5rem -.5rem var(--primary-color),
+    0 .75rem 1.5rem -.5rem var(--primary-color);
 }
 
 #top-nav {
   display: none;
-  width: 100%;
-  background-color: var(--background);
   position: absolute;
-  box-shadow: inset 0 -.5rem .5rem -.5rem var(--primary-color), 0 .75rem 1.5rem -.5rem var(--primary-color);
-}
-#top-nav {
-  top: var(--nav-height);
+  width: 100%;
 }
 #top-nav > a {
   text-align: center;
   width: 100%;
 }
 #top-chkbox {
-  font-size: 250%;
+  position: absolute;
   right: 0;
   bottom: 0;
   padding: 0 1ch;
-  position: absolute;
-}
-#open-top:checked ~ #top-nav {
-  display: grid;
 }
 
-
-#top-nav > a {
-  font-size: 250%;
-  /* text-shadow: 0 0 .1em dimgray; */
+@media (orientation: portrait) {
+  #top-nav {
+    top: var(--nav-height);
+    background-color: var(--background);
+    box-shadow:
+      inset 0 -.5rem .5rem -.5rem var(--primary-color),
+      0 .75rem 1.5rem -.5rem var(--primary-color);
+  }
+  #open-top:checked ~ #top-nav {
+    display: grid;
+  }
 }
-@media (min-width: 30em) and (orientation: landscape) {
+
+@media (orientation: landscape) {
   nav,
   #top-nav {
     display: inline-block;
   }
   #top-chkbox {
     display: none;
-  }
-  #top-nav {
-    top: unset;
-    background-color: unset;
-    box-shadow: unset;
   }
   #top-nav > a {
     margin-left: 2vw;
@@ -247,25 +229,15 @@ nav {
 
 
 footer {
-  padding-top: .2em;
-  padding-bottom: .1em;
-  height: var(--bottom-row-one);
   bottom: 0;
+  height: var(--bottom-row-one);
+  background-color: var(--background);
   box-shadow: inset 0 .5rem 1rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color);
 }
 
-footer,
-#bot-nav {
-  padding: 0;
-  background-color: var(--background);
-}
 #bot-nav {
   display: none;
   grid-auto-flow: row;
-  width: 100%;
-  position: absolute;
-  bottom: var(--bottom-row-one);
-  box-shadow: inset 0 .5rem .5rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color)
 }
 
 #bot-nav > a {
@@ -276,13 +248,13 @@ footer,
   font-size: 125%;
   max-width: 85vw;
 }
-#report-slice a:hover span {
-  color: var(--link-hover);
-}
 #report-slice a span {
   font-size: inherit;
   text-align: left;
   padding-right: .25em;
+}
+#report-slice a:hover span {
+  color: var(--link-hover);
 }
 #slice-name {
   white-space: nowrap;
@@ -295,17 +267,23 @@ footer,
 }
 
 #bot-chkbox {
-  font-size: 150%;
+  position: absolute;
   right: 0;
   top: 0;
   padding: 0 1ch;
-  position: absolute;
+  font-size: 150%;
 }
 #open-bot:checked ~ #bot-nav {
   display: grid;
+  position: absolute;
+  left: 0;
+  bottom: var(--bottom-row-one);
+  width: 100%;
+  background-color: var(--background);
+  box-shadow: inset 0 .5rem .5rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color)
 }
 
-@media (min-width: 30em) and (orientation: landscape) {
+@media (orientation: landscape) {
   footer {
     display: flex;
   }
@@ -322,9 +300,6 @@ footer,
   footer #report-slice a {
     font-size: 150%;
     /* grid-auto-columns: min-content; */
-  }
-  footer ul {
-    padding-left: 1em;
   }
   #bot-chkbox {
     display: none;
@@ -356,7 +331,6 @@ footer,
   background-color: var(--background);
   box-shadow: inset 0 0 .5em var(--primary-color);
   border-radius: .5em;
-
 }
 #filtered-spells-container:focus-within > div {
   display: table;
@@ -423,7 +397,11 @@ footer,
   max-width: 75vw;
   font-size: inherit;
   white-space: nowrap;
-  overflow: clip;
+}
+@media (orientation: portrait) {
+  #fights-container > h1 > a {
+    overflow: clip;
+  }
 }
 
 
@@ -437,7 +415,7 @@ footer,
   left: 75%;
   top: 0;
 }
-@media (min-width: 30em) and (orientation: landscape) {
+@media (orientation: landscape) {
   #fights-container .segments {
     left: 100%;
   }
@@ -478,19 +456,11 @@ footer,
 }
 
 
-#player-info {
-  display: flex;
-  align-items: baseline;
-}
-#warmane-armory-link {
-  margin-left: 3ch;
-}
-
-
 main {
+  position: relative;
   margin-top: calc(var(--nav-height) + 2.5rem);
   margin-bottom: calc(var(--nav-height) + 1rem);
-  position: relative;
+  padding-bottom: 5vh;
 }
 
 #report-main-tables {
@@ -498,7 +468,7 @@ main {
   grid-auto-flow: row;
   justify-content: center;
 }
-@media (min-width: 30em) and (orientation: landscape) {
+@media (orientation: landscape) {
   #report-main-tables {
     grid-auto-flow: column;
   }
@@ -523,11 +493,11 @@ th, td {
 
 th {
   font-weight: 600;
-  background-color: var(--highlight-color);
+  background-color: var(--table-border);
   cursor: pointer;
 }
 tbody > tr:nth-child(odd) > td {
-  background-color: hsl(0, 0%, 5%);
+  background-color: hsl(0, 0%, 3%);
 }
 tbody > tr:hover > td {
   background-color: hsl(285, 100%, 5%);
@@ -541,7 +511,7 @@ td > a {
   text-shadow: 0 0 3rem currentColor;
 }
 td > a:hover {
-  text-shadow: 0 0 3rem currentColor, 0 0 .3em currentColor;
+  text-shadow: 0 0 3rem currentColor, 0 0 1rem currentColor;
 }
 
 
@@ -567,7 +537,9 @@ td > a:hover {
 .add-player-rank .table-has-total tr:first-child .player-cell::before {
   content: '';
 }
-
+td.player-cell {
+  text-align: left;
+}
 .boss-cell {
   min-width: 20ch;
 }
@@ -643,8 +615,10 @@ select {
   border-bottom: .2rem solid currentColor;
 }
 
-select * {
+select > option {
   background-color: var(--background);
+  color: gainsboro;
+  font-size: 50%;
 }
 
 input:not(:checked) + label {
@@ -667,8 +641,6 @@ select:hover {
 button,
 .swap-button {
   cursor: pointer;
-  min-width: 7ch;
-  font-size: 3ch;
   background: var(--background);
   border: .1rem solid var(--primary-color);
   border-radius: .2rem;
@@ -680,26 +652,12 @@ button:hover,
   text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
 }
 
-/* input:checked + label {
-  border-bottom: .2rem solid var(--primary-color);
-  color: var(--secondary-color);
-  color: var(--primary-color);
-}  */
-
 .panel,
 input[type="radio"],
 input[type="checkbox"],
 .target-table td > div {
   display: none;
 }
-
-input:checked + label + div {
-  display: block;
-  position: fixed;
-  left: 0;
-}
-
-
 
 .target-checkbox-label {
   display: inline-block;
@@ -755,6 +713,8 @@ input:checked + label + div {
 .wrap-spell {
   --min-width: 15ch;
   --max-width: 32ch;
+}
+#dmg-done .wrap-spell {
   padding-bottom: 7rem;
 }
 .table-wrap {
@@ -769,7 +729,6 @@ input:checked + label + div {
 }
 .table-wrap :is(.spell-name, .player-cell) {
   width: clamp(var(--min-width), 20vw, var(--max-width));
-  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   position: absolute;
@@ -892,34 +851,6 @@ td:hover > table {
   box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
 }
 
-
-#class-filter {
-  position: fixed;
-  bottom: var(--bottom-row-one);
-  padding: .5em;
-}
-#class-filter:hover > div {
-  display: block;
-}
-#class-filter > h2 {
-  font-size: 150%;
-  padding: .1em;
-  padding-left: 1ch;
-  border: .1em solid var(--primary-color);
-  border-radius: .3em;
-  background-color: var(--background)
-}
-#class-filter > div {
-  display: none;
-  width: max-content;
-  position: absolute;
-  bottom: 100%;
-  left:0;
-  z-index: 1;
-  background-color: var(--background);
-  box-shadow: inset 0 0 .5em var(--primary-color);
-  border-radius: .5em;
-}
 
 
 #aura-controls {
@@ -1096,18 +1027,18 @@ span.value.upper {
 #player-nav {
   display: flex;
 }
-#player-nav li {
+#player-nav > li {
   text-align: center;
   margin: 0;
   padding-block: .25rem;
   padding-inline: .33rem;
 }
-#player-nav a {
-  font-size: 150%;
-}
 
-@media (min-width: 30em) and (orientation: landscape) {
+@media (orientation: landscape) {
   #player-nav li {
     padding-inline: 1rem;
+  }
+  #player-nav {
+    font-size: 150%;
   }
 }
