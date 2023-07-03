@@ -356,12 +356,12 @@ class THE_LOGS:
     def get_all_guids(self):
         return self.get_guids()[0]
 
-    def get_players_guids(self, filter_guids=None, filter_names=None):
+    def get_players_guids(self, whitelist_guids=None, whitelist_names=None):
         players = self.get_guids()[1]
-        if filter_guids is not None:
-            return {k:v for k,v in players.items() if k in filter_guids}
-        elif filter_names is not None:
-            return {k:v for k,v in players.items() if v in filter_names}
+        if whitelist_guids is not None:
+            return {k:v for k,v in players.items() if k in whitelist_guids}
+        elif whitelist_names is not None:
+            return {k:v for k,v in players.items() if v in whitelist_names}
         else:
             return players
 
