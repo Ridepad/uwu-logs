@@ -199,6 +199,17 @@ def sort_by_name_type(targets):
     targets = sorted(targets, key=lambda x: _SORT[x[0][:3]])
     return dict(targets)
 
+def get_dict_int(d: dict, key, default=0):
+    try:
+        v = d[key]
+        try:
+            return int(v)
+        except Exception:
+            return v
+    except KeyError:
+        return default
+
+
 class THE_LOGS:
     def __init__(self, logs_name: str) -> None:
         self.loading = False
@@ -544,11 +555,11 @@ class THE_LOGS:
     
     def parse_request(self, path: str, args: dict) -> dict:
         segment_difficulty = args.get("mode")
-        attempt = args.get("attempt", type=int)
+        attempt = get_dict_int(args, "attempt")
         boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
         ts = self.get_timestamp()
-        sc = args.get("sc", type=int) or 0
-        fc = args.get("fc", type=int) or 0
+        sc = get_dict_int(args, "sc")
+        fc = get_dict_int(args, "fc")
         if sc > 0 and fc < len(ts):
             slice_name = "Custom Slice"
             slice_tries = ""
@@ -556,8 +567,8 @@ class THE_LOGS:
         elif not boss_name:
             slice_name = "Custom Slice"
             slice_tries = "All"
-            s = args.get("s", type=int)
-            f = args.get("f", type=int)
+            s = get_dict_int(args, "s")
+            f = get_dict_int(args, "f")
             if s and f:
                 segments = [[ts[s], ts[f]]]
             else:
