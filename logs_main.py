@@ -431,14 +431,6 @@ class THE_LOGS:
         self.CONTROLLED_UNITS[master_guid] = controlled_units
         return controlled_units
 
-    def guid_to_player_name(self):
-        try:
-            return self.PLAYERS_NAMES
-        except AttributeError:
-            players = self.get_players_guids()
-            self.PLAYERS_NAMES = {v:k for k,v in players.items()}
-            return self.PLAYERS_NAMES
-        
     def get_all_players_pets(self):
         try:
             return self.ALL_PETS
