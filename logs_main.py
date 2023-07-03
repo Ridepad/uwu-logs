@@ -291,12 +291,6 @@ class THE_LOGS:
     def get_fight_duration_total(self, segments):
         return sum(self.get_slice_duration(s, f) for s, f in segments)
 
-    def get_fight_duration_total(self, segments):
-        durations = []
-        for s, f in segments:
-            durations.append(self.get_slice_duration(s, f))
-        return sum(durations)
-
     def get_enc_data(self, rewrite=False):
         try:
             return self.ENCOUNTER_DATA
