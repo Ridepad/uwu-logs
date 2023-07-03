@@ -276,7 +276,8 @@ class THE_LOGS:
         return to_dt_year_precise(now, self.year) - to_dt_year_precise(last, self.year)
     
     def get_slice_first_last_lines(self, s, f):
-        return self.get_logs()[s or 0], self.get_logs()[f or -1]
+        _slice = self.get_logs(s, f)
+        return _slice[0], _slice[-1]
     
     def get_slice_duration(self, s, f):
         slice_ID = f"{s}_{f}"
@@ -286,6 +287,9 @@ class THE_LOGS:
         dur = self.get_timedelta(first_line, last_line).total_seconds()
         self.DURATIONS[slice_ID] = dur
         return dur
+
+    def get_fight_duration_total(self, segments):
+        return sum(self.get_slice_duration(s, f) for s, f in segments)
 
     def get_fight_duration_total(self, segments):
         durations = []
