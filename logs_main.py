@@ -34,8 +34,9 @@ SHIFT = {
 }
 _SORT = {"0xF": 1, "0x0": 2}
 
+UNKNOWN_ICON = "inv_misc_questionmark"
 DEFAULT_ICONS = [
-    "inv_misc_questionmark",
+    UNKNOWN_ICON,
     "ability_rogue_deviouspoisons",
     "ability_hunter_readiness",
     "ability_druid_catform",
@@ -1399,7 +1400,7 @@ class THE_LOGS:
         spell_info = dict(logs_power.SPELLS.get(spell_id, {}))
         if not spell_info:
             spell_info = {
-                "icon": "inv_misc_questionmark",
+                "icon": UNKNOWN_ICON,
                 "name": self.get_spell_name(spell_id)
             }
             LOGGER_UNUSUAL_SPELLS.info(f"{self.NAME} {spell_id} missing info")
@@ -1515,7 +1516,7 @@ class THE_LOGS:
             try:
                 _spells[spell_id] = logs_spells_order.SPELLS3[spell_id]
             except KeyError:
-                _spells[spell_id] = "inv_misc_questionmark"
+                _spells[spell_id] = UNKNOWN_ICON
         _data["SPELL_ICONS"] = _spells
         _data["RDURATION"] = self.get_slice_duration(s, f)
         return _data
