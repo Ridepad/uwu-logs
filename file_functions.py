@@ -12,7 +12,7 @@ def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-def new_folder_path(root, name):
+def new_folder_path(root: str, name: str):
     new_folder = os.path.join(root, name)
     create_folder(new_folder)
     return new_folder
@@ -123,6 +123,22 @@ def get_all_files(path=None, ext=None):
 
 def get_logs_filter(filter_file: str):
     return file_read(filter_file).splitlines()
+
+def get_privated_logs_wrap():
+    _privated = {
+        "reports": file_read(REPORTS_PRIVATE).splitlines(),
+        "last_mtime": os.path.getmtime(REPORTS_PRIVATE),
+    }
+    def inner():
+        current_mtime = os.path.getmtime(REPORTS_PRIVATE)
+        if current_mtime > _privated["last_mtime"]:
+            print('changed')
+            _privated["reports"] = file_read(REPORTS_PRIVATE).splitlines()
+            _privated["last_mtime"] = current_mtime
+        return _privated["reports"]
+    return inner
+
+get_privated_logs = get_privated_logs_wrap()
 
 def get_folders_filter(folders: list[str], filter_str: str=None, private_only=True):
     if filter_str is not None:
