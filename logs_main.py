@@ -298,7 +298,7 @@ class THE_LOGS:
             enc_data_file_name = self.relative_path("ENCOUNTER_DATA.json")
             if rewrite or self.cache_files_missing(enc_data_file_name):
                 logs = self.get_logs()
-                self.ENCOUNTER_DATA = logs_fight_separator.main(logs)
+                self.ENCOUNTER_DATA = logs_fight_separator.Fights(logs).main()
                 file_functions.json_write(enc_data_file_name, self.ENCOUNTER_DATA, indent=None)
             else:
                 enc_data: dict[str, list[tuple[int, int]]]
