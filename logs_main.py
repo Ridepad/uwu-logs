@@ -460,6 +460,9 @@ class THE_LOGS:
             _classes_names: dict[str, str] = self.convert_data_guids_to_names(classes)
             self.CLASSES_NAMES = _classes_names
             return self.CLASSES_NAMES
+
+    def get_classes_with_names_json(self):
+        return json.dumps(self.get_classes_with_names())
         
     
     def get_timestamp(self, rewrite=False):
@@ -546,6 +549,13 @@ class THE_LOGS:
             enc_data = self.get_enc_data()
             self.SEGMENTS = logs_check_difficulty.get_segments(logs, enc_data)
             return self.SEGMENTS
+
+    def get_segments_data_json(self):
+        _data = {
+            convert_to_html_name(fight_name): v
+            for fight_name, v in self.get_segments_data().items()
+        }
+        return json.dumps(_data)
     
     def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
         if not shift_s and not shift_f:
@@ -657,6 +667,22 @@ class THE_LOGS:
                 _spells = file_functions.json_read_no_exception(spells_data_file_name)
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
+
+    def get_spells_with_icons(self):
+        try:
+            if self.icons_set:
+                return self.get_spells()
+        except AttributeError:
+            pass
+
+        _spells = self.get_spells()
+        
+        _icons = logs_spells_order.SPELLS3
+        for spell_id, spell_data in _spells.items():
+            spell_data["icon"] = _icons.get(spell_id, UNKNOWN_ICON)
+        self.icons_set = True
+
+        return _spells
 
     def get_spell_name(self, spell_id):
         _spells = self.get_spells()
@@ -1209,6 +1235,16 @@ class THE_LOGS:
             "TARGETS": dmg_to_target,
             "PLAYERS": players,
         }
+    
+    def heal_test(self, s, f, boss_id=None):
+        slice_ID = f"{s}_{f}"
+        cached_data = self.CACHE['heal_test']
+        if slice_ID in cached_data:
+            return cached_data[slice_ID]
+        
+        logs_slice = self.get_logs(s, f)
+        if boss_id == "008FB5":
+            logs_dmg_heals.heal_gen_target(logs_slice, )
 
     def sort_spell_data_by_name(self, data: dict):
         spells = self.get_spells()
@@ -1271,6 +1307,7 @@ class THE_LOGS:
         
         cached_data[slice_ID] = data
         return data
+
 
     def grabs_info(self, s, f):
         slice_ID = f"{s}_{f}"
@@ -1486,14 +1523,15 @@ class THE_LOGS:
         logs_slice = self.get_logs(s, f)
         players_and_pets = self.get_players_and_pets_guids()
         data = logs_spells_order.get_history(logs_slice, guid, players_and_pets)
-        _spells = self.get_spells()
-        _flags = [flag for flag in FLAG_ORDER if flag in data["FLAGS"]]
-        _other = sorted(set(data["FLAGS"]) - set(_flags))
-        data["FLAGS"] = _flags + _other
+
+        _spells = self.get_spells_with_icons()
         data["SPELLS"] = {
             x: _spells[int(x)]
             for x in data["DATA"]
         }
+        data["RDURATION"] = self.get_slice_duration(s, f)
+        data["NAME"] = self.guid_to_name(guid)
+        data["CLASS"] = self.get_classes()[guid]
 
         cached_data[slice_ID] = data
         return data
@@ -1501,14 +1539,8 @@ class THE_LOGS:
     def get_spell_history_wrap(self, segments: dict, player_name: str):
         s, f = segments[0]
         player = self.name_to_guid(player_name)
-        _data = self.get_spell_history(s, f, player)
-        _spells = {}
-        for spell_id in _data["SPELLS"]:
-            try:
-                _spells[spell_id] = logs_spells_order.SPELLS3[spell_id]
-            except KeyError:
-                _spells[spell_id] = UNKNOWN_ICON
-        _data["SPELL_ICONS"] = _spells
-        _data["RDURATION"] = self.get_slice_duration(s, f)
-        return _data
+        return self.get_spell_history(s, f, player)
+    
+    def get_spell_history_wrap_json(self, segments: dict, player_name: str):
+        return json.dumps((self.get_spell_history_wrap(segments, player_name)), default=list)
     
