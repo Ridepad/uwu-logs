@@ -805,4 +805,3 @@ if (boss) {
 } else {
   BOSS_REMINDER.style.display = "";
 }
-tyl
