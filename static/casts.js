@@ -425,7 +425,7 @@ function makeQuery(name) {
 function new_timestamp(t) {
   const m = ~~(t / 60);
   const s = (~~(t % 60)).toString().padStart(2, "0");
-  const ms = (~~(t % 1 * 1000)).toString().padEnd(3, "0");
+  const ms = (t * 1000 % 1000).toString().padStart(3, "0");
   return `${m}:${s}.${ms}`;
 }
 
