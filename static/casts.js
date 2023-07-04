@@ -18,7 +18,7 @@ const BUTTON_DEL = document.getElementById("button-del");
 
 const TABLE_WRAP = document.querySelector(".table-wrap");
 const SPELL_TOGGLE_HIDDEN = document.getElementById("spell-toggle-hidden");
-const CDN_LINK = "https://icons.wowdb.com/retail/large/";
+const CDN_LINK = "https://icons.wowdb.com/retail/large";
 const AURA_REFRESH = ["SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE", "SPELL_AURA_REFRESH"];
 const AURA_ONOFF = ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"];
 
