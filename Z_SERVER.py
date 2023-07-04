@@ -86,7 +86,7 @@ def render_template_wrap(file: str, **kwargs):
 
 @SERVER.route('/favicon.ico')
 def favicon():
-    response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/x-icon')
     response.cache_control.max_age = 30 * 24 * 60 * 60
     return response
 
