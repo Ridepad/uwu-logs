@@ -417,7 +417,7 @@ class THE_LOGS:
             int(master_guid, 16)
         except ValueError:
             master_guid = self.name_to_guid(master_guid)
-        
+
         if master_guid in self.CONTROLLED_UNITS:
             return self.CONTROLLED_UNITS[master_guid]
         
