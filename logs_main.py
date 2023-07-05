@@ -398,7 +398,7 @@ class THE_LOGS:
                 if guid in full_guid:
                     return p['name']
         
-    def convert_data_guids_to_names(self, data: dict[str]):
+    def convert_dict_guids_to_names(self, data: dict[str]):
         return {
             self.guid_to_name(guid): value
             for guid, value in data.items()
@@ -457,7 +457,7 @@ class THE_LOGS:
             return self.CLASSES_NAMES
         except AttributeError:
             classes = self.get_classes()
-            _classes_names: dict[str, str] = self.convert_data_guids_to_names(classes)
+            _classes_names: dict[str, str] = self.convert_dict_guids_to_names(classes)
             self.CLASSES_NAMES = _classes_names
             return self.CLASSES_NAMES
 
@@ -811,7 +811,7 @@ class THE_LOGS:
         for k, v in total.items():
             total[k] = separate_thousands(v) 
         
-        SPECS = self.convert_data_guids_to_names(SPECS)
+        SPECS = self.convert_dict_guids_to_names(SPECS)
         SPECS = self.report_add_spec_info(SPECS, TABLE)
         for name, (spec_name, spec_icon) in SPECS.items():
             TABLE[name]['spec_name'] = spec_name
@@ -988,9 +988,6 @@ class THE_LOGS:
         cached_data[slice_ID] = data
         return data
     
-    def convert_dict_guids_to_name(self, data: dict):
-        return {self.guid_to_name(guid): v for guid, v in data.items()}
-    
     def sort_data_guids_by_name(self, data: dict):
         return dict(sorted(data.items(), key=lambda x: self.guid_to_name(x[0])))
 
@@ -1025,10 +1022,10 @@ class THE_LOGS:
 
         p_total |= p_value
         p_total = sort_dict_by_value(p_total)
-        p_total = self.convert_dict_guids_to_name(p_total)
+        p_total = self.convert_dict_guids_to_names(p_total)
         
         for spell_id, sources in potions.items():
-            potions[spell_id] = self.convert_dict_guids_to_name(sources)
+            potions[spell_id] = self.convert_dict_guids_to_names(sources)
 
         return {
             "ITEM_INFO": logs_spell_info.ITEM_INFO,
@@ -1074,8 +1071,8 @@ class THE_LOGS:
         self.add_missing_players(auras_count, {})
         self.add_missing_players(auras_uptime, {})
 
-        auras_count_with_names = self.convert_dict_guids_to_name(auras_count)
-        auras_uptime_with_names = self.convert_dict_guids_to_name(auras_uptime_formatted)
+        auras_count_with_names = self.convert_dict_guids_to_names(auras_count)
+        auras_uptime_with_names = self.convert_dict_guids_to_names(auras_uptime_formatted)
 
         filtered_aura_info = logs_spell_info.get_filtered_info(aura_info_set)
 
@@ -1087,7 +1084,7 @@ class THE_LOGS:
 
 
     @running_time
-    def get_spell_count(self, s, f, spell_id_str) -> dict[str, dict[str, int]]:
+    def get_spell_count(self, s, f, spell_id_str):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE['get_spell_count'].setdefault(spell_id_str, {})
         if slice_ID in cached_data:
@@ -1099,44 +1096,44 @@ class THE_LOGS:
         return spells
     
     def spell_count_all(self, segments, spell_id: str):
+        def sort_by_total(data: dict):
+            return dict(sorted(data.items(), key=lambda x: x[1]["Total"], reverse=True))
+        
         spell_id = spell_id.replace("-", "")
         all_spells = self.get_spells()
         if int(spell_id) not in all_spells:
             LOGGER_REPORTS.error(f"{spell_id} not in spells")
             return {
                 "SPELLS": {},
-                "TABS": {},
             }
         
-        spells: dict[str, dict[str, dict[str, int]]] = {}
-
+        spells_data: dict[str, dict[str, dict[str, int]]] = {}
+        spells_data = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        all_targets: list[str] = ["Total", ]
         for s, f in segments:
-            _spells = self.get_spell_count(s, f, spell_id)
-            for flag, _types in _spells.items():
-                _flag = spells.setdefault(flag, {})
-                for _type, names in _types.items():
-                    _t = _flag.setdefault(_type, {})
-                    for name, value in names.items():
-                        _t[name] = _t.get(name, 0) + value
-        
-        spells = {x: spells[x] for x in FLAG_ORDER if x in spells}
+            _segment_data = self.get_spell_count(s, f, spell_id)
+            for flag, sources in _segment_data.items():
+                for source_name, targets in sources.items():
+                    for target_name, value in targets.items():
+                        spells_data[flag][source_name]["Total"] += value
+                        spells_data[flag][source_name][target_name] += value
+                        if target_name not in all_targets:
+                            all_targets.append(target_name)
 
-        for flag_info in spells.values():
-            for sources, sources_info in flag_info.items():
-                flag_info[sources] = sort_dict_by_value(sources_info)
-        
-        tabs = [(flag.lower().replace('_', '-'), flag) for flag in spells]
+        for flag in FLAG_ORDER:
+            if flag in spells_data:
+                spells_data[flag] = sort_by_total(spells_data.pop(flag))
 
-        _spells = self.get_spells()
         s_id = abs(int(spell_id))
-        spell_name = _spells.get(s_id, {}).get('name', '')
-        spell_name = f"{spell_id} {spell_name}"
+        SPELL_DATA = self.get_spells_with_icons()[s_id]
 
         return {
-            "SPELLS": spells,
-            "TABS": tabs,
-            "SPELL_NAME": spell_name,
-            "SPELL_ID": s_id,
+            "SPELLS": spells_data,
+            "TARGETS": all_targets,
+            "SPELL_ID": spell_id,
+            "SPELL_NAME": SPELL_DATA["name"],
+            "SPELL_ICON": SPELL_DATA["icon"],
+            "SPELL_COLOR": SPELL_DATA["color"],
         }
 
 

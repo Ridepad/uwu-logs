@@ -2,45 +2,83 @@
 
 {% block add_style %}
 <style>
-h1 a {
+h2 {
   font-size: 200%;
+  padding-block: .5em;
 }
-.panel section {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
+h2 img {
+  min-width: 1em;
+  max-width: 1em;
+  min-height: 1em;
+  max-height: 1em;
 }
-@media (min-width: 1100px) {
-  .panel section {
-    margin-left: 5rem;
-  }
+h2 a {
+	text-shadow: .1em .1em .5em #5d5d5d;
+}
+h2 a:hover {
+	text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+.table-wrap-wrap {
+  position: absolute;
+  display: none;
+  width: 100%;
+}
+input:checked + label + .table-wrap-wrap {
+  display: block;
+}
+th {
+  height: 4rem;
+}
+th > a {
+	text-shadow: 0 0 3rem currentColor;
 }
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="spells">
+<header>
+  <h2>
+    {% if SPELLS %}
+    <img src="https://icons.wowdb.com/retail/large/{{ SPELL_ICON }}.jpg">
+    <a class="{{ SPELL_COLOR }}" href="https://wotlk.evowow.com/?spell={{ SPELL_ID }}" target="_blank">{{ SPELL_ID }} {{ SPELL_NAME }}</a>
+    {% else %}
+    <a>Spell not found</a>
+    {% endif %}
+  </h2>
+</header>
 <section>
-  <h1><a href="https://wotlk.evowow.com/?spell={{ SPELL_ID }}">{{ SPELL_NAME }}</a></h1>
-  
-  {% for name_css, flag in TABS %}
-  <input id="{{ name_css }}" name="flags-group" type="radio">
-  <label class="tab" for="{{ name_css }}">{{ flag }}</label>
-  <div class="panel">
-    <section>
-      {% for type_, v in SPELLS[flag].items() %}
-      <table class="buffs">
-        <caption>{{ type_ }}</caption>
-        {% for player_name, total in v.items() %}
-        <tr>
-          <td class="boss-cell">
-            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-          </td>
-          <td class="buff-count">{{ total }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-      {% endfor %}
+  {% for flag, sources in SPELLS.items() %}
+  <input id="{{ flag }}" name="flags-group" type="radio">
+  <label class="tab" for="{{ flag }}">{{ flag }}</label>
+  <div class="table-wrap-wrap">
+    <section class="table-wrap wrap-spell">
+      <div>
+        <table>
+          <thead>
+            <tr>
+              <th class="player-cell"></th>
+              {% for target_name in TARGETS %}
+              <th>
+                <a {% if target_name in PLAYER_CLASSES %}class="{{ PLAYER_CLASSES[target_name] }}"{% endif %} href="/reports/{{ REPORT_ID }}/player/{{ target_name }}/{{ QUERY }}">{{ target_name }}</a>
+              </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for player_name, targets in sources.items() %}
+            <tr>
+              <td class="player-cell">
+                <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+              </td>
+              {% for target_name in TARGETS %}
+              <td class="total-cell">{{ targets[target_name] }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </section>
   </div>
   {% endfor %}
