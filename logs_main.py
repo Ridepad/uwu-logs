@@ -892,12 +892,14 @@ class THE_LOGS:
     
     @running_time
     def player_damage_format(self, _data):
-        spell_data = self.get_spells()
-        def spell_name(spell_id):
+        all_spells = self.get_spells_with_icons()
+        def get_spell_info(spell_id):
             try:
                 if spell_id < 0:
-                    return f"{spell_data[-spell_id]['name']} (Pet)"
-                return spell_data[spell_id]['name']
+                    _d = dict(all_spells[-spell_id])
+                    _d["name"] = f"{_d['name']} (Pet)"
+                    return _d
+                return all_spells[spell_id]
             except KeyError:
                 return spell_id
         
@@ -915,9 +917,9 @@ class THE_LOGS:
             for spell_id, d in actual.items()
         }
         actual_sorted = sort_dict_by_value(actual_sum)
-        spell_names = {spell_id: spell_name(spell_id) for spell_id in actual_sorted}
-        spell_colors = self.get_spells_colors(spell_names)
-        
+        all_spells = self.get_spells_with_icons()
+        SPELLS_DATA = {spell_id: get_spell_info(spell_id) for spell_id in actual_sorted}
+
         reduced = _data['reduced']
         reduced_formatted = format_total_data(reduced)
         reduced_percent = {
@@ -934,11 +936,15 @@ class THE_LOGS:
         }
         
         if _data['casts']:
-            dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
-            auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
-            casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
+            dmg_hits = _data['dmg_hits']
+            auras = _data['auras']
+            casts = _data['casts']
+            # dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
+            # auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
+            # casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
             casts = dmg_hits | auras | casts
-            misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
+            misses = _data['misses']
+            # misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
         else:
             casts = {}
             misses = {}
@@ -946,8 +952,7 @@ class THE_LOGS:
 
         return {
             "TARGETS": targets,
-            "NAMES": spell_names,
-            "COLORS": spell_colors,
+            "SPELLS_DATA": SPELLS_DATA,
             "ACTUAL": actual_formatted,
             "ACTUAL_PERCENT": actual_percent,
             "REDUCED": reduced_formatted,

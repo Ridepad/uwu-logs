@@ -13,6 +13,31 @@
 #chart-slice > * {
   font-size: 200%;
 }
+#dmg-done button {
+  padding-inline: 2ch;
+}
+.sliced-control {
+  font-size: 200%;
+  min-width: 10ch;
+}
+img {
+  min-width: 1em;
+  max-width: 1em;
+  min-height: 1em;
+  max-height: 1em;
+}
+#player-info {
+	display: flex;
+	align-items: end;
+  flex-direction: column;
+}
+@media (orientation: landscape) {
+  #player-info {
+    align-items: first baseline;
+    justify-content: space-evenly;
+    flex-direction: row;
+  }
+}
 </style>
 {% endblock add_style %}
 
@@ -39,10 +64,30 @@
   <ul id="player-info">
     <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
     <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
+    <li class="sliced-control">
+      <span>Sliced</span>
+      <select id="sliced-sec">
+        <option value=0 selected>0</option>
+        <option value=1>1</option>
+        <option value=2>2</option>
+        <option value=3>3</option>
+        <option value=5>5</option>
+        <option value=10>10</option>
+        <option value=15>15</option>
+        <option value=20>20</option>
+        <option value=30>30</option>
+      </select>
+      <span>sec</span>
+    </li>
   </ul>
 </section>
+<section>
+  <div>
+    <canvas id="chart"></canvas>
+  </div>
+</section>
 <section id="dmg-done-main" class="table-wrap wrap-spell">
-  {% if NAMES %}
+  {% if SPELLS_DATA %}
   <div class="table-wrap wrap-spell">
     <table>
       <tbody>
@@ -67,15 +112,18 @@
           <th colspan="2">Hit</th>
           <th colspan="3">Crit</th>
         </tr>
-        {% for spell_id, spell_name in NAMES.items() %} 
-        <tr class="{{ spell_id }}">
-          <td class="spell-name"><a class="{{ COLORS[spell_id] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_name }}</a></td>
+        {% for spell_id, spell_data in SPELLS_DATA.items() %} 
+        <tr>
+          <td class="spell-name">
+            <img src="https://icons.wowdb.com/retail/large/{{ spell_data['icon'] }}.jpg">
+            <a class="{{ spell_data['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_data['name'] }}</a>
+          </td>
           <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>
           <td class="total-cell">{{ ACTUAL[spell_id] }}</td>
           <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
           <td class="total-cell">{{ REDUCED[spell_id] }}</td>
-          <td class="count">{{ CASTS[spell_name] }}</td>
-          <td class="count">{{ MISSES[spell_name] }}</td>
+          <td class="count">{{ CASTS[spell_id] }}</td>
+          <td class="count">{{ MISSES[spell_id] }}</td>
           {% for hits, percent in HITS[spell_id] %}
           {% for _count, _avg in hits %}
           <td class="count">{{ _count }}</td>
@@ -106,30 +154,10 @@
         </tr>
       </tfoot>
     </table>
-    {% else %}
-    <p>No data</p>
-    {% endif %}
   </div>
-</section>
-<section>
-  <div>
-    <canvas id="chart"></canvas>
-  </div>
-  <div id="chart-slice">
-    <span>Sliced</span>
-    <select id="sliced-sec">
-      <option value=0 selected>0</option>
-      <option value=1>1</option>
-      <option value=2>2</option>
-      <option value=3>3</option>
-      <option value=5>5</option>
-      <option value=10>10</option>
-      <option value=15>15</option>
-      <option value=20>20</option>
-      <option value=30>30</option>
-    </select>
-    <span>sec</span>
-  </div>
+  {% else %}
+  <p>No data</p>
+  {% endif %}
 </section>
 </main>
 {% endblock the_main %}
