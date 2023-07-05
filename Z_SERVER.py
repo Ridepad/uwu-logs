@@ -237,6 +237,10 @@ def before_request():
 def home():
     return render_template('home.html')
 
+@SERVER.route("/about")
+def about():
+    return render_template('about.html')
+
 # @SERVER.route("/logs_list", methods=['GET', 'POST'])
 @SERVER.route("/logs_list")
 def show_logs_list():
