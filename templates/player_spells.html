@@ -83,7 +83,7 @@ main {
   border: 1px solid var(--table-border);
   background-color: black;
 }
-.spell-row:nth-of-type(even) > div {
+.casts-section .spell-row:nth-of-type(even) > div {
 	background-color: hsl(0, 0%, 5%);
 }
 
@@ -186,58 +186,71 @@ spells-fav > spell-row:last-of-type > * {
   min-width: 11ch;
 }
 
-.player-name {
-  font-size: 300%;
+.char-0 {
+  --custom-bg-color: hsl(0, 0%, 0%);
 }
-
-.player-info {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
+.char-1 {
+  --custom-bg-color: hsl(271, 100%, 10%);
 }
-
-#spells-fav > .char-0 > * {
-  background-color: hsl(0, 0%, 0%);
+.char-2 {
+  --custom-bg-color: hsl(0, 100%, 10%);
 }
-#spells-fav > .char-1 > * {
-  background-color: hsl(271, 100%, 10%);
-}
-#spells-fav > .char-2 > * {
-  background-color: hsl(0, 100%, 10%);
+#spells-fav > spell-row > div {
+  background-color: var(--custom-bg-color);
 }
 .char-tab {
-  display: block;
-  font-size: 300%;
-  max-width: 30ch;
+  background-color: var(--custom-bg-color);
 }
-.char-report-id {
-  display: block;
-}
+
 #tabs-wrap {
-  display: grid;
-  grid-column-gap: 1rem;
-  grid-auto-flow: column;
+  display: flex;
   padding-bottom: 1rem;
-}
-#tabs-wrap > div {
-  display: grid;
-  border: 2px solid var(--primary-color);
-  border-radius: 1rem 1rem auto auto;
-}
-.char-report-id {
-  grid-column: span 3;
+  row-gap: 1rem;
+  flex-flow: column;
 }
 .char-tab {
-  grid-column: span 4;
+  display: block;
+  font-size: 300%;
+  border: 2px solid var(--primary-color);
 }
-@media (orientation: portrait) {
+.char-tab a {
+  color: var(--link-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow);
+}
+.char-tab a:hover {
+  color: var(--link-hover);
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+.char-tab > div {
+	display: flex;
+	justify-content: space-between;
+  font-size: 40%;
+  align-items: end;
+  row-gap: 1rem;
+}
+.button-close {
+  width: 3ch;
+}
+.char-report-id {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+  max-width: 67%;
+}
+@media (orientation: landscape) {
   #tabs-wrap {
-    grid-auto-flow: row;
+	  justify-content: space-between;
+    flex-flow: row wrap;
+  }
+  .char-tab {
+    min-width: 30%;
   }
 }
+
 #add-character {
   font-size: 350%;
 }
+
 dialog {
   background-color: var(--background);
   border: none;
@@ -250,6 +263,7 @@ dialog {
 dialog select {
   font-size: 200%;
 }
+
 #boss-reminder {
   font-size: 500%;
 }

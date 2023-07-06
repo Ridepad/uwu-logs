@@ -34,6 +34,7 @@ const INPUT_REPORT_ID = document.getElementById("input-report-id");
 const BUTTON_FETCH_SEGMENTS = document.getElementById("fetch-report-slices");
 const BUTTON_CONFIRM = document.getElementById("button-confirm");
 const BUTTON_CANCEL = document.getElementById("button-cancel");
+const HTML_MAIN = document.querySelector("main");
 
 const DEFAULT_COLORS = {
   "SWING_DAMAGE": "#DCDCDC",
@@ -456,21 +457,33 @@ class Character {
     CASTS_SECTION_WRAP.appendChild(this.CASTS_SECTION);
     this.REPORT_ID = report_id;
     this.NAME = name;
-    this.TAB_N = CHARACTERS.length;
-    CHARACTERS.push(this);
+
+    for (let i=0; i<=CHARACTERS.length+1; i++) {
+      if (CHARACTERS[i] === undefined) {
+        console.log('char', i, CHARACTERS[i]);
+        this.TAB_N = i;
+        CHARACTERS[i] = this;
+        break
+      }
+    }
     
     const req = new XMLHttpRequest();
     req.onreadystatechange = () => {
       if (req.status != 200 || req.readyState != 4) return;
       
-      this.PARSED_DATA = req.response ? JSON.parse(req.response) : {};
+      const PARSED_DATA = req.response ? JSON.parse(req.response) : {};
 
-      this.CLASS = this.PARSED_DATA.CLASS;
+      console.log(this.PARSED_DATA);
+      this.SPELLS = PARSED_DATA.SPELLS;
+      this.CASTS_DATA = PARSED_DATA.DATA;
+
+      Character.PLAYER_CLASS = Character.PLAYER_CLASS ?? PARSED_DATA.CLASS
       
-      this.DURATION = parseFloat(this.PARSED_DATA.RDURATION);
+      this.DURATION = parseFloat(PARSED_DATA.RDURATION);
       this.WIDTH = `calc(var(--mult) * ${this.DURATION*10}px + 2px)`;
       
-      setTimeout(() => check_timeline(this.DURATION));      
+      setTimeout(() => reveal_new_flags(PARSED_DATA.FLAGS));
+      setTimeout(() => check_timeline(this.DURATION));
       setTimeout(() => this.new_character());
     }
     req.open("POST", `/reports/${report_id}/casts/`);
@@ -537,9 +550,6 @@ class Character {
   }
 
   new_character() {
-    console.log(this.PARSED_DATA);
-    this.SPELLS = this.PARSED_DATA.SPELLS;
-    this.CASTS_DATA = this.PARSED_DATA.DATA;
 
     this.SPELLS_MAIN = document.createElement("spells-main");
     this.SPELLS_MAIN.className = "casts-section-main";
@@ -554,8 +564,6 @@ class Character {
     this.CASTS_SECTION.setAttribute("data-tab", this.TAB_N);
 
     this.add_spell_rows();
-
-    reveal_new_flags(this.PARSED_DATA.FLAGS);
 
     toggle_aura_duration_wrap();
     init_flag_filter();
@@ -590,7 +598,6 @@ class Character {
     }
   }
   new_tab() {
-    const wrap = document.createElement("div");
     const input = document.createElement("input");
     input.id = `char-${this.TAB_N}-tab`;
     input.type = "radio";
@@ -599,30 +606,64 @@ class Character {
       this.CASTS_SECTION.style.display = input.checked ? "" : "none";
       this.hide_other();
     });
-    wrap.appendChild(input);
+    input.checked = true;
 
     const label = document.createElement("label");
-    label.className = "char-tab";
+    label.classList.add("char-tab");
+    label.classList.add("char-tab");
+    label.classList.add(`char-${this.TAB_N}`);
     label.htmlFor = input.id;
-    label.textContent = this.NAME;
-    wrap.appendChild(label);
 
+    const report_link_wrap = document.createElement("span");
+    report_link_wrap.className = "char-report-id";
     const report_link = document.createElement("a");
-    report_link.className = "char-report-id";
     report_link.target = "_blank";
     report_link.href = `/reports/${this.REPORT_ID}`;
     report_link.textContent = this.REPORT_ID;
-    wrap.appendChild(report_link);
+    report_link_wrap.appendChild(report_link)
 
     const armory_link = document.createElement("a");
     armory_link.className = "warmane-armory-link";
     armory_link.target = "_blank";
-    const SERVER = this.REPORT_ID.split("--").at(-1);
+    const SERVER = this.REPORT_ID.split("--")[3];
     armory_link.href = `http://armory.warmane.com/character/${this.NAME}/${SERVER}`;
     armory_link.textContent = "Armory⇗";
-    wrap.appendChild(armory_link);
 
-    TABS_WRAP.insertBefore(wrap, BUTTON_ADD_CHARACTER);
+    const close = document.createElement("button");
+    close.className = "button-close";
+    close.textContent = "X";
+    close.addEventListener("click", () => {
+      CASTS_SECTION_WRAP.removeChild(this.CASTS_SECTION);
+      console.log('removed', this.CASTS_SECTION)
+      
+      TABS_WRAP.removeChild(this.TAB_INPUT);
+      console.log('removed', this.TAB_INPUT)
+      
+      TABS_WRAP.removeChild(this.TAB_LABEL);
+      console.log('removed', this.TAB_LABEL)
+      
+      for (let child of Array.from(SECTION_FAV.children)) {
+        if (child.getAttribute("data-tab-n") == this.TAB_N) {
+          console.log('removed', child)
+          SECTION_FAV.removeChild(child);
+        }
+      }
+      CHARACTERS[this.TAB_N] = undefined;
+    });
+
+    const tab_nav = document.createElement("div");
+    tab_nav.appendChild(report_link_wrap);
+    tab_nav.appendChild(armory_link);
+    tab_nav.appendChild(close);
+    label.appendChild(tab_nav);
+    label.append(this.NAME);
+
+    this.TAB_INPUT = input;
+    this.TAB_LABEL = label;
+
+    // TABS_WRAP.insertBefore(tab_nav, BUTTON_ADD_CHARACTER);
+    TABS_WRAP.insertBefore(input, BUTTON_ADD_CHARACTER);
+    TABS_WRAP.insertBefore(label, BUTTON_ADD_CHARACTER);
   }
   hide_other() {
     for (let character of CHARACTERS) {
@@ -752,7 +793,7 @@ function get_report_slices() {
     const parsed_json = JSON.parse(response);
     
     for (let player_name in parsed_json) {
-      if (parsed_json[player_name] == CHARACTERS[0].CLASS) {
+      if (parsed_json[player_name] == Character.PLAYER_CLASS) {
         SELECT_PLAYERS.appendChild(newOption(player_name, player_name))
       }
     }
