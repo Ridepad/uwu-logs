@@ -98,29 +98,33 @@ def class_icons():
 
 @SERVER.errorhandler(404)
 def method404(e):
+    response = ""
     if request.method == 'GET':
-        return render_template("404.html")
-    return '', 404
+        response = render_template("404.html")
+    return response, 404
 
 @SERVER.errorhandler(405)
 def method405(e):
+    response = ""
     if request.method == 'GET':
-        return render_template("404.html")
-    return '', 405
+        response = render_template("404.html")
+    return response, 405
 
 @SERVER.errorhandler(429)
-def method429(e):
+def method429(e: TooManyRequests):
     retry_in = e.retry_after - datetime.now()
+    response = str(retry_in)
     if request.method == 'GET':
-        return render_template("429.html", retry_in=retry_in)
-    return str(retry_in), 405
+        response = render_template("429.html", retry_in=retry_in)
+    return response, 429
 
 @SERVER.errorhandler(500)
 def method500(e):
     LOGGER_CONNECTIONS.exception(f"{request.remote_addr:>15} | {request.method:<7} | {get_incoming_connection_info()}")
+    response = ""
     if request.method == 'GET':
-        return render_template("500.html")
-    return '', 500
+        response = render_template("500.html")
+    return response, 500
 
 
 def __cleaner():
