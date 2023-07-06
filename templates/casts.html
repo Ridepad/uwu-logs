@@ -163,6 +163,13 @@ spell-cleu {
   bottom: 100%;
   transform: translate(-50%, 0);
 }
+#spells-fav aside {
+  font-size: 200%;
+  max-width: 75vw;
+}
+#spells-fav aside:not(:only-child) {
+  display: none;
+}
 
 spells-hide > spell-row:first-of-type > * {
  border-top: 1px solid var(--primary-color);
@@ -171,6 +178,7 @@ spells-hide > spell-row:first-of-type > * {
 spells-fav > spell-row:last-of-type > * {
  border-bottom: 1px solid var(--primary-color);
 }
+
 
 #aura-controls {
   position: absolute;
@@ -307,7 +315,16 @@ dialog select {
 <section class="table-wrap wrap-spell" style="display: none;">
   <div id="casts-section-wrap">
     <div id="timeline-ruler"></div>
-    <div id="spells-fav"></div>
+    <div id="spells-fav">
+      <aside>
+        <p>
+          To add spells to compare - hover spell names below and click ▲
+        </p>
+        <p>
+          You can also hide spells by clicking ✖ next to spell name
+        </p>
+      </aside>
+    </div>
   </div>
 </section>
 <aside id="the-tooltip" style="display: none">
