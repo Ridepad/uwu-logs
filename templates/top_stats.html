@@ -200,7 +200,7 @@ table {
         <tbody id="stats-tbody">
           {% for spec_info in SPECS_BASE %}
           <tr class="stats-cell-row {{ spec_info['class_html'] }}" id="{{ spec_info['spec_html'] }}" data-class="{{ spec_info['class_name'] }}" data-spec="{{ spec_info['spec_name'] }}">
-            <td class="stats-cell-name" title="{{ spec_info['class_name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spec_info['icon'] }}.jpg">{{ spec_info['spec_name']  }}</td>
+            <td class="stats-cell-name" title="{{ spec_info['class_name'] }}"><img src="/static/icons/{{ spec_info['icon'] }}.jpg">{{ spec_info['spec_name']  }}</td>
             <td class="stats-cell-data"></td>
           </tr>
           {% endfor %}

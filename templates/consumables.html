@@ -29,7 +29,7 @@ td {
             <th class="player-cell"></th>
             <th title="Total"></th>
             {% for spell_id, _info in ITEM_INFO.items() %}
-            <th title="{{ _info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ _info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+            <th title="{{ _info['name'] }}"><img src="/static/icons/{{ _info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
             {% endfor %}
           </tr>
         </thead>

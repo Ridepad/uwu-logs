@@ -40,7 +40,7 @@ th > a {
 <header>
   <h2>
     {% if SPELLS %}
-    <img src="https://icons.wowdb.com/retail/large/{{ SPELL_ICON }}.jpg">
+    <img src="/static/icons/{{ SPELL_ICON }}.jpg">
     <a class="{{ SPELL_COLOR }}" href="https://wotlk.evowow.com/?spell={{ SPELL_ID }}" target="_blank">{{ SPELL_ID }} {{ SPELL_NAME }}</a>
     {% else %}
     <a>Spell not found</a>

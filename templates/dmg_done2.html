@@ -119,7 +119,7 @@ img {
         {% for spell_id, spell_data in SPELLS_DATA.items() %} 
         <tr>
           <td class="spell-name">
-            <img src="https://icons.wowdb.com/retail/large/{{ spell_data['icon'] }}.jpg">
+            <img src="/static/icons/{{ spell_data['icon'] }}.jpg">
             <a class="{{ spell_data['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_data['name'] }}</a>
           </td>
           <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>

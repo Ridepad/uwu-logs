@@ -17,7 +17,7 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    FLAG_ORDER, ICON_CDN_LINK, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
+    FLAG_ORDER, ICONS_DIR, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
     STATIC_DIR, T_DELTA, TOP_DIR
 )
 
@@ -98,6 +98,10 @@ def class_icons():
 
 @SERVER.errorhandler(404)
 def method404(e):
+    if SERVER.debug and request.path.endswith(".jpg"):
+        # handled by nginx
+        return send_from_directory(ICONS_DIR, os.path.basename(request.path), mimetype='image/jpeg')
+
     response = ""
     if request.method == 'GET':
         response = render_template("404.html")
@@ -346,7 +350,6 @@ def report_page(report_id):
 
     return render_template_wrap(
         'report_main.html', **default_params, **data,
-        ICON_CDN_LINK=ICON_CDN_LINK,
     )
 
 @SERVER.route("/reports/<report_id>/download")

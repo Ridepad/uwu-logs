@@ -55,7 +55,7 @@ input:checked + label + section {
             <th class="player-cell">.</th>
             <th class="total">TOTAL</th>
             {% for spell_id, spell_info in SPELLS[power_name].items() %}
-            <th title="{{ spell_info['name'] }}"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+            <th title="{{ spell_info['name'] }}"><img src="/static/icons/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
             {% endfor %}
           </tr>
         </thead>
