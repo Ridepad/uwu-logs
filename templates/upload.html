@@ -92,9 +92,9 @@
     <li>- Use <a href="https://wago.io/9Okfx9zrS" target="_blank">weakauras</a> instead to never forget to start logging</li>
     <li>- You can even <span>/reload</span> mid pull with this wa and it'll continue logging</li>
     <li>2. Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
-    <li>3. Archive it (supported formates: <span>.7z</span> or <span>.zip</span>)</li>
-    <li style="color: crimson;">- Don't rename files to .zip/.7z, create archives from 0.</li>
-    <li style="color: goldenrod;">- Make sure to archive only <span>.txt</span> file without any folders.</li>
+    <li>3. Archive it (supports every archive format now)</li>
+    <li style="color: crimson;">- Don't rename text files to .zip/.7z/etc., create archives from 0.</li>
+    <li style="color: goldenrod;">- Preferably archive only <span>.txt</span> file without any folders to prevent bugs.</li>
     <li>4. Upload the archive above</li>
   </ul>
   <img src="/static/upload_guide.png">
@@ -102,22 +102,23 @@
   <ul>
     <li>Combatlog is logged into the same file always</li>
     <li>After upload, delete/move/rename <span>WoWCombatLog.txt</span> to keep it fresh</li>
+    <li>Don't let log file exceed 4GB, it will be rewritten in a weird way</li>
     <li>Use <a href="https://www.7-zip.org/" target="_blank">7zip</a> with <a href="https://i.imgur.com/0xznLXP.png" target="_blank">PPMd</a> compression for lower archiving time and file size</li>
     <li>
       <table>
         <tr style="text-align: center;">
           <th>1GB Logs</th>
-          <th>7z</th>
-          <th>Zip</th>
+          <th>Speed</th>
+          <th>Size</th>
         </tr>
         <tr>
-          <td>Speed</td>
+          <td>7z</td>
           <td>20 sec</td>
-          <td>75 sec</td>
+          <td>30 MB</td>
         </tr>
         <tr>
-          <td>Size</td>
-          <td>30 MB</td>
+          <td>Zip</td>
+          <td>75 sec</td>
           <td>90 MB</td>
         </tr>
       </table>
