@@ -15,6 +15,7 @@ UPLOADS_DIR = file_functions.new_folder_path(PATH_DIR, "uploads")
 UPLOADED_DIR = file_functions.new_folder_path(UPLOADS_DIR, "uploaded")
 LOGGERS_DIR = file_functions.new_folder_path(PATH_DIR, "_loggers")
 STATIC_DIR = file_functions.new_folder_path(PATH_DIR, 'static')
+ICONS_DIR = file_functions.new_folder_path(PATH_DIR, '_icons')
 REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
 REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
 
