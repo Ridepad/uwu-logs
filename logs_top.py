@@ -111,8 +111,7 @@ def make_report_top(name: str, rewrite=False):
     
     pc = perf_counter()
     top = {}
-    segments = report.get_segments_data()
-    for boss_name, boss_segments in segments.items():
+    for boss_name, boss_segments in report.SEGMENTS.items():
         boss_top = top.setdefault(boss_name, {})
         for kill_segment in find_kill(boss_segments):
             diff = kill_segment['diff']
