@@ -110,6 +110,9 @@ def convert_to_dps(data: dict[int, int], refresh_window=None):
     return convert_to_slice_dps_custom(data, int(refresh_window))
 
 def convert_keys(data: dict[str, int]):
+    if not data:
+        return
+    
     FIRST_KEY = to_int(list(data)[0])
     for k in list(data):
         new_key = to_int(k) - FIRST_KEY
