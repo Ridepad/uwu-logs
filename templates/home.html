@@ -4,38 +4,52 @@
 li {
   padding-left: 3rem;
 }
+video {
+  width: 50%;
+}
+@media (orientation: portrait) {
+  video {
+    width: 100%;
+  }
+}
+main {
+  text-align: center;
+}
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="home-page">
   <h1>Welcome to UwU Logs</h1>
-  <section style="max-width: 100vmin;">
-    <h2>
-      <p>UwU Logs is a World of Warcraft combat log parser.</p>
-      <p>Supports any Wrath of the Lich King (3.3.5) server.</p>
-    </h2>
-    <h2>Features include</h2>
-    <ul>
-      <li>Damage top</li>
-      <li>Detailed damage/heal/damage taken breakdown</li>
-      <li>Actions timeline</li>
-      <li>Useful damage</li>
-      <li>Consumables</li>
-      <li>Deaths</li>
-      <li>Valk grabs</li>
-      <li>Player auras</li>
-      <li>Comparison between same classes</li>
-      <li>PvE Stats</li>
-    </ul>
-    <h2>Soon<span>TM</span></h2>
-    <ul>
-      <li>All fights history by player</li>
-      <li>Logs search (filter forms - guid, spell, etc.)</li>
-      <li>Friendly fire: Bloodbolt Splash, UCM, bpc vortex</li>
-      <li>Self harm: UCM, Chilled to the Bone</li>
-      <li>Top: no externals</li>
-    </ul>
-  </section>
+  <p>UwU Logs is a World of Warcraft combat log parser.</p>
+  <p>Supports any Wrath of the Lich King (3.3.5) server.</p>
+  <h2>New feature - actions comparison</h2>
+  <p>
+    Compare casts/damage/auras between same class regardless of raid or server
+  </p>
+  <video controls>
+    <source src="/static/casts.mp4" type="video/mp4">
+  </video>
+  <h2>Features include</h2>
+  <ul>
+    <li>Damage top</li>
+    <li>Detailed damage/heal/damage taken breakdown</li>
+    <li>Actions timeline</li>
+    <li>Useful damage</li>
+    <li>Consumables</li>
+    <li>Deaths</li>
+    <li>Valk grabs</li>
+    <li>Player auras</li>
+    <li>Comparison between same classes</li>
+    <li>PvE Stats</li>
+  </ul>
+  <h2>Soon<span>TM</span></h2>
+  <ul>
+    <li>All fights history by player</li>
+    <li>Logs search (filter forms - guid, spell, etc.)</li>
+    <li>Friendly fire: Bloodbolt Splash, UCM, bpc vortex</li>
+    <li>Self harm: UCM, Chilled to the Bone</li>
+    <li>Top: no externals</li>
+  </ul>
 </main>
 {% endblock the_main %}
