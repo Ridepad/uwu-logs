@@ -31,8 +31,6 @@ table {
 }
 .stats-cell-data {
   position: relative;
-  vertical-align: middle;
-  margin-top: auto;
   color: inherit;
 }
 .stats-cell-data div {
@@ -61,12 +59,12 @@ table {
   background-color: orange;
 }
 .stats-cell-data :is(.p10, .max) {
-  height: .5rem;
-  transform: translate(0, -50%);
+  height: .5em;
+  transform: translateY(-50%);
 }
 .stats-cell-data .passthrudiv {
   height: .2em;
-  transform: translate(0, -200%);
+  transform: translateY(-200%);
 }
 
 #chart-timeline-wrap {
@@ -412,9 +410,9 @@ function update_row(row, data) {
     _values[k] = _pos;
   }
 
-  let a = Array.from(Object.keys(data)).sort((a, b) => b > a);
-  for (let i=1; i<a.length-3; i++) {
-    _divs[a[i]].style.width = to_width_percent(_values[a[i-1]] - _values[a[i]]);
+  const a = Array.from(Object.keys(data)).filter(e => e[0] == "p").sort()
+  for (let i=1; i<a.length-1; i++) {
+    _divs[a[i]].style.width = to_width_percent(_values[a[i+1]] - _values[a[i]]);
   }
 
   const passthrudiv = new_div("passthrudiv", _values["p10"]);
