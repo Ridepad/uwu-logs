@@ -179,7 +179,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 spell_info = SPELL_BOOK[other[0]]
                 players_classes[sGUID] = CLASSES[spell_info[0]]
                 players_skip.add(sGUID)
-                LOGGER_REPORTS.info(f" NEW CLASS | {sName:>12} | {line}")
+                LOGGER_REPORTS.info(f" NEW CLASS | {sName:12} | {line}")
 
         if spell_id == "47468": # Claw
             if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
