@@ -8,73 +8,15 @@ from constants import LOGGER_UPLOADS, LOGS_RAW_DIR, PATH_DIR, get_ms_str, logs_e
 
 ARCHIVE_INFO_LABELS = ["date", "time", "attr", "size", "compressed", "name"]
 
-def get_7zip_linux():
-    executable = "7zz"
-    executable_path = os.path.join(PATH_DIR, executable)
-    if os.path.isfile(executable_path):
-        return executable_path
-
-    print("Downloading 7z...")
-    temp_archive_name = os.path.join(PATH_DIR, "7z.tar.xz")
-    cmd = ["wget", "https://www.7-zip.org/a/7z2201-linux-x64.tar.xz", "-O", temp_archive_name]
-    code = subprocess.call(cmd)
-    if code != 0:
-        LOGGER_UPLOADS.error(f'Error downloading 7z with code: {code}')
-        return
-    
-    cmd = ["tar", "-xf", temp_archive_name, executable]
-    code = subprocess.call(cmd)
-    if code != 0:
-        LOGGER_UPLOADS.error(f'Error extracting 7z with code: {code}')
-        return
-    
-    os.remove(temp_archive_name)
-    
-    return executable_path
-
-def get_7zip_windows():
-    executable = "7za.exe"
-    executable_path = os.path.join(PATH_DIR, executable)
-    if os.path.isfile(executable_path):
-        return executable_path
-    
-    print("Downloading 7z...")
-    temp_archive_name = os.path.join(PATH_DIR, "7z.zip")
-    cmd = ["powershell", "-command", "wget", "https://www.7-zip.org/a/7za920.zip", "-O", temp_archive_name]
-    code = subprocess.call(cmd)
-    if code != 0:
-        LOGGER_UPLOADS.error(f'Error downloading 7z with code: {code}')
-        return
-    
-    cmd = ["tar", "-xf", temp_archive_name, executable]
-    code = subprocess.call(cmd)
-    if code != 0:
-        LOGGER_UPLOADS.error(f'Error extracting 7z with code: {code}')
-        return
-    
-    os.remove(temp_archive_name)
-
-    return executable_path
-
-def get_7z_path():
-    path_7z = None
-    def inner():
-        nonlocal path_7z
-        if path_7z is not None and os.path.isfile(path_7z):
-            pass
-        elif platform.startswith("linux"):
-            path_7z = get_7zip_linux()
-        elif platform == "win32":
-            path_7z = get_7zip_windows()
-        else:
-            raise RuntimeError("Unsupported OS")
-        return path_7z
-    return inner
-
-get_7z_path = get_7z_path()
+if platform.startswith("linux"):
+    EXE_7Z = os.path.join(PATH_DIR, "7zz")
+elif platform == "win32":
+    EXE_7Z = os.path.join(PATH_DIR, "7z.exe")
+else:
+    raise RuntimeError("Unsupported OS")
 
 def get_archive_info(full_archive_path):
-    cmd_list = [get_7z_path(), "l", full_archive_path]
+    cmd_list = [EXE_7Z, "l", full_archive_path]
     with subprocess.Popen(cmd_list, stdout=subprocess.PIPE) as p:
         try:
             return p.stdout.read().decode().splitlines()
@@ -117,7 +59,7 @@ def get_extracted_file(upload_dir: str):
     
 def extract(full_archive_path, upload_dir, file_name):
     pc = perf_counter()
-    cmd = [get_7z_path(), 'e', full_archive_path, f"-o{upload_dir}", "-y", "--", file_name]
+    cmd = [EXE_7Z, 'e', full_archive_path, f"-o{upload_dir}", "-y", "--", file_name]
     subprocess.call(cmd)
     extracted_file = get_extracted_file(upload_dir)
     if not extracted_file:
@@ -177,7 +119,7 @@ def save_raw_logs(logs_id: str, upload_dir: str, forced=False):
         os.remove(archive_path)
     
     pc = perf_counter()
-    cmd = [get_7z_path(), 'a', archive_path, logs_txt_file, '-m0=PPMd', '-mo=11', '-mx=9']
+    cmd = [EXE_7Z, 'a', archive_path, logs_txt_file, '-m0=PPMd', '-mo=11', '-mx=9']
     subprocess.call(cmd)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {logs_id} | Saved raw')
 
