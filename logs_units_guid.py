@@ -22,38 +22,114 @@ FLAG_SKIP = {"PARTY_KILL", "UNIT_DIED"}
 FLAG_PET_AGGRO = {"SWING_DAMAGE", "SPELL_DAMAGE"}
 NAMES_SKIP = {"nil", "Unknown"}
 PET_FILTER_SPELLS = {
-    "43771", # Well Fed
+"43771", # Well Fed (Spiced Mammoth Treats)
+"65247", # Well Fed (Kibler's Bits)
 
-    "34952", # Go for the Throat (Rank 1)
-    "34953", # Go for the Throat (Rank 2)
-    "53434", # Call of the Wild
-    "48990", # Mend Pet
-    "70728", # Exploit Weakness
-    "1539", # Feed Pet
-    "70893", # Culling the Herd
-    "64495", # Furious Howl
-    "54216", # Master's Call
+# from dk
+"48743", # Death Pact
+"51328", # Corpse Explosion
+"63560", # Ghoul Frenzy
 
-    "63560", # Ghoul Frenzy
-    "48743", # Death Pact
+# from warlock
+"25228", # Soul Link
+"23720", # Blessing of the Black Book
+"32553", # Life Tap
+"32554", # Mana Feed - Drain Mana
+"32752", # Summoning Disorientation
+"54181", # Fel Synergy
+"54607", # Soul Leech Mana
+"59092", # Dark Pact
+"70840", # Devious Minds
+"755",   # Health Funnel 1
+"3698",  # Health Funnel 2
+"3699",  # Health Funnel 3
+"3700",  # Health Funnel 4
+"11693", # Health Funnel 5
+"11694", # Health Funnel 6
+"11695", # Health Funnel 7
+"27259", # Health Funnel 8
+"47856", # Health Funnel 9
+"16569", # Health Funnel
+"40671", # Health Funnel
+"60829", # Health Funnel
+# from pet
+"35696", # Demonic Knowledge
+"47283", # Empowered Imp
+"7812",  # Sacrifice 1
+"19438", # Sacrifice 2
+"19440", # Sacrifice 3
+"19441", # Sacrifice 4
+"19442", # Sacrifice 5
+"19443", # Sacrifice 6
+"27273", # Sacrifice 7
+"47985", # Sacrifice 8
+"47986", # Sacrifice 9
+# Imp
+"23759", # Master Demonologist
+"23826", # Master Demonologist
+"23827", # Master Demonologist
+"23828", # Master Demonologist
+"23829", # Master Demonologist
+# Voidwalker
+"23760", # Master Demonologist
+"23841", # Master Demonologist
+"23842", # Master Demonologist
+"23843", # Master Demonologist
+"23844", # Master Demonologist
+# Succubus
+"23761", # Master Demonologist
+"23833", # Master Demonologist
+"23834", # Master Demonologist
+"23835", # Master Demonologist
+"23836", # Master Demonologist
+# Felhunter
+"23762", # Master Demonologist
+"23837", # Master Demonologist
+"23838", # Master Demonologist
+"23839", # Master Demonologist
+"23840", # Master Demonologist
+# Felguard
+"35702", # Master Demonologist
+"35703", # Master Demonologist
+"35704", # Master Demonologist
+"35705", # Master Demonologist
+"35706", # Master Demonologist
 
-    "35706", # Master Demonologist
-    "35696", # Demonic Knowledge
-    "25228", # Soul Link
-    "54181", # Fel Synergy
-    "32553", # Life Tap
-    "70840", # Devious Minds
-    "755", # Health Funnel (Rank 1)
-    "3698", # Health Funnel (Rank 2)
-    "3699", # Health Funnel (Rank 3)
-    "3700", # Health Funnel (Rank 4)
-    "11693", # Health Funnel (Rank 5)
-    "11694", # Health Funnel (Rank 6)
-    "11695", # Health Funnel (Rank 7)
-    "27259", # Health Funnel (Rank 8)
-    "47856", # Health Funnel (Rank 9)
-    "16569", # Health Funnel?
-    "60829", # Health Funnel?
+# from hunter
+"1002", # Eyes of the Beast
+"1539", # Feed Pet
+"19574", # Bestial Wrath
+"19577", # Intimidation
+"34952", # Go for the Throat 1
+"34953", # Go for the Throat 2
+"61669", # Aspect of the Beast
+"68130", # Greatness (4T9)
+"70728", # Exploit Weakness
+"136",   # Mend Pet 1
+"3111",  # Mend Pet 2
+"3661",  # Mend Pet 3
+"3662",  # Mend Pet 4
+"13542", # Mend Pet 5
+"13543", # Mend Pet 6
+"13544", # Mend Pet 7
+"27046", # Mend Pet 8
+"48989", # Mend Pet 9
+"48990", # Mend Pet 10
+"33976", # Mend Pet
+# from pet
+"53434", # Call of the Wild
+"57475", # Kindred Spirits
+"53412", # Invigoration
+"53517", # Roar of Recovery
+"70893", # Culling the Herd
+"19579", # Spirit Bond 1
+"24529", # Spirit Bond 2
+"24604", # Furious Howl 1
+"64491", # Furious Howl 2
+"64492", # Furious Howl 3
+"64493", # Furious Howl 4
+"64494", # Furious Howl 5
+"64495", # Furious Howl 6
 }
 
 BOSS_PETS = {
