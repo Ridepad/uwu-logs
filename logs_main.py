@@ -475,17 +475,18 @@ class THE_LOGS:
             self.PLAYERS_AND_PETS = players | self.PLAYERS_PETS
             return self.PLAYERS_AND_PETS
             
-    def get_classes_with_names(self):
+    @property
+    def CLASSES_NAMES(self):
         try:
-            return self.CLASSES_NAMES
+            return self.__CLASSES_NAMES
         except AttributeError:
             classes = self.get_classes()
             _classes_names: dict[str, str] = self.convert_dict_guids_to_names(classes)
-            self.CLASSES_NAMES = _classes_names
-            return self.CLASSES_NAMES
+            self.__CLASSES_NAMES = _classes_names
+            return _classes_names
 
     def get_classes_with_names_json(self):
-        return json.dumps(self.get_classes_with_names())
+        return json.dumps(self.CLASSES_NAMES)
         
     
     def get_timestamp(self, rewrite=False):
@@ -665,7 +666,7 @@ class THE_LOGS:
             "REPORT_ID": self.NAME,
             "REPORT_NAME": self.FORMATTED_NAME,
             "SEGMENTS_LINKS": self.SEGMENTS_QUERIES,
-            "PLAYER_CLASSES": self.get_classes_with_names(),
+            "PLAYER_CLASSES": self.CLASSES_NAMES,
             "DURATION": duration,
             "DURATION_STR": duration_to_string(duration),
             "SPEC_ICON_TO_POSITION": SPEC_ICON_TO_POSITION,
@@ -753,8 +754,8 @@ class THE_LOGS:
         }
 
 
-    @running_time
     @cache_wrap
+    @running_time
     def report_page(self, s, f) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
         players_and_pets = self.get_players_and_pets_guids()
@@ -773,15 +774,13 @@ class THE_LOGS:
         return convert_to_table(data_sorted, slice_duration)
 
     def report_add_spec_info(self, specs: dict[str, int], data: dict[str, dict]):
-        classes_names = self.get_classes_with_names()
-
         new_specs: dict[str, tuple(str, str)] = {}
         for unit_name in data:
             if unit_name.endswith('-A'):
                 new_specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
             elif unit_name == "Total":
                 new_specs[unit_name] = ('Total', 'ability_hunter_readiness')
-            elif unit_name in classes_names:
+            elif unit_name in self.CLASSES_NAMES:
                 new_specs[unit_name] = logs_player_spec.get_spec_info(specs[unit_name])
         return new_specs
 
@@ -1407,8 +1406,8 @@ class THE_LOGS:
         logs_dps.convert_keys_to_str(new_data)
         return new_data
 
-    @running_time
     @cache_wrap
+    @running_time
     def get_spell_history(self, s, f, guid) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
         players_and_pets = self.get_players_and_pets_guids()
