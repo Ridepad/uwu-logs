@@ -377,6 +377,8 @@ class NewUpload(Thread):
         self.add_logger_msg(f"{logs_id} | Slice done", timestamp)
 
     def main(self):
+        logs_fix.check_null_bug(self.extracted_file)
+
         self.slice_logs()
 
         if not self.slices:
