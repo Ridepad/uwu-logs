@@ -696,7 +696,7 @@ class THE_LOGS:
         except AttributeError:
             _spells = self.get_spells()
             
-            _icons = logs_spells_order.SPELLS3
+            _icons = logs_spells_order.get_spells()
             for spell_id, spell_data in _spells.items():
                 spell_data["icon"] = _icons.get(spell_id, UNKNOWN_ICON)
             self.icons_set = True

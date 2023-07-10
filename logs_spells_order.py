@@ -4,14 +4,23 @@ import file_functions
 from constants import running_time
 
 @running_time
-def get_spells():
+def get_spells_int():
     spells_json = file_functions.json_read("___spells_icons")
     return {
         int(spell_id): icon_name
         for icon_name, _spells in spells_json.items()
         for spell_id in _spells
     }
-SPELLS3 = get_spells()
+def _get_spells():
+    spells = None
+    def get_spells_inner():
+        nonlocal spells
+        if spells:
+            return spells
+        spells = get_spells_int()
+        return spells
+    return get_spells_inner
+get_spells = _get_spells()
 
 IGNORED_FLAGS = {
     "SPELL_HEAL",
