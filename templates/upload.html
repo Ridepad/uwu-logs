@@ -50,6 +50,12 @@
 #server-input {
   width: 100%;
 }
+.col-report {
+  width: 20em;
+}
+.col-status {
+  width: 10em;
+}
 </style>
 {% endblock add_style %}
 
@@ -133,8 +139,8 @@
   <table id="upload-table" style="display: none;">
     <thead>
       <tr>
-        <th style="min-width: 40ch;">Slice ID</th>
-        <th style="min-width: 20ch;">Status</th>
+        <th class="col-report">Slice ID</th>
+        <th class="col-status">Status</th>
       </tr>
     </thead>
     <tbody id="upload-table-tbody"></tbody>

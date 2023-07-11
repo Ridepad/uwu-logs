@@ -72,7 +72,18 @@ function upload_progress() {
   progressBarWrapper.style.display = "none";
   processingTable.style.display = "";
   processingTableBody.innerHTML = "";
-  processingStatus.innerText = res.status ?? "Preparing...";
+  processingStatus.innerHTML = "";
+  if (!res.status) {
+    const p = document.createElement("p");
+    p.append("Preparing...");
+    processingStatus.appendChild(p);
+  } else {
+    for (let line of res.status.split("  ")) {
+      const p = document.createElement("p");
+      p.append(line);
+      processingStatus.appendChild(p);
+    }
+  }
 
   for (let slice_name in res.slices) {
     const slice = res.slices[slice_name];

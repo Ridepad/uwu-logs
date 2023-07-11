@@ -20,13 +20,14 @@ from constants import (
     SERVERS, T_DELTA, UPLOADED_DIR, UPLOADS_DIR
 )
 
-ARCHIVE_ID_ERROR = "Bad archive. Don't rename files to .zip/.7z, create archives from 0."
-ARCHIVE_ERROR = "Error unziping file. Make sure logs file inside the archive without any folders."
+ARCHIVE_ID_ERROR = "Bad archive.  Don't rename files to .zip/.7z, create archives from 0."
+ARCHIVE_ERROR = "Error unziping file.  Make sure logs file inside the archive without any folders."
 LOGS_ERROR = "Error parsing logs."
-TOP_ERROR = "Done! Select 1 of the reports below. Top update encountered an error."
-ALREADY_DONE = "File has been uploaded already! Select 1 of the reports below."
-FULL_DONE = "Done! Select 1 of the reports below."
-FULL_DONE_NONE_FOUND = "Done! No boss segments were found! Make sure to use /combatlog"
+TOP_ERROR = "Done!  Select 1 of the reports below.  Top update encountered an error."
+ALREADY_DONE = "File has been uploaded already!  Select 1 of the reports below."
+ALREADY_DONE_NONE_FOUND = "File has been uploaded already!  No boss segments were found!  Make sure to use /combatlog"
+FULL_DONE = "Done!  Select 1 of the reports below."
+FULL_DONE_NONE_FOUND = "Done!  No boss segments were found!  Make sure to use /combatlog"
 SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
 TOP_UPDATE = "Updating top..."
@@ -455,10 +456,13 @@ class NewUpload(Thread):
                 done = False
         
         if not done:
-            return
+            return False
 
         self.status_dict["slices"] = self.slices
-        self.finish(ALREADY_DONE)
+        if not self.slices:
+            self.finish(ALREADY_DONE_NONE_FOUND)
+        else:
+            self.finish(ALREADY_DONE)
         return True
 
     def extract_archive(self):
@@ -517,9 +521,12 @@ class NewUpload(Thread):
         
         finally:
             self.add_logger_msg("Done", pc_main)
-            self.finish()
+            if not self.slices:
+                self.finish(FULL_DONE_NONE_FOUND)
+            else:
+                self.finish(FULL_DONE)
             
-    def finish(self, msg=None):
+    def finish(self, msg: str):
         for logs_id in self.slices:
             self.change_slice_status(logs_id, "Done!", slice_done=True)
             raw_path_current = os.path.join(self.upload_dir, f"{logs_id}.txt")
@@ -552,10 +559,7 @@ class NewUpload(Thread):
         if not self.keep_temp_folder:
             shutil.rmtree(self.upload_dir, ignore_errors=True)
 
-        if msg:
-            self.change_status(msg, 1)
-        else:
-            self.change_status(FULL_DONE, 1)
+        self.change_status(msg, 1)
 
 
 class File:
