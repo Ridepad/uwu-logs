@@ -32,10 +32,10 @@
     <meta property="twitter:image" content="https://uwu-logs.xyz/static/thumb.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" type="text/css" href="/static/style_top.css">
+    <link rel="stylesheet" type="text/css" href="/static/style_top.css?v={{ V }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700&display=swap">
     
-    <script type="module" src="static/top.js"></script>
+    <script type="module" src="static/top.js?v={{ V }}"></script>
     <style>
       * {
         color: gainsboro;
@@ -104,16 +104,16 @@
         <table id="main-table">
           <thead>
             <tr>
-              <th id="head-name">Name</th>
-              <th id="head-useful-dps" class="sortable">uDPS</th>
-              <th id="head-useful-amount" class="sortable">Useful</th>
-              <th id="head-total-dps" class="sortable">tDPS</th>
-              <th id="head-total-amount" class="sortable">Total</th>
-              <th id="head-duration" class="sortable">Dur</th>
-              <th id="head-external" class="sortable">Ext</th>
-              <th id="head-self" class="sortable">Slf</th>
-              <th id="head-rekt" class="sortable">Rkt</th>
-              <th id="head-date" class="sortable">Date</th>
+              <th id="head-name" class="table-n">Name</th>
+              <th id="head-useful-dps" class="table-ud">uDPS</th>
+              <th id="head-useful-amount" class="table-ua">Useful</th>
+              <th id="head-total-dps" class="table-td">tDPS</th>
+              <th id="head-total-amount" class="table-ta">Total</th>
+              <th id="head-duration" class="table-t">Dur</th>
+              <th id="head-external" class="table-ext">E</th>
+              <th id="head-self" class="table-self">S</th>
+              <th id="head-rekt" class="table-rekt">R</th>
+              <th id="head-date" class="table-r">Date</th>
             </tr>
           </thead>
           <tbody id="main-table-body"></tbody>
@@ -128,6 +128,12 @@
         <p>You can select any other filter to cancel</p>
         <p>Some filters will make your browser beg for mercy</p>
       </section>
+      <aside id="the-tooltip" style="display: none;">
+        <table>
+          <tbody>
+          </tbody>
+        </table>
+      </aside>
       <footer>
         <section>
           <a id="home-button" href="/">UwU LOGS</a>

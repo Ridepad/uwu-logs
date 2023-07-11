@@ -1,5 +1,4 @@
 :root {
-  --highlight-color: rgb(24, 24, 24);
   --footer-height: 3vh;
   --primary-color: blueviolet;
   --secondary-color: darkviolet;
@@ -10,6 +9,9 @@
   --unfocused: hsl(271, 100%, 20%);
   --hover: hsl(271, 100%, 35%);
   --main-white: gainsboro;
+  --highlight-color: rgb(12, 12, 12);
+  --slider-background: #4F00A9;
+  --table-border: hsl(0, 0%, 8%);
 }
 
 * {
@@ -21,7 +23,7 @@
   margin: 0;
 }
 
-@media (min-width: 1100px) and (orientation: landscape) {
+@media (orientation: landscape) {
   * {
     font-size: 2vh;
   }
@@ -73,10 +75,12 @@ footer {
 table, th, td {
   border-spacing: 0;
 }
-th, td {
-  border: 1px solid dimgray;
+th {
+  font-weight: 600;
+  background-color: var(--table-border);
+  cursor: pointer;
 }
-@media (min-width: 1100px) {
+@media (orientation: landscape) {
   table, th, td {
     border-collapse: collapse;
   }
@@ -86,7 +90,7 @@ th {
   background-color: var(--highlight-color);
 }
 tbody > tr:nth-child(odd) > td {
-  background-color: hsl(0, 0%, 5%);
+  background-color: hsl(0, 0%, 3%);
 }
 tbody > tr:hover > td {
   background-color: hsl(285, 100%, 5%);
@@ -189,7 +193,7 @@ input[type=checkbox] {
   text-align: center;
 }
 
-@media (min-width: 1100px) {
+@media (orientation: landscape) {
   #controls {
     grid-template-areas:
     'inst inst boss boss boss boss size diff diff'
@@ -204,8 +208,8 @@ input[type=checkbox] {
   padding-bottom: 4vh;
 }
 
-#main-table * {
-  border: 0;
+table td {
+  padding-inline: .25em;
 }
 #main-table th {
   position: sticky;
@@ -213,9 +217,12 @@ input[type=checkbox] {
   z-index: 40;
 }
 
-@media (min-width: 1100px) {
+@media (orientation: landscape) {
   #main-table th {
     top: 5em;
+  }
+  th, td {
+    min-width: 2em;
   }
 }
 
@@ -229,7 +236,6 @@ input[type=checkbox] {
 }
 
 #main-table-body td {
-  padding: 0;
   text-align: center;
 }
 
@@ -249,7 +255,7 @@ input[type=checkbox] {
   text-align: right;
   color: var(--main-white);
 }
-#main-table > tbody img {
+img {
   min-height: 1em;
   max-height: 1em;
   min-width: 1em;
@@ -264,21 +270,21 @@ input[type=checkbox] {
   overflow: hidden;
   white-space: nowrap;
 }
-@media (max-width: 1100px) {
+@media (orientation: portrait) {
   #main-table > tbody .table-n {
     max-width: 15ch;
   }
 }
 
 #main-table > tbody :is(.table-ud, .table-td) {
-  min-width: 7.25ch;
-  width: 9ch;
+  min-width: 4rem;
+  width: 5rem;
   text-align: right;
 }
 
 #main-table > tbody :is(.table-ua, .table-ta) {
-  min-width: 9.25ch;
-  width: 10ch;
+  min-width: 4.5rem;
+  width: 6rem;
   text-align: right;
 }
 
@@ -314,28 +320,6 @@ td > ul {
   box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
 }
 
-li {
-  display: table-row;
-}
-
-li span {
-  display: table-cell;
-  padding-inline: 1ch;
-  min-width: max-content;
-}
-#head-useful,
-.table-u {
-  display: none;
-}
-
-@media (min-width: 1100px) {
-  #head-useful,
-  .table-u {
-    display: table-cell;
-    font-size: 2vh;
-  }
-}
-
 #link-home::before {
   content: "<<";
 }
@@ -367,4 +351,24 @@ li span {
   position: absolute;
   right: .5em;
   bottom: 5%;
+}
+
+#the-tooltip {
+  position: absolute;
+  width: fit-content;
+  background-color: var(--background);
+  padding: .5em;
+  border-radius: 6px;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  z-index: 5;
+}
+#the-tooltip td {
+  min-width: fit-content;
+  text-align: right;
+}
+#the-tooltip td:nth-child(2) {
+  min-width: 1.5em;
+}
+#the-tooltip td:nth-child(3) {
+  min-width: 3em;
 }

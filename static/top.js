@@ -1,4 +1,4 @@
-import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, ICON_CDN_URL, MONTHS } from "./appConstants.js"
+import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, MONTHS } from "./appConstants.js"
 
 const selectServer = document.getElementById('select-server');
 const selectInstance = document.getElementById('select-instance');
@@ -35,9 +35,34 @@ const toggleTotalDamage = document.getElementById('toggle-total-damage');
 const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
 const toggleLimit = document.getElementById('toggle-limit');
 const LIMITED_ROWS = 1000;
-const LOC = window.location;
-const screenX = window.matchMedia("(min-width: 1100px)");
+const screenX = window.matchMedia("(orientation: landscape)");
+const HAS_HEROIC = [
+  "Icecrown Citadel",
+  "The Ruby Sanctum",
+  "Trial of the Crusader",
+];
 
+const SORT_VARS = {column: headUsefulDps, order: 1};
+const DATA_KEYS2 = {
+  "head-useful-amount": 'ua',
+  "head-useful-dps": 'ud',
+  "head-total-amount": 'ta',
+  "head-total-dps": 'td',
+  "head-duration": 't',
+};
+const CACHE = {
+  lastQuery: "",
+  setNewData(data) {
+    const query = makeQuery();
+    if (query == this.lastQuery) {
+      this[query] = data;
+    }
+  },
+  getCurrent() {
+    const query = makeQuery();
+    return this[query];
+  }
+};
 
 function toggleColumn(className, display) {
   mainTableBody.querySelectorAll(className).forEach(e => e.style.display = display);
@@ -72,6 +97,7 @@ function newOption(value, index) {
 function addBosses() {
   selectBoss.innerHTML = "";
   BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(newOption(boss_name)));
+  const has_heroic = HAS_HEROIC.includes(selectInstance.value);
 };
 
 function addSpecs() {
@@ -98,7 +124,7 @@ function addNameCell(row, data, key) {
 
   const [spec_name, spec_icon, spec_class_id] = SPECS[data[DATA_KEYS.spec]];
   const img = document.createElement("img");
-  img.src = `${ICON_CDN_URL}/${spec_icon}.jpg`;
+  img.src = `/static/icons/${spec_icon}.jpg`;
   cell.appendChild(img);
   cell.append(data_value);
   cell.title = spec_name;
@@ -108,10 +134,12 @@ function addNameCell(row, data, key) {
 
 function addDPSCell(row, data, key) {
   const cell = document.createElement('td');
-  const data_value = data[key];
+  const data_damage = data[key];
+  const data_value = data_damage / data.t;
   cell.value = data_value;
-  cell.className = `table-${key}`;
-  const _input = key == "td" ? toggleTotalDamage : toggleUsefulDamage;
+  key = key[0];
+  cell.className = `table-${key}d`;
+  const _input = key == "u" ? toggleUsefulDamage : toggleTotalDamage;
   if (!_input.checked) {
     cell.style.display = "none";
   }
@@ -168,60 +196,66 @@ function addDateCell(row, data, key) {
   row.appendChild(cell);
 }
 
-function new_li(spell_id, count, uptime) {
-  const li = document.createElement('li');
+const theTooltip = document.getElementById("the-tooltip");
+const theTooltipBody = theTooltip.querySelector("tbody");
+function show_tooltip(td) {
+  while(theTooltipBody.firstChild) theTooltipBody.removeChild(theTooltipBody.firstChild);
   
-  const img = document.createElement("img");
-  img.src = `${ICON_CDN_URL}/${AURAS_ICONS[spell_id]}.jpg`;
-  img.alt = spell_id;
-  li.appendChild(img);
-  
-  const span1 = document.createElement("span");
-  span1.append(count)
-  li.appendChild(span1);
-  
-  const span2 = document.createElement("span");
-  span2.append(uptime)
-  li.appendChild(span2);
-  
-  return li;
+  const dataset = td.dataset;
+  const fragment = new DocumentFragment();
+  for (let spell_id in dataset) {
+    const tr = document.createElement("tr");
+    const [count, uptime] = dataset[spell_id].split(',');
+
+    const td_icon = document.createElement("td");
+    const img = document.createElement("img");
+    img.src = `/static/icons/${AURAS_ICONS[spell_id]}.jpg`;
+    img.alt = spell_id;
+    td_icon.appendChild(img);
+    
+    const td_count = document.createElement("td");
+    td_count.append(count);
+
+    const td_uptime = document.createElement("td");
+    td_uptime.append(parseFloat(uptime).toFixed(1) + "%");
+
+    tr.appendChild(td_icon);
+    tr.appendChild(td_count);
+    tr.appendChild(td_uptime);
+    fragment.appendChild(tr);
+  }
+  theTooltipBody.append(fragment);
+
+  const bodyRect = document.body.getBoundingClientRect();
+  const trRect = td.getBoundingClientRect();
+  theTooltip.style.top = trRect.bottom - bodyRect.top + 'px';
+  theTooltip.style.right = bodyRect.right - trRect.left + 'px';
+  theTooltip.style.display = "";
 }
 
 function addAurasCells(row, data, key) {
-  const data_value = data[key];
-
-  const AURAS_COUNT = [];
-  const AURAS_CELLS = [];
-  const AURAS_ROWS  = [];
+  const cells = [];
+  const all_count = [];
   for (let i=0; i<AURAS_COLUMNS.length; i++) {
-    AURAS_COUNT.push(0);
     const td = document.createElement('td');
-    AURAS_CELLS.push(td);
-    const fragment = new DocumentFragment();
-    AURAS_ROWS.push(fragment);
+    td.className = `table-${AURAS_COLUMNS[i]}`;
+    row.appendChild(td);
+    cells.push(td);
+    all_count.push(0);
   }
-
+  const data_value = data[key];
   for (let spell_id in data_value) {
     const [count, uptime, type] = data_value[spell_id];
-    const li = new_li(spell_id, count, uptime);
-    AURAS_COUNT[type] += count;
-    AURAS_ROWS[type].append(li);
+    const td = cells[type];
+    td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
+    all_count[type] += count;
   }
-  
-  for (let i=0; i<AURAS_COLUMNS.length; i++) {
-    const cell = AURAS_CELLS[i];
-    const count = AURAS_COUNT[i];
-    cell.value = count;
-
-    if (count > 0) {
-      const ul = document.createElement('ul');
-      ul.append(AURAS_ROWS[i])
-      cell.appendChild(ul);
-    }
-
-    cell.append(count);
-    cell.className = `table-${AURAS_COLUMNS[i]}`;
-    row.appendChild(cell);
+  for (let i=0; i<all_count.length; i++) {
+    const td = cells[i];
+    td.append(all_count[i]);
+    if (all_count[i] == 0) continue;
+    td.addEventListener("mouseleave", () => theTooltip.style.display = "none");
+    td.addEventListener("mouseenter", () => show_tooltip(td));
   }
 }
 
@@ -229,34 +263,15 @@ function newRow(data) {
   const row = document.createElement('tr');
 
   addNameCell(row, data, DATA_KEYS.name);
-  addDPSCell(row, data, DATA_KEYS.uDPS);
+  addDPSCell(row, data, DATA_KEYS.uAmount);
   addTotalCell(row, data, DATA_KEYS.uAmount);
-  addDPSCell(row, data, DATA_KEYS.tDPS);
+  addDPSCell(row, data, DATA_KEYS.tAmount);
   addTotalCell(row, data, DATA_KEYS.tAmount);
   addDurationCell(row, data, DATA_KEYS.duration);
   addAurasCells(row, data, DATA_KEYS.auras);
   addDateCell(row, data, DATA_KEYS.reportID);
 
   return row
-}
-
-const SORT_VARS = {column: headUsefulDps, order: 1};
-const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"];
-const getCellValue = (tr, idx) => tr.children[idx].value;
-const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
-function sort_table_by_column(event) {
-  const th = event ? event.target : headDPS;
-  SORT_VARS.order = th == SORT_VARS.column ? -SORT_VARS.order : REVERSE_SORTED.includes(th.id) ? -1 : 1;
-  SORT_VARS.column = th;
-  if (DATA_KEYS2[th.id] && (toggleLimit.checked || checkboxCombine.checked)) {
-    const data = CACHE.getCurrent();
-    tableAddNewData(data);
-    return;
-  }
-
-  Array.from(mainTableBody.querySelectorAll('tr'))
-       .sort(tableSort(th.cellIndex))
-       .forEach(tr => mainTableBody.appendChild(tr));
 }
 
 const newClassFilter = class_i => x => class_i <= x[DATA_KEYS.spec] && x[DATA_KEYS.spec] < class_i+4;
@@ -286,14 +301,6 @@ function noDublicates(data) {
   return Object.values(best_data);
 }
 
-const DATA_KEYS2 = {
-  "head-useful-amount": 'ua',
-  "head-useful-dps": 'ud',
-  "head-total-amount": 'ta',
-  "head-total-dps": 'td',
-  "head-duration": 't',
-};
-
 function update_progress(done, total) {
   const percent = Math.round(done / total * 100);
   progressBarPercentage.textContent = `${done} / ${total} (${percent}%)`;
@@ -304,29 +311,28 @@ let mainTimeout;
 const sortNewData = key => (a, b) => (b[key] - a[key]) * SORT_VARS.order;
 function tableAddNewData(data) {
   clearTimeout(mainTimeout);
+  console.time("clear table");
   mainTableBody.innerHTML = "";
+  console.timeEnd("clear table");
   if (!data) return;
   
   data = filterDataByClass(data);
   if (!data) return;
   
   const key = DATA_KEYS2[SORT_VARS.column.id];
-  const sortFunc = sortNewData(key);
-  data = data.sort(sortFunc);
-  if (!data) return;
-  
+  data = data.sort(sortNewData(key));
   data = checkboxCombine.checked ? noDublicates(data) : data;
   if (!data) return;
 
-  console.time("tableAddRows1");
+  console.time("tableAddRows");
   loadingInfo.textContent = "Building table...";
-  tableContainer.style.display = "none";
   loadingInfoPanel.style.display = "";
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
   const fragment = new DocumentFragment();
   let i = 0;
+
   (function chunk() {
-    const end = Math.min(i+250, LIMIT);
+    const end = Math.min(i+100, LIMIT);
     for ( ; i < end; i++) {
       const row = newRow(data[i]);
       fragment.appendChild(row);
@@ -337,24 +343,37 @@ function tableAddNewData(data) {
       mainTimeout = setTimeout(chunk);
       return;
     }
-
+    
     loadingInfo.textContent = "Rendering table...";
     progressBarPercentage.textContent = "Done!";
 
     setTimeout(() => {
+      console.time("tableAddNewData Rendering");
+      mainTableBody.append(fragment);
       toggleUsefulColumns();
       toggleTotalColumns();
-      loadingInfoPanel.style.display = "none";
-      tableContainer.style.display = "";
-      mainTableBody.append(fragment);
-      console.timeEnd("tableAddRows1");
-    });
+      setTimeout(() => {
+        loadingInfoPanel.style.display = "none";
+        tableContainer.style.display = "";
+        console.timeEnd("tableAddRows");
+        console.timeEnd("tableAddNewData Rendering");
+      });
+    })
   })();
+}
+
+function tableAddNewDataWrap(data) {
+  tableContainer.style.display = "none";
+  setTimeout(() => tableAddNewData(data));
+}
+
+function is_heroic() {
+  return HAS_HEROIC.includes(selectInstance.value) && checkboxDifficulty.checked;
 }
 
 function makeQuery() {
   const sizeValue = selectSize.value;
-  const diffValue = checkboxDifficulty.checked ? 'H' : 'N';
+  const diffValue = is_heroic() ? 'H' : 'N';
   const diff_str = `${sizeValue}${diffValue}`;
   const q = {
     server: selectServer.value,
@@ -363,20 +382,6 @@ function makeQuery() {
   };
   return JSON.stringify(q);
 }
-
-const CACHE = {
-  lastQuery: "",
-  setNewData(data) {
-    const query = makeQuery();
-    if (query == this.lastQuery) {
-      this[query] = data;
-    }
-  },
-  getCurrent() {
-    const query = makeQuery();
-    return this[query];
-  }
-};
 
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
@@ -400,7 +405,7 @@ xrequest.onreadystatechange = () => {
 
   CACHE.setNewData(parsed_json);
 
-  tableAddNewData(parsed_json);
+  tableAddNewDataWrap(parsed_json);
 }
 
 function queryServer(query) {
@@ -417,11 +422,11 @@ function fetchData() {
   const query = makeQuery();
   CACHE.lastQuery = query;
   const data = CACHE[query];
-  data ? tableAddNewData(data) : queryServer(query);
+  data ? tableAddNewDataWrap(data) : queryServer(query);
 }
 
 function searchChanged() {
-  const __diff = checkboxDifficulty.checked ? 'H' : "N";
+  const __diff = is_heroic() ? 'H' : "N";
   const title = `UwU Logs - Top - ${selectBoss.value} - ${selectSize.value}${__diff}`;
   document.title = title;
 
@@ -430,7 +435,7 @@ function searchChanged() {
     raid: selectInstance.value,
     boss: selectBoss.value,
     size: selectSize.value,
-    mode: checkboxDifficulty.checked ? 1 : 0,
+    mode: is_heroic() ? 1 : 0,
     best: checkboxCombine.checked ? 1 : 0,
     cls: selectClass.value,
     spec: selectSpec.value,
@@ -461,11 +466,30 @@ function getDefaultIndex(select) {
   return 0;
 }
 
+const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"];
+const getCellValue = (tr, idx) => tr.children[idx].value;
+const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
+function sort_table_by_column(event) {
+  const th = event ? event.target : headDPS;
+  SORT_VARS.order = th == SORT_VARS.column ? -SORT_VARS.order : REVERSE_SORTED.includes(th.id) ? -1 : 1;
+  SORT_VARS.column = th;
+  if (DATA_KEYS2[th.id] && (toggleLimit.checked || checkboxCombine.checked)) {
+    const data = CACHE.getCurrent();
+    tableAddNewDataWrap(data);
+    return;
+  }
+
+  Array.from(mainTableBody.querySelectorAll('tr'))
+       .sort(tableSort(th.cellIndex))
+       .forEach(tr => mainTableBody.appendChild(tr));
+}
+
+
 function init() {
   Object.keys(BOSSES).forEach(name => selectInstance.appendChild(newOption(name)));
   CLASSES.forEach((name, i) => selectClass.appendChild(newOption(name, i)));
 
-  const currentParams = new URLSearchParams(LOC.search);
+  const currentParams = new URLSearchParams(window.location.search);
   for (let key in INTERACTABLES) {
     const par = currentParams.get(key);
     const elm = INTERACTABLES[key];
@@ -486,6 +510,12 @@ function init() {
     }
     elm.addEventListener('change', searchChanged);
   }
+
+  if (screenX.matches) {
+    document.getElementById("head-external").textContent = "Ext";
+    document.getElementById("head-self").textContent = "Slf";
+    document.getElementById("head-rekt").textContent = "Rkt";
+  }
   
   toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : screenX.matches;
   toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
@@ -502,11 +532,14 @@ function init() {
   toggleLimit.addEventListener('change', () => {
     localStorage.setItem("showlimit", toggleLimit.checked);
     const data = CACHE.getCurrent();
-    tableAddNewData(data);
+    tableAddNewDataWrap(data);
   });
 
   searchChanged();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));
+
+  
+  
 }
 
 document.readyState !== 'loading' ? init() : document.addEventListener('DOMContentLoaded', init);
