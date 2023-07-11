@@ -149,6 +149,9 @@ def top_add_new_data(full_server_folder_name, boss_f_n, json_files):
     modified = update_top(current_top, new_top_data)
     if modified:
         save_top(full_server_folder_name, boss_f_n, current_top)
+    for json_file in json_files:
+        if os.path.isfile(json_file):
+            os.remove(json_file)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | {modified}')
 
 def top_grouped():
