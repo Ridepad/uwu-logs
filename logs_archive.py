@@ -8,15 +8,62 @@ from constants import LOGS_RAW_DIR, PATH_DIR, logs_edit_time
 EXTRACTED_LOGS_NAME = "logs.txt"
 ARCHIVE_INFO_LABELS = ["date", "time", "attr", "size", "compressed", "name"]
 
-if platform.startswith("linux"):
-    EXE_7Z = os.path.join(PATH_DIR, "7zz")
-elif platform == "win32":
-    EXE_7Z = os.path.join(PATH_DIR, "7z.exe")
-else:
-    raise RuntimeError("Unsupported OS")
+INIT = {
+    "windows": {
+        "file_name": os.path.join(PATH_DIR, "7z.exe"),
+        "commands": (
+            ['powershell', '-command', 'wget', 'https://www.7-zip.org/a/7zr.exe', '-O', '7zr.exe'],
+            ['powershell', '-command', 'wget', 'https://www.7-zip.org/a/7z2301-x64.exe', '-O', '7z2301-x64.exe'],
+            ['7zr', 'e', '7z2301-x64.exe', '7z.exe'],
+            ['rm', '7zr.exe'],
+            ['rm', '7z2301-x64.exe'],
+        )
+    },
+    "linux": {
+        "file_name": os.path.join(PATH_DIR, "7zz"),
+        "commands": (
+            ['apt', 'install', 'wget'],
+            ['wget', 'https://www.7-zip.org/a/7z2301-linux-x64.tar.xz'],
+            ['tar', '-xf', '7z2301-linux-x64.tar.xz', '7zz'],
+            ['rm', '7z2301-linux-x64.tar.xz'],
+        )
+    },
+}
+
+def get_7zip(os_type):
+    path_7z = INIT[os_type]["file_name"]
+    if os.path.isfile(path_7z):
+        return path_7z
+    for command in INIT[os_type]["commands"]:
+        if command[0] == "rm":
+            os.remove(command[1])
+            continue
+        return_code = subprocess.call(command)
+        if return_code != 0:
+            return
+    return path_7z
+
+def __get_7z_path():
+    path_7z = None
+    def inner():
+        nonlocal path_7z
+        if path_7z is not None and os.path.isfile(path_7z):
+            return path_7z
+        if platform.startswith("linux"):
+            path_7z = get_7zip("linux")
+        elif platform == "win32":
+            path_7z = get_7zip("windows")
+        else:
+            raise RuntimeError("Unsupported OS")
+        if path_7z is None or not os.path.isfile(path_7z):
+            raise FileNotFoundError
+        return path_7z
+    return inner
+
+get_7z_path = __get_7z_path()
 
 def get_archive_info(full_archive_path):
-    cmd_list = [EXE_7Z, "l", full_archive_path]
+    cmd_list = [get_7z_path(), "l", full_archive_path]
     with subprocess.Popen(cmd_list, stdout=subprocess.PIPE) as p:
         try:
             return p.stdout.read().decode().splitlines()
@@ -64,7 +111,7 @@ def get_extracted_file(upload_dir: str):
 def extract(full_archive_path, file_name, extract_to=None):
     if extract_to is None:
         extract_to = os.path.dirname(full_archive_path)
-    cmd = [EXE_7Z, 'e', full_archive_path, f"-o{extract_to}", "-y", "--", file_name]
+    cmd = [get_7z_path(), 'e', full_archive_path, f"-o{extract_to}", "-y", "--", file_name]
     subprocess.call(cmd)
     extracted_file = get_extracted_file(extract_to)
     if not extracted_file:
@@ -105,5 +152,9 @@ def valid_raw_logs(logs_id):
 def archive_file(archive_path: str, file_path: str):
     if os.path.isfile(archive_path):
         os.remove(archive_path)
-    cmd = [EXE_7Z, 'a', archive_path, file_path, '-m0=PPMd', '-mo=11', '-mx=9']
+    cmd = [get_7z_path(), 'a', archive_path, file_path, '-m0=PPMd', '-mo=11', '-mx=9']
     subprocess.call(cmd)
+
+
+if __name__ == "__main__":
+    print(get_7z_path())
