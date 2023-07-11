@@ -36,6 +36,7 @@ USE_FILTER = True
 MAX_SURVIVE_LOGS = T_DELTA["5MIN"]
 IGNORED_PATHS = {"/upload", "/upload_progress"}
 LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
+SERVER_STARTED = datetime.now()
 
 CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
@@ -307,14 +308,14 @@ def upload_progress():
     if new_upload.upload_thread is None:
         return '', 204
 
-    status_str = new_upload.upload_thread.status_json
-    if new_upload.upload_thread.status_dict.get('done') == 1:
+    status_dict = new_upload.upload_thread.status_dict
+    if status_dict.get('done') == 1:
         del NEW_UPLOADS[ip]
     elif not new_upload.upload_thread.is_alive():
         del NEW_UPLOADS[ip]
         return '', 500
     
-    return status_str, 200
+    return new_upload.upload_thread.status_to_json(), 200
 
 @SERVER.route("/upload", methods=['GET', 'POST'])
 def upload():
@@ -329,7 +330,7 @@ def upload():
         new_upload = NEW_UPLOADS[IP] = logs_upload.FileSave()
     
     if request.headers.get("Content-Type") == "application/json":
-        new_upload.done(request)
+        new_upload.done(IP, request.data)
         return '', 201
 
     chunkN = request.headers.get("X-Chunk", type=int)
@@ -425,7 +426,7 @@ def casts(report_id, source_name):
         # **data,
         FLAG_ORDER=FLAG_ORDER,
         SOURCE_NAME=source_name,
-        # V=datetime.now()
+        V=SERVER.debug and datetime.now() or SERVER_STARTED,
     )
 
 @SERVER.route("/reports/<report_id>/casts/", methods=['POST'])
@@ -639,7 +640,11 @@ def get_uncompressed_size(filename):
 def top():
     if request.method == "GET":
         servers = file_functions.get_folders(TOP_DIR)
-        return render_template('top.html', SERVERS=servers)
+        return render_template(
+            'top.html',
+            SERVERS=servers,
+            V=SERVER.debug and datetime.now() or SERVER_STARTED,
+        )
     
     _data: dict = request.get_json()
 
