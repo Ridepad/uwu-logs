@@ -458,7 +458,7 @@ class NewUpload(Thread):
             return
 
         self.status_dict["slices"] = self.slices
-        self.finish()
+        self.finish(ALREADY_DONE)
         return True
 
     def extract_archive(self):
@@ -519,7 +519,7 @@ class NewUpload(Thread):
             self.add_logger_msg("Done", pc_main)
             self.finish()
             
-    def finish(self):
+    def finish(self, msg=None):
         for logs_id in self.slices:
             self.change_slice_status(logs_id, "Done!", slice_done=True)
             raw_path_current = os.path.join(self.upload_dir, f"{logs_id}.txt")
@@ -551,8 +551,11 @@ class NewUpload(Thread):
 
         if not self.keep_temp_folder:
             shutil.rmtree(self.upload_dir, ignore_errors=True)
-        
-        self.change_status(FULL_DONE, 1)
+
+        if msg:
+            self.change_status(msg, 1)
+        else:
+            self.change_status(FULL_DONE, 1)
 
 
 class File:
