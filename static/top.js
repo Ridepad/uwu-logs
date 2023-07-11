@@ -536,10 +536,7 @@ function init() {
   });
 
   searchChanged();
-  document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));
-
-  
-  
+  document.querySelectorAll('th').forEach(th => th.addEventListener('click', sort_table_by_column));
 }
 
 document.readyState !== 'loading' ? init() : document.addEventListener('DOMContentLoaded', init);
