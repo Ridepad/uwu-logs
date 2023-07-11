@@ -520,7 +520,6 @@ class NewUpload(Thread):
             self.finish()
             
     def finish(self):
-        print("+"*100, "FINISH")
         for logs_id in self.slices:
             self.change_slice_status(logs_id, "Done!", slice_done=True)
             raw_path_current = os.path.join(self.upload_dir, f"{logs_id}.txt")
@@ -536,7 +535,6 @@ class NewUpload(Thread):
                 self.add_logger_msg(f"Raw exists | {logs_id}")
                 continue
         
-        print("="*100, "FINISH")
         try:
             old = self.archive_path or self.extracted_path
             basename = os.path.basename(old)
