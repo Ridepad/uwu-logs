@@ -554,8 +554,7 @@ class NewUpload(Thread):
         if not self.keep_temp_folder:
             shutil.rmtree(self.upload_dir, ignore_errors=True)
         
-        self.change_status(ALREADY_DONE, 1)
-        self.add_logger_msg("already uploaded")
+        self.change_status(FULL_DONE, 1)
 
 
 class File:
