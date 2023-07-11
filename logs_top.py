@@ -5,7 +5,7 @@ import file_functions
 import logs_dmg_heals
 import logs_dmg_useful
 import logs_main
-from constants import LOGGER_REPORTS, get_ms_str, running_time
+from constants import LOGGER_REPORTS, get_ms_str
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
@@ -101,10 +101,8 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
         if is_player(guid)
     ]
 
-@running_time
-def make_report_top(name: str, rewrite=False):
-    print(name)
-    report = logs_main.THE_LOGS(name)
+def make_report_top(report_id: str, rewrite=False):
+    report = logs_main.THE_LOGS(report_id)
     top_path = report.relative_path('top.json')
     if not rewrite and os.path.isfile(top_path):
         return
@@ -119,42 +117,11 @@ def make_report_top(name: str, rewrite=False):
             boss_top[diff] = data
 
     file_functions.json_write(top_path, top, indent=None)
-    LOGGER_REPORTS.info(f'{get_ms_str(pc)} | {name:<50} | Done top')
+    LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Done top')
     return top
 
-def main_wrap(name):
+def make_report_top_wrap(name, rewrite=False):
     try:
-        make_report_top(name)
+        make_report_top(name, rewrite=rewrite)
     except Exception:
         LOGGER_REPORTS.exception(name)
-
-if __name__ == "__main__":
-    def get_player(data, name):
-        for x in data:
-            if x["n"] == name:
-                return x
-        return data[0]
-    a = make_report_top("23-04-28--21-07--Safiyah--Lordaeron", rewrite=True)
-    # print(a)
-    a = r"F:\Python\uwulogs\LogsDir\23-04-28--21-07--Safiyah--Lordaeron\top.json"
-    b = r"F:\Python\uwulogs\LogsDir\23-04-28--21-07--Safiyah--Lordaeron\top - Copy.json"
-    import json
-    with open(a) as f:
-        aj = json.load(f)
-    with open(b) as f:
-        bj = json.load(f)
-
-    # print(aj['The Lich King'])
-    print(get_player(aj['The Lich King']['25H'], "Safiyah"))
-    print(get_player(bj['The Lich King']['25H'], "Safiyah"))
-    print()
-    print(get_player(aj['Blood Prince Council']['25H'], "Safiyah"))
-    print(get_player(bj['Blood Prince Council']['25H'], "Safiyah"))
-    print()
-    print(get_player(aj['Professor Putricide']['25H'], "Safiyah"))
-    print(get_player(bj['Professor Putricide']['25H'], "Safiyah"))
-    print()
-    print(get_player(aj['Professor Putricide']['25H'], "Zpevacik"))
-    print(get_player(bj['Professor Putricide']['25H'], "Zpevacik"))
-    # print(aj['The Lich King']['25H'][0])
-    # print(bj['The Lich King']['25H'][0])
