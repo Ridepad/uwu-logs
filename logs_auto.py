@@ -194,6 +194,7 @@ def main():
 def main_wrap():
     pc = perf_counter()
     try:
+        LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto start')
         main()
         LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto finish')
     except Exception:
