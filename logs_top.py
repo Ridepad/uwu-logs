@@ -8,6 +8,12 @@ import logs_main
 from constants import LOGGER_REPORTS, get_ms_str
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
+try:
+    import _validate
+except ImportError:
+    _validate = None
+
+
 Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
 HUNGER_FOR_BLOOD = "63848"
@@ -108,6 +114,10 @@ def make_report_top(report_id: str, rewrite=False):
         return
     
     pc = perf_counter()
+    if _validate and _validate.pure_dog_water(report):
+        LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Dog water')
+        return
+
     top = {}
     for boss_name, boss_segments in report.SEGMENTS.items():
         boss_top = top.setdefault(boss_name, {})
