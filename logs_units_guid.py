@@ -250,9 +250,9 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         if sGUID not in players_skip:
             if not is_player(sGUID):
                 players_skip.add(sGUID)
-            elif other[0] in SPELL_BOOK:
+            elif spell_id in SPELL_BOOK and flag != "SPELL_AURA_REMOVED":
                 players[sGUID] = sName
-                spell_info = SPELL_BOOK[other[0]]
+                spell_info = SPELL_BOOK[spell_id]
                 players_classes[sGUID] = CLASSES[spell_info[0]]
                 players_skip.add(sGUID)
                 LOGGER_REPORTS.info(f" NEW CLASS | {sName:12} | {line}")
