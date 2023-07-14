@@ -1,7 +1,8 @@
 import json
 import os
+import shutil
 import zlib
-
+from pathlib import Path
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
@@ -12,10 +13,25 @@ def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-def new_folder_path(root: str, name: str):
-    new_folder = os.path.join(root, name)
-    create_folder(new_folder)
-    return new_folder
+def get_backup_folder(folder):
+    folder_backup = list(Path(folder).parts)
+    folder_backup[1] = "mnt"
+    folder_backup = Path(*folder_backup)
+    return folder_backup
+
+def new_folder_path(root: str, name: str, check_backup=False):
+    folder = os.path.join(root, name)
+    if os.path.isdir(folder):
+        return folder
+    
+    if check_backup:
+        folder_backup = get_backup_folder(folder)
+        if os.path.isdir(folder_backup):
+            shutil.copytree(folder_backup, folder)
+            return folder
+
+    create_folder(folder)
+    return folder
 
 def create_new_folders(root, *names):
     for name in names:

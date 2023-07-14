@@ -355,7 +355,10 @@ def report_page(report_id):
 
 @SERVER.route("/reports/<report_id>/download")
 def download_logs(report_id):
-    return send_from_directory(LOGS_RAW_DIR, f"{report_id}.7z")
+    fname = f"{report_id}.7z"
+    if os.path.isfile(os.path.join(LOGS_RAW_DIR, fname)):
+        return send_from_directory(LOGS_RAW_DIR, fname)
+    return send_from_directory(file_functions.get_backup_folder(LOGS_RAW_DIR), fname)
 
 @SERVER.route("/reports/<report_id>/player/<source_name>/")
 def player(report_id, source_name):
