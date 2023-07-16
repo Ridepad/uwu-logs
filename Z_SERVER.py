@@ -221,9 +221,11 @@ def before_request():
     if not report_id:
         return show_logs_list()
 
-    report_path = os.path.join(LOGS_DIR, report_id)
-    if not os.path.isdir(report_path):
-        raise NotFound()
+    report_folder = os.path.join(LOGS_DIR, report_id)
+    if not os.path.isdir(report_folder):
+        backup_folder = file_functions.get_backup_folder(report_folder)
+        if not os.path.isdir(backup_folder):
+            raise NotFound()
     
     if not USE_FILTER:
         pass
