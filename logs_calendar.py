@@ -112,6 +112,8 @@ def get_logs_list_df_filter(df: pandas.DataFrame, filter: dict):
     return df
 
 def separate_to_days(df: pandas.DataFrame):
+    if df.empty:
+        return {}
     # ['year', 'month', 'day', 'time', 'author', 'server', 'player', 'fight']
     columns = list(df.columns)
     i_day = columns.index("day") + 1
