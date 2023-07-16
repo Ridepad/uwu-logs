@@ -16,7 +16,7 @@ import file_functions
 import logs_archive
 import logs_fix
 from constants import (
-    LOGGER_UPLOADS, LOGS_CUT_NAME, LOGS_DIR, PATH_DIR,
+    LOGGER_UPLOADS, LOGS_CUT_NAME, LOGS_DIR, LOGS_RAW_DIR, PATH_DIR,
     SERVERS, T_DELTA, UPLOADED_DIR, UPLOADS_DIR
 )
 
@@ -32,6 +32,7 @@ SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
 TOP_UPDATE = "Updating top..."
 BUGGED_NAMES = {"nil", "Unknown"}
+LOGS_RAW_DIR_BKP = file_functions.get_backup_folder(LOGS_RAW_DIR)
 file_functions.create_new_folders(PATH_DIR, LOGS_DIR, UPLOADS_DIR, UPLOADED_DIR)
 
 UPLOADS_TEXT = file_functions.new_folder_path(UPLOADS_DIR, "0archive_pending")
@@ -94,7 +95,15 @@ def slice_exists(logs_name):
 
 def raw_exists(logs_id):
     raw_path_new = os.path.join(UPLOADS_TEXT, f"{logs_id}.txt")
-    return os.path.isfile(raw_path_new) or logs_archive.valid_raw_logs(logs_id)
+    if os.path.isfile(raw_path_new):
+        return True
+    raw_path = os.path.join(LOGS_RAW_DIR, f"{logs_id}.7z")
+    if logs_archive.get_archive_id(raw_path):
+        return True
+    raw_path_bkp = os.path.join(LOGS_RAW_DIR_BKP, f"{logs_id}.7z")
+    if logs_archive.get_archive_id(raw_path_bkp):
+        return True
+    return False
 
 def slice_is_fully_processed(logs_id):
     logs_folder = os.path.join(LOGS_DIR, logs_id)
