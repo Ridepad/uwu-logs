@@ -850,12 +850,12 @@ def duration_to_string(t: float):
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
 
-REPORT_NAME_STRUCTURE = ("date", "time", "name", "server")
-def get_report_name_info(name: str):
-    _name = name.split('--')
-    while len(_name) < len(REPORT_NAME_STRUCTURE):
-        _name.append("")
-    return dict(zip(REPORT_NAME_STRUCTURE, _name))
+REPORT_NAME_STRUCTURE = ("date", "time", "author", "server")
+def get_report_name_info(report_id: str):
+    _report_id = report_id.split('--')
+    while len(_report_id) < len(REPORT_NAME_STRUCTURE):
+        _report_id.append("")
+    return dict(zip(REPORT_NAME_STRUCTURE, _report_id))
 
 def get_last_line(filename, skip_lines=0):
     with open(filename, 'rb') as f:

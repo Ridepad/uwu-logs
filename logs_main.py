@@ -261,8 +261,8 @@ class THE_LOGS:
             year, month, day = report_name_info['date'].split("-")
             month = MONTHS[int(month)-1][:3]
             date = f"{day} {month} {year}"
-            name = report_name_info['name']
-            self.__FORMATTED_NAME = f"{date}, {time} - {name}"
+            author = report_name_info['author']
+            self.__FORMATTED_NAME = f"{date}, {time} - {author}"
             return self.__FORMATTED_NAME
 
     @property
