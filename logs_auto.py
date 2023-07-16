@@ -9,6 +9,7 @@ from time import perf_counter
 
 import constants
 import file_functions
+import logs_calendar
 import logs_top
 from constants import (
     LOGGER_UPLOADS, LOGS_DIR, LOGS_RAW_DIR, PATH_DIR, TOP_DIR, UPLOADS_TEXT,
@@ -166,7 +167,7 @@ def main():
     if not os.path.isdir(UPLOADS_TEXT):
         return
     
-    RAW_LOGS = next(os.walk(UPLOADS_TEXT))[2]
+    RAW_LOGS = [x for x in os.listdir(UPLOADS_TEXT) if x.endswith(".txt")]
     if not RAW_LOGS:
         return
     
@@ -176,6 +177,9 @@ def main():
     with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         for report_id in RAW_LOGS_NO_EXT:
             executor.submit(logs_top.make_report_top_wrap, report_id)
+
+    # needs player and encounter data, thats why after logs top
+    logs_calendar.add_new_logs()
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         for report_id in RAW_LOGS_NO_EXT:

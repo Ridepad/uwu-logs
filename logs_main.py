@@ -245,7 +245,7 @@ class THE_LOGS:
         try:
             return self.__path
         except AttributeError:
-            self.__path = file_functions.new_folder_path(LOGS_DIR, self.NAME)
+            self.__path = file_functions.new_folder_path(LOGS_DIR, self.NAME, check_backup=True)
             return self.__path
 
     def relative_path(self, s: str):

@@ -238,9 +238,10 @@ MULTIBOSSES = {
 def convert_to_html_name(name: str):
     return name.lower().replace(' ', '-').replace("'", '')
 
+ALL_FIGHT_NAMES = set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
 BOSSES_FROM_HTML = {
     convert_to_html_name(name): name
-    for name in set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
+    for name in ALL_FIGHT_NAMES
 }
 
 BOSSES_GUIDS.update(TOC_CHAMPIONS)

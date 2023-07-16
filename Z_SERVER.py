@@ -5,7 +5,11 @@ from struct import unpack
 
 from flask import (
     Flask, request,
-    make_response, redirect, render_template, send_from_directory)
+    make_response,
+    redirect,
+    render_template,
+    send_from_directory,
+)
 import psutil
 
 from werkzeug.exceptions import NotFound, TooManyRequests
@@ -17,7 +21,7 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    FLAG_ORDER, ICONS_DIR, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
+    ALL_FIGHT_NAMES, FLAG_ORDER, ICONS_DIR, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
     STATIC_DIR, T_DELTA, TOP_DIR
 )
 
@@ -37,6 +41,7 @@ MAX_SURVIVE_LOGS = T_DELTA["5MIN"]
 IGNORED_PATHS = {"/upload", "/upload_progress"}
 LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
 SERVER_STARTED = datetime.now()
+YEARS = list(range(2018, SERVER_STARTED.year+2))
 
 CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
@@ -250,39 +255,52 @@ def home():
 def about():
     return render_template('about.html')
 
-# @SERVER.route("/logs_list", methods=['GET', 'POST'])
-@SERVER.route("/logs_list")
+@SERVER.route("/logs_list", methods=['GET', 'POST'])
 def show_logs_list():
-    # if request.method == 'POST':
-    #     print(request.data)
-    #     return '', 200
-        # page = request.data.get()
-        # new_month = logs_calendar.makeshit(page)
-        # return logs_calendar.makeshit(page)
-
-    page = request.args.get("page", default=0, type=int)
-    free = request.args.get("free")
-    server = request.args.get("server")
-    new_month = logs_calendar.makeshit(page, free, server)
-    year, month = logs_calendar.new_month(page)
-    years = list(range(2018, datetime.now().year+2))
-    month_name = MONTHS[month-1]
+    if request.method == "POST":
+        _filter = logs_calendar.normalize_filter(request.json)
+        if not _filter:
+            return "", 418
+        resp = make_response(logs_calendar.get_logs_list_filter_json(_filter))
+        resp.headers.add("Content-Type", "application/json")
+        return resp
+    
     servers = file_functions.get_folders(TOP_DIR)
-    
-    query = ""
-    if server:
-        query = f"{query}&server={server}"
-    if free:
-        query = f"{query}&free={free}"
-    prev_query = f"?page={page-1}{query}"
-    next_query = f"?page={page+1}{query}"
-    
+    server = request.args.get("server")
+    YEAR_REQUEST = request.args.get("year", type=int)
+    MONTH_REQUEST = request.args.get("month", type=int)
+    if YEAR_REQUEST is None or MONTH_REQUEST is None:
+        DATE_CURRENT = datetime.now()
+        YEAR_REQUEST = DATE_CURRENT.year
+        MONTH_REQUEST = DATE_CURRENT.month
+
+    MONTH_PREV = (MONTH_REQUEST + 10) % 12 + 1
+    YEAR_PREV = YEAR_REQUEST-1 if MONTH_PREV == 12 else YEAR_REQUEST
+
+    r = dict(request.args)
+    r["month"] = MONTH_REQUEST
+    r["year"] = YEAR_REQUEST % 1000
+    current_month = logs_calendar.get_logs_list_df_filter_to_calendar_wrap(r)
+    r["month"] = MONTH_PREV
+    r["year"] = YEAR_PREV % 1000
+    prev_month = logs_calendar.get_logs_list_df_filter_to_calendar_wrap(r)
+    new_month = prev_month | current_month
+
+    month_name = MONTHS[MONTH_REQUEST-1]
+    calend_prev = logs_calendar.get_calend_days(YEAR_PREV, MONTH_PREV)
+    calend = logs_calendar.get_calend_days(YEAR_REQUEST, MONTH_REQUEST)
+    calend_prev_last_week = calend_prev[-1]
+    if calend_prev_last_week == calend[0]:
+        calend_prev_last_week = calend_prev[-2]
+    calend.insert(0, calend_prev_last_week)
+
     return render_template(
         'logs_list.html',
-        new_month=new_month,
-        PREV_QUERY=prev_query, NEXT_QUERY=next_query,
-        CURRENT_MONTH=month_name, CURRENT_YEAR=year, CURRENT_SERVER=server,
-        MONTHS=LOGS_LIST_MONTHS, YEARS=years, SERVERS=servers,
+        MONTH=new_month, CALEND=calend,
+        CURRENT_MONTH=month_name, CURRENT_YEAR=YEAR_REQUEST,
+        CURRENT_SERVER=server,
+        MONTHS=LOGS_LIST_MONTHS, YEARS=YEARS, SERVERS=servers,
+        ALL_FIGHT_NAMES=ALL_FIGHT_NAMES,
     )
 
 def file_is_proccessing(ip):
