@@ -27,6 +27,7 @@ TOP_ERROR = "Done!  Select 1 of the reports below.  Top update encountered an er
 ALREADY_DONE = "File has been uploaded already!  Select 1 of the reports below."
 ALREADY_DONE_NONE_FOUND = "File has been uploaded already!  No boss segments were found!  Make sure to use /combatlog"
 FULL_DONE = "Done!  Select 1 of the reports below."
+FULL_DONE_PARTIAL = "Done!  Some of the raids were already uploaded.  Make sure to delete logs file to keep it fresh.  Select 1 of the reports below."
 FULL_DONE_NONE_FOUND = "Done!  No boss segments were found!  Make sure to use /combatlog"
 SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
@@ -134,6 +135,7 @@ class NewUpload(Thread):
     def __init__(self, upload_data: dict[str, str], forced=False, only_slices=False, keep_temp_folder=False) -> None:
         super().__init__()
         print(upload_data)
+        self.has_duplicates = False
         self.upload_data = upload_data
         self.ip = upload_data.get("ip", "localhost")
         self.timestamp = upload_data.get("timestamp")
@@ -304,6 +306,7 @@ class NewUpload(Thread):
         self.slices[logs_id] = _slice_info
 
         if not self.forced and slice_is_fully_processed(logs_id):
+            self.has_duplicates = True
             self.change_slice_status(logs_id, "Done!", slice_done=True)
             self.add_logger_msg(f"Exists     | {logs_id}")
             return
@@ -459,6 +462,7 @@ class NewUpload(Thread):
         self.slices = get_uploaded_logs_info(file_id)
         for slice_id in self.slices:
             if slice_is_fully_processed(slice_id):
+                self.has_duplicates = True
                 self.change_slice_status(slice_id, "Done!", slice_done=True)
             else:
                 self.change_slice_status(slice_id, "Standby...")
@@ -532,6 +536,8 @@ class NewUpload(Thread):
             self.add_logger_msg("Done", pc_main)
             if not self.slices:
                 self.finish(FULL_DONE_NONE_FOUND)
+            elif self.has_duplicates:
+                self.finish(FULL_DONE_PARTIAL)
             else:
                 self.finish(FULL_DONE)
             
