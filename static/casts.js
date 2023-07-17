@@ -78,7 +78,7 @@ function create_new_cleu(flag) {
 
 function new_fake_applied(cleu) {
   const _applied = create_new_cleu("SPELL_AURA_APPLIED");
-  _applied.setAttribute("data-time", 0);
+  _applied.setAttribute("data-time", "0.0");
   for (let attr of ["data-source", "data-target", "data-etc"]) {
     _applied.setAttribute(attr, cleu.getAttribute(attr));
   }
@@ -424,9 +424,10 @@ function makeQuery(name) {
 }
 
 function new_timestamp(t) {
-  const m = ~~(t / 60);
-  const s = (~~(t % 60)).toString().padStart(2, "0");
-  const ms = (t * 1000 % 1000).toString().padStart(3, "0");
+  const [_s, _ms] = t.split(".");
+  const m = ~~(_s / 60);
+  const s = (_s % 60).toString().padStart(2, "0");
+  const ms = _ms.padEnd(3, "0");
   return `${m}:${s}.${ms}`;
 }
 
