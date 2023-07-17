@@ -286,12 +286,32 @@ function array_remove(array, item) {
   }
 }
 
+function format_dmg_line(e) {
+  const [, dmg, ok, , res, , abs, iscrit,] = e.map(v => parseInt(v)); 
+  const crit = iscrit ? "🌟" : "";
+  const whole_dmg = dmg + res + abs;
+  const res_p = ~~(res / whole_dmg * 100 + 0.1);
+  const res_p_s = res == 0 ? 0 : `${res}(${res_p}%)`;
+  const abs_s = abs ? `+🛡️${abs}` : "";
+  const ok_s = ok ? ` | 💀${ok} ` : "";
+  return `${crit}${whole_dmg}${crit} | 🎯${dmg}+🖤${res_p_s}${abs_s}${ok_s}`;
+}
+function parse_etc(etc) {
+  const e = etc.split(",");
+  if (e.length == 2) {
+    return e[1];
+  } else if (e.length == 3) {
+    return `${e[1]} (${e[2]})`;
+  } else if (e.length == 10) {
+    return format_dmg_line(e);
+  }
+}
 function add_tooltip_info(cleu) {
   TOOLTIP_FLAG.textContent = cleu.className;
   TOOLTIP_TIME.textContent = new_timestamp(cleu.getAttribute("data-time"));
   TOOLTIP_SOURCE.textContent = cleu.getAttribute("data-source");
   TOOLTIP_TARGET.textContent = cleu.getAttribute("data-target");
-  TOOLTIP_DATA.textContent = cleu.getAttribute("data-etc");
+  TOOLTIP_DATA.textContent = parse_etc(cleu.getAttribute("data-etc"));
 }
 function move_tooltip_to(cleu) {
   const bodyRect = document.body.getBoundingClientRect();
@@ -443,14 +463,14 @@ class Character {
   }
 
   new_cleu(cleu_data) {
-    const [timestamp, flag, source, target, etc] = cleu_data;
+    const timestamp = cleu_data[0];
     const pad = (timestamp / this.DURATION * 100).toFixed(3);
-    const spellCleu = create_new_cleu(flag);
+    const spellCleu = create_new_cleu(cleu_data[1]);
     spellCleu.style.setProperty("--left", `${pad}%`);
     spellCleu.setAttribute("data-time", timestamp);
-    spellCleu.setAttribute("data-source", source);
-    spellCleu.setAttribute("data-target", target);
-    spellCleu.setAttribute("data-etc", etc);
+    spellCleu.setAttribute("data-source", cleu_data[2]);
+    spellCleu.setAttribute("data-target", cleu_data[3]);
+    spellCleu.setAttribute("data-etc", cleu_data.at(-1));
     spellCleu.setAttribute("data-pad", pad);
     return spellCleu;
   }
