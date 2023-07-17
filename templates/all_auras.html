@@ -30,7 +30,7 @@
           <tr>
             <th class="player-cell">-</th>
             {% for spell_id, spell_info in AURA_INFO.items() %}
-            <th title="{{ spell_info['name'] }}" colspan="2"><img src="https://wotlk.evowow.com/static/images/wow/icons/large/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
+            <th title="{{ spell_info['name'] }}" colspan="2"><img src="/static/icons/{{ spell_info['icon'] }}.jpg" alt="{{ spell_id }}"></th>
             {% endfor %}
           </tr>
         </thead>
