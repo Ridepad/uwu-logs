@@ -496,7 +496,7 @@ class Character {
     name_cell.className = "spell-name";
 
     const _img = document.createElement("img");
-    _img.src = `${CDN_LINK}/${this.SPELLS[spell_id]['icon']}.jpg`;
+    _img.src = `/static/icons/${this.SPELLS[spell_id]['icon']}.jpg`;
     _img.alt = spell_id;
     name_cell.appendChild(_img);
 
