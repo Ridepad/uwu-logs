@@ -286,78 +286,7 @@ function array_remove(array, item) {
   }
 }
 
-function add_control_events(CASTS_SECTION) {
-  const tab_n = CASTS_SECTION.getAttribute("data-tab");
-  const sectionMain = CASTS_SECTION.querySelector("spells-main");
-
-  const _data = {
-    fav: {},
-    hide: {},
-  }
-
-  for (let z in _data) {
-    const spells = localStorage.getItem(z) ? localStorage.getItem(z).split(",") : [];
-    _data[z]["spells"] = Array.from(new Set(spells));
-    _data[z]["element"] = CASTS_SECTION.querySelector(`spells-${z}`);
-  }
-
-  for (let row of sectionMain.querySelectorAll("spell-row")) {
-    const spell_id = row.getAttribute("data-spell-id");
-    for (let z in _data) {
-      if (_data[z]["spells"].includes(spell_id)) {
-        _data[z]["element"].appendChild(row);
-      }
-    }
-  }
-  
-  const insert_before = (parent, element) => {
-    const spellname = element.getAttribute("data-spell-name");
-    for (let row of parent.children) {
-      if (row.getAttribute("data-spell-name") > spellname) return parent.insertBefore(element, row);
-    }
-    parent.appendChild(element);
-  }
-  const spellsFav = _data["fav"]["spells"];
-  const SPELLS_HIDE = _data["hide"]["spells"];
-  const onevent = e => {
-    const row = e.target.closest("spell-row");
-    const spell_id = row.getAttribute("data-spell-id");
-    array_remove(spellsFav, spell_id);
-    array_remove(SPELLS_HIDE, spell_id);
-    
-    const key = e.target == BUTTON_FAV ? "fav" : "hide";
-    const section = _data[key]["element"];
-    if (row.parentElement != section) {
-      const array = _data[key]["spells"];
-      array.push(spell_id);
-      insert_before(section, row);
-    } else {
-      insert_before(sectionMain, row);
-    }
-
-    localStorage.setItem("fav", spellsFav.toString());
-    localStorage.setItem("hide", SPELLS_HIDE.toString());
-  }
-  BUTTON_FAV.addEventListener("click", onevent);
-  BUTTON_DEL.addEventListener("click", onevent);
-
-  CASTS_SECTION.querySelectorAll(".spell-name").forEach(e => {
-    const div = e.querySelector("div");
-    e.addEventListener('mouseover', () => {
-      const section = e.closest("spell-row").parentElement;
-      BUTTON_FAV.textContent = section == _data["fav"]["element"] ? "▼" : "▲";
-      BUTTON_DEL.textContent = section == _data["hide"]["element"] ? "✚" : "✖";
-      div.appendChild(AURA_CONTROLS);
-      AURA_CONTROLS.style.display = "";
-    });
-    e.addEventListener("mouseleave", () => {
-      AURA_CONTROLS.style.display = "none";
-    });
-  });
-}
-
 function add_tooltip_info(cleu) {
-  // console.log(cleu.parentNode.parentNode);
   TOOLTIP_FLAG.textContent = cleu.className;
   TOOLTIP_TIME.textContent = new_timestamp(cleu.getAttribute("data-time"));
   TOOLTIP_SOURCE.textContent = cleu.getAttribute("data-source");
