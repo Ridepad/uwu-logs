@@ -6,15 +6,11 @@
 
 {% block add_style %}
 <style>
-main {
-  padding-bottom: 5rem;
-}
 #graph-controls {
   background: var(--background);
   display: flex;
   gap: .25rem;
 }
-
 @media (orientation: portrait) {
   #graph-controls {
     position: fixed;
@@ -65,63 +61,89 @@ main {
   min-width: 4ch;
 }
 
+.table-wrap {
+  padding-bottom: 5rem;
+}
 .casts-section {
   padding-top: 5rem;
 }
 
+
 #casts-section-wrap {
+  --row-height: 1.25rem;
+  --row-height-border: calc(var(--row-height) + 2px);
+  --event-width-mult: 1;
   --tenth-width: calc(var(--mult) * 1px);
+  --event-width: calc(var(--event-width-mult) * var(--tenth-width));
   width: calc(var(--mult) * var(--duration) * 10px + 2px);
-  margin-left: 2px;
 }
 .spell-row {
-  --size: 1.15em;
+  --row-targets: 1;
   display: block;
+  height: calc(var(--row-targets) * var(--row-height-border));
 }
-.spell-row > div {
-  height: var(--size);
+spell-name div,
+spell-name-data,
+.spell-history {
   border: 1px solid var(--table-border);
-  background-color: black;
-}
-.casts-section .spell-row:nth-of-type(even) > div {
-	background-color: hsl(0, 0%, 5%);
+  height: var(--row-height-border);
 }
 
-.spell-name {
+spell-name,
+spell-history-wrap {
+	background-color: black;
+}
+.casts-section .spell-row:nth-of-type(even) > spell-name,
+.casts-section .spell-row:nth-of-type(even) > spell-history-wrap {
+  background-color: hsl(0, 0%, 3%);
+}
+spell-history-wrap > * {
+  background-color: inherit;
+}
+
+spell-name-data {
   display: flex;
 }
-.spell-name::before {
+spell-name-data::before {
   content: attr(data-count);
   text-align: right;
-  display: inline-block;
   min-width: 4ch;
 }
-.spell-name img {
-  min-width: var(--size);
-  max-width: var(--size);
-  min-height: var(--size);
-  max-height: var(--size);
+spell-name-data img {
+  min-width: var(--row-height);
+  max-width: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   padding-inline: .25em;
 }
-.spell-name a {
+spell-name-data a {
   overflow: hidden;
 }
-.spell-name div {
-  position: relative;
-  margin-left: auto;
+spell-name div::before {
+  display: inline-block;
+  content: attr(data-uptime);
+  text-align: right;
+  min-width: 6ch;
+  padding-right: 1ch;
 }
 
 .spell-history {
   position: relative;
+  width: 100%;
 }
 spell-cleu {
   position: absolute;
   top: 0;
-  left: var(--left);
   height: 100%;
-  width: var(--tenth-width);
+  width: var(--event-width);
   background-color: currentColor;
   box-shadow: -1px 0 gainsboro;
+}
+.copy {
+  display: none;
+}
+.openned .copy {
+  display: block;
 }
 
 #the-tooltip {
@@ -163,22 +185,13 @@ spell-cleu {
   bottom: 100%;
   transform: translate(-50%, 0);
 }
-#spells-fav-aside {
+#spells-fav-reminder {
   font-size: 200%;
   max-width: 75vw;
 }
-#spells-fav-aside:not(:only-child) {
+#spells-fav-reminder:not(:only-child) {
   display: none;
 }
-
-spells-hide > spell-row:first-of-type > * {
- border-top: 1px solid var(--primary-color);
-}
-
-spells-fav > spell-row:last-of-type > * {
- border-bottom: 1px solid var(--primary-color);
-}
-
 
 #aura-controls {
   position: absolute;
@@ -194,21 +207,24 @@ spells-fav > spell-row:last-of-type > * {
   min-width: 11ch;
 }
 
+
 .char-0 {
   --custom-bg-color: hsl(0, 0%, 0%);
 }
 .char-1 {
-  --custom-bg-color: hsl(271, 100%, 10%);
+  --custom-bg-color: hsl(271, 100%, 5%);
 }
 .char-2 {
-  --custom-bg-color: hsl(0, 100%, 10%);
+  --custom-bg-color: hsl(0, 100%, 5%);
 }
-#spells-fav > spell-row > div {
+#spells-fav > spell-row > spell-name,
+#spells-fav > spell-row > spell-history-wrap {
   background-color: var(--custom-bg-color);
 }
 .char-tab {
   background-color: var(--custom-bg-color);
 }
+
 
 #tabs-wrap {
   display: flex;
@@ -254,11 +270,9 @@ spells-fav > spell-row:last-of-type > * {
     min-width: 30%;
   }
 }
-
 #add-character {
   font-size: 350%;
 }
-
 dialog {
   background-color: var(--background);
   border: none;
@@ -272,8 +286,17 @@ dialog select {
   font-size: 200%;
 }
 
+
 #boss-reminder {
   font-size: 500%;
+}
+
+
+#spells-fav #button-unhide,
+#spells-fav #button-fav,
+spells-main #button-unhide,
+spells-hide #button-hide {
+  display: none;
 }
 </style>
 {% endblock add_style %}
@@ -316,7 +339,7 @@ dialog select {
   <div id="casts-section-wrap">
     <div id="timeline-ruler"></div>
     <div id="spells-fav">
-      <aside id="spells-fav-aside">
+      <aside id="spells-fav-reminder">
         <p>
           To add spells to compare - hover spell names below and click ▲
         </p>
@@ -324,6 +347,11 @@ dialog select {
           You can also hide spells by clicking ✖ next to spell name
         </p>
       </aside>
+    </div>
+    <div id="click-reminder">
+      <p>
+        Tip: you can click on timeline to see auras/damage/etc per target and uptime
+      </p>
     </div>
   </div>
 </section>
@@ -336,7 +364,8 @@ dialog select {
 </aside>
 <aside id="aura-controls" style="display: none;">
   <button id="button-fav">▲</button>
-  <button id="button-del">✖</button>
+  <button id="button-hide">✖</button>
+  <button id="button-unhide">✚</button>
 </aside>
 
 <dialog id="add-character-dialog">

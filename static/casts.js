@@ -14,7 +14,8 @@ const TOOLTIP_DATA = document.getElementById("tooltip-data");
 
 const AURA_CONTROLS = document.getElementById("aura-controls");
 const BUTTON_FAV = document.getElementById("button-fav");
-const BUTTON_DEL = document.getElementById("button-del");
+const BUTTON_HIDE = document.getElementById("button-hide");
+const BUTTON_UNHIDE = document.getElementById("button-unhide");
 
 const TABLE_WRAP = document.querySelector(".table-wrap");
 const SPELL_TOGGLE_HIDDEN = document.getElementById("spell-toggle-hidden");
@@ -79,26 +80,35 @@ function create_new_cleu(flag) {
 function new_fake_applied(cleu) {
   const _applied = create_new_cleu("SPELL_AURA_APPLIED");
   _applied.setAttribute("data-time", "0.0");
-  for (let attr of ["data-source", "data-target", "data-etc"]) {
+  for (let attr of ["data-source", "data-target", "data-etc", "data-guid"]) {
     _applied.setAttribute(attr, cleu.getAttribute(attr));
   }
-  _applied.style.setProperty("--left", 0);
   _applied.style.width = get_pad_value(cleu) + "%";
   return _applied;
 }
 
-function add_fake_applied(row, cleus) {
-  const first_cleu = cleus[0];
+function add_fake_applied(spellHistory, events) {
+  const first_cleu = events[0];
   if (first_cleu.className == "SPELL_AURA_REMOVED") {
-    const spellHistory = row.querySelector(".spell-history");
     const _applied = new_fake_applied(first_cleu);
     spellHistory.insertBefore(_applied, spellHistory.firstChild);
   }
   
-  const last_cleu = cleus.at(-1);
+  const last_cleu = events.at(-1);
   if (last_cleu.className == "SPELL_AURA_APPLIED") {
     last_cleu.style.width = 100 - get_pad_value(last_cleu) + "%";
   }
+}
+
+function split_by_guid(row) {
+  const events = Array.from(row.querySelectorAll("spell-cleu"));
+  const events_split = {};
+  for (const event of events) {
+    const guid = event.getAttribute("data-guid");
+    if (!events_split[guid]) events_split[guid] = [];
+    events_split[guid].push(event);
+  }
+  return events_split;
 }
 
 function change_applied_width(new_array) {
@@ -115,23 +125,79 @@ function change_applied_width(new_array) {
   }
 }
 
-function toggle_aura_duration(row) {
-  const events = Array.from(row.querySelectorAll("spell-cleu"));
+function toggle_aura_duration_guid(events, parent) {
   const auras = events.filter(e => AURA_ONOFF.includes(e.className));
 
   if (auras.length > 0) {
-    add_fake_applied(row, auras);
+    add_fake_applied(parent, auras);
   } else {
     const lastEvent = events.filter(e => AURA_REFRESH.includes(e.className)).at(-1);
     if (lastEvent) {
       const _new = lastEvent.cloneNode();
       _new.setAttribute("data-pad", "100");
-      const spellHistory = row.querySelector(".spell-history");
-      spellHistory.insertBefore(new_fake_applied(_new), spellHistory.firstChild);
+      parent.insertBefore(new_fake_applied(_new), parent.firstChild);
     }
   }
 
   change_applied_width(auras);
+}
+
+function toggle_aura_duration(row) {
+  const events_split = split_by_guid(row);
+  const spellHistory = row.querySelector(".spell-history");
+  for (const guid in events_split) {
+    toggle_aura_duration_guid(events_split[guid], spellHistory);
+  }
+}
+
+function get_uptime(events) {
+  const applied = events.filter(e => e.classList.contains("SPELL_AURA_APPLIED"));
+  let uptime = 0;
+  for (const event of applied) {
+    uptime += parseFloat(event.style.getPropertyValue("width") || 0);
+  }
+  return uptime.toFixed(1) + "%";
+}
+
+function spell_row_click(event) {
+  const row = event.target.closest("spell-row");
+  const spellnamewrap = row.querySelector("spell-name");
+  const spellhistory = row.querySelector(".spell-history");
+  const spell_history_wrap = row.querySelector("spell-history-wrap");
+  if (row.style.getPropertyValue("--row-targets")) {
+    row.style.removeProperty("--row-targets");
+    row.classList.remove("openned");
+    return
+  }
+  row.classList.add("openned");
+  const known_len = row.getAttribute("data-len");
+  if (known_len) {
+    row.style.setProperty("--row-targets", known_len);
+    return
+  }
+
+  const events_split = split_by_guid(spellhistory);
+  const len = Object.keys(events_split).length;
+  row.style.setProperty("--row-targets", len+2);
+  row.setAttribute("data-len", len+2);
+
+  for (const guid in events_split) {
+    const spellinfo = document.createElement("div");
+    spellinfo.className = "copy";
+    spellinfo.setAttribute("data-uptime", get_uptime(events_split[guid]));
+    const tname = events_split[guid][0].getAttribute("data-target");
+    spellinfo.append(tname);
+    spellnamewrap.appendChild(spellinfo);
+
+    const spellrowrow = document.createElement("div");
+    spellrowrow.classList.add("spell-history", "copy");
+    for (const event of events_split[guid]) {
+      const cleu = event.cloneNode();
+      add_tooltip_event(cleu);
+      spellrowrow.appendChild(cleu);
+    }
+    spell_history_wrap.appendChild(spellrowrow)
+  }
 }
 
 function toggle_aura_duration_wrap() {
@@ -153,7 +219,7 @@ function toggle_rows(parent) {
   const to_sort = [];
   for (let row of parent.getElementsByClassName("spell-row")) {
     const count = spell_count(row);
-    row.querySelector(".spell-name").setAttribute('data-count', count);
+    row.querySelector("spell-name-data").setAttribute('data-count', count);
     if (count == 0) {
       row.style.display = "none";
       to_hide.push(row);
@@ -169,6 +235,7 @@ function toggle_rows(parent) {
 }
 
 function toggle_rows_wrap() {
+  toggle_rows(SECTION_FAV);
   for (let section of document.getElementsByClassName("casts-section")) {
     for (let category of section.children) {
       toggle_rows(category);
@@ -316,18 +383,18 @@ function add_tooltip_info(cleu) {
 function move_tooltip_to(cleu) {
   const bodyRect = document.body.getBoundingClientRect();
   const elemRect = cleu.getBoundingClientRect();
-  const elemRect2 = cleu.parentNode.previousSibling.getBoundingClientRect();
+  const elemRect2 = cleu.parentNode.parentNode.previousSibling.getBoundingClientRect();
   const _left = Math.max(elemRect.left, elemRect2.right);
   TOOLTIP.style.top = elemRect.bottom - bodyRect.top + 'px';
   TOOLTIP.style.right = bodyRect.right - _left + 'px';
 }
 function mouseenter(event) {
-    move_tooltip_to(event.target);
-    add_tooltip_info(event.target);
-    TOOLTIP.style.display = "";
+  move_tooltip_to(event.target);
+  add_tooltip_info(event.target);
+  TOOLTIP.style.display = "";
 }
 function mouseleave() {
-    TOOLTIP.style.display = "none";
+  TOOLTIP.style.display = "none";
 }
 function add_tooltip_event(cleu) {
   cleu.addEventListener("mouseenter", mouseenter);
@@ -430,7 +497,7 @@ class Character {
       Character.PLAYER_CLASS = Character.PLAYER_CLASS ?? PARSED_DATA.CLASS
       
       this.DURATION = parseFloat(PARSED_DATA.RDURATION);
-      this.WIDTH = `calc(var(--mult) * ${this.DURATION*10}px + 2px)`;
+      this.WIDTH = `calc(var(--mult) * ${(this.DURATION*10).toFixed(2)}px)`;
       
       setTimeout(() => reveal_new_flags(PARSED_DATA.FLAGS));
       setTimeout(() => check_timeline(this.DURATION));
@@ -442,8 +509,9 @@ class Character {
   }
 
   new_spell_name_cell(spell_id) {
-    const name_cell = document.createElement("div");
-    name_cell.className = "spell-name";
+    const name_cell_wrap = document.createElement("spell-name");
+    name_cell_wrap.className = "spell-name";
+    const name_cell = document.createElement("spell-name-data");
 
     const _img = document.createElement("img");
     _img.src = `/static/icons/${this.SPELLS[spell_id]['icon']}.jpg`;
@@ -456,20 +524,19 @@ class Character {
     _a.append(this.SPELLS[spell_id]['name']);
     name_cell.appendChild(_a);
     
-    const _div = document.createElement("div");
-    name_cell.appendChild(_div);
-    
-    return name_cell;
+    name_cell_wrap.appendChild(name_cell);
+    return name_cell_wrap;
   }
 
   new_cleu(cleu_data) {
     const timestamp = cleu_data[0];
-    const pad = (timestamp / this.DURATION * 100).toFixed(3);
+    const pad = timestamp / this.DURATION * 100;
     const spellCleu = create_new_cleu(cleu_data[1]);
-    spellCleu.style.setProperty("--left", `${pad}%`);
+    spellCleu.style.setProperty("left", `${pad}%`);
     spellCleu.setAttribute("data-time", timestamp);
     spellCleu.setAttribute("data-source", cleu_data[2]);
     spellCleu.setAttribute("data-target", cleu_data[3]);
+    spellCleu.setAttribute("data-guid", cleu_data[4]);
     spellCleu.setAttribute("data-etc", cleu_data.at(-1));
     spellCleu.setAttribute("data-pad", pad);
     return spellCleu;
@@ -491,9 +558,15 @@ class Character {
       spellRow.setAttribute("data-tab-n", this.TAB_N);
       spellRow.setAttribute("data-spell-id", spell_id);
       spellRow.setAttribute("data-spell-name", this.SPELLS[spell_id]['name']);
+      
       spellRow.appendChild(this.new_spell_name_cell(spell_id));
-      spellRow.appendChild(this.new_spell_history_cell(spell_id));
+      
+      const spellhistorywrap = document.createElement("spell-history-wrap");
+      spellhistorywrap.appendChild(this.new_spell_history_cell(spell_id));
+      spellRow.appendChild(spellhistorywrap);
+      
       spellRow.style.width = this.WIDTH;
+      spellhistorywrap.addEventListener("click", spell_row_click);
 
       this.SPELLS_MAIN.appendChild(spellRow);
     }
@@ -526,16 +599,12 @@ class Character {
   }
 
   add_control_events() {
-    this.CASTS_SECTION.querySelectorAll(".spell-name").forEach(e => {
-      const div = e.querySelector("div");
-      e.addEventListener('mouseover', () => {
-        const section = e.closest("spell-row").parentElement;
-        BUTTON_DEL.textContent = section == this.SPELLS_HIDE ? "✚" : "✖";
-        BUTTON_FAV.style.display = section == SECTION_FAV ? "none" : "";
-        div.appendChild(AURA_CONTROLS);
-        AURA_CONTROLS.style.display = "";
+    this.CASTS_SECTION.querySelectorAll("spell-name").forEach(element => {
+      element.addEventListener("mouseleave", () => AURA_CONTROLS.style.display = "none");
+      element.addEventListener('mouseover', () => {
+        element.appendChild(AURA_CONTROLS);
+        AURA_CONTROLS.style.removeProperty("display");
       });
-      e.addEventListener("mouseleave", () => AURA_CONTROLS.style.display = "none");
     });
 
     for (let row of this.SPELLS_MAIN.querySelectorAll("spell-row")) {
@@ -628,48 +697,48 @@ function save_spells_local_storage() {
   localStorage.setItem("fav", [...SPELLS_FAV]);
   localStorage.setItem("hide", [...SPELLS_HIDE]);
 }
-
-BUTTON_DEL.addEventListener("click", e => {
-  const _row = e.target.closest("spell-row");
-  const spell_id = _row.getAttribute("data-spell-id");
+function get_spell_row_css_query(event, add_to) {
+  const spell_row = event.target.closest("spell-row");
+  const spell_id = spell_row.getAttribute("data-spell-id");
   const css_query = `[data-spell-id="${spell_id}"]`;
   SPELLS_FAV.delete(spell_id);
   SPELLS_HIDE.delete(spell_id);
-
-  if (_row.parentElement == SECTION_FAV) {
-    for (let row of document.querySelectorAll(css_query)) {
-      const tab_n = row.getAttribute("data-tab-n");
-      section_append(CHARACTERS[tab_n].SPELLS_MAIN, row);
-    }
-  } else if (_row.closest("spells-main")) {
+  if (add_to == "fav") {
+    SPELLS_FAV.add(spell_id);
+  } else if (add_to == "hide") {
     SPELLS_HIDE.add(spell_id);
+  }
+  save_spells_local_storage();
+  return css_query;
+}
+BUTTON_HIDE.addEventListener("click", event => {
+  if (event.target.closest("spells-main")) {
+    const css_query = get_spell_row_css_query(event, "hide");
     for (let character of CHARACTERS) {
       const row = character.CASTS_SECTION.querySelector(css_query);
       section_append(character.SPELLS_HIDE, row);
     }
-  } else  {
-    for (let character of CHARACTERS) {
-      const row = character.CASTS_SECTION.querySelector(css_query);
-      section_append(character.SPELLS_MAIN, row);
+  } else if (!event.target.closest("spells-hide")) {
+    const css_query = get_spell_row_css_query(event);
+    for (let row of document.querySelectorAll(css_query)) {
+      const tab_n = row.getAttribute("data-tab-n");
+      section_append(CHARACTERS[tab_n].SPELLS_MAIN, row);
     }
   }
-
-  save_spells_local_storage();
 });
-
-BUTTON_FAV.addEventListener("click", e => {
-  const _row = e.target.closest("spell-row");
-  const spell_id = _row.getAttribute("data-spell-id");
-  const css_query = `[data-spell-id="${spell_id}"]`;
-  SPELLS_FAV.add(spell_id);
-  SPELLS_HIDE.delete(spell_id);
-
+BUTTON_UNHIDE.addEventListener("click", event => {
+  const css_query = get_spell_row_css_query(event);
+  for (let character of CHARACTERS) {
+    const row = character.CASTS_SECTION.querySelector(css_query);
+    section_append(character.SPELLS_MAIN, row);
+  }
+});
+BUTTON_FAV.addEventListener("click", event => {
+  const css_query = get_spell_row_css_query(event, "fav");
   for (let character of CHARACTERS) {
     const row = character.CASTS_SECTION.querySelector(css_query);
     section_append(SECTION_FAV, row);
   }
-
-  save_spells_local_storage();
 });
 
 function newOption(value, text) {
@@ -783,6 +852,7 @@ BUTTON_CONFIRM.addEventListener("click", () => {
   DIALOG_MSG.style.color = "gainsboro";
   DIALOG_MSG.style.visibility = "visible";
   new Character(INPUT_REPORT_ID.value, SELECT_PLAYERS.value);
+  CASTS_SECTION_WRAP.style.display = "";
 });
 BUTTON_CANCEL.addEventListener("click", () => DIALOG_CHARACTER_SELECTION.close());
 

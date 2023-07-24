@@ -45,63 +45,80 @@ def convert_keys(data: dict[str, int]):
         data[new_key] = data.pop(k)
 
 
-
-
-def to_float(s: str):
-    minutes, seconds = s[-9:-2].split(":", 1)
-    return int(minutes) * 60 + float(seconds)
-
-def to_str(k: float):
-    seconds = k % 60
-    minutes = k // 60
-    return f"{minutes:0>2.0f}:{seconds:0>4.1f}"
-
 def to_float(s: str):
     minutes, seconds = s[-9:].split(":", 1)
-    # return int(minutes) * 60 + float(seconds)
     return int(minutes) * 60000 + float(seconds) * 1000
 
-def to_str(k: float):
-    seconds = k % 60
-    minutes = k // 60
-    return f"{minutes:0>2.0f}:{seconds:0>6.3f}"
+COMBINE_SPELLS = {
+    "58381": "48156",
+    "53022": "53023",
+    # "63675": "48300",
+    "23881": "23885",
+    "2687": "29131",
+    "22858": "20230",
+    "7386 Sunder Armor": "58567 Sunder Armor",
+    " 42897 Arcane Blast": "36032 Arcane Blast",
+    "  55362 Living Bomb": "55360 Living Bomb (DoT)",
+    "   22482 Blade Flurry": "13877 Blade Flurry",
+    "   57841 Killing Spree": "51690 Killing Spree",
+    "   57842 Killing Spree": "51690 Killing Spree",
+    "   34075 Aspect of the Viper": "34074 Aspect of the Viper",
+    "    58433 Volley": " 58434 Volley",
+    "   49065 Explosive Trap Effect ": "49067 Explosive Trap ",
+    "   50590 Immolation ": "50589 Immolation Aura ",
+    "   47834 Seed of Corruption ": "47836 Seed of Corruption ",
+    "   686 Shadow Bolt ": "47809 Shadow Bolt ",
+    "    61290 Shadowflame ": " 61291 Shadowflame ",
+    "    48466 Hurricane ": " 48467 Hurricane ",
+    "49088 Anti-Magic Shell ": " 48707 Anti-Magic Shell ",
+    "47632 Death Coil ": " 49895 Death Coil ",
+    "52212 Death and Decay ": " 49938 Death and Decay ",
+    "53506 Moonkin Form": " 24858 Moonkin Form ",
+}
 
 @running_time
-def get_history(logs: list[str], guid: str, other_players_and_pets: set[str]):
-    def get_delta(current_ts: str):
+def get_history(logs: list[str], source_guid: str, ignored_guids: set[str]=None):
+    def get_delta_from_start(current_ts: str):
         new_key = to_float(current_ts) - FIRST_KEY
         if new_key < 0:
-            # new_key = new_key + 3600
             new_key = new_key + 3600000
-        # return new_key
         return new_key / 1000
     
-    def get_percentage(from_start: float):
-        return from_start / FIGHT_DURATION * 100
-
     history = defaultdict(list)
     flags = set()
     FIRST_KEY = to_float(logs[0].split(",", 1)[0])
-    FIGHT_DURATION = get_delta(logs[-1].split(",", 1)[0])
 
-    if guid in other_players_and_pets:
-        other_players_and_pets.remove(guid)
+    if ignored_guids is None:
+        ignored_guids = set()
+    elif source_guid in ignored_guids:
+        ignored_guids.remove(source_guid)
     
     for line in logs:
-        if guid not in line:
+        if source_guid not in line:
             continue
         try:
             timestamp, flag, _, sName, tGUID, tName, spell_id, _, etc = line.split(',', 8)
-            if flag in IGNORED_FLAGS or tGUID in other_players_and_pets:
+            if flag in IGNORED_FLAGS or tGUID in ignored_guids:
                 continue
-            _delta = get_delta(timestamp)
-            history[spell_id].append([_delta, flag, sName, tName, etc])
+            _delta = get_delta_from_start(timestamp)
+            history[spell_id].append((_delta, flag, sName, tName, tGUID, etc))
+            # history[spell_id].append({
+            #     "ts": _delta,
+            #     "flag": flag,
+            #     "sName": sName,
+            #     "tName": tName,
+            #     "etc": etc,
+            # })
             flags.add(flag)
-        except Exception as e:
-            print(e)
+        except ValueError:
             print(line)
-            # PARTY_KILL UNIT_DIED
             continue
+
+    for spell_id in list(history):
+        if spell_id not in COMBINE_SPELLS:
+            continue
+        main_spell_id = COMBINE_SPELLS[spell_id]
+        history[main_spell_id] = sorted(history[main_spell_id] + history.pop(spell_id))
     
     return {
         "DATA": history,
