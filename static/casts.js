@@ -208,7 +208,7 @@ function toggle_aura_duration_wrap() {
 
 function spell_count(row) {
   let c = 0;
-  for (let cleu of row.querySelectorAll("spell-cleu")) {
+  for (let cleu of row.querySelector(".spell-history").querySelectorAll("spell-cleu")) {
     if (cleu.style.visibility != "hidden") c = c + 1;
   }
   return c
