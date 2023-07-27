@@ -8,16 +8,6 @@ from constants import LOGS_DIR, TOP_DIR, running_time, get_report_name_info
 
 TOP_FILE = 'top.json'
 
-def new_request(request: dict):
-    server = request.get("server")
-    if not server:
-        return b''
-    
-    server_folder = file_functions.new_folder_path(TOP_DIR, server)
-    fname = f"{request.get('boss')} {request.get('diff')}.gzip"
-    p = os.path.join(server_folder, fname)
-    return file_functions.bytes_read(p)
-
 def save_top(server_folder: str, boss_f_n: str, data):
     print(boss_f_n)
     bpath = os.path.join(server_folder, f"{boss_f_n}.gzip")
@@ -28,7 +18,6 @@ def save_top(server_folder: str, boss_f_n: str, data):
 
 @running_time
 def save_tops(top: dict, server: str):
-    print("\nSaving top for", server)
     server_folder = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in top.items():
         save_top(server_folder, boss_f_n, data)

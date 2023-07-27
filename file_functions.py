@@ -9,6 +9,12 @@ PATH_DIR = os.path.dirname(real_path)
 REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
 REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
 
+def get_mtime(path):
+    try:
+        return os.path.getmtime(path)
+    except FileNotFoundError:
+        return 0.0
+
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
@@ -142,11 +148,11 @@ def get_logs_filter(filter_file: str):
 
 def get_privated_logs_wrap():
     _privated = {
-        "reports": file_read(REPORTS_PRIVATE).splitlines(),
-        "last_mtime": os.path.getmtime(REPORTS_PRIVATE),
+        "reports": [],
+        "last_mtime": 0,
     }
     def inner():
-        current_mtime = os.path.getmtime(REPORTS_PRIVATE)
+        current_mtime = get_mtime(REPORTS_PRIVATE)
         if current_mtime > _privated["last_mtime"]:
             print('changed')
             _privated["reports"] = file_read(REPORTS_PRIVATE).splitlines()

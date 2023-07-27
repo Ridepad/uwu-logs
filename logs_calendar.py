@@ -37,7 +37,7 @@ class DF_TYPE(TypedDict):
 
 DF_MAIN_DATA: DF_TYPE = {
     "df": pandas.DataFrame(),
-    "last_mtime": 0,
+    "last_mtime": 0.0,
 }
 COLUMN_TYPES = {
     "year": "int8",
@@ -57,12 +57,6 @@ def _read_df(path) -> pandas.DataFrame:
     except FileNotFoundError:
         return pandas.DataFrame()
 
-def _get_mtime(path):
-    try:
-        return os.path.getmtime(path)
-    except FileNotFoundError:
-        return 0.0
-
 @running_time
 def _save_df(df: pandas.DataFrame, path, comp=None):
     df.to_pickle(path, compression=comp)
@@ -71,24 +65,17 @@ def _save_df_with_backup(df: pandas.DataFrame):
     PATH_BKP = os.path.join(PATH_DIR, f"{DF_MAIN_NAME}.bkp")
     PATH_TMP = os.path.join(PATH_DIR, f"{DF_MAIN_NAME}.tmp")
 
-    DF_MAIN_DATA["df"] = df
-
     shutil.copy2(DF_MAIN_PATH, PATH_BKP)
     _save_df(df, PATH_TMP)
-    DF_MAIN_DATA["last_mtime"] = _get_mtime(PATH_TMP)
-    os.replace(PATH_TMP, DF_MAIN_PATH)
-
-def save_df_wrap(df: pandas.DataFrame, backup=True):
-    if backup:
-        _save_df_with_backup
+    
     DF_MAIN_DATA["df"] = df
-    DF_MAIN_DATA["last_mtime"] = _get_mtime(DF_MAIN_PATH)
-    return 
-
+    DF_MAIN_DATA["last_mtime"] = file_functions.get_mtime(PATH_TMP)
+    
+    os.replace(PATH_TMP, DF_MAIN_PATH)
 
 
 def get_logs_list_df():
-    current_mtime = _get_mtime(DF_MAIN_PATH)
+    current_mtime = file_functions.get_mtime(DF_MAIN_PATH)
     if current_mtime > DF_MAIN_DATA["last_mtime"]:
         DF_MAIN_DATA["df"] = _read_df(DF_MAIN_PATH)
         DF_MAIN_DATA["last_mtime"] = current_mtime
