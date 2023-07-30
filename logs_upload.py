@@ -202,6 +202,15 @@ class NewUpload(Thread):
     def get_timedelta(self, now, before):
         return self.to_dt(now) - self.to_dt(before)
     
+    def get_first_valid_timedelta(self, logs_slice: list[str], reverse=False):
+        index = reverse and -1 or 0
+        while logs_slice:
+            line = logs_slice[index]
+            try:
+                return self.to_dt(line)
+            except ValueError:
+                logs_slice.pop(index)
+    
     def to_int(self, line: bytes):
         return int(line.split(b' ', 1)[1][:8].replace(b':', b''))
     
@@ -269,11 +278,16 @@ class NewUpload(Thread):
             elif guid[:3] == b"0x0" and guid != b"0x0000000000000000":
                 players.add(_format_name(names[guid]))
 
-        _tdelta = self.get_timedelta(logs_slice[-1], logs_slice[0])
+        duration = 0
+        start = self.get_first_valid_timedelta(logs_slice)
+        end = self.get_first_valid_timedelta(logs_slice, reverse=True)
+        if start and end:
+            duration = (end - start).seconds
+
         return {
             'players': sorted(players),
             'bosses': bosses,
-            'duration': _tdelta.seconds,
+            'duration': duration,
             "length": len(logs_slice)
         }
 
