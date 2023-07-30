@@ -103,13 +103,12 @@ def get_more_precise_end(lines: list[tuple[int, list[str]]]):
     index = 0
     _damaged = 0
     for i, line in enumerate(reversed(lines)):
-        # print(_damaged)
-        if i > MAX_LINES or _damaged > 5:
+        if i > MAX_LINES or _damaged > 20:
             # print(">>>>>>> break", i, _damaged)
             break
         if line[2] in SPELL_AURA:
             continue
-        if line[2] == "UNIT_DIED" and i < 5:
+        if line[2] == "UNIT_DIED" and index < 10:
             # print(line)
             index = i
             continue
