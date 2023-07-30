@@ -538,17 +538,20 @@ class NewUpload(Thread):
         
         pc_main = perf_counter()
 
+        logs_error = False
         try:
             self.main()
         
         except Exception:
+            logs_error = True
             LOGGER_UPLOADS.exception(f"{self.upload_dir} | NewUpload run")
             self.status_dict['slices'] = {}
-            self.change_status(LOGS_ERROR, 1)
         
         finally:
             self.add_logger_msg("Done", pc_main)
-            if not self.slices:
+            if logs_error:
+                self.finish(LOGS_ERROR)
+            elif not self.slices:
                 self.finish(FULL_DONE_NONE_FOUND)
             elif self.has_duplicates:
                 self.finish(FULL_DONE_PARTIAL)
