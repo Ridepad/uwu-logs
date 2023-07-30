@@ -30,7 +30,7 @@ IGNORED_SPELL_IDS = {
     # "70861", # Sindragosa"s Lair Teleport
     # "72550", # Malleable Goo
     # "72273", # Vile Gas
-    # "72371", # Blood Power
+    "72371", # Blood Power
     # "70952", # Invocation of Blood
     # "72443", # Boiling Blood
     # "72410", # Rune of Blood
