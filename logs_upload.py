@@ -40,6 +40,24 @@ UPLOADS_TEXT = file_functions.new_folder_path(UPLOADS_DIR, "0archive_pending")
 UPLOADED_FILE_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0file_info")
 UPLOADED_LOGS_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0logs_info")
 
+
+def format_filename(file_name):
+    if not file_name:
+        return "archive.7z"
+
+    *words, ext = re.findall('([A-Za-z0-9]+)', file_name)
+    return f"{'_'.join(words)}.{ext}"
+
+def get_now_timestamp():
+    return datetime.now().strftime("%y-%m-%d--%H-%M-%S")
+
+def new_upload_folder(ip='localhost', timestamp: str=None):
+    new_upload_dir_ip = file_functions.new_folder_path(UPLOADS_DIR, ip)
+    if not timestamp:
+        timestamp = get_now_timestamp()
+    new_upload_dir = file_functions.new_folder_path(new_upload_dir_ip, timestamp)
+    return new_upload_dir
+
 def save_upload_cache(_data, slices):
     file_id = _data["file_id"]
     new_file_info_file = os.path.join(UPLOADED_FILE_INFO, f"{file_id}.json")
@@ -54,28 +72,6 @@ def get_uploaded_file_info(file_id):
 def get_uploaded_logs_info(file_id):
     new_logs_info_file = os.path.join(UPLOADED_LOGS_INFO, f"{file_id}.json")
     return file_functions.json_read(new_logs_info_file)
-
-# UPLOADED_FILES_FILE = os.path.join(PATH_DIR, '_uploaded_files.json')
-# UPLOADED_FILES: dict[str, dict] = file_functions.json_read(UPLOADED_FILES_FILE)
-# UPLOADED_LOGS_FILE = os.path.join(PATH_DIR, '_uploaded_logs.json')
-# UPLOADED_LOGS: dict[str, dict] = file_functions.json_read(UPLOADED_LOGS_FILE)
-# def save_upload_cache(_data, slices):
-#     u_logs = file_functions.json_read(UPLOADED_LOGS_FILE)
-#     u_logs_old = dict(u_logs)
-#     u_logs.update(slices)   
-#     if u_logs != u_logs_old:
-#         file_functions.json_write(UPLOADED_LOGS_FILE, u_logs)
-#         UPLOADED_LOGS.update(u_logs)
-
-#     new_upload_data = dict(_data)
-#     new_upload_data['logs_list'] = sorted(slices)
-#     file_id = _data["file_id"]
-#     u_files = file_functions.json_read(UPLOADED_FILES_FILE)
-#     u_files_old = dict(u_files)
-#     u_files[file_id] = new_upload_data
-#     if u_files != u_files_old:
-#         file_functions.json_write(UPLOADED_FILES_FILE, u_files)
-#         UPLOADED_FILES.update(u_files)
 
 def get_logs_author_info(logs: list[bytes]):
     for line in logs:
@@ -160,13 +156,6 @@ class NewUpload(Thread):
 
         self.timezone = upload_data.get("timezone", "")
 
-        # _timezone = upload_data.get("timezone")
-        # try:
-        #     self.timezone = pytz.timezone(_timezone)
-        # except (ValueError, pytz.exceptions.UnknownTimeZoneError):
-        #     self.timezone = pytz.utc
-        #     LOGGER_UPLOADS.exception(f"{self.upload_dir} | Can't parse timezone: {_timezone}")
-
         self.slices: dict[str, dict] = {}
         self.status_dict = {
             'done': 0,
@@ -225,9 +214,6 @@ class NewUpload(Thread):
                 except Exception:
                     pass
         return None
-    
-    def to_utc(self, d):
-        return self.timezone.normalize(self.timezone.localize(d)).astimezone(pytz.utc)
         
     def get_logs_id(self, logs_slice: list[bytes]):
         for _ in range(10):
@@ -236,11 +222,6 @@ class NewUpload(Thread):
                 break
             except Exception:
                 del logs_slice[0]
-        
-        # try:
-        #     __date = self.to_utc(__date)
-        # except Exception:
-        #     LOGGER_UPLOADS.exception(f"{self.upload_dir} | Coudn't convert to utc: {__date}")
 
         date = __date.strftime("%y-%m-%d--%H-%M")
 
@@ -594,46 +575,6 @@ class NewUpload(Thread):
         self.change_status(msg, 1)
 
 
-class File:
-    # helper class for Flask.File type hints
-    def __init__(self, current_path) -> None:
-        self.current_path = current_path
-        self.filename: str = os.path.basename(current_path)
-        self.name, self.ext = self.filename.rsplit('.', 1)
-    
-    def save(self, new_path):
-        shutil.copyfile(self.current_path, new_path)
-
-def format_filename(file_name):
-    if not file_name:
-        return "archive.7z"
-
-    *words, ext = re.findall('([A-Za-z0-9]+)', file_name)
-    return f"{'_'.join(words)}.{ext}"
-
-def get_now_timestamp():
-    return datetime.now().strftime("%y-%m-%d--%H-%M-%S")
-
-def new_upload_folder(ip='localhost', timestamp: str=None):
-    new_upload_dir_ip = file_functions.new_folder_path(UPLOADS_DIR, ip)
-    if not timestamp:
-        timestamp = get_now_timestamp()
-    new_upload_dir = file_functions.new_folder_path(new_upload_dir_ip, timestamp)
-    return new_upload_dir
-
-def main(file: File, ip='localhost', server=None, forced=False):
-    new_upload_dir = new_upload_folder(ip)
-    file_name = format_filename(file.filename)
-    full_file_path = os.path.join(new_upload_dir, file_name)
-    file.save(full_file_path)
-    upload_data = {
-        "upload_dir": new_upload_dir,
-        "archive": full_file_path,
-        "server": server,
-        "ip": ip,
-    }
-    return NewUpload(upload_data, forced=forced)
-
 class FileSave:
     def __init__(self) -> None:
         self.date = 0
@@ -690,6 +631,35 @@ class FileSave:
         self.chunks.append(chunk)
         return True
 
+
+class File:
+    # helper class for Flask.File type hints
+    def __init__(self, current_path) -> None:
+        self.current_path = current_path
+        self.filename: str = os.path.basename(current_path)
+        self.name, self.ext = self.filename.rsplit('.', 1)
+    
+    def save(self, new_path):
+        shutil.copyfile(self.current_path, new_path)
+
+
+def main_archive(file: File, ip='localhost', server=None, timezone=None, forced=False):
+    timestamp = get_now_timestamp()
+    new_upload_dir = new_upload_folder(ip, timestamp)
+    file_name = format_filename(file.filename)
+    full_file_path = os.path.join(new_upload_dir, file_name)
+    file.save(full_file_path)
+    upload_data = {
+        "upload_dir": new_upload_dir,
+        "archive": full_file_path,
+        "server": server,
+        "ip": ip,
+        "timezone": timezone,
+        "timestamp": timestamp,
+    }
+    return NewUpload(upload_data, forced=forced)
+
+
 def main_local_text(logs_path, ip="localhost", forced=False, dont_clean=False, only_slices=False):
     upload_data = {
         "upload_dir": new_upload_folder(ip),
@@ -712,7 +682,7 @@ def __main():
         _main_thread = main_local_text(name)
     else:
         new_file = File(name)
-        _main_thread = main(new_file)
+        _main_thread = main_archive(new_file)
     
     if _main_thread is not None:
         _main_thread.start()
