@@ -870,7 +870,7 @@ def get_last_line(filename, skip_lines=0):
                     skip_lines -= 1
         except OSError:
             f.seek(0)
-        return f.readline().decode()
+        return f.readline().strip(b"\x00").decode()
 
 def get_last_mod(file_name):
     return datetime.fromtimestamp(os.path.getmtime(file_name))
