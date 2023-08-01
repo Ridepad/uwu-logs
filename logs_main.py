@@ -34,6 +34,20 @@ SHIFT = {
     'player_auras': 10,
 }
 _SORT = {"0xF": 1, "0x0": 2}
+PASSIVE_SPELLS = {
+    49497: {
+        'name': 'Spell Deflection',
+        'school': '0x1',
+        'color': 'physical',
+        'icon': 'spell_deathknight_spelldeflection'
+    },
+    52286: {
+        'name': 'Will of the Necropolis',
+        'school': '0x1',
+        'color': 'physical',
+        'icon': 'ability_creature_cursed_02'
+    },
+}
 
 UNKNOWN_ICON = "inv_misc_questionmark"
 DEFAULT_ICONS = [
@@ -703,8 +717,8 @@ class THE_LOGS:
             _icons = logs_spells_order.get_spells()
             for spell_id, spell_data in _spells.items():
                 spell_data["icon"] = _icons.get(spell_id, UNKNOWN_ICON)
-            self.icons_set = True
 
+            _spells |= PASSIVE_SPELLS
             self.__SPELLS_WITH_ICONS = _spells
             return _spells
 
