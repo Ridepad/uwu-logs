@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 
+import logs_absorbs
 import logs_spells_order
 import file_functions
 import logs_auras
@@ -66,6 +67,9 @@ def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
 def format_total_data(data: dict):
     data["Total"] = sum(data.values())
     return {k: separate_thousands(v) for k, v in data.items()}
+
+def format_percentage(v, total):
+    return f"{(v / total * 100):.1f}%"
 
 def calc_percent(value: int, max_value: int):
     return int(value / max_value * 100)
@@ -764,6 +768,8 @@ class THE_LOGS:
         data['specs'] = self.get_players_specs_in_segments(s, f)
         data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
         data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
+        for guid, v in self.get_absorbs_by_source(s, f).items():
+            data["heal"][guid] += v
 
         return data
     
@@ -883,50 +889,60 @@ class THE_LOGS:
 
         return dmg_data
     
-    @running_time
-    def player_damage_format(self, _data):
-        all_spells = self.SPELLS_WITH_ICONS
-        def get_spell_info(spell_id):
-            try:
-                if spell_id < 0:
-                    _d = dict(all_spells[-spell_id])
-                    _d["name"] = f"{_d['name']} (Pet)"
-                    return _d
-                return all_spells[spell_id]
-            except KeyError:
-                return spell_id
-        
-        targets_set = regroup_targets(_data["units"])
+    def format_targets_data(self, all_targets: str):
+        targets_set = regroup_targets(all_targets)
         targets = [
             (gid, self.guid_to_name(gid))
             for gid in targets_set
         ]
-        targets = sort_by_name_type(targets)
+        return sort_by_name_type(targets)
+
+    @running_time
+    def player_damage_format(self, _data, add_absorbs=None):
+        ALL_SPELLS = self.SPELLS_WITH_ICONS
+        def get_spell_info(spell_id):
+            try:
+                if spell_id < 0:
+                    _d = dict(ALL_SPELLS[-spell_id])
+                    _d["name"] = f"{_d['name']} (Pet)"
+                    return _d
+                return ALL_SPELLS[spell_id]
+            except KeyError:
+                return spell_id
+        
+        TARGETS = self.format_targets_data(_data["units"])
         
         actual = _data["actual"]
-        hits_data = logs_dmg_breakdown.hits_data(actual)
         actual_sum = {
             spell_id: sum(sum(x) for x in d.values())
             for spell_id, d in actual.items()
         }
-        actual_sorted = sort_dict_by_value(actual_sum)
-        all_spells = self.SPELLS_WITH_ICONS
-        SPELLS_DATA = {spell_id: get_spell_info(spell_id) for spell_id in actual_sorted}
+        
+        if add_absorbs:
+            for spell_id, v in add_absorbs.items():
+                actual_sum[int(spell_id)] = v
+
+        SPELLS_DATA = {
+            spell_id: get_spell_info(spell_id)
+            for spell_id in sort_dict_by_value(actual_sum)
+        }
+        actual_formatted = format_total_data(actual_sum)
 
         reduced = _data['reduced']
         reduced_formatted = format_total_data(reduced)
         reduced_percent = {
-            spell_id: f"{((reduced[spell_id] / (value + reduced[spell_id])) * 100):.1f}%"
-            for spell_id, value in actual_sum.items()
-            if reduced.get(spell_id)
+            spell_id: format_percentage(value, value + actual_sum[spell_id])
+            for spell_id, value in reduced.items()
+            if value
         }
         
-        actual_formatted = format_total_data(actual_sum)
         actual_total = actual_sum['Total'] or 1
         actual_percent =  {
-            spell_id: f"{(value / actual_total * 100):.1f}%"
+            spell_id: format_percentage(value, actual_total)
             for spell_id, value in actual_sum.items()
         }
+
+        HITS_DATA = logs_dmg_breakdown.hits_data(actual)
         
         if _data['casts']:
             dmg_hits = _data['dmg_hits']
@@ -944,13 +960,13 @@ class THE_LOGS:
 
 
         return {
-            "TARGETS": targets,
+            "TARGETS": TARGETS,
             "SPELLS_DATA": SPELLS_DATA,
             "ACTUAL": actual_formatted,
             "ACTUAL_PERCENT": actual_percent,
             "REDUCED": reduced_formatted,
             "REDUCED_PERCENT": reduced_percent,
-            "HITS": hits_data,
+            "HITS": HITS_DATA,
             "CASTS": casts,
             "MISSES": misses,
         }
@@ -1438,3 +1454,38 @@ class THE_LOGS:
         # for 
         return 'Spell not found'
     
+    @cache_wrap
+    def get_absorbs(self, s, f):
+        logs_slice = self.LOGS[s:f]
+        specs = self.get_players_specs_in_segments(s, f)
+        discos = {guid for guid, spec in specs.items() if spec == 21}
+        events = logs_absorbs.parse_absorb_related(logs_slice, discos=discos)
+        return {
+            target: logs_absorbs.proccess_absorb(lines, discos, specs.get(target) == 1)
+            for target, lines in events.items()
+        }
+    
+    def get_absorbs_by_source(self, s, f):
+        _abs = defaultdict(int)
+        _data = self.get_absorbs(s, f)
+        for target, sources in _data.items():
+            for source, spells in sources.items():
+                for spell_id, value in spells.items():
+                    _abs[source] += value
+        return _abs
+    
+    def get_absorbs_by_source_spells_wrap(self, segments, source_filter, target_filter=None):
+        # _abs = defaultdict(lambda: defaultdict(int))
+        _abs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        for s, f in segments:
+            _data = self.get_absorbs(s, f)
+            for _target, sources in _data.items():
+                for _source, spells in sources.items():
+                    # print(_source, spells)
+                    for spell_id, value in spells.items():
+                        # _abs[source][spell_id] += value
+                        _abs[_source]["Total"][spell_id] += value
+                        _abs[_source][_target][spell_id] += value
+        if not target_filter:
+            target_filter = "Total"
+        return _abs[source_filter][target_filter]

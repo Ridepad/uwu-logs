@@ -429,8 +429,11 @@ def heal(report_id, source_name):
     tGUID = request.args.get('target')
     data_gen = report.player_heal_gen(segments, sGUID, tGUID)
     data_sum = report.player_damage_sum(data_gen)
-    print(data_sum["units"])
-    data = report.player_damage_format(data_sum)
+    
+    tGUID = request.args.get('target')
+    _absorbs = report.get_absorbs_by_source_spells_wrap(segments, sGUID, target_filter=tGUID)
+    
+    data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
 
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
