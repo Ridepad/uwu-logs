@@ -41,6 +41,7 @@ MAX_SURVIVE_LOGS = T_DELTA["5MIN"]
 IGNORED_PATHS = {"/upload", "/upload_progress"}
 LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
 SERVER_STARTED = datetime.now()
+SERVER_STARTED_STR = SERVER_STARTED.strftime("%y-%m-%d")
 YEARS = list(range(2018, SERVER_STARTED.year+2))
 
 CACHED_PAGES = {}
@@ -84,7 +85,11 @@ def get_formatted_query_string():
 def render_template_wrap(file: str, **kwargs):
     path = kwargs.get("PATH", "")
     query = kwargs.get("QUERY", "")
-    page = render_template(file, **kwargs)
+    page = render_template(
+        file,
+        **kwargs,
+        V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
+    )
     pages = CACHED_PAGES.setdefault(path, {})
     pages[query] = page
     return page
@@ -452,7 +457,6 @@ def casts(report_id, source_name):
         # **data,
         FLAG_ORDER=FLAG_ORDER,
         SOURCE_NAME=source_name,
-        V=SERVER.debug and datetime.now() or SERVER_STARTED,
     )
 
 @SERVER.route("/reports/<report_id>/casts/", methods=['POST'])
@@ -669,7 +673,6 @@ def top():
         return render_template(
             'top.html',
             SERVERS=servers,
-            V=SERVER.debug and datetime.now() or SERVER_STARTED,
         )
     
     _data: dict = request.get_json()
