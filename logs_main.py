@@ -871,6 +871,11 @@ class THE_LOGS:
         controlled_units = self.get_units_controlled_by(player_GUID)
         all_player_pets = self.get_players_and_pets_guids()
         return logs_dmg_breakdown.parse_logs_heal(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
+    
+    @cache_wrap
+    def player_heal_taken(self, s, f, player_GUID, filter_GUID=None):
+        logs_slice = self.LOGS[s:f]
+        return logs_dmg_breakdown.parse_logs_heal_taken(logs_slice, player_GUID, filter_GUID)
 
     def player_damage_gen(self, segments, player_GUID, filter_GUID=None):
         for s, f in segments:
@@ -883,6 +888,10 @@ class THE_LOGS:
     def player_heal_gen(self, segments, player_GUID, filter_GUID=None):
         for s, f in segments:
             yield self.player_heal(s, f, player_GUID, filter_GUID)
+
+    def player_heal_taken_gen(self, segments, player_GUID, filter_GUID=None):
+        for s, f in segments:
+            yield self.player_heal_taken(s, f, player_GUID, filter_GUID)
 
     def player_damage_sum(self, data_gen):
         dmg_data = defaultdict(lambda: defaultdict(int))
@@ -1505,3 +1514,20 @@ class THE_LOGS:
         if not target_filter:
             target_filter = "Total"
         return _abs[source_filter][target_filter]
+
+    
+    def get_absorbs_by_target_wrap(self, segments, target_filter, source_filter=None):
+        # _abs = defaultdict(lambda: defaultdict(int))
+        _abs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        for s, f in segments:
+            _data = self.get_absorbs(s, f)
+            for _target, sources in _data.items():
+                for _source, spells in sources.items():
+                    # print(_source, spells)
+                    for spell_id, value in spells.items():
+                        # _abs[source][spell_id] += value
+                        _abs[_target]["Total"][spell_id] += value
+                        _abs[_target][_source][spell_id] += value
+        if not source_filter:
+            source_filter = "Total"
+        return _abs[target_filter][source_filter]

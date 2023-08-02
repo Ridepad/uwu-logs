@@ -318,3 +318,44 @@ def parse_logs_heal(logs_slice: list[str], player_GUID: str, controlled_units: s
         "overkill": overkill,
         "reduced": reduced,
     }
+def parse_logs_heal_taken(logs_slice: list[str], player_GUID: str, target_filter=None):
+    units = set()
+    overkill = defaultdict(int)
+    reduced = defaultdict(int)
+    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+
+    for line in logs_slice:
+        if "HEAL" not in line:
+            continue
+        try:
+            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, crit = line.split(',', 12)
+        except ValueError:
+            continue
+
+        if tGUID != player_GUID:
+            continue
+
+        units.add(sGUID)
+
+        if target_filter:
+            if target_filter not in sGUID:
+                continue
+        
+        spell_id = int(sp_id)
+        
+        _value = int(dmg)
+        if over != "0":
+            over = int(over)
+            _value = _value - over
+            reduced[spell_id] += over
+            overkill[spell_id] += over
+        
+        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+        actual[spell_id][HIT_TYPE[_hit_type]].append(_value)
+
+    return {
+        "units": units,
+        "actual": actual,
+        "overkill": overkill,
+        "reduced": reduced,
+    }

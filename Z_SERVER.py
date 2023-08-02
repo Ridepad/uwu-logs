@@ -436,7 +436,28 @@ def heal(report_id, source_name):
     data_sum = report.player_damage_sum(data_gen)
     
     tGUID = request.args.get('target')
-    _absorbs = report.get_absorbs_by_source_spells_wrap(segments, sGUID, target_filter=tGUID)
+    _absorbs = report.get_absorbs_by_source_spells_wrap(segments, sGUID, tGUID)
+    
+    data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
+
+    return render_template_wrap(
+        'dmg_done2.html', **default_params, **data,
+        SOURCE_NAME=source_name,
+    )
+
+@SERVER.route("/reports/<report_id>/healed/<source_name>/")
+def healed(report_id, source_name):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    sGUID = report.name_to_guid(source_name)
+    tGUID = request.args.get('target')
+    data_gen = report.player_heal_taken_gen(segments, sGUID, tGUID)
+    data_sum = report.player_damage_sum(data_gen)
+    
+    tGUID = request.args.get('target')
+    _absorbs = report.get_absorbs_by_target_wrap(segments, sGUID, tGUID)
     
     data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
 
