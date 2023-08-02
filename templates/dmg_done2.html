@@ -61,13 +61,14 @@ img {
     <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
     <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/player_auras/{{ SOURCE_NAME }}/{{ QUERY }}">AURAS</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">CASTS</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/healed/{{ SOURCE_NAME }}/{{ QUERY }}">HEALED</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">TIMELINE</a></li>
 </section>
 <section>
   <ul id="player-info">
     <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
     <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
+    <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
     <li class="sliced-control">
       <span>Sliced</span>
       <select id="sliced-sec">
@@ -84,8 +85,6 @@ img {
       <span>sec</span>
     </li>
   </ul>
-</section>
-<section>
   <div id="chart-wrap">
     <canvas id="chart"></canvas>
   </div>
@@ -171,10 +170,15 @@ img {
 const TARGET_RESET = document.getElementById("dmg-done-reset");
 const TARGET_SELECT = document.getElementById("dmg-done-select");
 const CHART_ELEMENT_WRAP = document.getElementById('chart-wrap');
-
+const TOGGLE_GRAPH = document.getElementById('toggle-graph');
+const SELECT_SLICE_SECONDS = document.getElementById("sliced-sec");
+const GET_DPS_REQUEST = new XMLHttpRequest();
+const main = document.querySelector("main");
+const REPORT_ID = main.getAttribute("data-report-id");
+const SOURCE_NAME = main.getAttribute("data-source-name");
 const QUERY_PARAMS = new URLSearchParams(location.search);
-const target = QUERY_PARAMS.get('target');
-target ? TARGET_SELECT.value = target : TARGET_SELECT.selectedIndex = 0;
+const TARGET = QUERY_PARAMS.get('target');
+TARGET ? TARGET_SELECT.value = TARGET : TARGET_SELECT.selectedIndex = 0;
 
 function redirect(event) {
   const isReset = (TARGET_SELECT.selectedIndex == 0 || event.target == TARGET_RESET);
@@ -182,8 +186,24 @@ function redirect(event) {
   location.replace(`${location.origin}${location.pathname}?${QUERY_PARAMS}`);
 };
 
-TARGET_RESET.addEventListener('click', redirect);
-TARGET_SELECT.addEventListener('change', redirect);
+function togglegraph() {
+  if (!TOGGLE_GRAPH.checked) {
+    CHART_ELEMENT_WRAP.style.display = "none";
+  } else {
+    send_post();
+    CHART_ELEMENT_WRAP.style.removeProperty("display");
+  }
+}
+
+function send_post() {
+  if (!TOGGLE_GRAPH.checked) return;
+  QUERY_PARAMS.set("player_name", SOURCE_NAME)
+  QUERY_PARAMS.set("sec", SELECT_SLICE_SECONDS.value);
+  const params_obj = Object.fromEntries(QUERY_PARAMS);
+  const END_POINT = `/reports/${REPORT_ID}/get_dps`;
+  GET_DPS_REQUEST.open("POST", END_POINT);
+  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
+}
 
 
 const options = {
@@ -231,6 +251,12 @@ const CHART = new Chart(document.getElementById('chart'), {
   options: options,
 });
 
+GET_DPS_REQUEST.onreadystatechange = () => {
+  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
+  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
+  chartSetData(datapoints);
+}
+
 function make_new_dataset(datapoints) {
   return {
     data: datapoints,
@@ -242,7 +268,6 @@ function make_new_dataset(datapoints) {
 
 function chartSetData(datapoints) {
   if (Object.keys(datapoints).length === 0 && CHART.data.datasets.length === 0) {
-    CHART_ELEMENT_WRAP.style.display = "none";
     return
   }
   const datapoints_values = Object.values(datapoints);
@@ -251,31 +276,13 @@ function chartSetData(datapoints) {
   CHART.options.scales.y.min = Math.floor(datapoints_min);
   CHART.options.scales.y.max = Math.ceil(datapoints_max);
   CHART.data.datasets[0] = make_new_dataset(datapoints);
-  CHART_ELEMENT_WRAP.style.display = "";
   CHART.update();
 }
 
-const get_dps_request = new XMLHttpRequest();
-get_dps_request.onreadystatechange = () => {
-  if (get_dps_request.readyState != 4 || get_dps_request.status != 200) return;
-  const datapoints = JSON.parse(get_dps_request.response);
-  chartSetData(datapoints);
-}
-
-const main = document.querySelector("main");
-const REPORT_ID = main.getAttribute("data-report-id");
-const SOURCE_NAME = main.getAttribute("data-source-name");
-const SELECT_SLICE_SECONDS = document.getElementById("sliced-sec");
-function send_post() {
-  QUERY_PARAMS.set("player_name", SOURCE_NAME)
-  QUERY_PARAMS.set("sec", SELECT_SLICE_SECONDS.value);
-  const params_obj = Object.fromEntries(QUERY_PARAMS);
-  const END_POINT = `/reports/${REPORT_ID}/get_dps`;
-  get_dps_request.open("POST", END_POINT);
-  get_dps_request.send(JSON.stringify(params_obj));
-}
-
+togglegraph();
+TOGGLE_GRAPH.addEventListener("change", togglegraph);
+TARGET_RESET.addEventListener("click", redirect);
+TARGET_SELECT.addEventListener("change", redirect);
 SELECT_SLICE_SECONDS.addEventListener("change", send_post);
-send_post();
 </script>
 {% endblock the_scripts %}
