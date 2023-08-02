@@ -188,7 +188,7 @@ nav {
 #top-nav {
   display: none;
   position: absolute;
-  width: 100%;
+  width: 200%;
 }
 #top-nav > a {
   text-align: center;
@@ -362,24 +362,10 @@ footer {
 #fights-container {
   z-index: 2;
   position: fixed;
-  left: 0;
+  right: 1%;
   top: var(--nav-height);
   padding-top: .25rem;
 }
-#fights-container::after {
-  content: '';
-  display: none;
-  position: relative;
-  width: 100%;
-  height: 5em;
-  background-color: rgba(0, 0, 0, 0);
-}
-#fights-container:hover::after,
-#fights-container:hover > ul,
-#fights-container li:hover > ul {
-  display: block;
-}
-
 #fights-container > h1 {
   z-index: 2;
   font-size: 150%;
@@ -404,55 +390,57 @@ footer {
   }
 }
 
-
-#fights-container > ul,
-#fights-container .segments {
-  border: .2em solid var(--primary-color);
-}
-#fights-container .segments {
-  z-index: 5;
-  position: absolute;
-  left: 75%;
-  top: 0;
-}
-@media (orientation: landscape) {
-  #fights-container .segments {
-    left: 100%;
-  }
-}
-
-#fights-container ul a {
-  font-size: 2vh;
-  padding-right: 2ch;
-}
 #fights-container ul {
   display: none;
   padding: 0;
   min-width: max-content;
   background-color: black;
+  box-shadow: 0 0 0 .15rem var(--primary-color);
 }
-#fights-container li {
-  position: relative;
+#fights-container ul a {
+  font-size: 2vh;
+  padding-inline: 1em;
 }
 #fights-container a:hover {
   color: var(--link-hover);
+}
+#fights-container li {
+  position: relative;
 }
 #fights-container li:hover {
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
   background-color: var(--highlight-color); 
 }
-
-#fights-container > ul > li::before {
-  content: '▼';
-  margin-right: 2ch;
-  margin-left: 2ch;
-  font-size: 2vh;
+@media (orientation: portrait) {
+  #fights-container ul:not(.segments) > li::before {
+    content: '▶';
+    padding-left: 1em;
+    font-size: 125%;
+  }
 }
-#fights-container .diffs > li::before {
-  content: '▶';
-  margin-right: 2ch;
-  margin-left: 3ch;
-  font-size: 2vh;
+
+#fights-container:hover .bosses, 
+#fights-container .bosses li:hover > .diffs,
+#fights-container .diffs li:hover > .segments {
+  display: block;
+}
+#fights-container .diffs,
+#fights-container .segments {
+  z-index: 5;
+  position: absolute;
+  left: 33%;
+  right: auto;
+  top: 0;
+}
+#fights-container .segments {
+  z-index: 10;
+}
+@media (orientation: landscape) {
+  #fights-container .diffs,
+  #fights-container .segments {
+    left: auto;
+    right: 100%;
+  }
 }
 
 

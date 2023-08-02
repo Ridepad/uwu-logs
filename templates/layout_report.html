@@ -25,7 +25,7 @@
 {% if SEGMENTS_LINKS %}
 <aside id="fights-container">
   <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
-  <ul>
+  <ul class="bosses">
     {% for boss_name, boss_data in SEGMENTS_LINKS.items() %}
     <li>
       <a href="{{ boss_data['link']['href'] }}" class="{{ boss_data['link']['class_name'] }}">{{ boss_data['link']['text'] }}</a>
