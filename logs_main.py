@@ -860,10 +860,12 @@ class THE_LOGS:
         all_player_pets = self.get_players_and_pets_guids()
         return logs_dmg_breakdown.parse_logs_wrap(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
     
+    @cache_wrap
     def player_damage_taken(self, s, f, player_GUID, filter_GUID=None):
         logs_slice = self.LOGS[s:f]
         return logs_dmg_breakdown.parse_logs_taken(logs_slice, player_GUID, source_filter=filter_GUID)
     
+    @cache_wrap
     def player_heal(self, s, f, player_GUID, filter_GUID=None):
         logs_slice = self.LOGS[s:f]
         controlled_units = self.get_units_controlled_by(player_GUID)
