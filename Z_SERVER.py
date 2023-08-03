@@ -460,10 +460,10 @@ def healed(report_id, source_name):
     _absorbs = report.get_absorbs_by_target_wrap(segments, sGUID, tGUID)
     
     data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
-
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=source_name,
+        ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, sGUID)
     )
 
 @SERVER.route("/reports/<report_id>/casts/<source_name>/")

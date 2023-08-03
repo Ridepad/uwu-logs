@@ -162,6 +162,37 @@ img {
   <p>No data</p>
   {% endif %}
 </section>
+{% if ABORBS_DETAILS %}
+<section>
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Flag</th>
+        <th>Source</th>
+        <th>Spell name</th>
+        <th>Amount</th>
+        <th>Total Hit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ts, flag, sguid, spellid, amount, hit in ABORBS_DETAILS %}
+      <tr>
+        <td>{{ts}}</td>
+        <td>{{flag}}</td>
+        <td class="{{ PLAYER_CLASSES[sguid] }}">{{ sguid }}</td>
+        <td class="spell-name">
+          {{spellid}}
+        </td>
+        <td>{{amount}}</td>
+        <td>{{hit}}</td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
 </main>
 {% endblock the_main %}
 

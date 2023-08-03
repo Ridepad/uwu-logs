@@ -1480,16 +1480,33 @@ class THE_LOGS:
         return 'Spell not found'
     
     @cache_wrap
-    def get_absorbs(self, s, f):
+    def _get_absorbs(self, s, f):
         logs_slice = self.LOGS[s:f]
         specs = self.get_players_specs_in_segments(s, f)
         discos = {guid for guid, spec in specs.items() if spec == 21}
         events = logs_absorbs.parse_absorb_related(logs_slice, discos=discos)
-        return {
-            target: logs_absorbs.proccess_absorb(lines, discos, specs.get(target) == 1)
-            for target, lines in events.items()
-        }
+        ABSORBS = {}
+        DETAILS = {}
+        
+        for target, lines in events.items():
+            _absorbs, _details = logs_absorbs.proccess_absorb(lines, discos, specs.get(target) == 1)
+            ABSORBS[target] = _absorbs
+            DETAILS[target] = _details
+
+        return ABSORBS, DETAILS
     
+    def get_absorbs(self, s, f):
+        return self._get_absorbs(s, f)[0]
+    
+    def get_absorbs_details(self, s, f):
+        return self._get_absorbs(s, f)[1]
+    
+    def get_absorbs_details_wrap(self, segments, tGUID):
+        DETAILS = []
+        for s, f in segments:
+            DETAILS.extend(self.get_absorbs_details(s, f)[tGUID])
+        return DETAILS
+
     def get_absorbs_by_source(self, s, f):
         _abs = defaultdict(int)
         _data = self.get_absorbs(s, f)

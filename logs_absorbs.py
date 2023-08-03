@@ -399,6 +399,7 @@ def proccess_absorb(lines, discos, is_bdk=False):
     CURRENT_SHIELDS = {}
     CURRENT_MAX_SHIELD = {}
     ABSORBS = defaultdict(lambda: defaultdict(int))
+    ABSORBS_DETAILS = []
     for ts, flag, sGUID, sName, tGUID, tName, _id, spell_name, _ABSORB, _DAMAGE, res, sch in lines:
         _ABSORB = to_int(_ABSORB)
         _DAMAGE = to_int(_DAMAGE)
@@ -407,6 +408,10 @@ def proccess_absorb(lines, discos, is_bdk=False):
         _line = f"{ts:18} | {flag:21} | {sGUID} | {sName:30} | {tGUID} | {tName:30} | {_id:>5} | {spell_name:30}"
         if _ABSORB and _ABSORB != "0":
             _line = f"{_line} | {_ABSORB:>6} | {_DAMAGE:>6} | {res:>6} | {sch:>6}"
+        if _ABSORB:
+            ABSORBS_DETAILS.append((ts, flag, sName, spell_name, _ABSORB, _DAMAGE+_ABSORB))
+        else:
+            ABSORBS_DETAILS.append((ts, flag, sName, spell_name, "", ""))
         # print(_line)
             
         if flag == "DAMAGE_SPLIT":
@@ -482,9 +487,13 @@ def proccess_absorb(lines, discos, is_bdk=False):
                     if int(45 - ratio) == 0:
                         if flag != "SWING_DAMAGE":
                             ABSORBS[tGUID]["49497"] += _ABSORB
+                            ABSORBS_DETAILS.append((ts, "ADDED_sd1", tName, "Spell Deflection", _ABSORB, ""))
+                            _ABSORB = 0
                             # prettyprint("++++??sd1 ADDED", _ABSORB, "Spell Deflection", tName)
                     elif int(15 - ratio) == 0:
                         ABSORBS[tGUID]["52286"] += _ABSORB
+                        ABSORBS_DETAILS.append((ts, "ADDED_wn1", tName, "Will of the Necropolis", _ABSORB, ""))
+                        _ABSORB = 0
                         # prettyprint("++++??wn0 ADDED", _ABSORB, "Will of the Necropolis", tName)
                     elif ratio > 45:
                         _rem_abs = _ABSORB - (_ABSORB + _DAMAGE) * .45 - _DAMAGE * 3
@@ -497,16 +506,19 @@ def proccess_absorb(lines, discos, is_bdk=False):
                                 _abs = int((_ABSORB + _DAMAGE) * .15)
                                 _ABSORB = _ABSORB - _abs
                                 ABSORBS[tGUID]["52286"] += _abs
+                                ABSORBS_DETAILS.append((ts, "ADDED_wn2", tName, "Will of the Necropolis", _abs, ""))
                                 # prettyprint("++++??wn2 ADDED", _abs, "Will of the Necropolis", tName)
                             elif _rem_abs > _max_avg - 15:
                                 _abs = int((_ABSORB + _DAMAGE) * .45)
                                 _ABSORB = _ABSORB - _abs
                                 ABSORBS[tGUID]["49497"] += _abs
+                                ABSORBS_DETAILS.append((ts, "ADDED_sd2", tName, "Spell Deflection", _abs, ""))
                                 # prettyprint("++++??sd2 ADDED", _abs, "Spell Deflection", tName)
                             elif abs(_DAMAGE * 3 - _ABSORB) > 10:
                                 _abs = int((_ABSORB + _DAMAGE) * .15)
                                 _ABSORB = _ABSORB - _abs
                                 ABSORBS[tGUID]["52286"] += _abs
+                                ABSORBS_DETAILS.append((ts, "ADDED_wn3", tName, "Will of the Necropolis", _abs, ""))
                                 # prettyprint("++++??wn3 ADDED", _abs, "Will of the Necropolis", tName)
                             # elif _rem_abs < 0:
                             # else:
@@ -515,14 +527,16 @@ def proccess_absorb(lines, discos, is_bdk=False):
                             #     _ABSORB = _ABSORB - _abs
                             
                         elif flag != "SWING_DAMAGE" and _ABSORB > _max_cap + 500:
-                            _abs = int((_ABSORB + _DAMAGE) * .45)
-                            _ABSORB = _ABSORB - _abs
-                            ABSORBS[tGUID]["49497"] += _abs
+                            _rem_abs = int((_ABSORB + _DAMAGE) * .45)
+                            _ABSORB = _ABSORB - _rem_abs
+                            ABSORBS[tGUID]["49497"] += _rem_abs
+                            ABSORBS_DETAILS.append((ts, "ADDED_sd3", tName, "Spell Deflection", _rem_abs, ""))
                             # prettyprint("++++??sd3 ADDED", _abs, "Spell Deflection", tName)
                     elif ratio > 15 and _ABSORB > _max_cap + 500:
-                        _abs = int((_ABSORB + _DAMAGE) * .15)
-                        _ABSORB = _ABSORB - _abs
-                        ABSORBS[tGUID]["52286"] += _abs
+                        _rem_abs = int((_ABSORB + _DAMAGE) * .15)
+                        _ABSORB = _ABSORB - _rem_abs
+                        ABSORBS[tGUID]["52286"] += _rem_abs
+                        ABSORBS_DETAILS.append((ts, "ADDED_wnx4", tName, "Will of the Necropolis", _rem_abs, ""))
                         # prettyprint("++++??wn1 ADDED", _abs, "Will of the Necropolis", tName)
 
             for current_shield_id in CURRENT_SHIELD_IDS:
@@ -556,12 +570,14 @@ def proccess_absorb(lines, discos, is_bdk=False):
                             _ABSORB = _ABSORB - _abs
                         # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
                         ABSORBS[CURR_SHIELD["sGUID"]]["48707"] += _abs
+                        ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
                 
                 elif current_shield_id in DMG_SPLIT:
                     _abs = CURR_SHIELD["remain"]
                     _ABSORB = _ABSORB - _abs
                     # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
                     ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
+                    ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
 
                 elif current_shield_id in IDKSHIELDS:
                     if current_shield_id == DAEGIS and "ts" in CURR_SHIELD:
@@ -595,6 +611,7 @@ def proccess_absorb(lines, discos, is_bdk=False):
                         _ABSORB = _ABSORB - currv
                     # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
                     ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
+                    ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
                 else:
                     pass
                     # prettyprint("++++++??? ADDED", _ABSORB, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
@@ -619,6 +636,7 @@ def proccess_absorb(lines, discos, is_bdk=False):
             if _LAST_SHIELD is None:
                 continue
             # prettyprint(">>>>>>>> REMAIN", _ABSORB, _LAST_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
+            ABSORBS_DETAILS.append((ts, "REMAIN", "nil", str(_filtered_shit), _ABSORB, ""))
             if _LAST_SHIELD_ID in IGNORED_MAX_VALUES2:
                 continue
             
@@ -629,7 +647,7 @@ def proccess_absorb(lines, discos, is_bdk=False):
                 _max_default = ABSORB_SPELLS.get(_LAST_SHIELD_ID, {}).get("avg", 0)
                 CURRENT_MAX_SHIELD[_LAST_SHIELD_ID] = _max_default + _ABSORB
             # prettyprint("....... NEW MAX", CURRENT_MAX_SHIELD[_LAST_SHIELD_ID], CURR_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
-    return ABSORBS
+    return ABSORBS, ABSORBS_DETAILS
 
 def _test():
     report = logs_main.THE_LOGS("23-07-10--16-00--Praystation--Lordaeron")
@@ -651,6 +669,7 @@ def _test():
 
     ABSORBS = defaultdict(lambda: defaultdict(int))
     ABSORBS2 = {}
+    ABSORBS_DETAILS = {}
     z = report.name_to_guid("Deadrockk")
     for target, lines in events.items():
         if target != z:
@@ -663,15 +682,16 @@ def _test():
         print(len(sources), sources)
         print(lines[0])
         # continue
-        _absorbs = proccess_absorb(lines, discos, is_bdk)
+        _absorbs, _details = proccess_absorb(lines, discos, is_bdk)
         ABSORBS2[target] = _absorbs
+        ABSORBS_DETAILS[target] = _details
         # print(_absorbs)
         for source, spells in _absorbs.items():
             for spell_id, value in spells.items():
                 ABSORBS[source][spell_id] += value
 
     print(ABSORBS)
-    return ABSORBS2
+    return ABSORBS2, ABSORBS_DETAILS
 
 
 if __name__ == "__main__":
