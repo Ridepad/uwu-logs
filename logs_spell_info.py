@@ -194,10 +194,6 @@ AURAS_EXTERNAL = {
         "name": "Innervate",
         "icon": "spell_nature_lightning",
     },
-    # "6346": {
-    #     "name": "Fear Ward",
-    #     "icon": "spell_holy_excorcism",
-    # },
     "63848": {
         "name": "Hunger For Blood",
         "icon": "ability_rogue_hungerforblood",
@@ -205,6 +201,18 @@ AURAS_EXTERNAL = {
     "51800": {
         "name": "Might of Malygos",
         "icon": "inv_misc_head_dragon_blue"
+    },
+    "51777": {
+        "name": "Arcane Focus",
+        "icon": "spell_arcane_teleportironforge"
+    },
+    "51605": {
+        "name": "Zeal",
+        "icon": "spell_shadow_shadowworddominate"
+    },
+    "44335": {
+        "name": "Energy Feedback",
+        "icon": "spell_arcane_arcane04"
     },
     "72553": {
         "name": "Gastric Bloat",
@@ -322,10 +330,6 @@ AURAS_EVENT = {
 }
 
 AURAS_BOSS_MECHANICS = {
-    # "1604": {
-    #     "name": "Dazed",
-    #     "icon": "spell_frost_stun"
-    # },
     "69065": {
         "name": "Impaled",
         "icon": "inv_misc_bone_03"
