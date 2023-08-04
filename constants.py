@@ -497,6 +497,10 @@ SPELL_BOOK_SPEC = {
     "hunter": {
         "19574": 1, # Bestial Wrath
         "19577": 1, # Intimidation
+        "34471": 1, # The Beast Within
+        "53257": 1, # Cobra Strikes
+        "57475": 1, # Kindred Spirits
+        "75447": 1, # Ferocious Inspiration
         "53209": 2, # Chimera Shot
         "60053": 3, # Explosive Shot
     },
