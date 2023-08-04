@@ -5,7 +5,7 @@ from constants import running_time
 
 @running_time
 def get_spells_int():
-    spells_json = file_functions.json_read("___spells_icons")
+    spells_json = file_functions.json_read("x_spells_icons")
     return {
         int(spell_id): icon_name
         for icon_name, _spells in spells_json.items()
@@ -50,30 +50,29 @@ def to_float(s: str):
     return int(minutes) * 60000 + float(seconds) * 1000
 
 COMBINE_SPELLS = {
-    "58381": "48156",
-    "53022": "53023",
-    # "63675": "48300",
-    "23881": "23885",
-    "2687": "29131",
-    "22858": "20230",
-    "7386 Sunder Armor": "58567 Sunder Armor",
-    " 42897 Arcane Blast": "36032 Arcane Blast",
-    "  55362 Living Bomb": "55360 Living Bomb (DoT)",
-    "   22482 Blade Flurry": "13877 Blade Flurry",
-    "   57841 Killing Spree": "51690 Killing Spree",
-    "   57842 Killing Spree": "51690 Killing Spree",
-    "   34075 Aspect of the Viper": "34074 Aspect of the Viper",
-    "    58433 Volley": " 58434 Volley",
-    "   49065 Explosive Trap Effect ": "49067 Explosive Trap ",
-    "   50590 Immolation ": "50589 Immolation Aura ",
-    "   47834 Seed of Corruption ": "47836 Seed of Corruption ",
-    "   686 Shadow Bolt ": "47809 Shadow Bolt ",
-    "    61290 Shadowflame ": " 61291 Shadowflame ",
-    "    48466 Hurricane ": " 48467 Hurricane ",
-    "49088 Anti-Magic Shell ": " 48707 Anti-Magic Shell ",
-    "47632 Death Coil ": " 49895 Death Coil ",
-    "52212 Death and Decay ": " 49938 Death and Decay ",
-    "53506 Moonkin Form": " 24858 Moonkin Form ",
+    "58381": "48156", # Mind Flay
+    "53022": "53023", # Mind Sear
+    "23881": "23885", # Bloodthirst
+     "2687": "29131", # Bloodrage
+    "22858": "20230", # Retaliation
+     "7386": "58567", # Sunder Armor",
+    "42897": "36032", # Arcane Blast",
+    "55362": "55360", # Living Bomb",
+    "22482": "13877", # Blade Flurry",
+    "57841": "51690", # Killing Spree",
+    "57842": "51690", # Killing Spree",
+    "34075": "34074", # Aspect of the Viper",
+    "58433": "58434", # Volley",
+    "49065": "49067", # Explosive Trap",
+    "50590": "50589", # Immolation Aura",
+    "47834": "47836", # Seed of Corruption",
+      "686": "47809", # Shadow Bolt",
+    "61290": "61291", # Shadowflame",
+    "48466": "48467", # Hurricane",
+    "49088": "48707", # Anti-Magic Shell",
+    "47632": "49895", # Death Coil",
+    "52212": "49938", # Death and Decay",
+    "53506": "24858", # Moonkin Form",
 }
 
 @running_time
