@@ -36,11 +36,11 @@ const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
 const toggleLimit = document.getElementById('toggle-limit');
 const LIMITED_ROWS = 1000;
 const screenX = window.matchMedia("(orientation: landscape)");
-const HAS_HEROIC = [
-  "Icecrown Citadel",
-  "The Ruby Sanctum",
-  "Trial of the Crusader",
-];
+const HAS_HEROIC = new Set([
+  ...BOSSES["Icecrown Citadel"],
+  ...BOSSES["Trial of the Crusader"],
+  "Halion",
+]);
 
 const SORT_VARS = {column: headUsefulDps, order: 1};
 const DATA_KEYS2 = {
@@ -97,7 +97,6 @@ function newOption(value, index) {
 function addBosses() {
   selectBoss.innerHTML = "";
   BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(newOption(boss_name)));
-  const has_heroic = HAS_HEROIC.includes(selectInstance.value);
 };
 
 function addSpecs() {
@@ -369,7 +368,7 @@ function tableAddNewDataWrap(data) {
 }
 
 function is_heroic() {
-  return HAS_HEROIC.includes(selectInstance.value) && checkboxDifficulty.checked;
+  return HAS_HEROIC.has(selectBoss.value) && checkboxDifficulty.checked;
 }
 
 function makeQuery() {
