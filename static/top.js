@@ -203,7 +203,8 @@ function show_tooltip(td) {
   
   const dataset = td.dataset;
   const fragment = new DocumentFragment();
-  for (let spell_id in dataset) {
+  const sorted = Object.keys(dataset).sort()
+  for (let spell_id of sorted) {
     const tr = document.createElement("tr");
     const [count, uptime] = dataset[spell_id].split(',');
 

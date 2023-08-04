@@ -694,6 +694,7 @@ def top():
         return render_template(
             'top.html',
             SERVERS=servers,
+            V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
         )
     
     _data: dict = request.get_json()

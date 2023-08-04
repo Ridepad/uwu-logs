@@ -198,6 +198,7 @@ input[type=checkbox] {
     grid-template-areas:
     'inst inst boss boss boss boss size diff diff'
     'serv serv clss clss spec spec spec comb comb';
+    padding-inline: 5rem;
   }
   #main-table-body td {
     padding-inline: 2px;
