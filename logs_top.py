@@ -22,11 +22,11 @@ BATTLE_SQUAWK = "23060"
 SPECS_NO_USE_FOR_CHICKEN = {*range(12, 16), *range(20, 24), 29, 31, 33, 35}
 
 def f_auras(auras: dict[str, tuple[int, float]], spec: int):
-    if spec == 25 and HUNGER_FOR_BLOOD in auras:
+    if HUNGER_FOR_BLOOD in auras and spec == 25:
         del auras[HUNGER_FOR_BLOOD]
-    elif spec in range(12, 16) and FOCUS_MAGIC in auras:
+    if FOCUS_MAGIC in auras and spec in range(12, 16):
         del auras[FOCUS_MAGIC]
-    elif spec in SPECS_NO_USE_FOR_CHICKEN and BATTLE_SQUAWK in auras:
+    if BATTLE_SQUAWK in auras and spec in SPECS_NO_USE_FOR_CHICKEN:
         del auras[BATTLE_SQUAWK]
     
     zz: dict[str, list[int, float, int]] = {}
