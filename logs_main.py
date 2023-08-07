@@ -33,7 +33,6 @@ SHIFT = {
     'consumables': 10,
     'player_auras': 10,
 }
-_SORT = {"0xF": 1, "0x0": 2}
 PASSIVE_SPELLS = {
     49497: {
         'name': 'Spell Deflection',
@@ -210,11 +209,10 @@ def regroup_targets(targets):
     
     return set(grouped_targets) | targets_players
 
-def sort_by_name_type(targets):
-    targets = sorted(targets)
-    targets = sorted(targets, key=lambda x: x[0][:5])
+def sort_by_name_type(targets: list[tuple[str, str]]):
     targets = sorted(targets, key=lambda x: x[1])
-    targets = sorted(targets, key=lambda x: _SORT[x[0][:3]])
+    targets.sort(key=lambda x: x[0][:3] == "0x0")
+    targets.sort(key=lambda x: x[0][:5] == "0xF14")
     return dict(targets)
 
 def get_dict_int(d: dict, key, default=0):
