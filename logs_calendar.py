@@ -94,8 +94,10 @@ def normalize_filter(filter: dict):
 
 @running_time
 def get_logs_list_df_filter(df: pandas.DataFrame, filter: dict):
-    for f,v  in filter.items():
+    for f, v in filter.items():
         df = df_filter_by(df, f, v)
+        if df.empty:
+            break
     return df
 
 def separate_to_days(df: pandas.DataFrame):
