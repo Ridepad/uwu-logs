@@ -770,8 +770,8 @@ class THE_LOGS:
         }
 
 
-    @cache_wrap
     @running_time
+    @cache_wrap
     def report_page(self, s, f) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
         players_and_pets = self.get_players_and_pets_guids()
@@ -1445,8 +1445,8 @@ class THE_LOGS:
         logs_dps.convert_keys_to_str(new_data)
         return new_data
 
-    @cache_wrap
     @running_time
+    @cache_wrap
     def get_spell_history(self, s, f, guid) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
         players_and_pets = self.get_players_and_pets_guids()
