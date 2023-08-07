@@ -21,8 +21,16 @@ import logs_calendar
 import logs_main
 import logs_upload
 from constants import (
-    ALL_FIGHT_NAMES, FLAG_ORDER, ICONS_DIR, LOGGER_CONNECTIONS, LOGGER_MEMORY, LOGS_DIR, LOGS_RAW_DIR, MONTHS,
-    STATIC_DIR, T_DELTA, TOP_DIR
+    ALL_FIGHT_NAMES,
+    FLAG_ORDER,
+    LOGGER_CONNECTIONS,
+    LOGGER_MEMORY,
+    LOGS_DIR,
+    LOGS_RAW_DIR,
+    MONTHS,
+    STATIC_DIR,
+    T_DELTA,
+    TOP_DIR,
 )
 
 try:
@@ -109,10 +117,6 @@ def class_icons():
 
 @SERVER.errorhandler(404)
 def method404(e):
-    if SERVER.debug and request.path.endswith(".jpg"):
-        # handled by nginx
-        return send_from_directory(ICONS_DIR, os.path.basename(request.path), mimetype='image/jpeg')
-
     response = ""
     if request.method == 'GET':
         response = render_template("404.html")
