@@ -780,8 +780,9 @@ class THE_LOGS:
         data['specs'] = self.get_players_specs_in_segments(s, f)
         data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
         data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
-        for guid, v in self.get_absorbs_by_source(s, f).items():
-            data["heal"][guid] += v
+        if s and f:
+            for guid, v in self.get_absorbs_by_source(s, f).items():
+                data["heal"][guid] += v
 
         return data
     
