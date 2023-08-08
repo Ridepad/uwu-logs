@@ -227,11 +227,11 @@ def get_dict_int(d: dict, key, default=0):
 
 
 def cache_wrap(func):
-    def inner(self, s, f, *args, **kwargs):
+    def cache_inner(self, s, f, *args, **kwargs):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE[func.__name__]
         for arg in args:
-            if arg is not None and type(arg) != str:
+            if not isinstance(arg, (str, bool, None)):
                 break
             cached_data = cached_data[arg]
             
@@ -242,7 +242,7 @@ def cache_wrap(func):
         cached_data[slice_ID] = data
         return data
 
-    return inner
+    return cache_inner
 
 
 class THE_LOGS:
@@ -774,7 +774,6 @@ class THE_LOGS:
         }
 
 
-    @running_time
     @cache_wrap
     def report_page(self, s, f) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
@@ -1450,7 +1449,6 @@ class THE_LOGS:
         logs_dps.convert_keys_to_str(new_data)
         return new_data
 
-    @running_time
     @cache_wrap
     def get_spell_history(self, s, f, guid) -> dict[str, defaultdict[str, int]]:
         logs_slice = self.LOGS[s:f]
