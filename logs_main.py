@@ -296,13 +296,17 @@ class THE_LOGS:
         except TypeError:
             return not all(os.path.isfile(file) for file in files)
         
+    @running_time
+    def __open_logs(self):
+        logs_cut_file_name = self.relative_path("LOGS_CUT")
+        return file_functions.zlib_text_read(logs_cut_file_name).splitlines()
+        
     @property
     def LOGS(self):
         try:
             return self.__LOGS
         except AttributeError:
-            logs_cut_file_name = self.relative_path("LOGS_CUT")
-            self.__LOGS = file_functions.zlib_text_read(logs_cut_file_name).splitlines()
+            self.__LOGS = self.__open_logs()
             return self.__LOGS
     
     def get_logs(self, s=None, f=None):
