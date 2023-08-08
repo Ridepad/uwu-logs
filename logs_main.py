@@ -125,6 +125,8 @@ TABLE_VALUES: dict[str, tuple[str]] = {
     "taken": ("taken", "tps", "t_p"),
 }
 
+TYPES = (str, bool, type(None))
+
 def add_new_data(data: dict, table: dict[str, dict], duration: float, _type: str):
     KEYS = TABLE_VALUES[_type]
     if not data:
@@ -218,7 +220,7 @@ def cache_wrap(func):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE[func.__name__]
         for arg in args:
-            if not isinstance(arg, (str, bool, None)):
+            if not isinstance(arg, TYPES):
                 break
             cached_data = cached_data[arg]
             
