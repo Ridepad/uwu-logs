@@ -26,7 +26,6 @@ from constants import (
     separate_thousands, setup_logger, sort_dict_by_value, to_dt_year_precise
 )
 
-IGNORED_ADDS = ['Treant', 'Shadowfiend', 'Ghouls']
 PLAYER = "0x0"
 SHIFT = {
     'spell': 10,
@@ -65,6 +64,10 @@ SPEC_ICON_TO_POSITION = {
     for class_i, specs in enumerate(_ICONS)
     for spec_i, icon in enumerate(specs)
 }
+
+HIT_KEYS = {"CAST", "HIT", "PERIODIC"}
+REDUCED_KEYS = {"OVERKILL", "OVERHEAL", "ABSORBED", "RESISTED", "GLANCING", "BLOCKED"}
+MISS_KEYS = {"MISS", "PARRY", "DODGE", "ABSORB", "RESIST", "REFLECT", "IMMUNE", "DEFLECT", "EVADE", "BLOCK"}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')
@@ -192,24 +195,6 @@ def build_query(boss_name_html, mode, s, f, attempt):
     if query:
         return f"?{query}"
     return ""
-
-def group_targets(targets: set[str]):
-    target_ids = {guid[:-6] for guid in targets}
-    return {
-        target_id: {guid for guid in targets if target_id in guid}
-        for target_id in target_ids
-    }
-
-def regroup_targets(targets):
-    grouped_targets = group_targets(targets)
-    targets_players = set()
-    
-    for target_id in grouped_targets:
-        if target_id[:3] == PLAYER:
-            targets_players = grouped_targets.pop(target_id, set())
-            break
-    
-    return set(grouped_targets) | targets_players
 
 def sort_by_name_type(targets: list[tuple[str, str]]):
     targets = sorted(targets, key=lambda x: x[1])
@@ -457,6 +442,12 @@ class THE_LOGS:
         if not master_guid:
             return guid
         return guids.get(master_guid, {}).get('master_guid', master_guid)
+    
+    def get_pet_name(self, guid):
+        is_pet = guid != self.get_master_guid(guid)
+        if is_pet:
+            return self.guid_to_name(guid)
+        return None
 
     def get_units_controlled_by(self, master_guid: str):
         if not master_guid.startswith("0x"):
@@ -469,7 +460,7 @@ class THE_LOGS:
         controlled_units = {
             guid
             for guid, p in all_guids.items()
-            if p.get("master_guid") == master_guid
+            if p.get("master_guid") == master_guid or master_guid in guid
         }
         controlled_units.add(master_guid)
         self.CONTROLLED_UNITS[master_guid] = controlled_units
@@ -788,9 +779,8 @@ class THE_LOGS:
         data['specs'] = self.get_players_specs_in_segments(s, f)
         data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
         data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
-        if s and f:
-            for guid, v in self.get_absorbs_by_source(s, f).items():
-                data["heal"][guid] += v
+        for guid, v in self.get_absorbs_by_source(s, f).items():
+            data["heal"][guid] += v
 
         return data
     
@@ -860,150 +850,186 @@ class THE_LOGS:
         return return_dict
 
 
-    @cache_wrap
-    def player_damage(self, s, f, player_GUID, filter_GUID=None):
-        logs_slice = self.LOGS[s:f]
-        controlled_units = self.get_units_controlled_by(player_GUID)
-        all_player_pets = self.get_players_and_pets_guids()
-        return logs_dmg_breakdown.parse_logs_wrap(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
+    def get_spell_data_pet_name(self, spell_id: int, pet_name=None):
+        spell_id = int(spell_id)
+        spell_data = dict(self.SPELLS_WITH_ICONS[spell_id])
+        spell_data["id"] = spell_id
+        if pet_name:
+            spell_data['name'] = f"{spell_data['name']} ({pet_name})"
+        return spell_data
     
     @cache_wrap
-    def player_damage_taken(self, s, f, player_GUID, filter_GUID=None):
+    def data_given_breakdown(self, s, f, source, heal=False):
         logs_slice = self.LOGS[s:f]
-        return logs_dmg_breakdown.parse_logs_taken(logs_slice, player_GUID, source_filter=filter_GUID)
-    
+        controlled_units = self.get_units_controlled_by(source)
+        return logs_dmg_breakdown.given(logs_slice, controlled_units, heal)
+
     @cache_wrap
-    def player_heal(self, s, f, player_GUID, filter_GUID=None):
+    def data_taken_breakdown(self, s, f, source, heal=False):
         logs_slice = self.LOGS[s:f]
-        controlled_units = self.get_units_controlled_by(player_GUID)
-        all_player_pets = self.get_players_and_pets_guids()
-        return logs_dmg_breakdown.parse_logs_heal(logs_slice, player_GUID, controlled_units, all_player_pets, filter_GUID)
+        return logs_dmg_breakdown.taken(logs_slice, source, heal)
     
-    @cache_wrap
-    def player_heal_taken(self, s, f, player_GUID, filter_GUID=None):
-        logs_slice = self.LOGS[s:f]
-        return logs_dmg_breakdown.parse_logs_heal_taken(logs_slice, player_GUID, filter_GUID)
+    def data_breakdown_gen(self, segments, source_guid_id, heal=False, taken=False):
+        if taken:
+            func = self.data_taken_breakdown
+        else:
+            func = self.data_given_breakdown
 
-    def player_damage_gen(self, segments, player_GUID, filter_GUID=None):
-        for s, f in segments:
-            yield self.player_damage(s, f, player_GUID, filter_GUID)
+        for s,f in segments:
+            yield func(s, f, source_guid_id, heal)
 
-    def player_damage_taken_gen(self, segments, player_GUID, filter_GUID=None):
-        for s, f in segments:
-            yield self.player_damage_taken(s, f, player_GUID, filter_GUID)
+    def get_data_breakdown(self, segments, source, heal, taken) -> logs_dmg_breakdown.BreakdownTypeExtended:
+        _other = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        _damage = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        _spells = {}
+        _targets = set()
 
-    def player_heal_gen(self, segments, player_GUID, filter_GUID=None):
-        for s, f in segments:
-            yield self.player_heal(s, f, player_GUID, filter_GUID)
+        def get_spell_data_pet_name_wrap(spell_id, pet_name=None):
+            _spell_data = self.get_spell_data_pet_name(spell_id, pet_name)
+            spell_name = _spell_data["name"]
+            if spell_name not in _spells:
+                _spells[spell_name] = _spell_data
+            return spell_name
 
-    def player_heal_taken_gen(self, segments, player_GUID, filter_GUID=None):
-        for s, f in segments:
-            yield self.player_heal_taken(s, f, player_GUID, filter_GUID)
+        def reduce_data(data):
+            for tGUID, sources in data.items():
+                target_id = tGUID[:12] if tGUID.startswith("0xF") else tGUID
+                _targets.add(target_id)
+                for sGUID, spells in sources.items():
+                    pet_name = self.get_pet_name(sGUID)
+                    for spell_id, types in spells.items():
+                        spell_name = get_spell_data_pet_name_wrap(spell_id, pet_name)
+                        yield target_id, spell_name, types
 
-    def player_damage_sum(self, data_gen):
-        dmg_data = defaultdict(lambda: defaultdict(int))
-        units: set[str] = set()
-        dmg_data["units"] = units
-        actual = defaultdict(lambda: defaultdict(list))
-        dmg_data["actual"] = actual
+        for data in self.data_breakdown_gen(segments, source, heal, taken):
+            for target_id, spell_name, types in reduce_data(data["DAMAGE"]):
+                for t, v in types.items():
+                    _damage[target_id][spell_name][t].extend(v)
+                    _damage["Total"][spell_name][t].extend(v)
+            for target_id, spell_name, types in reduce_data(data["OTHER"]):
+                for t, v in types.items():
+                    _other[target_id][spell_name][t] += v
+                    _other["Total"][spell_name][t] += v
 
-        for data in data_gen:
-            for k, v in data.items():
-                if k == "units":
-                    units.update(v)
-                elif k == "actual":
-                    for spell_id, cats in v.items():
-                        spells = actual[spell_id]
-                        for hit_type, hits in cats.items():
-                            spells[hit_type].extend(hits)
-                else:
-                    add_new_numeric_data(dmg_data[k], v)
-
-        return dmg_data
+        return {
+            "DAMAGE": _damage,
+            "OTHER": _other,
+            "SPELLS": _spells,
+            "TARGETS": _targets,
+        }
     
-    def format_targets_data(self, all_targets: str):
-        targets_set = regroup_targets(all_targets)
-        targets = [
-            (gid, self.guid_to_name(gid))
-            for gid in targets_set
-        ]
-        return sort_by_name_type(targets)
-
-    @running_time
-    def player_damage_format(self, _data, add_absorbs=None):
-        ALL_SPELLS = self.SPELLS_WITH_ICONS
-        def get_spell_info(spell_id):
-            try:
-                if spell_id < 0:
-                    _d = dict(ALL_SPELLS[-spell_id])
-                    _d["name"] = f"{_d['name']} (Pet)"
-                    return _d
-                return ALL_SPELLS[spell_id]
-            except KeyError:
-                return spell_id
+    def get_numbers_breakdown_wrap(self, segments: list, source: str, filter_guid=None, heal=False, taken=False):
+        source = self.name_to_guid(source)
+        if source.startswith("0xF"):
+            source = source[:12]
         
-        TARGETS = self.format_targets_data(_data["units"])
+        _parsed = self.get_data_breakdown(segments, source, heal, taken)
+        _spells = _parsed["SPELLS"]
+
+        if not filter_guid:
+            OTHER = _parsed["OTHER"]["Total"]
+            DAMAGE_HITS = _parsed["DAMAGE"]["Total"]
+        else:
+            filter_guid = filter_guid[:18]
+            OTHER = _parsed["OTHER"][filter_guid]
+            DAMAGE_HITS = _parsed["DAMAGE"][filter_guid]
         
-        actual = _data["actual"]
         actual_sum = {
-            spell_id: sum(sum(x) for x in d.values())
-            for spell_id, d in actual.items()
+            spell_name: sum(sum(x) for x in d.values())
+            for spell_name, d in DAMAGE_HITS.items()
         }
-        
-        if add_absorbs:
-            for spell_id, v in add_absorbs.items():
-                actual_sum[int(spell_id)] = v
 
-        SPELLS_DATA = {
-            spell_id: get_spell_info(spell_id)
-            for spell_id in sort_dict_by_value(actual_sum)
-        }
-        actual_formatted = format_total_data(actual_sum)
+        if heal:
+            if taken:
+                _absorbs = self.get_absorbs_by_target_wrap(segments, source, filter_guid)
+            else:
+                _absorbs = self.get_absorbs_by_source_spells_wrap(segments, source, filter_guid)
+            if _absorbs:
+                for spell_id, v in _absorbs.items():
+                    _spell_data = self.get_spell_data_pet_name(spell_id)
+                    SPELL_NAME = _spell_data["name"]
+                    if SPELL_NAME not in _spells:
+                        _spells[SPELL_NAME] = _spell_data
+                    actual_sum[SPELL_NAME] = v
 
-        reduced = _data['reduced']
-        reduced_formatted = format_total_data(reduced)
-        reduced_percent = {
-            spell_id: format_percentage(value, value + actual_sum[spell_id])
-            for spell_id, value in reduced.items()
-            if value
+        HITS_DATA = logs_dmg_breakdown.hits_data(DAMAGE_HITS)
+        TARGETS = sort_by_name_type(
+            (gid, self.guid_to_name(gid))
+            for gid in _parsed["TARGETS"]
+        )
+        SPELLS = {
+            spell_name: _spells[spell_name]
+            for spell_name in sort_dict_by_value(actual_sum)
         }
-        
+
+        _data = self.breakdown_finish_formatting(actual_sum, OTHER)
+
+        for spell_name in sort_dict_by_value(_data["REDUCED"]):
+            if spell_name not in SPELLS and spell_name in _spells:
+                SPELLS[spell_name] = _spells[spell_name]
+
+        return _data | {
+            "OTHER": OTHER,
+            "SPELLS_DATA": SPELLS,
+            "TARGETS": TARGETS,
+            "HITS": HITS_DATA,
+        }
+
+    def breakdown_finish_formatting(
+        self,
+        actual_sum: dict[str, int],
+        OTHER_SHIT: defaultdict[str, defaultdict[str, int]],
+    ):
+        ACTUAL_FORMATTED = format_total_data(actual_sum)
         actual_total = actual_sum['Total'] or 1
-        actual_percent =  {
+        ACTUAL_PERCENT =  {
             spell_id: format_percentage(value, actual_total)
             for spell_id, value in actual_sum.items()
         }
 
-        HITS_DATA = logs_dmg_breakdown.hits_data(actual)
-        
-        if _data['casts']:
-            dmg_hits = _data['dmg_hits']
-            auras = _data['auras']
-            casts = _data['casts']
-            # dmg_hits = {spell_name(spell_id): value for spell_id, value in _data['dmg_hits'].items()}
-            # auras = {spell_name(spell_id): value for spell_id, value in _data['auras'].items()}
-            # casts = {spell_name(spell_id): value for spell_id, value in _data['casts'].items()}
-            casts = dmg_hits | auras | casts
-            misses = _data['misses']
-            # misses = {spell_name(spell_id): value for spell_id, value in _data['misses'].items()}
-        else:
-            casts = {}
-            misses = {}
+        CASTS = {
+            spell: _data["CAST"]
+            for spell, _data in OTHER_SHIT.items()
+            if "CAST" in _data
+        }
 
+        reduced = defaultdict(int)
+        REDUCED_DETAILED = defaultdict(dict)
+        TOTAL_MISSES = defaultdict(int)
+        MISS_DETAILED = defaultdict(dict)
+        for spell, other_data in OTHER_SHIT.items():
+            for k, v in other_data.items():
+                if not v:
+                    continue
+                elif k in REDUCED_KEYS:
+                    reduced[spell] += v
+                    REDUCED_DETAILED[spell][k] = v
+                elif k in MISS_KEYS:
+                    TOTAL_MISSES[spell] += v
+                    MISS_DETAILED[spell][k] = v
+
+        for spell, data in REDUCED_DETAILED.items():
+            for k, v in data.items():
+                data[k] = separate_thousands(v)
+        
+        REDUCED_FORMATTED = format_total_data(reduced)
+        REDUCED_PERCENT = {
+            spell_id: format_percentage(value, value + actual_sum.get(spell_id, 0))
+            for spell_id, value in reduced.items()
+        }
 
         return {
-            "TARGETS": TARGETS,
-            "SPELLS_DATA": SPELLS_DATA,
-            "ACTUAL": actual_formatted,
-            "ACTUAL_PERCENT": actual_percent,
-            "REDUCED": reduced_formatted,
-            "REDUCED_PERCENT": reduced_percent,
-            "HITS": HITS_DATA,
-            "CASTS": casts,
-            "MISSES": misses,
+            "ACTUAL": ACTUAL_FORMATTED,
+            "ACTUAL_PERCENT": ACTUAL_PERCENT,
+            "REDUCED": REDUCED_FORMATTED,
+            "REDUCED_PERCENT": REDUCED_PERCENT,
+            "REDUCED_DETAILED": REDUCED_DETAILED,
+            "MISSES": dict(TOTAL_MISSES),
+            "MISS_DETAILED": MISS_DETAILED,
+            "CASTS": CASTS,
         }
-    
-    
+
+
     def get_comp_data(self, segments, class_filter: str, tGUID=None):
         class_filter = class_filter.lower()
         response = []
@@ -1161,7 +1187,7 @@ class THE_LOGS:
         }
 
     @cache_wrap
-    def useful_damage(self, s, f, targets, boss_name):
+    def useful_damage(self, s, f, targets: dict[str, str], boss_name: str):
         logs_slice = self.LOGS[s:f]
 
         damage = logs_dmg_useful.get_dmg(logs_slice, targets)
@@ -1192,7 +1218,7 @@ class THE_LOGS:
         }
 
     @running_time
-    def useful_damage_all(self, segments, boss_name):
+    def useful_damage_all(self, segments: list, boss_name: str):
         all_data = defaultdict(lambda: defaultdict(int))
         all_data_useful = defaultdict(lambda: defaultdict(int))
 
@@ -1249,50 +1275,6 @@ class THE_LOGS:
             "TARGETS": dmg_to_target,
             "PLAYERS": players,
         }
-    
-    def heal_test(self, s, f, boss_id=None):
-        slice_ID = f"{s}_{f}"
-        cached_data = self.CACHE['heal_test']
-        if slice_ID in cached_data:
-            return cached_data[slice_ID]
-        
-        logs_slice = self.LOGS[s:f]
-        if boss_id == "008FB5":
-            logs_dmg_heals.heal_gen_target(logs_slice, )
-
-    def sort_spell_data_by_name(self, data: dict):
-        spells = self.get_spells()
-        return dict(sorted(data.items(), key=lambda x: spells[x[0]]["name"]))
-
-    def get_auras(self, s, f, filter_guid):
-        logs_slice = self.LOGS[s:f]
-        a = logs_auras.AurasMain(logs_slice)
-        data = a.main(filter_guid)
-        # buffs = self.sort_spell_data_by_name(data["buffs"])
-        # debuffs = self.sort_spell_data_by_name(data["debuffs"])
-        spell_colors = self.get_spells_colors(data['spells'])
-        all_spells = self.get_spells()
-        return {
-            'BUFFS': data["buffs"],
-            'DEBUFFS': data["debuffs"],
-            # 'BUFFS': buffs,
-            # 'DEBUFFS': debuffs,
-            'COLORS': spell_colors,
-            'ALL_SPELLS': all_spells,
-            "BUFF_UPTIME": data['buffs_uptime'],
-            "DEBUFF_UPTIME": data['debuffs_uptime'],
-        }
-
-    def get_auras_all(self, segments, player_name):
-        durations = []
-
-        filter_guid = self.name_to_guid(player_name)
-
-        for s, f in segments:
-            data = self.get_auras(s, f, filter_guid)
-            buffs = data['buffs']
-            durations.append(self.get_slice_duration(s, f))
-    
 
     def pretty_print_players_data(self, data):
         guids = self.get_all_guids()
@@ -1479,19 +1461,17 @@ class THE_LOGS:
     def get_spell_history_wrap_json(self, segments: dict, player_name: str):
         return json.dumps((self.get_spell_history_wrap(segments, player_name)), default=list)
     
-
-    def logs_custom_search(self, query: dict[str, str]):
-        logs = self.get_logs()
-        # for 
-        return 'Spell not found'
     
     @cache_wrap
     def _get_absorbs(self, s, f):
+        if not s or not f:
+            return {}, {}
+
         logs_slice = self.LOGS[s:f]
         specs = self.get_players_specs_in_segments(s, f)
         discos = {guid for guid, spec in specs.items() if spec == 21}
         events = logs_absorbs.parse_absorb_related(logs_slice, discos=discos)
-        ABSORBS = {}
+        ABSORBS: dict[str, dict[str, dict[str, int]]] = {}
         DETAILS = {}
         
         for target, lines in events.items():
@@ -1507,10 +1487,18 @@ class THE_LOGS:
     def get_absorbs_details(self, s, f):
         return self._get_absorbs(s, f)[1]
     
-    def get_absorbs_details_wrap(self, segments, tGUID):
+    def get_absorbs_details_wrap(self, segments: list, target: str):
+        if not target.startswith("0x0"):
+            target = self.name_to_guid(target)
+
+        if not target:
+            return []
+        
         DETAILS = []
         for s, f in segments:
-            DETAILS.extend(self.get_absorbs_details(s, f)[tGUID])
+            _a = self.get_absorbs_details(s, f)
+            if target in _a:
+                DETAILS.extend(self.get_absorbs_details(s, f)[target])
         return DETAILS
 
     def get_absorbs_by_source(self, s, f):
@@ -1522,25 +1510,21 @@ class THE_LOGS:
                     _abs[source] += value
         return _abs
     
-    def get_absorbs_by_source_spells_wrap(self, segments, source_filter, target_filter=None):
-        # _abs = defaultdict(lambda: defaultdict(int))
-        _abs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    def get_absorbs_by_source_spells_wrap(self, segments: list, source_filter: str, target_filter: str=None):
+        ABSORBS = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         for s, f in segments:
             _data = self.get_absorbs(s, f)
             for _target, sources in _data.items():
                 for _source, spells in sources.items():
-                    # print(_source, spells)
                     for spell_id, value in spells.items():
-                        # _abs[source][spell_id] += value
-                        _abs[_source]["Total"][spell_id] += value
-                        _abs[_source][_target][spell_id] += value
+                        ABSORBS[_source]["Total"][spell_id] += value
+                        ABSORBS[_source][_target][spell_id] += value
+        
         if not target_filter:
             target_filter = "Total"
-        return _abs[source_filter][target_filter]
-
+        return ABSORBS[source_filter][target_filter]
     
     def get_absorbs_by_target_wrap(self, segments, target_filter, source_filter=None):
-        # _abs = defaultdict(lambda: defaultdict(int))
         _abs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         for s, f in segments:
             _data = self.get_absorbs(s, f)
@@ -1554,3 +1538,10 @@ class THE_LOGS:
         if not source_filter:
             source_filter = "Total"
         return _abs[target_filter][source_filter]
+
+
+    def logs_custom_search(self, query: dict[str, str]):
+        logs = self.get_logs()
+        # for 
+        return 'Spell not found'
+    

@@ -1,15 +1,63 @@
 from collections import defaultdict
+from typing import TypedDict
 
 HIT_TYPE = ["spells_hit", "spells_crit", "dot_hit", "dot_crit"]
 PERIODIC = {'SPELL_PERIODIC_DAMAGE', 'SPELL_PERIODIC_HEAL'}
-AURA_APPLIED = {"SPELL_AURA_APPLIED", "SPELL_AURA_REFRESH"}
+FLAGS_FILTER_DAMAGE = {
+    "SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE",
+    "SPELL_MISSED",
+    "SWING_DAMAGE", "SWING_MISSED",
+    "RANGE_DAMAGE", "RANGE_MISSED",
+    "SPELL_CAST_SUCCESS",
+    "SPELL_CAST_START",
+    "DAMAGE_SHIELD", "DAMAGE_SHIELD_MISSED",
+}
+FLAGS_FILTER_HEAL = {
+    "SPELL_HEAL", "SPELL_PERIODIC_HEAL",
+    "SPELL_CAST_SUCCESS",
+    "SPELL_CAST_START",
+}
+FLAGS_DAMAGE = {
+    "SPELL_DAMAGE",
+    "SWING_DAMAGE",
+    "RANGE_DAMAGE",
+    "DAMAGE_SHIELD",
+    "SPELL_PERIODIC_DAMAGE",
+}
+FLAG_MISS = {
+    "SWING_MISSED",
+    "RANGE_MISSED",
+    "SPELL_MISSED",
+    "DAMAGE_SHIELD_MISSED",
+}
+FLAGS_HEAL = {
+    "SPELL_HEAL",
+    "SPELL_PERIODIC_HEAL",
+}
+FLAGS_CAST = {
+    "SPELL_CAST_SUCCESS",
+    "SPELL_CAST_START",
+}
+HIT_TYPE_DICT = {
+    "SPELL_PERIODIC_DAMAGE": "PERIODIC",
+    "SPELL_DAMAGE": "HIT",
+    "SPELL_PERIODIC_HEAL": "PERIODIC",
+    "SPELL_HEAL": "HIT",
+    "SPELL_DAMAGE": "HIT",
+    "SWING_DAMAGE": "HIT",
+    "DAMAGE_SHIELD": "HIT",
+    "RANGE_DAMAGE": "HIT",
+}
 
-def group_targets(targets: set[str]):
-    target_ids = {guid[:-6] for guid in targets}
-    return {
-        target_id: {guid for guid in targets if target_id in guid}
-        for target_id in target_ids
-    }
+
+class BreakdownType(TypedDict):
+    OTHER: defaultdict[str, defaultdict[str, defaultdict[str, defaultdict[str, int]]]]
+    DAMAGE: defaultdict[str, defaultdict[str, defaultdict[str, defaultdict[str, list[int]]]]]
+
+class BreakdownTypeExtended(BreakdownType):
+    SPELLS: dict[str, dict[str, str]]
+    TARGETS: set[str]
+
 
 def separate_thousands(num, precision=None):
     try:
@@ -24,149 +72,11 @@ def separate_thousands(num, precision=None):
         precision = 1 if isinstance(num, float) else 0
     
     return f"{num:,.{precision}f}".replace(',', ' ')
-
-def parse_logs(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
-    '''absolute = { spell_id: sum }
-    useful = { spell_id: {
-        "spells_hit": [],
-        "spells_crit": [],
-        "dot_hit": [],
-        "dot_crit": [] } }'''
-    units = set()
-
-    overkill = defaultdict(int)
-    reduced = defaultdict(int)
-    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
-
-    for line in logs_slice:
-        if "DAMAGE" not in line:
-            continue
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, glanc, _ = line.split(',', 17)
-        except ValueError:
-            # DAMAGE_SHIELD_MISSED
-            continue
-        if flag == "DAMAGE_SPLIT":
-            continue
-        if sGUID not in controlled_units:
-            continue
-
-        units.add(tGUID)
-
-        if target_filter:
-            if target_filter not in tGUID:
-                continue
-        elif tGUID in filter_guids:
-            continue
-        
-        dmg_raw = int(dmg)
-        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
-        over = int(over)
-        dmg_actual = dmg_raw - over
-        overkill[spell_id] += over
-        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
-        actual[spell_id][HIT_TYPE[_hit_type]].append(dmg_actual)
-        
-        if over != "0":
-            reduced[spell_id] += int(over)
-        if res != "0":
-            reduced[spell_id] += int(res)
-        if glanc == "1":
-            reduced[spell_id] += int(dmg_raw/3)
-        
-    return {
-        "units": units,
-        "actual": actual,
-        "overkill": overkill,
-        "reduced": reduced,
-    }
-
-def casts(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
-    spells = defaultdict(int)
-    for line in logs_slice:
-        if "_SUCCESS" not in line:
-            continue
-
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
-        except ValueError:
-            continue
-
-        if sGUID not in controlled_units:
-            continue
-
-        if target_filter:
-            if target_filter not in tGUID:
-                continue
-        elif tGUID in filter_guids:
-            continue
-
-        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
-        spells[spell_id] += 1
-    
-    return spells
-
-def misses(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
-    spells = defaultdict(int)
-    for line in logs_slice:
-        if player_GUID not in line:
-            continue
-        if "_MISSED" not in line:
-            continue
-
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
-        except ValueError:
-            continue
-
-        if flag == "SPELL_PERIODIC_MISSED":
-            continue
-
-        if sGUID not in controlled_units:
-            continue
-
-        if target_filter:
-            if target_filter not in tGUID:
-                continue
-        elif tGUID in filter_guids:
-            continue
-
-        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
-        spells[spell_id] += 1
-    
-    return spells
-
-def auras(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
-    spells = defaultdict(int)
-    for line in logs_slice:
-        if "_AURA_" not in line:
-            continue
-
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _ = line.split(',', 7)
-        except ValueError:
-            continue
-
-        if flag not in AURA_APPLIED:
-            continue
-
-        if sGUID not in controlled_units:
-            continue
-
-        if target_filter:
-            if target_filter not in tGUID:
-                continue
-        elif tGUID in filter_guids:
-            continue
-
-        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
-        spells[spell_id] += 1
-    
-    return spells
     
 def get_avgs(hits: list):
     if not hits:
-        return []
+        return "", []
+
     hits = sorted(hits)
     _len = len(hits)
     len10 = _len//10 or 1
@@ -180,7 +90,8 @@ def get_avgs(hits: list):
         sum(hits[:len10]) // len10,
         min(hits),
     ]
-    return list(map(separate_thousands, avgs))
+    avg, *other = map(separate_thousands, avgs)
+    return avg, other
 
 def format_percent(hit, crit):
     if crit == 0:
@@ -193,169 +104,163 @@ def format_hits_data(hits, crits):
     hits_count = len(hits)
     crits_count = len(crits)
     percent = format_percent(hits_count, crits_count)
-    hits_avg = get_avgs(hits)
-    crits_avg = get_avgs(crits)
-    hits_count = separate_thousands(hits_count)
-    crits_count = separate_thousands(crits_count)
-    return ((hits_count, hits_avg), (crits_count, crits_avg)), percent
+    hit_avg, hits_avg = get_avgs(hits)
+    crit_avg, crits_avg = get_avgs(crits)
+    return {
+        "total": separate_thousands(hits_count+crits_count),
+        "hits": separate_thousands(hits_count),
+        "crits": separate_thousands(crits_count),
+        "percent": percent,
+        "hit_avg": hit_avg,
+        "hits_avg": hits_avg,
+        "crit_avg": crit_avg,
+        "crits_avg": crits_avg,
+    }
 
 def format_hits(hits: dict[str, list[int]]):
     hit_hit, hit_crt, dot_hit, dot_crt = [hits.get(x, []) for x in HIT_TYPE]
-    return format_hits_data(hit_hit, hit_crt), format_hits_data(dot_hit, dot_crt)
+    return {
+        "HIT": format_hits_data(hit_hit, hit_crt),
+        "DOT": format_hits_data(dot_hit, dot_crt),
+    }
 
 def hits_data(data: dict[int, dict[str, list[int]]]):
     return {spell_id: format_hits(hits) for spell_id, hits in data.items()}
 
-PARSE_LOGS_FUNCTIONS = {
-    "casts": casts,
-    "misses": misses,
-    "auras": auras,
-}
 
-def get_total_damage_hits(data: dict[str, list]):
-    return len(data.get("spells_hit", [])) + len(data.get("spells_crit", []))
+def given(logs_slice: list[str], controlled_units: set[str], heal=False) -> BreakdownType:
+    '''{'sGUID': {'tGUID': {'spell_id': {'type': 0}}}}'''
+    if heal:
+        flags_filter = FLAGS_FILTER_HEAL
+    else:
+        flags_filter = FLAGS_FILTER_DAMAGE
 
-def parse_logs_wrap(logs_slice, sGUID, controlled_units, all_player_pets, tGUID):
-    data = parse_logs(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-    for key, func in PARSE_LOGS_FUNCTIONS.items():
-        data[key] = func(logs_slice, sGUID, controlled_units, all_player_pets, tGUID)
-    data['dmg_hits'] = {
-        spell_id: get_total_damage_hits(_d)
-        for spell_id, _d in data["actual"].items()
-    }
-    return data
-
-
-
-def parse_logs_taken(logs_slice: list[str], player_GUID: set[str], source_filter=None):
-    units = set()
-    reduced = defaultdict(int)
-    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
-
+    other = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+    damage = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
+    
     for line in logs_slice:
-        if player_GUID not in line:
-            continue
-        if "DAMAGE" not in line:
-            continue
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, res, _, absrb, crit, _ = line.split(',', 16)
-        except ValueError:
-            # DAMAGE_SHIELD_MISSED
-            continue
-        
-        if tGUID != player_GUID:
-            continue
-
-        units.add(sGUID)
-
-        if source_filter:
-            if source_filter not in sGUID:
-                continue
-        
-        spell_id = int(sp_id)
-        _dmg = int(dmg)
-        if over != "0":
-            over = int(over)
-            reduced[spell_id] += over
-            _dmg = _dmg - over
-        
-        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
-        actual[spell_id][HIT_TYPE[_hit_type]].append(_dmg)
-        
-        if res != "0":
-            reduced[spell_id] += int(res)
-        if absrb != "0":
-            reduced[spell_id] += int(absrb)
-        
-    return {
-        "units": units,
-        "actual": actual,
-        "reduced": reduced,
-    }
-
-def parse_logs_heal(logs_slice: list[str], player_GUID: str, controlled_units: set[str], filter_guids=None, target_filter=None):
-    units = set()
-    overkill = defaultdict(int)
-    reduced = defaultdict(int)
-    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
-
-    for line in logs_slice:
-        if "HEAL" not in line:
-            continue
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, crit = line.split(',', 12)
-        except ValueError:
-            continue
-
+        _, flag, sGUID, etc1 = line.split(',', 3)
         if sGUID not in controlled_units:
             continue
-        
-        units.add(tGUID)
-
-        if target_filter:
-            if target_filter not in tGUID:
-                continue
-        
-        if tGUID not in filter_guids:
+        if flag not in flags_filter:
             continue
+        
+        _, tGUID, _, spell_id, etc2 = etc1.split(',', 4)
+        if flag in FLAGS_CAST:
+            type = "CAST"
+        elif flag in FLAGS_DAMAGE:
+            type = HIT_TYPE_DICT[flag]
+            _, _, dmg, over, _, res, _, absrb, crit, glanc, _ = etc2.split(',', 10)
+                
+            _value = int(dmg)
+            
+            _spell = other[tGUID][sGUID][spell_id]
+            if absrb != "0":
+                _spell["ABSORBED"] += int(absrb)
+            if res != "0":
+                _spell["RESISTED"] += int(res)
+            if glanc == "1":
+                _spell["GLANCING"] += int(_value/3)
+            if over != 0:
+                over = int(over)
+                _value = _value - over
+                _spell["OVERKILL"] += over
+            
+            _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+            damage[tGUID][sGUID][spell_id][HIT_TYPE[_hit_type]].append(_value)
+        elif flag in FLAGS_HEAL:
+            type = HIT_TYPE_DICT[flag]
+            _, _, dmg, over, _, crit = etc2.split(',')
+        
+            _value = int(dmg)
+            if over != "0":
+                over = int(over)
+                _value = _value - over
+                other[tGUID][sGUID][spell_id]["OVERHEAL"] += over
+            
+            _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+            damage[tGUID][sGUID][spell_id][HIT_TYPE[_hit_type]].append(_value)
+        else:
+            __miss = etc2.split(',')
+            try:
+                v = int(__miss[-1])
+                type = __miss[-2]
+                other[tGUID][sGUID][spell_id][f"{type}ED"] += v
+            except ValueError:
+                type = __miss[-1]
 
-        
-        spell_id = int(sp_id) if sGUID == player_GUID else -int(sp_id)
-        
-        _value = int(dmg)
-        if over != "0":
-            over = int(over)
-            _value = _value - over
-            reduced[spell_id] += over
-            overkill[spell_id] += over
-        
-        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
-        actual[spell_id][HIT_TYPE[_hit_type]].append(_value)
+        other[tGUID][sGUID][spell_id][type] += 1
 
     return {
-        "units": units,
-        "actual": actual,
-        "overkill": overkill,
-        "reduced": reduced,
+        "OTHER": other,
+        "DAMAGE": damage,
     }
-def parse_logs_heal_taken(logs_slice: list[str], player_GUID: str, target_filter=None):
-    units = set()
-    overkill = defaultdict(int)
-    reduced = defaultdict(int)
-    actual: defaultdict[int, defaultdict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
 
+def taken(logs_slice: list[str], target_guid: str, heal=False) -> BreakdownType:
+    '''{'sGUID': {'tGUID': {'spell_id': {'type': 0}}}}'''
+
+    if heal:
+        flags_filter = FLAGS_FILTER_HEAL
+    else:
+        flags_filter = FLAGS_FILTER_DAMAGE
+
+    other = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+    damage = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
+    
     for line in logs_slice:
-        if "HEAL" not in line:
+        _, flag, etc1 = line.split(',', 2)
+        if flag not in flags_filter:
             continue
-        try:
-            _, flag, sGUID, _, tGUID, _, sp_id, _, _, dmg, over, _, crit = line.split(',', 12)
-        except ValueError:
+        
+        sGUID, _, tGUID, _, spell_id, etc2 = etc1.split(',', 5)
+        if target_guid not in tGUID:
             continue
-
-        if tGUID != player_GUID:
-            continue
-
-        units.add(sGUID)
-
-        if target_filter:
-            if target_filter not in sGUID:
-                continue
+        if flag in FLAGS_CAST:
+            type = "CAST"
+        elif flag in FLAGS_DAMAGE:
+            type = HIT_TYPE_DICT[flag]
+            _, _, dmg, over, _, res, _, absrb, crit, glanc, _ = etc2.split(',', 10)
+                
+            _value = int(dmg)
+            
+            _spell = other[sGUID][tGUID][spell_id]
+            if absrb != "0":
+                _spell["ABSORBED"] += int(absrb)
+            if res != "0":
+                _spell["RESISTED"] += int(res)
+            if glanc == "1":
+                _spell["GLANCING"] += int(_value/3)
+            if over != 0:
+                over = int(over)
+                _value = _value - over
+                _spell["OVERKILL"] += over
+            
+            _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+            damage[sGUID][tGUID][spell_id][HIT_TYPE[_hit_type]].append(_value)
+        elif flag in FLAGS_HEAL:
+            type = HIT_TYPE_DICT[flag]
+            _, _, dmg, over, _, crit = etc2.split(',')
         
-        spell_id = int(sp_id)
-        
-        _value = int(dmg)
-        if over != "0":
-            over = int(over)
-            _value = _value - over
-            reduced[spell_id] += over
-            overkill[spell_id] += over
-        
-        _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
-        actual[spell_id][HIT_TYPE[_hit_type]].append(_value)
+            _value = int(dmg)
+            if over != "0":
+                over = int(over)
+                _value = _value - over
+                other[sGUID][tGUID][spell_id]["OVERHEAL"] += over
+            
+            _hit_type = (flag in PERIODIC) * 2 + (crit == "1")
+            damage[sGUID][tGUID][spell_id][HIT_TYPE[_hit_type]].append(_value)
+        else:
+            __miss = etc2.split(',')
+            try:
+                v = int(__miss[-1])
+                type = __miss[-2]
+                other[sGUID][tGUID][spell_id][f"{type}ED"] += v
+            except ValueError:
+                type = __miss[-1]
+
+        other[sGUID][tGUID][spell_id][type] += 1
 
     return {
-        "units": units,
-        "actual": actual,
-        "overkill": overkill,
-        "reduced": reduced,
+        "OTHER": other,
+        "DAMAGE": damage,
     }

@@ -6,34 +6,53 @@
 
 {% block add_style %}
 <style>
-#chart-wrap {
-  height: 20vh;
-  width: 100%;
-}
-#chart {
-  height: 100;
-  width: 100%;
-}
-#chart-slice > * {
-  font-size: 200%;
-}
-#dmg-done button {
-  padding-inline: 2ch;
-}
-.sliced-control {
-  font-size: 200%;
-  min-width: 10ch;
-}
 img {
   min-width: 1em;
   max-width: 1em;
   min-height: 1em;
   max-height: 1em;
 }
+button {
+  /* margin: 0; */
+  padding: 0 2ch;
+  background: var(--background);
+  border: .2rem solid var(--primary-color);
+  border-radius: .2rem;
+  box-shadow: inset 0 0 .4rem var(--primary-color), 0 .1rem 1rem var(--primary-color);
+}
+button:hover {
+  cursor: pointer;
+  box-shadow: inset 0 0 1rem var(--secondary-color), 0 0 1rem var(--secondary-color);
+}
+
+#target-select-wrap {
+  position: fixed;
+  bottom: var(--bottom-row-two);
+  background-color: var(--background);
+  width: 100%;
+  z-index: 10;
+  padding-bottom: 1rem;
+}
+#target-select-wrap select {
+  margin-left: 1rem;
+  min-width: 22ch;
+}
+#target-select-wrap button,
+#target-select-wrap select {
+	font-size: clamp(1vw, 3rem, 5.5vw);
+}
+
+.sliced-control {
+  min-width: 10ch;
+}
 #player-info {
 	display: flex;
 	align-items: end;
   flex-direction: column;
+  font-size: 125%;
+}
+#player-info .player-name-big {
+  font-size: 300%;
 }
 @media (orientation: landscape) {
   #player-info {
@@ -42,14 +61,89 @@ img {
     flex-direction: row;
   }
 }
+
+#chart-wrap {
+  height: 20vh;
+  width: 100%;
+}
+#chart {
+  height: 100;
+  width: 100%;
+}
+
+.table-wrap {
+  padding-bottom: 7rem;
+}
+
+#dmg-done-main > table > tbody > tr > td:hover {
+  background-color: hsl(285, 100%, 15%);
+}
+/* #dmg-done th:nth-child(n+2),
+#dmg-done td:nth-child(2),
+#dmg-done td:nth-child(4),
+#dmg-done td:nth-child(6),
+#dmg-done td:nth-child(8),
+#dmg-done td:nth-child(11),
+#dmg-done td:nth-child(13) {
+  border-left: 3px solid dimgray;
+} */
+#dmg-done-main > table > tfoot > tr > td {
+  border-top: 3px solid dimgray;
+}
+#dmg-done td:nth-child(n+2) {
+  text-align: right;
+}
+
+.count,
+.total-cell {
+  position: relative;
+}
+td:hover > table {
+  display: table;
+}
+.tooltip {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 95%;
+  z-index: 2;
+  box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
+}
+.tooltip td {
+  min-width: 7ch;
+}
+.avgs tr:nth-child(1) > td {
+  background-color: hsl(140, 100%, 10%);
+}
+.avgs tr:nth-child(2) > td {
+  background-color: hsl(140, 100%, 10%);
+}
+.avgs tr:nth-child(3) > td {
+  background-color: hsl(100, 100%, 10%);
+}
+.avgs tr:nth-child(4) > td {
+  background-color: hsl(60, 100%, 10%);
+}
+.avgs tr:nth-child(5) > td {
+  background-color: hsl(20, 100%, 10%);
+}
+.avgs tr:nth-child(6) > td {
+  background-color: hsl(20, 100%, 10%);
+}
+.border {
+  border-right: .5rem solid var(--table-border);
+}
+.border-thin {
+  border-right: .25rem solid var(--table-border);
+}
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main id="dmg-done" data-source-name="{{ SOURCE_NAME }}" data-report-id="{{ REPORT_ID }}">
-<section id="dmg-done-selection">
-  <button type="button" id="dmg-done-reset">All</button>
-  <select id="dmg-done-select">
+<section id="target-select-wrap">
+  <button type="button" id="target-select-reset">All</button>
+  <select id="target-select">
     <option>Select specific target:</option>
     {% for guid_id, target_name in TARGETS.items() %}
     <option value="{{ guid_id }}">{{ target_name }}</option>
@@ -66,8 +160,8 @@ img {
 </section>
 <section>
   <ul id="player-info">
-    <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }}" style="font-size: 300%;">{{ SOURCE_NAME }}</li>
-    <li><a id="warmane-armory-link" href="http://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
+    <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }} player-name-big">{{ SOURCE_NAME }}</li>
+    <li><a id="warmane-armory-link" href="https://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
     <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
     <li class="sliced-control">
       <span>Sliced</span>
@@ -99,8 +193,8 @@ img {
           <th colspan="2">Actual</th>
           <th colspan="2">Reduced</th>
           <th colspan="2"></th>
-          <th colspan="5">Direct hits</th>
-          <th colspan="5">Damage over time</th>
+          <th colspan="6">Direct hits</th>
+          <th colspan="6">Periodic hits</th>
         </tr>
         <tr>
           <th class="spell-name">Spell</th>
@@ -110,38 +204,68 @@ img {
           <th>Amount</th>
           <th>Cast</th>
           <th>Miss</th>
-          <th colspan="2">Hit</th>
-          <th colspan="3">Crit</th>
-          <th colspan="2">Hit</th>
-          <th colspan="3">Crit</th>
+          <th>Total</th>
+          <th colspan="2">Hits</th>
+          <th colspan="3">Crits</th>
+          <th>Total</th>
+          <th colspan="2">Hits</th>
+          <th colspan="3">Crits</th>
         </tr>
         {% for spell_id, spell_data in SPELLS_DATA.items() %} 
         <tr>
           <td class="spell-name">
             <img src="/static/icons/{{ spell_data['icon'] }}.jpg">
-            <a class="{{ spell_data['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_id }}/{{ QUERY }}">{{ spell_data['name'] }}</a>
+            <a class="{{ spell_data['color'] }}" href="/reports/{{ REPORT_ID }}/spell/{{ spell_data['id'] }}/{{ QUERY }}">{{ spell_data['name'] }}</a>
           </td>
           <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>
-          <td class="total-cell">{{ ACTUAL[spell_id] }}</td>
+          <td class="total-cell border">{{ ACTUAL[spell_id] }}</td>
           <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
-          <td class="total-cell">{{ REDUCED[spell_id] }}</td>
-          <td class="count">{{ CASTS[spell_id] }}</td>
-          <td class="count">{{ MISSES[spell_id] }}</td>
-          {% for hits, percent in HITS[spell_id] %}
-          {% for _count, _avg in hits %}
-          <td class="count">{{ _count }}</td>
-          <td class="count">
-            {% if _avg %}
-            {{ _avg[0] }}
-            <table class="avgs">
-              {% for avg in _avg[1:] %}
-              <tr><td>{{ avg }}
+          <td class="total-cell border">{{ REDUCED[spell_id] }}
+            {% if REDUCED_DETAILED[spell_id] %}
+            <table class="tooltip">
+              {% for t, a in REDUCED_DETAILED[spell_id].items() %}
+              <tr><td>{{ t }}</td><td>{{ a }}</td></tr>
               {% endfor %}
             </table>
             {% endif %}
           </td>
-          {% endfor %}
-          <td class="count">{{ percent }}</td>
+          <td class="count">{{ CASTS[spell_id] }}</td>
+          <td class="count border">{{ MISSES[spell_id] }}
+            {% if MISS_DETAILED[spell_id] %}
+            <table class="tooltip">
+              {% for t, a in MISS_DETAILED[spell_id].items() %}
+              <tr>
+                <td>{{ t }}</td>
+                <td>{{ a }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+          </td>
+          {% for _type, _data in HITS.get(spell_id, {}).items() %} 
+          <td class="count border-thin">{{ _data['total'] }}</td>
+          <td class="count">{{ _data['hits'] }}</td>
+          <td class="count border-thin">{{ _data['hit_avg'] }}
+            {% if _data['hits_avg'] %}
+            <table class="tooltip avgs"><tbody>
+              {% for x in _data['hits_avg'] %}
+              <tr><td>{{ x }}</td></tr>
+              {% endfor %}
+            </tbody></table>
+            {% endif %}
+          </td>
+          <td class="count">{{ _data['crits'] }}</td>
+          <td class="count">{{ _data['crit_avg'] }}
+            {% if _data['crits_avg'] %}
+            <table class="tooltip avgs">
+              <tbody>
+                {% for x in _data['crits_avg'] %}
+                <tr><td>{{ x }}</td></tr>
+                {% endfor %}
+            </tbody></table>
+            {% endif %}
+          </td>
+          <td class="count border">{{ _data['percent'] }}</td>
           {% endfor %}
         </tr>
         {% endfor %}
@@ -150,9 +274,9 @@ img {
         <tr>
           <td class="spell-name">Total</td>
           <td></td>
-          <td>{{ ACTUAL["Total"] }}</td>
+          <td class="border">{{ ACTUAL["Total"] }}</td>
           <td></td>
-          <td>{{ REDUCED["Total"] }}</td>
+          <td class="border">{{ REDUCED["Total"] }}</td>
           <td colspan="69"></td>
         </tr>
       </tfoot>
@@ -181,9 +305,7 @@ img {
         <td>{{ts}}</td>
         <td>{{flag}}</td>
         <td class="{{ PLAYER_CLASSES[sguid] }}">{{ sguid }}</td>
-        <td class="spell-name">
-          {{spellid}}
-        </td>
+        <td class="spell-name">{{spellid}}</td>
         <td>{{amount}}</td>
         <td>{{hit}}</td>
 
@@ -198,8 +320,8 @@ img {
 
 {% block the_scripts %}
 <script>
-const TARGET_RESET = document.getElementById("dmg-done-reset");
-const TARGET_SELECT = document.getElementById("dmg-done-select");
+const TARGET_RESET = document.getElementById("target-select-reset");
+const TARGET_SELECT = document.getElementById("target-select");
 const CHART_ELEMENT_WRAP = document.getElementById('chart-wrap');
 const TOGGLE_GRAPH = document.getElementById('toggle-graph');
 const SELECT_SLICE_SECONDS = document.getElementById("sliced-sec");

@@ -395,33 +395,8 @@ def player(report_id, source_name):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    sGUID = report.name_to_guid(source_name)
     tGUID = request.args.get('target')
-    
-    data_gen = report.player_damage_gen(segments, sGUID, tGUID)
-    data_sum = report.player_damage_sum(data_gen)
-    data = report.player_damage_format(data_sum)
-
-    _server = default_params.get("SERVER", "")
-    if _server.startswith("Frostmourne"):
-        default_params["SERVER"] = "Frostmourne"
-
-    return render_template_wrap(
-        'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=source_name,
-    )
-
-@SERVER.route("/reports/<report_id>/taken/<source_name>/")
-def taken(report_id, source_name):
-    report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
-
-    sGUID = report.name_to_guid(source_name)
-    tGUID = request.args.get('target')
-    data_gen = report.player_damage_taken_gen(segments, sGUID, tGUID)
-    data_sum = report.player_damage_sum(data_gen)
-    data = report.player_damage_format(data_sum)
+    data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID)
 
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
@@ -434,40 +409,43 @@ def heal(report_id, source_name):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    sGUID = report.name_to_guid(source_name)
     tGUID = request.args.get('target')
-    data_gen = report.player_heal_gen(segments, sGUID, tGUID)
-    data_sum = report.player_damage_sum(data_gen)
-    
-    tGUID = request.args.get('target')
-    _absorbs = report.get_absorbs_by_source_spells_wrap(segments, sGUID, tGUID)
-    
-    data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
+    data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID, heal=True)
 
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=source_name,
     )
 
-@SERVER.route("/reports/<report_id>/healed/<source_name>/")
-def healed(report_id, source_name):
+@SERVER.route("/reports/<report_id>/taken/<target_name>/")
+def taken(report_id, target_name):
     report = load_report(report_id)
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    sGUID = report.name_to_guid(source_name)
-    tGUID = request.args.get('target')
-    data_gen = report.player_heal_taken_gen(segments, sGUID, tGUID)
-    data_sum = report.player_damage_sum(data_gen)
-    
-    tGUID = request.args.get('target')
-    _absorbs = report.get_absorbs_by_target_wrap(segments, sGUID, tGUID)
-    
-    data = report.player_damage_format(data_sum, add_absorbs=_absorbs)
+    sGUID = request.args.get('target')
+    data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, taken=True)
+
     return render_template_wrap(
         'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=source_name,
-        ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, sGUID)
+        SOURCE_NAME=target_name,
+    )
+
+@SERVER.route("/reports/<report_id>/healed/<target_name>/")
+def healed(report_id, target_name):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    tGUID = report.name_to_guid(target_name)
+
+    sGUID = request.args.get('target')
+    data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, heal=True, taken=True)
+    
+    return render_template_wrap(
+        'dmg_done2.html', **default_params, **data,
+        SOURCE_NAME=target_name,
+        ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
     )
 
 @SERVER.route("/reports/<report_id>/casts/<source_name>/")
