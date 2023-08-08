@@ -82,6 +82,8 @@ def format_total_data(data: dict):
     return {k: separate_thousands(v) for k, v in data.items()}
 
 def format_percentage(v, total):
+    if not total:
+        total = 1
     return f"{(v / total * 100):.1f}%"
 
 def calc_percent(value: int, max_value: int):
