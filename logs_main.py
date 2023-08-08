@@ -886,7 +886,7 @@ class THE_LOGS:
 
         def get_spell_data_pet_name_wrap(spell_id, pet_name=None):
             _spell_data = self.get_spell_data_pet_name(spell_id, pet_name)
-            spell_name = _spell_data["name"]
+            spell_name = f'{_spell_data["name"]}{_spell_data["id"]}'
             if spell_name not in _spells:
                 _spells[spell_name] = _spell_data
             return spell_name
