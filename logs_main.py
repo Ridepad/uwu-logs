@@ -680,6 +680,9 @@ class THE_LOGS:
             return cached_data[QUERY]
 
         report_name_info = get_report_name_info(self.NAME)
+        _server = report_name_info.get("server", "")
+        if _server[-1].isdigit():
+            _server = _server[:-1]
         parsed = self.parse_request(PATH, request.args)
         duration = self.get_fight_duration_total(parsed["SEGMENTS"])
         return_data = parsed | {
@@ -692,7 +695,7 @@ class THE_LOGS:
             "DURATION": duration,
             "DURATION_STR": duration_to_string(duration),
             "SPEC_ICON_TO_POSITION": SPEC_ICON_TO_POSITION,
-            "SERVER": report_name_info["server"],
+            "SERVER": _server,
         }
         cached_data[QUERY] = return_data
         return return_data
