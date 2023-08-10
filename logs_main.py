@@ -5,7 +5,6 @@ from collections import defaultdict
 import logs_absorbs
 import logs_spells_order
 import file_functions
-import logs_auras
 import logs_check_difficulty
 import logs_deaths
 import logs_dmg_breakdown
