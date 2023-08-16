@@ -1,58 +1,29 @@
 import json
 import os
-import file_functions
-import gzip
 import numpy
-from datetime import datetime, timedelta
 from constants import SPECS_LIST, TOP_DIR, CLASSES, running_time
+import pandas
+
+COMPRESSION = "zstd"
 CLASSES_LIST = list(CLASSES)
-
-ONE_HOUR = timedelta(hours=12)
-DATA_CACHE = {}
-DATA_CACHE_RENEW = {}
-
-def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
-    if not server:
-        server = "Lordaeron"
-    if not boss:
-        boss = "The Lich King"
-    if not mode:
-        mode = "25H"
-
-    server_folder = os.path.join(TOP_DIR, server)
-    return os.path.join(server_folder, f"{boss} {mode}.gzip")
-
-@running_time
-def get_boss_data(server: str=None, boss: str=None, mode: str=None):
-    boss_file = get_boss_top_file(server, boss, mode)
-    if (
-        boss_file in DATA_CACHE
-    and boss_file in DATA_CACHE_RENEW
-    and DATA_CACHE_RENEW[boss_file] > datetime.now()
-    ):
-        return DATA_CACHE[boss_file]
-
-    data = _get_boss_data(boss_file)
-    data = json.dumps(data)
-    DATA_CACHE[boss_file] = data
-    DATA_CACHE_RENEW[boss_file] = datetime.now() + ONE_HOUR
-    return data
+SPECS_DATA: list[str] = []
+IGNORED_SPECS = [*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39]
 
 def get_class_spec_full(spec_index):
     spec, icon = SPECS_LIST[spec_index]
     _class = CLASSES_LIST[spec_index//4]
     return f"{_class} {spec}".replace(' ', '-').lower()
 
-SPECS_TO_HTML_LIST = [get_class_spec_full(spec_index) for spec_index in range(40)]
 
-IGNORED_SPECS = [*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39]
-SPECS_DATA: list[str] = None
+SPECS_TO_HTML_LIST = [
+    get_class_spec_full(spec_index)
+    for spec_index in range(40)
+]
 
 def get_specs_data():
-    global SPECS_DATA
-    if SPECS_DATA: return SPECS_DATA
+    if SPECS_DATA:
+        return SPECS_DATA
     
-    SPECS_DATA = []
     for spec_index in set(range(40)) - set(IGNORED_SPECS):
         spec, icon = SPECS_LIST[spec_index]
         _class = CLASSES_LIST[spec_index//4]
@@ -65,6 +36,28 @@ def get_specs_data():
         })
     return SPECS_DATA
 
+
+def get_mtime(path):
+    try:
+        return os.path.getmtime(path)
+    except FileNotFoundError:
+        return 0.0
+
+def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
+    if not server:
+        server = "Lordaeron"
+    if not boss:
+        boss = "The Lich King"
+    if not mode:
+        mode = "25H"
+
+    server_folder = os.path.join(TOP_DIR, server)
+    return os.path.join(server_folder, f"{boss} {mode}.{COMPRESSION}")
+
+@running_time
+def _from_pickle(fname) -> pandas.DataFrame:
+    return pandas.read_pickle(fname, compression=COMPRESSION)
+
 def n_greater_than(data: numpy.ndarray, value: float):
     return int((data > value).sum())
 
@@ -75,23 +68,25 @@ def get_percentile(data, percentile):
         "n": n_greater_than(data, _percentile),
     }
 
-def _get_boss_data(boss_file: str):
-    if not os.path.isfile(boss_file):
+@running_time
+def _get_boss_data(df: pandas.DataFrame):
+    if df.empty:
         return {}
     
-    data = file_functions.bytes_read(boss_file)
-    data = gzip.decompress(data)
-    data = json.loads(data)
+    df_spec = df["s"]
+    df_dps = df["u"] / df["t"]
     
-    new_data = {}
+    BOSS_DATA = {}
     for spec_index in range(40):
         if spec_index in IGNORED_SPECS:
             continue
-        data_s = numpy.fromiter((x["ud"] for x in data if x["s"] == spec_index), float)
-        if len(data_s) < 10:
+        
+        data_s = df_dps[df_spec == spec_index]
+        if len(data_s) < 5:
             continue
+
         data_s = numpy.sort(data_s)
-        new_data[SPECS_TO_HTML_LIST[spec_index]] = {
+        BOSS_DATA[SPECS_TO_HTML_LIST[spec_index]] = {
             "max": {"p": max(data_s), "n": 0},
             "p99": get_percentile(data_s, 99),
             "p95": get_percentile(data_s, 95),
@@ -101,7 +96,26 @@ def _get_boss_data(boss_file: str):
             "p10": get_percentile(data_s, 10),
             "all": {"p": 0, "n": len(data_s)},
         }
-    return new_data
+    return BOSS_DATA
 
-if __name__ == "__main__":
-    get_boss_data()
+
+
+def get_boss_data_wrap():
+    cache = {}
+    last_mtime = {}
+    @running_time
+    def get_boss_data(server: str=None, boss: str=None, mode: str=None):
+        boss_file = get_boss_top_file(server, boss, mode)
+        current_mtime = get_mtime(boss_file)
+        if current_mtime > last_mtime.get(boss_file, 0):
+            df = _from_pickle(boss_file)
+            data = _get_boss_data(df)
+            data = json.dumps(data)
+            cache[boss_file] = data
+            print(current_mtime)
+            last_mtime[boss_file] = current_mtime
+        return cache[boss_file]
+    
+    return get_boss_data
+
+get_boss_data = get_boss_data_wrap()

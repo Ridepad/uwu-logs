@@ -1,30 +1,28 @@
-from collections import defaultdict
-import concurrent.futures
 import gzip
 import json
 import os
-import subprocess
-from sys import platform
+
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from time import perf_counter
 
-import constants
+import pandas
+
 import file_functions
+import logs_archive
 import logs_calendar
 import logs_top
 from constants import (
-    LOGGER_UPLOADS, LOGS_DIR, LOGS_RAW_DIR, PATH_DIR, TOP_DIR, UPLOADS_TEXT,
-    get_ms_str, get_report_name_info,
+    LOGGER_UPLOADS,
+    LOGS_DIR,
+    LOGS_RAW_DIR,
+    TOP_DIR,
+    UPLOADS_TEXT,
+    get_ms_str,
+    get_report_name_info,
 )
 
 TOP_FILE = 'top.json'
-USEFUL_DAMAGE = 'ud'
-
-if platform.startswith("linux"):
-    EXE_7Z = os.path.join(PATH_DIR, "7zz")
-elif platform == "win32":
-    EXE_7Z = os.path.join(PATH_DIR, "7z.exe")
-else:
-    raise RuntimeError("Unsupported OS")
 
 def save_raw_logs(file_name: str):
     report_id, ext = os.path.splitext(file_name)
@@ -34,14 +32,13 @@ def save_raw_logs(file_name: str):
     
     pc = perf_counter()
     archive_path = os.path.join(LOGS_RAW_DIR, f"{report_id}.7z")
-    if os.path.isfile(archive_path):
-        os.remove(archive_path)
-    cmd = [EXE_7Z, 'a', archive_path, logs_txt_path, '-m0=PPMd', '-mo=11', '-mx=9']
-    return_code = subprocess.call(cmd)
+    return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
         os.remove(logs_txt_path)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
     
+def _to_pickle(df: pandas.DataFrame, fname):
+    df.to_pickle(fname, compression="zstd")
 
 def data_gen(report_id: str):
     report_folder = os.path.join(LOGS_DIR, report_id)
@@ -98,14 +95,16 @@ def __data_gen(new_data):
     else:
         return __data_gen_dict(new_data)
 
+def _dps(entry):
+    return entry["u"] / entry["t"]
+
 def update_top(top: dict[str, dict], new_data):
     modified = False
-    for player_id, item in __data_gen(new_data):
+    for player_id, new_entry in __data_gen(new_data):
         cached_report = top.get(player_id)
-        if cached_report and cached_report[USEFUL_DAMAGE] > item[USEFUL_DAMAGE]:
-            continue
-        modified = True
-        top[player_id] = item
+        if not cached_report or _dps(new_entry) > _dps(cached_report):
+            modified = True
+            top[player_id] = new_entry
     return modified
 
 def combine_jsons(json_files: list[str]):
@@ -130,9 +129,14 @@ def group_by_top_file(server_folder: str):
     return grouped
 
 def save_top(server_folder: str, boss_f_n: str, data: dict[str, dict[str, str]]):
-    pc = perf_counter()
     data = sorted(data.values(), key=lambda x: x["t"])
 
+    pc = perf_counter()
+    dfpath = os.path.join(server_folder, f"{boss_f_n}.zstd")
+    _to_pickle(pandas.DataFrame.from_dict(data), dfpath)
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Pandas saved')
+
+    pc = perf_counter()
     top_path = os.path.join(server_folder, f"{boss_f_n}.gzip")
     top_path_tmp = f"{top_path}.tmp"
     data = json.dumps(data, separators=(',', ':'), ).encode()
@@ -153,7 +157,7 @@ def top_add_new_data(full_server_folder_name, boss_f_n, json_files):
     for json_file in json_files:
         if os.path.isfile(json_file):
             os.remove(json_file)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | {modified}')
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Modified: {modified}')
 
 def top_grouped():
     for server_folder_name in next(os.walk(TOP_DIR))[1]:
@@ -173,27 +177,38 @@ def main():
     
     RAW_LOGS_NO_EXT = [os.path.splitext(fpath)[0] for fpath in RAW_LOGS]
     MAX_CPU = max(os.cpu_count() - 1, 1)
+    MAX_CPU = 4
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        for report_id in RAW_LOGS_NO_EXT:
-            executor.submit(logs_top.make_report_top_wrap, report_id)
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.map(logs_top.make_report_top_wrap, RAW_LOGS_NO_EXT)
+        # for report_id in RAW_LOGS_NO_EXT:
+        #     executor.submit(logs_top.make_report_top_wrap, report_id)
+    # for report_id in RAW_LOGS_NO_EXT:
+    #     logs_top.make_report_top_wrap(report_id)
 
     # needs player and encounter data, thats why after logs top
     logs_calendar.add_new_logs()
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        for report_id in RAW_LOGS_NO_EXT:
-            executor.submit(save_temp_top, report_id)
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.map(save_temp_top, RAW_LOGS_NO_EXT)
+        # for report_id in RAW_LOGS_NO_EXT:
+        #     executor.submit(save_temp_top, report_id)
+    # for report_id in RAW_LOGS_NO_EXT:
+    #     save_temp_top(report_id)
     
-    with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         for _data in top_grouped():
             executor.submit(top_add_new_data, *_data)
+    # for _data in top_grouped():
+    #     top_add_new_data(*_data)
     
     if not os.path.exists(LOGS_RAW_DIR):
         os.makedirs(LOGS_RAW_DIR, exist_ok=True)
     
-    with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(save_raw_logs, RAW_LOGS)
+    # for report_id in RAW_LOGS:
+    #     save_raw_logs(report_id)
 
 def main_wrap():
     pc = perf_counter()

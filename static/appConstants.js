@@ -2,18 +2,6 @@ const ICON_CDN_URL = "https://wotlk.evowow.com/static/images/wow/icons/large";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CLASSES = ["Death Knight", "Druid", "Hunter", "Mage", "Paladin", "Priest", "Rogue", "Shaman", "Warlock", "Warrior"]
 const AURAS_COLUMNS = ["ext", "self", "rekt"];
-const DATA_KEYS = {
-  guid: "i",
-  name: "n",
-  uAmount: "ua",
-  uDPS: "ud",
-  tAmount: "ta",
-  tDPS: "td",
-  spec: "s",
-  auras: "a",
-  reportID: "r",
-  duration: "t",
-}
 
 const BOSSES = {
   "Icecrown Citadel": [
@@ -161,7 +149,6 @@ export {
   SPECS,
   SPECS_SELECT_OPTIONS,
   AURAS_COLUMNS,
-  DATA_KEYS,
   AURAS_ICONS,
   ICON_CDN_URL,
   MONTHS,

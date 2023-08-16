@@ -1,7 +1,12 @@
 {% extends "layout.html" %}
-
+{% block scripts_head %}
+<script type="module" src="static/pve_stats.js?v={{ V }}"></script>
+{% endblock scripts_head %}
 {% block add_style %}
 <style>
+main {
+  position: unset;
+}
 img {
 	min-height: 1em;
 	max-height: 1em;
@@ -116,7 +121,7 @@ table {
 #select-boss {
   min-width: 26ch;
 }
-#controls > * {
+#controls * {
   font-size: 150%;
 }
 
@@ -127,6 +132,7 @@ table {
   padding: .5em;
   border-radius: 6px;
   box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+	transform: translateX(-100%);
   z-index: 5;
 }
 #the-tooltip p {
@@ -146,6 +152,19 @@ table {
   min-width: 8ch;
   text-align: left;
 }
+#the-tooltip .p95 td {
+  background-color: hsl(120, 100%, 10%);
+}
+#the-tooltip .p90 td {
+  background-color: hsl(90, 100%, 10%);
+}
+#the-tooltip .p75 td {
+  background-color: hsl(60, 100%, 10%);
+}
+#the-tooltip .p50 td {
+  background-color: hsl(39, 100%, 10%);
+}
+
 #select-server {grid-area: serv;}
 #select-instance {grid-area: inst;}
 #select-boss {grid-area: boss;}
@@ -217,10 +236,10 @@ table {
   <aside id="the-tooltip" style="display: none;">
     <table>
       <thead>
-        <tr><td colspan="3"></td></tr>
+        <tr><td colspan="3" id="tooltip-spec-info"></td></tr>
         <tr><td></td><td class="npoints">n</td><td class="percentile">DPS</td></tr>
       </thead>
-      <tbody>
+      <tbody id="tooltip-body">
         <tr class="max"><td>Top 1:</td><td class="npoints"></td><td class="percentile"></td></tr>
         <tr class="p99"><td>Top 1%:</td><td class="npoints"></td><td class="percentile"></td></tr>
         <tr class="p95"><td>Top 5%:</td><td class="npoints"></td><td class="percentile"></td></tr>
@@ -234,275 +253,3 @@ table {
   </aside>
 </main>
 {% endblock the_main %}
-
-{% block the_scripts %}
-<script>
-const BOSSES = {
-  "Icecrown Citadel": [
-    "The Lich King",
-    "Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang",
-    "Festergut", "Rotface", "Professor Putricide",
-    "Blood Prince Council", "Blood-Queen Lana'thel",
-    "Sindragosa"
-  ],
-  "The Ruby Sanctum": ["Halion", "Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian"],
-  "Trial of the Crusader": ["Anub'arak", "Northrend Beasts", "Lord Jaraxxus", "Faction Champions", "Twin Val'kyr"],
-  "Ulduar": [
-    "Flame Leviathan", "Ignis the Furnace Master", "Razorscale", "XT-002 Deconstructor",
-    "Assembly of Iron", "Kologarn", "Auriaya", "Hodir", "Thorim", "Freya", "Mimiron",
-    "General Vezax", "Yogg-Saron", "Algalon the Observer"
-  ],
-  "Naxxramas": [
-    "Anub'Rekhan", "Grand Widow Faerlina", "Maexxna", "Noth the Plaguebringer", "Heigan the Unclean",
-    "Loatheb", "Patchwerk", "Grobbulus", "Gluth", "Thaddius", "Instructor Razuvious", "Gothik the Harvester",
-    "The Four Horsemen", "Sapphiron", "Kel'Thuzad"
-  ],
-  "Vault of Archavon": ["Toravon the Ice Watcher", "Archavon the Stone Watcher", "Emalon the Storm Watcher", "Koralon the Flame Watcher"],
-  "Onyxia's Lair": ["Onyxia"],
-  "The Eye of Eternity": ["Malygos"],
-  "The Obsidian Sanctum": ["Sartharion"],
-};
-const CACHE = {};
-const xrequest = new XMLHttpRequest();
-const serverSelect = document.getElementById("select-server");
-const instanceSelect = document.getElementById("select-instance");
-const bossSelect = document.getElementById("select-boss");
-const sizeSelect = document.getElementById("select-mode");
-const difficultyCheckbox = document.getElementById("difficulty-checkbox");
-const submitButton = document.getElementById("submit-button");
-const chartTimeline = document.getElementById("chart-timeline-wrap");
-const statsTableBody = document.getElementById("stats-tbody");
-const theTooltip = document.getElementById("the-tooltip");
-const first_row = theTooltip.querySelector("tr td");
-const theTooltipBody = theTooltip.querySelector("tbody");
-const INTERACTABLES = {
-  server: serverSelect,
-  raid: instanceSelect,
-  boss: bossSelect,
-  size: sizeSelect,
-};
-
-let maxvalue = 20000;
-const dps_jump = 2500;
-
-function removeChildren(node) {
-  while(node.firstChild) node.removeChild(node.firstChild);
-}
-
-function newOption(value, index) {
-  const _option = document.createElement('option');
-  _option.value = index === undefined ? value : index;
-  _option.innerHTML = value;
-  return _option;
-}
-
-function addBosses() {
-  removeChildren(bossSelect);
-  BOSSES[instanceSelect.value].forEach(boss_name => bossSelect.appendChild(newOption(boss_name)));
-};
-
-function makeQuery() {
-  const sizeValue = sizeSelect.value;
-  const diffValue = difficultyCheckbox.checked ? 'H' : 'N';
-  const diff_str = `${sizeValue}${diffValue}`;
-  const q = {
-    server: serverSelect.value,
-    boss: bossSelect.value,
-    diff: diff_str,
-  };
-  return JSON.stringify(q);
-}
-
-
-function tableAddNewData(data) {
-  let max_v = 0;
-  for (let classname in data) {
-    const cur_max = data[classname].max.p;
-    if (cur_max > max_v) max_v = cur_max;
-  }
-  maxvalue = Math.ceil((max_v+500)/1000)*1000;
-  
-  const rows = Array.from(statsTableBody.querySelectorAll("tr"));
-  for (let tr of rows) {
-    update_row(tr, data[tr.id]);
-  }
-  removeChildren(chartTimeline);
-  for (let i of Array(Math.ceil(maxvalue/dps_jump)).keys()) {
-    new_dps_line(i);
-  }
-
-  rows.sort((a, b) => b.getAttribute("data-sort") - a.getAttribute("data-sort"))
-      .forEach(row => statsTableBody.appendChild(row));
-}
-
-function queryServer(query) {
-  xrequest.open("POST", '');
-  xrequest.setRequestHeader("Content-Type", "application/json");
-  xrequest.send(query);
-}
-
-function fetchData() {
-  const query = makeQuery();
-  const data = CACHE[query];
-  data ? tableAddNewData(data) : queryServer(query);
-}
-
-function searchChanged() {
-  const __diff = difficultyCheckbox.checked ? 'H' : "N";
-  const title = `UwU Logs - Top - ${bossSelect.value} - ${sizeSelect.value}${__diff}`;
-  document.title = title;
-
-  const parsed = {
-    server: serverSelect.value,
-    raid: instanceSelect.value,
-    boss: bossSelect.value,
-    size: sizeSelect.value,
-    mode: difficultyCheckbox.checked ? 1 : 0,
-  };
-
-  const new_params = new URLSearchParams(parsed).toString();
-  const url = `?${new_params}`;
-  history.pushState(parsed, title, url);
-
-  fetchData();
-}
-
-const to_width_percent = v => `${v}%`;
-
-function new_dps_line(v) {
-  const line = document.createElement("div");
-  line.className = "chart-column";
-  line.style.left = to_width_percent(v*dps_jump/maxvalue*100);
-  line.setAttribute("data-dps", v*dps_jump);
-  chartTimeline.appendChild(line);
-}
-
-function new_div(classname, pos) {
-  const div = document.createElement("div");
-  div.className = classname;
-  div.style.left = to_width_percent(pos);
-  return div;
-}
-
-function update_row(row, data) {
-  const cell = row.querySelector(".stats-cell-data");
-  removeChildren(cell);
-  if (!data) {
-    row.setAttribute("data-sort", 0);
-    return;
-  }
-
-  row.setAttribute("data-sort", data.p99.p);
-  
-  const _divs = {};
-  const _values = {};
-  for (let k in data) {
-    const _percentile = data[k].p;
-    const _amount = data[k].n;
-    row.setAttribute(`data-${k}-p`, Math.round(_percentile));
-    row.setAttribute(`data-${k}-n`, _amount);
-
-    const _pos = _percentile/maxvalue*100;
-    const _div = new_div(k, _pos);
-    cell.appendChild(_div);
-
-    _divs[k] = _div;
-    _values[k] = _pos;
-  }
-
-  const a = Array.from(Object.keys(data)).filter(e => e[0] == "p").sort()
-  for (let i=1; i<a.length-1; i++) {
-    _divs[a[i]].style.width = to_width_percent(_values[a[i+1]] - _values[a[i]]);
-  }
-
-  const passthrudiv = new_div("passthrudiv", _values["p10"]);
-  passthrudiv.style.width = to_width_percent(_values["max"] - _values["p10"]);
-  cell.insertBefore(passthrudiv, cell.children[0]);
-}
-
-xrequest.onreadystatechange = () => {
-  if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  const data = JSON.parse(xrequest.response);
-  const query = makeQuery();
-  CACHE[query] = data;
-  tableAddNewData(data);
-}
-function add_tooltip_info(tr) {
-  while(first_row.firstChild) first_row.removeChild(first_row.firstChild);
-  first_row.appendChild(tr.querySelector("img").cloneNode());
-  first_row.append(`${tr.getAttribute("data-spec")} ${tr.getAttribute("data-class")}`);
-  first_row.className = tr.classList[1];
-  
-  for (let _row of theTooltipBody.children) {
-    const _name = _row.className;
-    if (_name != "max") _row.querySelector(".npoints").innerText = tr.getAttribute(`data-${_name}-n`);
-    if (_name != "all") _row.querySelector(".percentile").innerText = tr.getAttribute(`data-${_name}-p`);
-  }
-}
-function move_tooltip_to(tr) {
-  const first_child = tr.querySelector(".stats-cell-data > div");
-  if (!first_child) return;
-
-  const bodyRect = document.body.getBoundingClientRect();
-  const elemRect = first_child.getBoundingClientRect();
-  const trRect = tr.getBoundingClientRect();
-  theTooltip.style.top = trRect.bottom - bodyRect.top + 'px';
-  theTooltip.style.right = bodyRect.right - elemRect.left + 'px';
-  theTooltip.style.display = "";
-}
-function add_tooltip_events() {
-  document.querySelectorAll(".stats-cell-row").forEach(tr => {
-    tr.addEventListener("mouseleave", () => theTooltip.style.display = "none");
-    tr.addEventListener("mouseenter", () => {
-      add_tooltip_info(tr);
-      move_tooltip_to(tr);
-    });
-  });
-}
-
-
-function init() {
-  const isValidParam = (elm, par) => Array.from(elm.children).map(e => e.value).includes(par);
-  const findValueIndex = (select, option_name) => Array.from(select.children).map(e => e.innerText).indexOf(option_name);
-
-  Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(newOption(name)));
-
-  const currentParams = new URLSearchParams(window.location.search);
-  difficultyCheckbox.checked = currentParams.get("mode") != 0;
-
-  for (let key in INTERACTABLES) {
-    const par = currentParams.get(key);
-    const elm = INTERACTABLES[key];
-    if (isValidParam(elm, par)) {
-      elm.value = par;
-    } else if (elm == serverSelect) {
-      elm.selectedIndex = findValueIndex(elm, "Lordaeron");
-    } else {
-      elm.selectedIndex = 0;
-    }
-
-    if (elm == instanceSelect) {
-      addBosses();
-    }
-  }
-
-  instanceSelect.addEventListener("change", addBosses);
-  submitButton.addEventListener("click", searchChanged);
-  add_tooltip_events();
-  fetchData();
-
-  const button_click = e => {
-    const sortby = e.target.getAttribute("data-sort-by");
-    Array.from(statsTableBody.children)
-    .sort((a,b) => b.getAttribute(sortby) - a.getAttribute(sortby))
-    .forEach(tr => statsTableBody.appendChild(tr));
-  }
-  const tableInfo = document.getElementById("table-info");
-  for (let button of tableInfo.getElementsByTagName('button')) {
-    button.addEventListener("click", button_click);
-  }
-}
-
-window.addEventListener("DOMContentLoaded", init);
-</script>
-{% endblock the_scripts %}

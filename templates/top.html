@@ -54,31 +54,13 @@
       
       /* Hide scrollbar */
       html {
-        background-color: var(--background);
+        background-color: black;
         overflow: none;
         -ms-overflow-style: none; /*IE Edge*/
         scrollbar-width: none;  /*Firefox*/
       }
       html::-webkit-scrollbar {
         display: none; /*Chrome Safari Opera*/
-      }
-      
-      #home-button {
-        text-align: center;
-        color: var(--third-color);
-        padding: 0 1em;
-        text-shadow: 0 0 2em silver, 0 0 1em currentColor;
-        animation-name: homebutton;
-        animation-duration: 4s;
-        animation-iteration-count: infinite;
-      }
-      @keyframes homebutton {
-        0%,
-        100% {color: var(--third-color);}
-        50%  {color: var(--primary-color);}
-      }
-      #home-button:hover {
-        text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
       }
     </style>
   </head>
@@ -104,16 +86,16 @@
         <table id="main-table">
           <thead>
             <tr>
-              <th id="head-name" class="table-n">Name</th>
-              <th id="head-useful-dps" class="table-ud">uDPS</th>
-              <th id="head-useful-amount" class="table-ua">Useful</th>
-              <th id="head-total-dps" class="table-td">tDPS</th>
-              <th id="head-total-amount" class="table-ta">Total</th>
-              <th id="head-duration" class="table-t">Dur</th>
+              <th id="head-name" class="table-n sortable">Name</th>
+              <th id="head-useful-dps" class="table-u sortable">uDPS</th>
+              <th id="head-useful-amount" class="table-u sortable">Useful</th>
+              <th id="head-total-dps" class="table-d sortable">tDPS</th>
+              <th id="head-total-amount" class="table-d sortable">Total</th>
+              <th id="head-duration" class="table-t sortable">Dur</th>
               <th id="head-external" class="table-ext">E</th>
               <th id="head-self" class="table-self">S</th>
               <th id="head-rekt" class="table-rekt">R</th>
-              <th id="head-date" class="table-r">Date</th>
+              <th id="head-date" class="table-r sortable">Date</th>
             </tr>
           </thead>
           <tbody id="main-table-body"></tbody>
@@ -130,7 +112,7 @@
       </section>
       <aside id="the-tooltip" style="display: none;">
         <table>
-          <tbody>
+          <tbody id="tooltip-body">
           </tbody>
         </table>
       </aside>

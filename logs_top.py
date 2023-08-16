@@ -42,11 +42,10 @@ def f_auras(auras: dict[str, tuple[int, float]], spec: int):
             zz[spell_id] = [count, uptime, n]
             break
 
-    return zz
-    # return [
-    #     [int(spell_id), *spell_data]
-    #     for spell_id, spell_data in zz.items()
-    # ]
+    return [
+        [int(spell_id), *spell_data]
+        for spell_id, spell_data in zz.items()
+    ]
 
 def find_kill(segments):
     for segment_info in segments:
@@ -90,16 +89,12 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
 
     return [
         {
+            'r': report.NAME,
+            't': DURATION,
             'i': guid[-7:],
             'n': PLAYERS[guid],
-            'r': report.NAME,
-            'ua': useful,
-            'ud': round(useful/DURATION, 2),
-            'ta': dmg_total[guid],
-            'td': round(dmg_total[guid]/DURATION, 2),
-            # 'u': useful,
-            # 'f': dmg_total[guid],
-            't': DURATION,
+            'u': useful,
+            'd': dmg_total[guid],
             's': SPECS[guid],
             'a': f_auras(AURAS[guid], SPECS[guid])
         }

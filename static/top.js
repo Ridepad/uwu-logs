@@ -1,4 +1,11 @@
-import { BOSSES, CLASSES,SPECS, SPECS_SELECT_OPTIONS, AURAS_COLUMNS, DATA_KEYS, AURAS_ICONS, MONTHS } from "./appConstants.js"
+import {
+  BOSSES,
+  CLASSES,SPECS,
+  SPECS_SELECT_OPTIONS,
+  AURAS_COLUMNS,
+  AURAS_ICONS,
+  MONTHS,
+} from "./appConstants.js"
 
 const selectServer = document.getElementById('select-server');
 const selectInstance = document.getElementById('select-instance');
@@ -28,155 +35,184 @@ const tableContainer = document.getElementById('table-container');
 const loadingInfo = document.getElementById('loading-info');
 const loadingInfoPanel = document.getElementById('loading-info-panel');
 const headUsefulDps = document.getElementById('head-useful-dps');
-const headUsefulAmount = document.getElementById('head-useful-amount');
-const headTotalDps = document.getElementById('head-total-dps');
-const headTotalAmount = document.getElementById('head-total-amount');
 const toggleTotalDamage = document.getElementById('toggle-total-damage');
 const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
 const toggleLimit = document.getElementById('toggle-limit');
+const theTooltip = document.getElementById("the-tooltip");
+const theTooltipBody = document.getElementById("tooltip-body");
+
 const LIMITED_ROWS = 1000;
 const screenX = window.matchMedia("(orientation: landscape)");
+const TOP_POST = window.location.pathname;
+const xrequest = new XMLHttpRequest();
 const HAS_HEROIC = new Set([
   ...BOSSES["Icecrown Citadel"],
   ...BOSSES["Trial of the Crusader"],
   "Halion",
 ]);
-
-const SORT_VARS = {column: headUsefulDps, order: 1};
-const DATA_KEYS2 = {
-  "head-useful-amount": 'ua',
-  "head-useful-dps": 'ud',
-  "head-total-amount": 'ta',
-  "head-total-dps": 'td',
-  "head-duration": 't',
-};
+const REVERSE_SORTED = new Set([
+  "head-duration",
+  "head-date",
+  "head-external",
+  "head-rekt",
+]);
+const SORT_VARS = {column: headUsefulDps, reversed: false};
+const DATA_KEYS = {
+  reportID: "r",
+  guid: "i",
+  name: "n",
+  spec: "s",
+  uAmount: "u",
+  tAmount: "d",
+  duration: "t",
+  auras: "a",
+}
+const sort_default = key => (a, b) => b[key] - a[key];
+const sort_string = key => (a, b) => b[key] > a[key] ? -1 : 1;
+const SORT_FUNC = {
+  "head-useful-dps": (a, b) => (b.u/b.t - a.u/a.t),
+  "head-total-dps": (a, b) => (b.d/b.t - a.d/a.t),
+  "head-useful-amount": sort_default(DATA_KEYS.uAmount),
+  "head-total-amount": sort_default(DATA_KEYS.tAmount),
+  "head-duration": sort_default(DATA_KEYS.duration),
+  "head-date": sort_string(DATA_KEYS.reportID),
+  "head-name": sort_string(DATA_KEYS.name),
+}
 const CACHE = {
   lastQuery: "",
-  setNewData(data) {
-    const query = makeQuery();
+  set_new_data(data) {
+    const query = make_query();
     if (query == this.lastQuery) {
       this[query] = data;
     }
   },
-  getCurrent() {
-    const query = makeQuery();
+  get_current() {
+    const query = make_query();
     return this[query];
   }
 };
 
-function toggleColumn(className, display) {
-  mainTableBody.querySelectorAll(className).forEach(e => e.style.display = display);
+function get_icon_link(icon_name) {
+  return `/static/icons/${icon_name}.jpg`;
 }
 
-function toggleUsefulColumns(event) {
-  if (!event && toggleUsefulDamage.checked) return;
-
-  const display = toggleUsefulDamage.checked ? "" : 'none';
-  headUsefulDps.style.display = display;
-  headUsefulAmount.style.display = display;
-  toggleColumn(".table-ud", display);
-  toggleColumn(".table-ua", display);
-}
-function toggleTotalColumns(event) {
-  if (!event && toggleTotalDamage.checked) return;
-
-  const display = toggleTotalDamage.checked ? "" : 'none';
-  headTotalDps.style.display = display;
-  headTotalAmount.style.display = display;
-  toggleColumn(".table-td", display);
-  toggleColumn(".table-ta", display);
+function is_heroic() {
+  return HAS_HEROIC.has(selectBoss.value) && checkboxDifficulty.checked;
 }
 
-function newOption(value, index) {
-  const _option = document.createElement('option');
-  _option.value = index === undefined ? value : index;
-  _option.innerHTML = value;
-  return _option;
+function make_query() {
+  const sizeValue = selectSize.value;
+  const diffValue = is_heroic() ? 'H' : 'N';
+  const diff_str = `${sizeValue}${diffValue}`;
+  const q = {
+    server: selectServer.value,
+    boss: selectBoss.value,
+    diff: diff_str,
+  };
+  return JSON.stringify(q);
 }
 
-function addBosses() {
-  selectBoss.innerHTML = "";
-  BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(newOption(boss_name)));
-};
 
-function addSpecs() {
-  selectSpec.innerHTML = "";
-  const class_index = CLASSES[selectClass.value];
-  const specs = SPECS_SELECT_OPTIONS[class_index];
-  selectSpec.appendChild(newOption('All specs', -1));
-  if (!specs) return;
+function table_modify_wrap(callback) {
+  if (tableContainer.style.display == "none") return callback();
 
-  specs.forEach((spec_name, i) => selectSpec.appendChild(newOption(spec_name, i+1)));
-};
+  tableContainer.style.display = "none";
+  loadingInfoPanel.style.removeProperty("display");
+  setTimeout(() => {
+    callback();
+    setTimeout(() => {
+      loadingInfoPanel.style.display = "none";
+      tableContainer.style.removeProperty("display");
+    });
+  });
+}
 
-function numberWithSeparator(x, sep=" ") {
+
+function create_css_rule(key) {
+  const style = document.createElement("style");
+  style.append(`.table-${key} {display: none}`);
+  return style;
+}
+const hide_total = create_css_rule("d");
+const hide_useful = create_css_rule("u");
+function toggle_columns(checkbox, style) {
+  if (checkbox.checked) {
+    if (style.parentNode != document.head) return;
+    table_modify_wrap(() => document.head.removeChild(style));
+  } else if (style.parentNode != document.head) {
+    table_modify_wrap(() => document.head.appendChild(style));
+  }
+}
+function toggle_useful_columns() {
+  toggle_columns(toggleUsefulDamage, hide_useful);
+}
+function toggle_total_columns() {
+  toggle_columns(toggleTotalDamage, hide_total);
+}
+
+
+function number_with_separator(x, sep=" ") {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 }
 function add_inner_text(cell, text) {
-  if (!isNaN(text)) text = numberWithSeparator(text);
+  if (!isNaN(text)) text = number_with_separator(text);
   cell.append(text);
 }
 
-function addNameCell(row, data, key) {
+function add_name_cell(row, data, key) {
   const cell = document.createElement('td');
   const data_value = data[key];
 
   const [spec_name, spec_icon, spec_class_id] = SPECS[data[DATA_KEYS.spec]];
   const img = document.createElement("img");
-  img.src = `/static/icons/${spec_icon}.jpg`;
+  img.src = get_icon_link(spec_icon);
   cell.appendChild(img);
   cell.append(data_value);
   cell.title = spec_name;
-  cell.className = `${spec_class_id} table-n`;
+  cell.classList.add("table-n");
+  cell.classList.add(spec_class_id);
   row.appendChild(cell);
 }
 
-function addDPSCell(row, data, key) {
+function add_dps_cell(row, data, key) {
+  const data_value = data[key];
   const cell = document.createElement('td');
-  const data_damage = data[key];
-  const data_value = data_damage / data.t;
-  cell.value = data_value;
-  key = key[0];
-  cell.className = `table-${key}d`;
-  const _input = key == "u" ? toggleUsefulDamage : toggleTotalDamage;
-  if (!_input.checked) {
-    cell.style.display = "none";
-  }
-  const _inside_data = data_value.toFixed(1);
+  const dps = data_value / data.t;
+  cell.value = dps;
+  cell.classList.add("table-dps");
+  cell.classList.add(`table-${key}`);
+  const _inside_data = dps.toFixed(1);
   add_inner_text(cell, _inside_data);
   row.appendChild(cell);
 }
 
-function addTotalCell(row, data, key) {
-  const cell = document.createElement('td');
+function add_total_cell(row, data, key) {
   const data_value = data[key];
+  const cell = document.createElement('td');
   cell.value = data_value;
-  cell.className = `table-${key}`;
-  const _input = key == "ta" ? toggleTotalDamage : toggleUsefulDamage;
-  if (!_input.checked) {
-    cell.style.display = "none";
-  }
+  cell.classList.add("table-dmg");
+  cell.classList.add(`table-${key}`);
   add_inner_text(cell, data_value);
   row.appendChild(cell);
 }
 
-function formatDuration(dur) {
+function format_duration(dur) {
   const minutes = Math.floor(dur/60);
   const seconds = Math.floor(dur%60);
   const m_str = minutes.toString().padStart(2, '0');
   const s_str = seconds.toString().padStart(2, '0');
   return `${m_str}:${s_str}`;
 }
-function addDurationCell(row, data, key) {
+function add_duration_cell(row, data, key) {
   const cell = document.createElement('td');
   const data_value = data[key];
   cell.value = data_value;
   cell.className = `table-${key}`;
-  cell.append(formatDuration(data_value));
+  cell.append(format_duration(data_value));
   row.appendChild(cell);
 }
 
-function addDateCell(row, data, key) {
+function add_date_cell(row, data, key) {
   const report_ID = data[key];
   const report_date = report_ID.toString().slice(0, 15);
   const [year, month, day, _, hour, minute] = report_date.split('-');
@@ -195,21 +231,19 @@ function addDateCell(row, data, key) {
   row.appendChild(cell);
 }
 
-const theTooltip = document.getElementById("the-tooltip");
-const theTooltipBody = theTooltip.querySelector("tbody");
 function show_tooltip(td) {
   while(theTooltipBody.firstChild) theTooltipBody.removeChild(theTooltipBody.firstChild);
   
   const dataset = td.dataset;
   const fragment = new DocumentFragment();
-  const sorted = Object.keys(dataset).sort()
-  for (let spell_id of sorted) {
+  const sorted = Object.keys(dataset).sort();
+  for (const spell_id of sorted) {
     const tr = document.createElement("tr");
     const [count, uptime] = dataset[spell_id].split(',');
 
     const td_icon = document.createElement("td");
     const img = document.createElement("img");
-    img.src = `/static/icons/${AURAS_ICONS[spell_id]}.jpg`;
+    img.src = get_icon_link(AURAS_ICONS[spell_id]);
     img.alt = spell_id;
     td_icon.appendChild(img);
     
@@ -230,10 +264,10 @@ function show_tooltip(td) {
   const trRect = td.getBoundingClientRect();
   theTooltip.style.top = trRect.bottom - bodyRect.top + 'px';
   theTooltip.style.right = bodyRect.right - trRect.left + 'px';
-  theTooltip.style.display = "";
+  theTooltip.style.removeProperty("display");
 }
 
-function addAurasCells(row, data, key) {
+function add_auras_cells(row, data, key) {
   const cells = [];
   const all_count = [];
   for (let i=0; i<AURAS_COLUMNS.length; i++) {
@@ -244,61 +278,65 @@ function addAurasCells(row, data, key) {
     all_count.push(0);
   }
   const data_value = data[key];
-  for (let spell_id in data_value) {
-    const [count, uptime, type] = data_value[spell_id];
-    const td = cells[type];
-    td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
-    all_count[type] += count;
+  if (data_value instanceof Array) {
+    for (const [spell_id, count, uptime, type] of data_value) {
+      const td = cells[type];
+      td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
+      all_count[type] += count;
+    }
+  } else {
+    for (const spell_id in data_value) {
+      const [count, uptime, type] = data_value[spell_id];
+      const td = cells[type];
+      td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
+      all_count[type] += count;
+    }
   }
+
   for (let i=0; i<all_count.length; i++) {
     const td = cells[i];
-    td.append(all_count[i]);
     if (all_count[i] == 0) continue;
+    td.append(all_count[i]);
     td.addEventListener("mouseleave", () => theTooltip.style.display = "none");
     td.addEventListener("mouseenter", () => show_tooltip(td));
   }
 }
 
-function newRow(data) {
+function new_row(data) {
   const row = document.createElement('tr');
 
-  addNameCell(row, data, DATA_KEYS.name);
-  addDPSCell(row, data, DATA_KEYS.uAmount);
-  addTotalCell(row, data, DATA_KEYS.uAmount);
-  addDPSCell(row, data, DATA_KEYS.tAmount);
-  addTotalCell(row, data, DATA_KEYS.tAmount);
-  addDurationCell(row, data, DATA_KEYS.duration);
-  addAurasCells(row, data, DATA_KEYS.auras);
-  addDateCell(row, data, DATA_KEYS.reportID);
+  add_name_cell(row, data, DATA_KEYS.name);
+  add_dps_cell(row, data, DATA_KEYS.uAmount);
+  add_total_cell(row, data, DATA_KEYS.uAmount);
+  add_dps_cell(row, data, DATA_KEYS.tAmount);
+  add_total_cell(row, data, DATA_KEYS.tAmount);
+  add_duration_cell(row, data, DATA_KEYS.duration);
+  add_auras_cells(row, data, DATA_KEYS.auras);
+  add_date_cell(row, data, DATA_KEYS.reportID);
 
-  return row
+  return row;
 }
 
-const newClassFilter = class_i => x => class_i <= x[DATA_KEYS.spec] && x[DATA_KEYS.spec] < class_i+4;
-const newSpecFilter = spec_i => x => x[DATA_KEYS.spec] == spec_i;
 
-function filterDataByClass(data) {
+const new_class_filter = class_i => x => class_i <= x[DATA_KEYS.spec] && x[DATA_KEYS.spec] < class_i+4;
+const new_spec_filter = spec_i => x => x[DATA_KEYS.spec] == spec_i;
+
+function filter_data_by_class(data) {
   const class_i = Number(selectClass.value);
   if (class_i === -1) return data;
   const spec_i = Number(selectSpec.value);
-  const _filter = spec_i === -1 ? newClassFilter(class_i*4) : newSpecFilter(class_i*4 + spec_i);
+  const _filter = spec_i === -1 ? new_class_filter(class_i*4) : new_spec_filter(class_i*4 + spec_i);
   return data.filter(_filter);
 }
 
-const getbest = () => SORT_VARS.order == 1 ? (a, b) => a > b : (a, b) => a < b;
-function noDublicates(data) {
-  const getbest_f = getbest();
-  const key = DATA_KEYS2[SORT_VARS.column.id];
-  const best_data = {};
-  for (let i=0; i < data.length; i++) {
-    const current = data[i];
-    const guid = current[DATA_KEYS.guid];
-    const best = best_data[guid];
-    if (!best || getbest_f(current[key], best[key])) {
-      best_data[guid] = current;
-    }
+function no_dublicates(data) {
+  const _data = {};
+  for (const entry of data) {
+    const guid = entry.i;
+    if (_data[guid]) continue;
+    _data[guid] = entry;
   }
-  return Object.values(best_data);
+  return Object.values(_data);
 }
 
 function update_progress(done, total) {
@@ -308,33 +346,35 @@ function update_progress(done, total) {
 }
 
 let mainTimeout;
-const sortNewData = key => (a, b) => (b[key] - a[key]) * SORT_VARS.order;
-function tableAddNewData(data) {
+function table_add_new_data(data) {
   clearTimeout(mainTimeout);
   console.time("clear table");
   mainTableBody.innerHTML = "";
   console.timeEnd("clear table");
   if (!data) return;
   
-  data = filterDataByClass(data);
+  data = filter_data_by_class(data);
   if (!data) return;
   
-  const key = DATA_KEYS2[SORT_VARS.column.id];
-  data = data.sort(sortNewData(key));
-  data = checkboxCombine.checked ? noDublicates(data) : data;
-  if (!data) return;
+  const sort_func = SORT_FUNC[SORT_VARS.column.id] ?? SORT_FUNC[headUsefulDps.id];
+  console.time("sortNewData");
+  data = data.sort(sort_func);
+  if (SORT_VARS.reversed) data = data.reverse();
+  console.timeEnd("sortNewData");
 
-  console.time("tableAddRows");
+  if (checkboxCombine.checked) data = no_dublicates(data);
+
   loadingInfo.textContent = "Building table...";
-  loadingInfoPanel.style.display = "";
+  loadingInfoPanel.style.removeProperty("display");
   const LIMIT = toggleLimit.checked ? Math.min(LIMITED_ROWS, data.length) : data.length;
   const fragment = new DocumentFragment();
   let i = 0;
 
+  console.time("tableAddRows");
   (function chunk() {
     const end = Math.min(i+100, LIMIT);
     for ( ; i < end; i++) {
-      const row = newRow(data[i]);
+      const row = new_row(data[i]);
       fragment.appendChild(row);
     }
     update_progress(i, LIMIT);
@@ -348,43 +388,23 @@ function tableAddNewData(data) {
     progressBarPercentage.textContent = "Done!";
 
     setTimeout(() => {
-      console.time("tableAddNewData Rendering");
+      console.time("table_add_new_data Rendering");
       mainTableBody.append(fragment);
-      toggleUsefulColumns();
-      toggleTotalColumns();
+      toggle_useful_columns();
+      toggle_total_columns();
       setTimeout(() => {
         loadingInfoPanel.style.display = "none";
-        tableContainer.style.display = "";
+        tableContainer.style.removeProperty("display");
+        console.timeEnd("table_add_new_data Rendering");
         console.timeEnd("tableAddRows");
-        console.timeEnd("tableAddNewData Rendering");
       });
     })
   })();
 }
-
-function tableAddNewDataWrap(data) {
+function table_add_new_data_wrap(data) {
   tableContainer.style.display = "none";
-  setTimeout(() => tableAddNewData(data));
+  setTimeout(() => table_add_new_data(data));
 }
-
-function is_heroic() {
-  return HAS_HEROIC.has(selectBoss.value) && checkboxDifficulty.checked;
-}
-
-function makeQuery() {
-  const sizeValue = selectSize.value;
-  const diffValue = is_heroic() ? 'H' : 'N';
-  const diff_str = `${sizeValue}${diffValue}`;
-  const q = {
-    server: selectServer.value,
-    boss: selectBoss.value,
-    diff: diff_str,
-  };
-  return JSON.stringify(q);
-}
-
-const TOP_POST = window.location.pathname;
-const xrequest = new XMLHttpRequest();
 
 xrequest.onprogress = e => {
   let contentLength;
@@ -398,34 +418,31 @@ xrequest.onprogress = e => {
 
 xrequest.onreadystatechange = () => {
   if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  
+
   console.timeEnd("query");
-  
   const parsed_json = xrequest.response ? JSON.parse(xrequest.response) : [];
-
-  CACHE.setNewData(parsed_json);
-
-  tableAddNewDataWrap(parsed_json);
+  CACHE.set_new_data(parsed_json);
+  table_add_new_data_wrap(parsed_json);
 }
 
-function queryServer(query) {
+function query_server(query) {
   loadingInfo.textContent = "Downloading top:";
   tableContainer.style.display = "none";
-  loadingInfoPanel.style.display = "";
+  loadingInfoPanel.style.removeProperty("display");
   console.time("query");
   xrequest.open("POST", TOP_POST);
   xrequest.setRequestHeader("Content-Type", "application/json");
   xrequest.send(query);
 }
 
-function fetchData() {
-  const query = makeQuery();
+function fetch_data() {
+  const query = make_query();
   CACHE.lastQuery = query;
   const data = CACHE[query];
-  data ? tableAddNewDataWrap(data) : queryServer(query);
+  data ? table_add_new_data_wrap(data) : query_server(query);
 }
 
-function searchChanged() {
+function search_changed() {
   const __diff = is_heroic() ? 'H' : "N";
   const title = `UwU Logs - Top - ${selectBoss.value} - ${selectSize.value}${__diff}`;
   document.title = title;
@@ -445,49 +462,81 @@ function searchChanged() {
   const url = `?${new_params}`;
   history.pushState(parsed, title, url);
 
-  fetchData();
+  fetch_data();
 }
 
-function isValidParam(elm, par) {
+function is_valid_param(elm, par) {
   return [...elm.options].map(o => o.value).includes(par);
 }
 
-function findValueIndex(select, option_name) {
+function find_value_index(select, option_name) {
   for (let i=0; i < select.childElementCount; i++) {
     if (select[i].textContent == option_name) return i;
   }
 }
-function getDefaultIndex(select) {
+function get_default_index(select) {
   if (select == selectClass) {
-    return findValueIndex(select, "Priest");
+    return find_value_index(select, "Priest");
   } else if (select == selectServer) {
-    return findValueIndex(select, "Lordaeron");
+    return find_value_index(select, "Lordaeron");
   }
   return 0;
 }
 
-const REVERSE_SORTED = ["head-duration", "head-external", "head-rekt"];
-const getCellValue = (tr, idx) => tr.children[idx].value;
-const tableSort = idx => (a, b) => (getCellValue(b, idx) - getCellValue(a, idx)) * SORT_VARS.order;
+
+const get_cell_value = (tr, idx) => tr.children[idx].value;
+const table_sort = idx => (a, b) => (get_cell_value(b, idx) - get_cell_value(a, idx));
+const table_sort_reversed = idx => (a, b) => (get_cell_value(a, idx) - get_cell_value(b, idx));
 function sort_table_by_column(event) {
   const th = event ? event.target : headDPS;
-  SORT_VARS.order = th == SORT_VARS.column ? -SORT_VARS.order : REVERSE_SORTED.includes(th.id) ? -1 : 1;
+  const same_column = th == SORT_VARS.column;
+  const sort_order = same_column ? !SORT_VARS.reversed : REVERSE_SORTED.has(th.id);
   SORT_VARS.column = th;
-  if (DATA_KEYS2[th.id] && (toggleLimit.checked || checkboxCombine.checked)) {
-    const data = CACHE.getCurrent();
-    tableAddNewDataWrap(data);
+  SORT_VARS.reversed = sort_order;
+  if (toggleLimit.checked || checkboxCombine.checked) {
+    const data = CACHE.get_current();
+    table_add_new_data_wrap(data);
     return;
   }
-
-  Array.from(mainTableBody.querySelectorAll('tr'))
-       .sort(tableSort(th.cellIndex))
-       .forEach(tr => mainTableBody.appendChild(tr));
+  const sort_func = sort_order ? table_sort_reversed : table_sort;
+  
+  table_modify_wrap(() => {
+    const fragment = new DocumentFragment();
+    console.time("sort_table_by_column");
+    Array.from(mainTableBody.querySelectorAll('tr'))
+        .sort(sort_func(th.cellIndex))
+        .forEach(tr => fragment.appendChild(tr));
+    mainTableBody.append(fragment);
+    console.timeEnd("sort_table_by_column");
+  });
 }
 
 
+function new_option(value, index) {
+  const _option = document.createElement('option');
+  _option.value = index === undefined ? value : index;
+  _option.innerHTML = value;
+  return _option;
+}
+
+function add_bosses() {
+  selectBoss.innerHTML = "";
+  BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(new_option(boss_name)));
+};
+
+function add_specs() {
+  selectSpec.innerHTML = "";
+  const class_index = CLASSES[selectClass.value];
+  const specs = SPECS_SELECT_OPTIONS[class_index];
+  selectSpec.appendChild(new_option('All specs', -1));
+  if (!specs) return;
+
+  specs.forEach((spec_name, i) => selectSpec.appendChild(new_option(spec_name, i+1)));
+};
+
 function init() {
-  Object.keys(BOSSES).forEach(name => selectInstance.appendChild(newOption(name)));
-  CLASSES.forEach((name, i) => selectClass.appendChild(newOption(name, i)));
+  Object.keys(BOSSES).forEach(name => selectInstance.appendChild(new_option(name)));
+  CLASSES.forEach((name, i) => selectClass.appendChild(new_option(name, i)));
 
   const currentParams = new URLSearchParams(window.location.search);
   for (let key in INTERACTABLES) {
@@ -495,20 +544,20 @@ function init() {
     const elm = INTERACTABLES[key];
     if (elm.nodeName == "INPUT") {
       elm.checked = par != 0;
-    } else if (isValidParam(elm, par)) {
+    } else if (is_valid_param(elm, par)) {
       elm.value = par;
     } else {
-      elm.selectedIndex = getDefaultIndex(elm);
+      elm.selectedIndex = get_default_index(elm);
     }
 
     if (elm == selectInstance) {
-      elm.addEventListener('change', addBosses);
-      addBosses();
+      elm.addEventListener('change', add_bosses);
+      add_bosses();
     } else if (elm == selectClass) {
-      elm.addEventListener('change', addSpecs);
-      addSpecs();
+      elm.addEventListener('change', add_specs);
+      add_specs();
     }
-    elm.addEventListener('change', searchChanged);
+    elm.addEventListener('change', search_changed);
   }
 
   if (screenX.matches) {
@@ -521,23 +570,22 @@ function init() {
   toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
   toggleLimit.checked = localStorage.getItem("showlimit") == "false" ? false : true;
   
-  toggleTotalDamage.addEventListener('change', event => {
+  toggleTotalDamage.addEventListener('change', () => {
     localStorage.setItem("showtotal", toggleTotalDamage.checked);
-    toggleTotalColumns(event);
+    toggle_total_columns();
   });
-  toggleUsefulDamage.addEventListener('change', event => {
+  toggleUsefulDamage.addEventListener('change', () => {
     localStorage.setItem("showuseful", toggleUsefulDamage.checked);
-    toggleUsefulColumns(event);
+    toggle_useful_columns();
   });
   toggleLimit.addEventListener('change', () => {
     localStorage.setItem("showlimit", toggleLimit.checked);
-    const data = CACHE.getCurrent();
-    tableAddNewDataWrap(data);
+    const data = CACHE.get_current();
+    table_add_new_data_wrap(data);
   });
 
-  searchChanged();
-  document.querySelectorAll('th').forEach(th => th.addEventListener('click', sort_table_by_column));
+  search_changed();
+  document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', sort_table_by_column));
 }
 
 document.readyState !== 'loading' ? init() : document.addEventListener('DOMContentLoaded', init);
-// window.addEventListener('DOMContentLoaded', init);
