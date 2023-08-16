@@ -90,7 +90,7 @@ def get_formatted_query_string():
         return ""
     return f"?{query}"
 
-def render_template_wrap(file: str, **kwargs):
+def render_template_cache(file: str, **kwargs):
     path = kwargs.get("PATH", "")
     query = kwargs.get("QUERY", "")
     page = render_template(
@@ -101,6 +101,13 @@ def render_template_wrap(file: str, **kwargs):
     pages = CACHED_PAGES.setdefault(path, {})
     pages[query] = page
     return page
+
+def render_template_wrap(file: str, **kwargs):
+    return render_template(
+        file,
+        **kwargs,
+        V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
+    )
 
 
 @SERVER.route('/favicon.ico')
@@ -248,7 +255,7 @@ def before_request():
         return "", 403
     elif not _validate.cookie(request):
         if request.method == "GET":
-            return render_template('protected.html')
+            return render_template_wrap('protected.html')
         return "", 403
 
     if not SERVER.debug and request.path in CACHED_PAGES:
@@ -260,11 +267,11 @@ def before_request():
 
 @SERVER.route("/")
 def home():
-    return render_template('home.html')
+    return render_template_wrap('home.html')
 
 @SERVER.route("/about")
 def about():
-    return render_template('about.html')
+    return render_template_wrap('about.html')
 
 @SERVER.route("/logs_list", methods=['GET', 'POST'])
 def show_logs_list():
@@ -305,7 +312,7 @@ def show_logs_list():
         calend_prev_last_week = calend_prev[-2]
     calend.insert(0, calend_prev_last_week)
 
-    return render_template(
+    return render_template_wrap(
         'logs_list.html',
         MONTH=new_month, CALEND=calend,
         CURRENT_MONTH=month_name, CURRENT_YEAR=YEAR_REQUEST,
@@ -352,7 +359,7 @@ def upload():
 
     if request.method == 'GET':
         servers = file_functions.get_folders(TOP_DIR)
-        return render_template('upload.html', SERVERS=servers)
+        return render_template_wrap('upload.html', SERVERS=servers)
 
     new_upload = NEW_UPLOADS.get(IP)
     if new_upload is None:
@@ -378,7 +385,7 @@ def report_page(report_id):
     segments = default_params["SEGMENTS"]
     data = report.get_report_page_all(segments)
 
-    return render_template_wrap(
+    return render_template_cache(
         'report_main.html', **default_params, **data,
     )
 
@@ -398,7 +405,7 @@ def player(report_id, source_name):
     tGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID)
 
-    return render_template_wrap(
+    return render_template_cache(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=source_name,
     )
@@ -412,7 +419,7 @@ def heal(report_id, source_name):
     tGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID, heal=True)
 
-    return render_template_wrap(
+    return render_template_cache(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=source_name,
     )
@@ -426,7 +433,7 @@ def taken(report_id, target_name):
     sGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, taken=True)
 
-    return render_template_wrap(
+    return render_template_cache(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=target_name,
     )
@@ -442,7 +449,7 @@ def healed(report_id, target_name):
     sGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, heal=True, taken=True)
     
-    return render_template_wrap(
+    return render_template_cache(
         'dmg_done2.html', **default_params, **data,
         SOURCE_NAME=target_name,
         ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
@@ -455,7 +462,7 @@ def casts(report_id, source_name):
     # segments = default_params["SEGMENTS"]
 
     # data = report.get_spell_history_wrap(segments, source_name)
-    return render_template_wrap(
+    return render_template_cache(
         'casts.html', **default_params,
         # **data,
         FLAG_ORDER=FLAG_ORDER,
@@ -507,7 +514,7 @@ def spells(report_id, spell_id: str):
 
     data = report.spell_count_all(segments, spell_id)
 
-    return render_template_wrap(
+    return render_template_cache(
         'spells_page.html', **default_params, **data,
     )
 
@@ -519,7 +526,7 @@ def consumables(report_id):
 
     data = report.potions_all(segments)
 
-    return render_template_wrap(
+    return render_template_cache(
         'consumables.html', **default_params, **data,
     )
 
@@ -531,7 +538,7 @@ def all_auras(report_id):
 
     data = report.auras_info_all(segments)
 
-    return render_template_wrap(
+    return render_template_cache(
         'all_auras.html', **default_params, **data,
     )
 
@@ -543,7 +550,7 @@ def damage_targets(report_id):
 
     data = report.useful_damage_all(segments, default_params["BOSS_NAME"])
 
-    return render_template_wrap(
+    return render_template_cache(
         'damage_target.html', **default_params, **data,
     )
 
@@ -577,7 +584,7 @@ def valks(report_id):
     
     data = report.valk_info_all(segments)
 
-    return render_template_wrap(
+    return render_template_cache(
         'valks.html', **default_params, **data,
     )
 
@@ -590,7 +597,7 @@ def deaths(report_id):
     guid = request.args.get("target")
     data = report.get_deaths(segments, guid)
 
-    return render_template_wrap(
+    return render_template_cache(
         'deaths.html', **default_params, **data,
     )
 
@@ -602,64 +609,10 @@ def powers(report_id):
 
     data = report.get_powers_all(segments)
 
-    return render_template_wrap(
+    return render_template_cache(
         'powers.html', **default_params, **data
     )
 
-
-@SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
-def custom_search_post(report_id):
-    data = None
-    try:
-        data = request.get_json(force=True)
-    except Exception:
-        pass
-    if not data:
-        return ('', 204)
-    report = load_report(report_id)
-    return report.logs_custom_search(data)
-
-@SERVER.route("/reports/<report_id>/custom_search/")
-def custom_search(report_id):
-    report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
-
-    return render_template(
-        'custom_search.html', **default_params,
-    )
-        
-@SERVER.route("/reports/<report_id>/player_auras/<player_name>/")
-def player_auras(report_id, player_name):
-    report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
-
-    s, f = segments[0]
-
-    filter_guid = report.name_to_guid(player_name)
-
-    data = report.get_auras(s, f, filter_guid)
-
-
-    # checkboxes = []
-    # intable = []
-    # css = []
-    # for n, guid in enumerate(buffs):
-    #     name =  report.guid_to_name(guid)
-    #     name_css = convert_to_html_name(name)
-    #     color_hue = n*48
-    #     zindex = n-1 if n>0 else 10
-    #     checkboxes.append((name, color_hue, name_css))
-    #     intable.append((guid, color_hue, zindex, name_css))
-    #     css.append(f'#tar-{name_css}:checked ~ table .tar-{name_css}')
-    # css = ', '.join(css) + "{display: inline-block;}"
-    
-    return render_template_wrap(
-        'player_auras.html', **default_params, **data,
-        SOURCE_NAME=player_name,
-        # checkboxes=checkboxes, intable=intable, 
-    )
 
 def get_uncompressed_size(filename):
     try:
@@ -673,10 +626,9 @@ def get_uncompressed_size(filename):
 def top():
     if request.method == "GET":
         servers = file_functions.get_folders(TOP_DIR)
-        return render_template(
+        return render_template_wrap(
             'top.html',
             SERVERS=servers,
-            V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
         )
     
     _data: dict = request.get_json()
@@ -702,7 +654,7 @@ def top():
 def top_stats():
     if request.method == "GET":
         servers = file_functions.get_folders(TOP_DIR)
-        return render_template(
+        return render_template_wrap(
             'top_stats.html',
             SPECS_BASE=logs_top_statistics.get_specs_data(),
             SERVERS=servers,
@@ -719,6 +671,29 @@ def top_stats():
 
 def connections():
     return
+
+
+@SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
+def custom_search_post(report_id):
+    data = None
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        pass
+    if not data:
+        return ('', 204)
+    report = load_report(report_id)
+    return report.logs_custom_search(data)
+
+@SERVER.route("/reports/<report_id>/custom_search/")
+def custom_search(report_id):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    return render_template(
+        'custom_search.html', **default_params,
+    )
 
 if __name__ == "__main__":
     SERVER.run(host="0.0.0.0", port=5000, debug=True)
