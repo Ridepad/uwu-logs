@@ -177,7 +177,6 @@ def main():
     
     RAW_LOGS_NO_EXT = [os.path.splitext(fpath)[0] for fpath in RAW_LOGS]
     MAX_CPU = max(os.cpu_count() - 1, 1)
-    MAX_CPU = 4
 
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(logs_top.make_report_top_wrap, RAW_LOGS_NO_EXT)
