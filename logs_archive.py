@@ -31,7 +31,7 @@ INIT = {
 }
 
 def get_7zip(os_type):
-    path_7z = INIT[os_type]["file_name"]
+    path_7z: str = INIT[os_type]["file_name"]
     if os.path.isfile(path_7z):
         return path_7z
     for command in INIT[os_type]["commands"]:
