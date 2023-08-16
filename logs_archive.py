@@ -153,7 +153,7 @@ def archive_file(archive_path: str, file_path: str):
     if os.path.isfile(archive_path):
         os.remove(archive_path)
     cmd = [get_7z_path(), 'a', archive_path, file_path, '-m0=PPMd', '-mo=11', '-mx=9']
-    subprocess.call(cmd)
+    return subprocess.call(cmd)
 
 
 if __name__ == "__main__":
