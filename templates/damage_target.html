@@ -2,7 +2,31 @@
 
 {% block add_style %}
 <style>
-
+th {
+  height: 3rem;
+}
+#class-filter {
+  width: 15ch;
+  position: fixed;
+  bottom: var(--bottom-row-two);
+  right: 0;
+  font-size: 150%;
+  z-index: 10;
+  background-color: black;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+}
+#class-filter-wrap {
+  background-color: black;
+  width: 15ch;
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+}
+#class-filter:hover #class-filter-wrap {
+  display: grid;
+}
 </style>
 {% endblock add_style %}
 
@@ -37,7 +61,7 @@
     </div>
   </section>
   <section id="class-filter">
-    <h2>CLASS FILTER ▲</h2>
+    <h2>▲ CLASS FILTER</h2>
     <div id="class-filter-wrap"></div>
   </section>
 </main>
