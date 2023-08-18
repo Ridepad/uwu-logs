@@ -1,11 +1,12 @@
 import os
+from collections import defaultdict
 from time import perf_counter
 
 import file_functions
 import logs_dmg_heals
 import logs_dmg_useful
 import logs_main
-from constants import LOGGER_REPORTS, get_ms_str
+from constants import LOGGER_REPORTS, get_ms_str, running_time
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 try:
@@ -52,40 +53,63 @@ def find_kill(segments):
         if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
             yield segment_info
 
+def get_vali_heal(logs_slice: list[str]):
+    data = defaultdict(lambda: defaultdict(int))
+    for line in logs_slice:
+        if "_H" not in line:
+            continue
+        _line = line.split(',', 11)
+        data[_line[4]][_line[2]] += int(_line[9]) - int(_line[10])
+    return data
+
+@running_time
 def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict):
     def is_player(guid):
         if guid in PLAYERS:
             return True
-        LOGGER_REPORTS.error(f"{report.NAME} {boss_name} Missing player {guid}")
+        # LOGGER_REPORTS.error(f"{report.NAME} {boss_name} Missing player {report.guid_to_name(guid)}")
     
     S = kill_segment['start']
     F = kill_segment['end']
+    SLICE = report.get_logs(S, F)
     GUIDS = report.get_all_guids()
     PLAYERS = report.get_players_guids()
     SPECS = report.get_players_specs_in_segments(S, F)
     DURATION = report.get_slice_duration(S, F)
     AURAS = report.auras_info(S, F)
 
-    boss_guid_id = report.name_to_guid(boss_name)
-    targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
-    targets_all = targets["all"]
-    targets_useful = targets["useful"]
+    if boss_name == "Valithria Dreamwalker":
+        vali_data = get_vali_heal(SLICE)
+        dmg_useful = defaultdict(int)
+        dmg_total = defaultdict(int)
+        for tguid, sources in vali_data.items():
+            # totems worked until ~21-12-20
+            # if tguid[5:12] == "0008FB5":
+            #     for sguid, v in sources.items():
+            #         dmg_useful[_sguid] += v
+            if tguid[5:12] == "0008FB5":
+                dmg_useful = sources
+            for sguid, v in sources.items():
+                _sguid = report.get_master_guid(sguid)
+                dmg_total[_sguid] += v
 
-    data = report.useful_damage(S, F, targets_all, boss_name)
-    for target_name in data["useful"]:
-        targets_useful[target_name] = target_name
-    
-    useful_damage = data["damage"] | data["useful"]
-    all_data_useful = logs_dmg_useful.combine_pets_all(useful_damage, GUIDS, trim_non_players=True, ignore_abom=True)
-    dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
+    else:
+        boss_guid_id = report.name_to_guid(boss_name)
+        targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
+        targets_all = targets["all"]
+        targets_useful = targets["useful"]
 
-    # all_data = logs_dmg_useful.combine_pets_all(data["damage"], GUIDS, trim_non_players=True)
-    # dmg_total = logs_dmg_useful.get_total_damage(all_data)
+        data = report.useful_damage(S, F, targets_all, boss_name)
+        for target_name in data["useful"]:
+            targets_useful[target_name] = target_name
+        
+        useful_damage = data["damage"] | data["useful"]
+        all_data_useful = logs_dmg_useful.combine_pets_all(useful_damage, GUIDS, trim_non_players=True, ignore_abom=True)
+        dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
 
-    logs_slice = report.get_logs(S, F)
-    pp = report.get_players_and_pets_guids()
-    dmg_total = logs_dmg_heals.parse_dmg_all_no_friendly(logs_slice, pp)
-    dmg_total = logs_dmg_useful.combine_pets(dmg_total, GUIDS, trim_non_players=True)
+        pp = report.get_players_and_pets_guids()
+        dmg_total = logs_dmg_heals.parse_dmg_all_no_friendly(SLICE, pp)
+        dmg_total = logs_dmg_useful.combine_pets(dmg_total, GUIDS, trim_non_players=True)
 
     return [
         {
@@ -113,20 +137,18 @@ def make_report_top(report_id: str, rewrite=False):
         LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Dog water')
         return
 
-    top = {}
+    report_top = defaultdict(dict)
     for boss_name, boss_segments in report.SEGMENTS.items():
-        boss_top = top.setdefault(boss_name, {})
         for kill_segment in find_kill(boss_segments):
             diff = kill_segment['diff']
-            data = make_boss_top(report, boss_name, kill_segment)
-            boss_top[diff] = data
+            report_top[boss_name][diff] = make_boss_top(report, boss_name, kill_segment)
 
-    file_functions.json_write(top_path, top, indent=None)
+    file_functions.json_write(top_path, report_top, indent=None)
     LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Done top')
-    return top
+    return report_top
 
 def make_report_top_wrap(name, rewrite=False):
     try:
-        make_report_top(name, rewrite=rewrite)
+        return make_report_top(name, rewrite=rewrite)
     except Exception:
         LOGGER_REPORTS.exception(name)

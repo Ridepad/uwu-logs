@@ -9,6 +9,7 @@ const BOSSES = {
     "Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang",
     "Festergut", "Rotface", "Professor Putricide",
     "Blood Prince Council", "Blood-Queen Lana'thel",
+    "Valithria Dreamwalker",
     "Sindragosa"
   ],
   "The Ruby Sanctum": ["Halion", "Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian"],
