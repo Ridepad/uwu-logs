@@ -95,8 +95,15 @@ button:hover {
 }
 
 .count,
-.total-cell {
+.total-cell,
+.count-small {
   position: relative;
+}
+.count {
+  min-width: 4rem;
+}
+.count-small {
+  min-width: 3rem;
 }
 td:hover > table {
   display: table;
@@ -229,8 +236,8 @@ td:hover > table {
             </table>
             {% endif %}
           </td>
-          <td class="count">{{ CASTS[spell_id] }}</td>
-          <td class="count border">{{ MISSES[spell_id] }}
+          <td class="count-small">{{ CASTS[spell_id] }}</td>
+          <td class="count-small border">{{ MISSES[spell_id] }}
             {% if MISS_DETAILED[spell_id] %}
             <table class="tooltip">
               {% for t, a in MISS_DETAILED[spell_id].items() %}
@@ -243,8 +250,8 @@ td:hover > table {
             {% endif %}
           </td>
           {% for _type, _data in HITS.get(spell_id, {}).items() %} 
-          <td class="count border-thin">{{ _data['total'] }}</td>
-          <td class="count">{{ _data['hits'] }}</td>
+          <td class="count-small border-thin">{{ _data['total'] }}</td>
+          <td class="count-small">{{ _data['hits'] }}</td>
           <td class="count border-thin">{{ _data['hit_avg'] }}
             {% if _data['hits_avg'] %}
             <table class="tooltip avgs"><tbody>
@@ -254,7 +261,7 @@ td:hover > table {
             </tbody></table>
             {% endif %}
           </td>
-          <td class="count">{{ _data['crits'] }}</td>
+          <td class="count-small">{{ _data['crits'] }}</td>
           <td class="count">{{ _data['crit_avg'] }}
             {% if _data['crits_avg'] %}
             <table class="tooltip avgs">

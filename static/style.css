@@ -545,9 +545,6 @@ td.player-cell {
 .source-name {
   min-width: 15ch;
 }
-.count {
-  min-width: 6.1ch;
-}
 .per-sec-cell {
   width: 9ch;
   min-width: 9ch;
