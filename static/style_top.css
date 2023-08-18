@@ -160,8 +160,7 @@ tbody tr {
 td.table-n::before {
   display: inline-block;
   content: counter(rowNumber);
-  /* min-width: 2ch; */
-  width: 4ch;
+  width: 4rem;
   text-align: right;
   color: var(--main-white);
 }
@@ -182,6 +181,12 @@ tbody > tr:hover > td {
 @media (orientation: portrait) {
   td.table-n {
     max-width: 15ch;
+  }
+  td.table-n::before {
+    width: 2.5rem;
+  }
+  td {
+    padding-inline: .2rem;
   }
 }
 
