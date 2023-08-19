@@ -80,7 +80,7 @@ SPEC_ICON_TO_POSITION = {
 
 HIT_KEYS = {"CAST", "HIT", "PERIODIC"}
 REDUCED_KEYS = {"OVERKILL", "OVERHEAL", "ABSORBED", "RESISTED", "GLANCING", "BLOCKED"}
-MISS_KEYS = {"MISS", "PARRY", "DODGE", "ABSORB", "RESIST", "REFLECT", "IMMUNE", "DEFLECT", "EVADE", "BLOCK"}
+MISS_KEYS = {"MISS", "PARRY", "DODGE", "ABSORB", "RESIST", "REFLECT", "IMMUNE", "DEFLECT", "EVADE", "BLOCK", "GLANCED"}
 
 def get_shift(request_path: str):
     url_comp = request_path.split('/')

@@ -161,6 +161,7 @@ def given(logs_slice: list[str], controlled_units: set[str], heal=False) -> Brea
                 _spell["RESISTED"] += int(res)
             if glanc == "1":
                 _spell["GLANCING"] += int(_value/3)
+                _spell["GLANCED"] += 1
             if over != 0:
                 over = int(over)
                 _value = _value - over
@@ -230,6 +231,7 @@ def taken(logs_slice: list[str], target_guid: str, heal=False) -> BreakdownType:
                 _spell["RESISTED"] += int(res)
             if glanc == "1":
                 _spell["GLANCING"] += int(_value/3)
+                _spell["GLANCED"] += 1
             if over != 0:
                 over = int(over)
                 _value = _value - over
