@@ -228,7 +228,7 @@ class Fights:
                 segment = get_more_precise_wrap(segment)
                 new_segments.append(segment)
                 # pretty_print(boss_id, segment)
-
+            
             if boss_id == "008EF5":
                 # print()
                 # print("="*100)
