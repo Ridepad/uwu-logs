@@ -20,9 +20,23 @@ import logs_spells_list
 import logs_units_guid
 import logs_valk_grabs
 from constants import (
-    BOSSES_FROM_HTML, CLASSES, FLAG_ORDER, LOGGER_REPORTS, LOGGER_UNUSUAL_SPELLS, LOGS_DIR, MONTHS,
-    convert_to_html_name, duration_to_string, get_now, get_report_name_info, is_player, running_time,
-    separate_thousands, setup_logger, sort_dict_by_value, to_dt_year_precise
+    BOSSES_FROM_HTML,
+    CLASSES,
+    FLAG_ORDER,
+    LOGGER_REPORTS,
+    LOGGER_UNUSUAL_SPELLS,
+    LOGS_DIR,
+    MONTHS,
+    convert_to_html_name,
+    duration_to_string,
+    get_now,
+    get_report_name_info,
+    is_player,
+    running_time,
+    separate_thousands,
+    setup_logger,
+    sort_dict_by_value,
+    to_dt_year_precise,
 )
 
 PLAYER = "0x0"
