@@ -187,6 +187,104 @@ BOSSES_GUIDS = {
     "0081F7": "General Vezax",
     "008208": "Yogg-Saron",
     "008067": "Algalon the Observer",
+
+    # Magtheridon's Lair
+    "004369": "Magtheridon",
+    # Karazhan
+    "003F33": "Shadikith the Glider",
+    "003F34": "Rokad the Ravager",
+    "003F35": "Hyakiss the Lurker",
+    "003D48": "Terestian Illhoof",
+    "003D49": "Netherspite",
+    "003D4A": "Prince Malchezaar",
+    "003D4B": "The Curator",
+    "003F18": "Attumen the Huntsman",
+    "00408C": "Shade of Aran",
+    "004049": "Maiden of Virtue",
+    "004349": "Nightbane",
+    "003D47": "Moroes",
+    "00426F": "Lady Keira Berrybuck",
+    "004DA0": "Lady Catriona Von'Indi",
+    "004DA1": "Lord Crispin Ference",
+    "004DA2": "Baron Rafe Dreuger",
+    "004DA3": "Baroness Dorothea Millstipe",
+    "004DA4": "Lord Robin Daris",
+    # Opera House
+    "00447F": "Dorothee",
+    "00448C": "Tito",
+    "00448A": "Roar",
+    "004487": "Strawman",
+    "00448B": "Tinhead",
+    "0046F8": "The Crone",
+    "004471": "The Big Bad Wolf",
+    "00447D": "Julianne",
+    "00447E": "Romulo",
+    # Gruul"s Lair
+    "004A64": "Gruul the Dragonkiller",
+    "00498F": "High King Maulgar",
+    "004990": "Krosh Firehand",
+    "004992": "Olm the Summoner",
+    "004993": "Kiggler the Crazed",
+    "004994": "Blindeye the Seer",
+    # Serpentshrine Cavern
+    "0052E0": "Hydross the Unstable",
+    "0052E1": "The Lurker Below",
+    "0052DF": "Leotheras the Blind",
+    "0052DE": "Fathom-Lord Karathress",
+    "0055CE": "Fathom-Guard Sharkkis",
+    "0055CD": "Fathom-Guard Tidalvess",
+    "0055CC": "Fathom-Guard Caribdis",
+    "0052DD": "Morogrim Tidewalker",
+    "0052DC": "Lady Vashj",
+    # The Eye
+    "004C3A": "Al'ar",
+    "004C3C": "Void Reaver",
+    "004975": "High Astromancer Solarian",
+    "004CA6": "Kael'thas Sunstrider",
+    "004E5C": "Lord Sanguinar",
+    "004E5E": "Grand Astromancer Capernian",
+    "004E5F": "Master Engineer Telonicus",
+    "004E60": "Thaladred the Darkener",
+    # Black Temple
+    "005967": "High Warlord Naj'entus",
+    "005972": "Supremus",
+    "005939": "Shade of Akama",
+    "005957": "Teron Gorefiend",
+    "0059A4": "Gurtogg Bloodboil",
+    "005948": "Reliquary of Souls",
+    "005B7A": "Essence of Suffering",
+    "005B7B": "Essence of Desire",
+    "005B7C": "Essence of Anger",
+    "0059A3": "Mother of Shahraz",
+    # Illidari Council
+    "0059A5": "High Nethermancer Zerevor",
+    "0059A6": "Gathios the Shatterer",
+    "0059A7": "Lady Malande",
+    "0059A8": "Veras Darkshadow",
+    "005985": "Illidan",
+    # Mount Hyjal
+    "004567": "Rage Winterchill",
+    "004590": "Anetheron",
+    "0045E0": "Kaz'rogal",
+    "0045B2": "Azgalor",
+    "004630": "Archimonde",
+    # Zul"Aman
+    "005C16": "Akil'zon",
+    "005C18": "Nalorakk",
+    "005C1A": "Jan'alai",
+    "005C19": "Halazzi",
+    "005EAF": "Hex Lord Malacrass",
+    "005D37": "Zul'jin",
+    #Sunwell Plateau
+    "006112": "Kalecgos",
+    "00613C": "Sathrovarr the Corruptor",
+    "006132": "Brutallus",
+    "0061CE": "Felmyst",
+    "00624E": "Grand Warlock Alythess",
+    "00624D": "Lady Sacrolash",
+    "00648D": "M'uru",
+    "0064F0": "Entropius",
+    "0062E3": "Kil'jaeden"
 }
 
 TOC_CHAMPIONS = {
@@ -220,7 +318,6 @@ TOC_CHAMPIONS = {
     "008692": "Harkzog <Warlock>",
     "008695": "Narrhok Steelbreaker <Warrior>",
 }
-
 MULTIBOSSES = {
     "Halion": ["009BB7", "009CCE", "009CD2"],
     "Gunship": ["0092A4", "00915F"],
@@ -235,6 +332,17 @@ MULTIBOSSES = {
     "XT-002 Deconstructor": ["00820D", "008231"],
     "Yogg-Saron": ["008208", "008170", "0084C1", "0084BF"],
     "Razorscale": ["0081A2", "00826C", "008436", "0082AD"],
+
+    "Servant Quarters": ["003F33", "003F34", "003F35"],
+    "Moroes": ["003D47", "00426F", "004DA0", "004DA1", "004DA2", "004DA3", "004DA4"],
+    "Opera House": ["00447F", "00448C", "00448A", "004487", "00448B", "0046F8", "004471", "00447D", "00447E"],
+    "Fathom-Lord Karathress": ["0052DE", "0055CE", "0055CD", "0055CC"],
+    "Kael'thas Sunstrider": ["004CA6", "004E5C", "004E5E", "004E5F", "004E60"],
+    "Reliquary of Souls": ["005948", "005B7A", "005B7B", "005B7C"],
+    "Illidari Council": ["0059A5", "0059A6", "0059A7", "0059A8"],
+    "Kalecgos": ["006112", "00613C"],
+    "Eredar Twins": ["00624E", "00624D"],
+    "M'uru": ["00648D", "0064F0"],
 }
 
 def convert_to_html_name(name: str):
