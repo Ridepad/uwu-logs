@@ -229,6 +229,9 @@ class Fights:
                 new_segments.append(segment)
                 # pretty_print(boss_id, segment)
             
+            if not new_segments:
+                continue
+
             if boss_id == "008EF5":
                 # print()
                 # print("="*100)
