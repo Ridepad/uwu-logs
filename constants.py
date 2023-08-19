@@ -100,6 +100,9 @@ ICONS = {
 }
 
 BOSSES_GUIDS = {
+    "007F23": "Highlord's Nemesis Trainer",
+    "0079AA": "Heroic Training Dummy",
+    
     "007995": "Archavon the Stone Watcher",
     "0084C9": "Emalon the Storm Watcher",
     "0088C5": "Koralon the Flame Watcher",
