@@ -306,6 +306,58 @@ UNUSUAL_SPELLS = {
     126: "magic", #-- Arcane + Shadow + Frost + Nature + Fire + Holy
 }
 
+COMBINE_SPELLS = {
+    "29131":  "2687", # Bloodrage
+    "58567":  "7386", # Sunder Armor",
+    "20253": "20252", # Intercept",
+    "23885": "23881", # Bloodthirst
+    "22858": "20230", # Retaliation
+    
+    "58381": "48156", # Mind Flay
+    "53022": "53023", # Mind Sear
+    
+    "36032": "42897", # Arcane Blast",
+    "42938": "42940", # Blizzard",
+    
+    "22482": "13877", # Blade Flurry",
+    "57841": "51690", # Killing Spree",
+    
+    "34075": "34074", # Aspect of the Viper",
+    "58433": "58434", # Volley",
+    "49065": "49067", # Explosive Trap",
+    
+    "50590": "50589", # Immolation Aura",
+    "47834": "47836", # Seed of Corruption",
+    "47818": "47820", # Rain of Fire",
+    "61291": "61290", # Shadowflame",
+    "63321": "57946", # Life Tap",
+    "31818": "57946", # Life Tap",
+    
+    "53195": "53201", # Starfall",
+    "48466": "48467", # Hurricane",
+    "53506": "24858", # Moonkin Form",
+    
+    "49088": "48707", # Anti-Magic Shell",
+    "47632": "49895", # Death Coil",
+    "52212": "49938", # Death and Decay",
+
+    "33110": "48113", # Prayer of Mending",
+    "64844": "64843", # Divine Hymn",
+    "48076": "48078", # Holy Nova",
+
+    "49279": "49281", # Lightning Shield",
+    "61654": "61657", # Fire Nova",
+
+    "53739": "53736", # Seal of Corruption",
+    "20424": "20375", # Seal of Command",
+    "67485": "62124", # Hand of Reckoning",
+    "54158": "20271", # Judgement of Light",
+    "20267": "20271", # Judgement of Light",
+    "48821": "48825", # Holy Shock",
+
+    "64442": "64440", # Blade Warding",
+}
+
 ENV_DAMAGE = {
     "FALLING":  "90001",
     "LAVA":     "90002",

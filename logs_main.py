@@ -22,6 +22,7 @@ import logs_valk_grabs
 from constants import (
     BOSSES_FROM_HTML,
     CLASSES,
+    COMBINE_SPELLS,
     FLAG_ORDER,
     LOGGER_REPORTS,
     LOGGER_UNUSUAL_SPELLS,
@@ -913,6 +914,7 @@ class THE_LOGS:
                 for sGUID, spells in sources.items():
                     pet_name = self.get_pet_name(sGUID)
                     for spell_id, types in spells.items():
+                        spell_id = COMBINE_SPELLS.get(spell_id, spell_id)
                         spell_name = get_spell_data_pet_name_wrap(spell_id, pet_name)
                         yield target_id, spell_name, types
 

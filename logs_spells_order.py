@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import file_functions
-from constants import running_time
+from constants import running_time, COMBINE_SPELLS
 
 @running_time
 def get_spells_int():
@@ -48,32 +48,6 @@ def convert_keys(data: dict[str, int]):
 def to_float(s: str):
     minutes, seconds = s[-9:].split(":", 1)
     return int(minutes) * 60000 + float(seconds) * 1000
-
-COMBINE_SPELLS = {
-    "58381": "48156", # Mind Flay
-    "53022": "53023", # Mind Sear
-    "23881": "23885", # Bloodthirst
-     "2687": "29131", # Bloodrage
-    "22858": "20230", # Retaliation
-     "7386": "58567", # Sunder Armor",
-    "42897": "36032", # Arcane Blast",
-    "55362": "55360", # Living Bomb",
-    "22482": "13877", # Blade Flurry",
-    "57841": "51690", # Killing Spree",
-    "57842": "51690", # Killing Spree",
-    "34075": "34074", # Aspect of the Viper",
-    "58433": "58434", # Volley",
-    "49065": "49067", # Explosive Trap",
-    "50590": "50589", # Immolation Aura",
-    "47834": "47836", # Seed of Corruption",
-      "686": "47809", # Shadow Bolt",
-    "61290": "61291", # Shadowflame",
-    "48466": "48467", # Hurricane",
-    "49088": "48707", # Anti-Magic Shell",
-    "47632": "49895", # Death Coil",
-    "52212": "49938", # Death and Decay",
-    "53506": "24858", # Moonkin Form",
-}
 
 @running_time
 def get_history(logs: list[str], source_guid: str, ignored_guids: set[str]=None):
