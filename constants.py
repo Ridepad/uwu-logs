@@ -760,9 +760,12 @@ SPELL_BOOK_SPEC = {
         "58757": 3, # Healing Stream Totem
     },
     "warlock": {
-        "59164": 1, # Haunt
-        "47843": 1, # Unstable Affliction
-        "64371": 1, # Eradication
+        "59161": 1, # Haunt (Rank 2)
+        "59164": 1, # Haunt (Rank 4)
+        "30405": 1, # Unstable Affliction (Rank 3)
+        "47843": 1, # Unstable Affliction (Rank 5)
+        "64368": 1, # Eradication (Rank 2)
+        "64371": 1, # Eradication (Rank 3)
 
         "71165": 2, # Molten Core
         "47241": 2, # Metamorphosis
