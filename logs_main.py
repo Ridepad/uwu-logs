@@ -901,7 +901,11 @@ class THE_LOGS:
         _targets = set()
 
         def get_spell_data_pet_name_wrap(spell_id, pet_name=None):
-            _spell_data = self.get_spell_data_pet_name(spell_id, pet_name)
+            try:
+                _spell_id = COMBINE_SPELLS.get(spell_id, spell_id)
+                _spell_data = self.get_spell_data_pet_name(_spell_id, pet_name)
+            except KeyError:
+                _spell_data = self.get_spell_data_pet_name(spell_id, pet_name)
             spell_name = f'{_spell_data["name"]}{_spell_data["id"]}'
             if spell_name not in _spells:
                 _spells[spell_name] = _spell_data
@@ -914,7 +918,6 @@ class THE_LOGS:
                 for sGUID, spells in sources.items():
                     pet_name = self.get_pet_name(sGUID)
                     for spell_id, types in spells.items():
-                        spell_id = COMBINE_SPELLS.get(spell_id, spell_id)
                         spell_name = get_spell_data_pet_name_wrap(spell_id, pet_name)
                         yield target_id, spell_name, types
 
