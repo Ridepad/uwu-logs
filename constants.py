@@ -664,7 +664,10 @@ SPELL_BOOK_SPEC = {
         "57475": 1, # Kindred Spirits
         "75447": 1, # Ferocious Inspiration
         "53209": 2, # Chimera Shot
-        "60053": 3, # Explosive Shot
+        "53301": 3, # Explosive Shot (Rank 1)
+        "60051": 3, # Explosive Shot (Rank 2)
+        "60052": 3, # Explosive Shot (Rank 3)
+        "60053": 3, # Explosive Shot (Rank 4)
     },
     "mage": {
         "44781": 1, # Arcane Barrage
