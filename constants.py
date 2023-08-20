@@ -18,6 +18,7 @@ LOGGERS_DIR = file_functions.new_folder_path(PATH_DIR, "_loggers")
 STATIC_DIR = file_functions.new_folder_path(PATH_DIR, 'static')
 REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
 REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
+SPELL_ICONS_DB = os.path.join(PATH_DIR, "x_spells_icons.json")
 
 LOGGING_FORMAT_DEFAULT = '''%(asctime)s | %(levelname)-5s | %(filename)18s:%(lineno)-4s | %(message)s'''
 LOGGING_FORMAT = {

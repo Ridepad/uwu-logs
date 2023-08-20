@@ -15,6 +15,21 @@ def get_mtime(path):
     except FileNotFoundError:
         return 0.0
 
+def cache_file_until_new(fname, callback):
+    data = None
+    last_mtime = 0.0
+    def inner():
+        nonlocal data, last_mtime
+        current_mtime = get_mtime(fname)
+        print(current_mtime)
+        print(last_mtime)
+        if current_mtime > last_mtime:
+            data = callback()
+            last_mtime = current_mtime + 10
+        return data
+    return inner
+
+
 def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
@@ -146,22 +161,6 @@ def get_all_files(path=None, ext=None):
 def get_logs_filter(filter_file: str):
     return file_read(filter_file).splitlines()
 
-def get_privated_logs_wrap():
-    _privated = {
-        "reports": [],
-        "last_mtime": 0,
-    }
-    def inner():
-        current_mtime = get_mtime(REPORTS_PRIVATE)
-        if current_mtime > _privated["last_mtime"]:
-            print('changed')
-            _privated["reports"] = file_read(REPORTS_PRIVATE).splitlines()
-            _privated["last_mtime"] = current_mtime
-        return _privated["reports"]
-    return inner
-
-get_privated_logs = get_privated_logs_wrap()
-
 def get_folders_filter(folders: list[str], filter_str: str=None, private_only=True):
     if filter_str is not None:
         folders = [name for name in folders if filter_str in name]
@@ -169,3 +168,8 @@ def get_folders_filter(folders: list[str], filter_str: str=None, private_only=Tr
         filter_list = get_logs_filter(REPORTS_PRIVATE)
         folders = [name for name in folders if name not in filter_list]
     return folders
+
+def _get_privated_logs():
+    return file_read(REPORTS_PRIVATE).splitlines()
+
+get_privated_logs = cache_file_until_new(REPORTS_PRIVATE, _get_privated_logs)

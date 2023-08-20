@@ -3,6 +3,7 @@ import os
 import numpy
 from constants import SPECS_LIST, TOP_DIR, CLASSES, running_time
 import pandas
+import file_functions
 
 COMPRESSION = "zstd"
 CLASSES_LIST = list(CLASSES)
@@ -36,27 +37,6 @@ def get_specs_data():
         })
     return SPECS_DATA
 
-
-def get_mtime(path):
-    try:
-        return os.path.getmtime(path)
-    except FileNotFoundError:
-        return 0.0
-
-def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
-    if not server:
-        server = "Lordaeron"
-    if not boss:
-        boss = "The Lich King"
-    if not mode:
-        mode = "25H"
-
-    server_folder = os.path.join(TOP_DIR, server)
-    return os.path.join(server_folder, f"{boss} {mode}.{COMPRESSION}")
-
-@running_time
-def _from_pickle(fname) -> pandas.DataFrame:
-    return pandas.read_pickle(fname, compression=COMPRESSION)
 
 def n_greater_than(data: numpy.ndarray, value: float):
     return int((data > value).sum())
@@ -98,24 +78,37 @@ def _get_boss_data(df: pandas.DataFrame):
         }
     return BOSS_DATA
 
+def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
+    if not server:
+        server = "Lordaeron"
+    if not boss:
+        boss = "The Lich King"
+    if not mode:
+        mode = "25H"
 
+    server_folder = os.path.join(TOP_DIR, server)
+    return os.path.join(server_folder, f"{boss} {mode}.{COMPRESSION}")
+
+@running_time
+def _from_pickle(fname) -> pandas.DataFrame:
+    return pandas.read_pickle(fname, compression=COMPRESSION)
+
+def _get_boss_data_cache(boss_file):
+    def inner():
+        df = _from_pickle(boss_file)
+        data = _get_boss_data(df)
+        return json.dumps(data)
+    return file_functions.cache_file_until_new(boss_file, inner)
 
 def get_boss_data_wrap():
-    cache = {}
-    last_mtime = {}
-    @running_time
-    def get_boss_data(server: str=None, boss: str=None, mode: str=None):
+    CACHE = {}
+    def inner(server: str=None, boss: str=None, mode: str=None) -> str:
         boss_file = get_boss_top_file(server, boss, mode)
-        current_mtime = get_mtime(boss_file)
-        if current_mtime > last_mtime.get(boss_file, 0):
-            df = _from_pickle(boss_file)
-            data = _get_boss_data(df)
-            data = json.dumps(data)
-            cache[boss_file] = data
-            print(current_mtime)
-            last_mtime[boss_file] = current_mtime
-        return cache[boss_file]
-    
-    return get_boss_data
+        f = CACHE.get(boss_file)
+        if f is None:
+            f = _get_boss_data_cache(boss_file)
+            CACHE[boss_file] = f
+        return f()
+    return inner
 
 get_boss_data = get_boss_data_wrap()

@@ -1,26 +1,18 @@
 from collections import defaultdict
 
 import file_functions
-from constants import running_time, COMBINE_SPELLS
+from constants import COMBINE_SPELLS, SPELL_ICONS_DB, running_time
 
 @running_time
 def get_spells_int():
-    spells_json = file_functions.json_read("x_spells_icons")
+    spells_json = file_functions.json_read(SPELL_ICONS_DB)
     return {
         int(spell_id): icon_name
         for icon_name, _spells in spells_json.items()
         for spell_id in _spells
     }
-def _get_spells():
-    spells = None
-    def get_spells_inner():
-        nonlocal spells
-        if spells:
-            return spells
-        spells = get_spells_int()
-        return spells
-    return get_spells_inner
-get_spells = _get_spells()
+
+get_spells = file_functions.cache_file_until_new(SPELL_ICONS_DB, get_spells_int)
 
 IGNORED_FLAGS = {
     "SPELL_HEAL",
