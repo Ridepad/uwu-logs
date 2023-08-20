@@ -977,16 +977,10 @@ class THE_LOGS:
             (gid, self.guid_to_name(gid))
             for gid in _parsed["TARGETS"]
         )
-        SPELLS = {
-            spell_name: _spells[spell_name]
-            for spell_name in sort_dict_by_value(actual_sum)
-        }
+
+        SPELLS = dict(sorted(sorted(_spells.items()), key=lambda x: actual_sum.get(x[0], 0), reverse=True))
 
         _data = self.breakdown_finish_formatting(actual_sum, OTHER)
-
-        for spell_name in sort_dict_by_value(_data["REDUCED"]):
-            if spell_name not in SPELLS and spell_name in _spells:
-                SPELLS[spell_name] = _spells[spell_name]
 
         return _data | {
             "OTHER": OTHER,
