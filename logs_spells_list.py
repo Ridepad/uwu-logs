@@ -43,9 +43,10 @@ def get_all_spells(logs: list[str]):
     }
     for line in logs:
         try:
-            line = line.split(',', 9)
-            if line[6] not in spells:
-                spells[line[6]] = {'name': CUSTOM_SPELLS.get(line[6], line[7]), 'school': line[8]}
+            _line = line.split(',', 7)
+            if _line[6] not in spells:
+                etc = _line[-1].split(',', 2)
+                spells[_line[6]] = {'name': CUSTOM_SPELLS.get(_line[6], etc[0]), 'school': etc[1]}
         except IndexError:
             pass
     return finish_spells(spells)
