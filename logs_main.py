@@ -718,6 +718,9 @@ class THE_LOGS:
                 file_functions.json_write(spells_data_file_name, self.SPELLS)
             else:
                 _spells = file_functions.json_read_no_exception(spells_data_file_name)
+                for spell_id, new_name in CUSTOM_SPELL_NAMES.items():
+                    if spell_id in _spells:
+                        _spells[spell_id]["name"] = new_name
                 self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
             return self.SPELLS
 

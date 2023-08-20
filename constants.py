@@ -470,6 +470,23 @@ COMBINE_SPELLS = {
     "64442": "64440", # Blade Warding",
 }
 
+CUSTOM_SPELL_NAMES = {
+    "42925": "Flamestrike (Rank 8)",
+    "49240": "Lightning Bolt (Proc)",
+    "49269": "Chain Lightning (Proc)",
+    "53190": "Starfall (AoE)",
+    "55360": "Living Bomb (DoT)",
+    # Off Hand
+    "66974": "Obliterate (Off Hand)",
+    "66962": "Frost Strike (Off Hand)",
+    "61895": "Blood-Caked Strike (Off Hand)",
+    "66992": "Plague Strike (Off Hand)",
+    "44949": "Whirlwind (Off Hand)",
+    "52874": "Fan of Knives (Off Hand)",
+    "57842": "Killing Spree (Off Hand)",
+    "66217": "Rune Strike (Off Hand)",
+}
+
 ENV_DAMAGE = {
     "FALLING":  "90001",
     "LAVA":     "90002",
