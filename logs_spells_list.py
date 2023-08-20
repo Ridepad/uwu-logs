@@ -6,6 +6,15 @@ CUSTOM_SPELLS = {
     "49269": "Chain Lightning (Proc)",
     "53190": "Starfall (AoE)",
     "55360": "Living Bomb (DoT)",
+    # Off Hand
+    "66974": "Obliterate (Off Hand)",
+    "66962": "Frost Strike (Off Hand)",
+    "61895": "Blood-Caked Strike (Off Hand)",
+    "66992": "Plague Strike (Off Hand)",
+    "44949": "Whirlwind (Off Hand)",
+    "52874": "Fan of Knives (Off Hand)",
+    "57842": "Killing Spree (Off Hand)",
+    "66217": "Rune Strike (Off Hand)",
 }
 
 def spell_id_to_int(data: dict[str, dict[str, str]]):
