@@ -25,12 +25,13 @@ from constants import (
     LOGS_DIR,
     LOGS_RAW_DIR,
     TOP_DIR,
+    TOP_FILE_NAME,
+    PANDAS_COMPRESSION,
     UPLOADS_TEXT,
     get_ms_str,
     get_report_name_info,
 )
 
-TOP_FILE = 'top.json'
 
 def save_raw_logs(file_name: str):
     report_id, ext = os.path.splitext(file_name)
@@ -46,11 +47,11 @@ def save_raw_logs(file_name: str):
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
     
 def _to_pickle(df: pandas.DataFrame, fname):
-    df.to_pickle(fname, compression="zstd")
+    df.to_pickle(fname, compression=PANDAS_COMPRESSION)
 
 def data_gen(report_id: str):
     report_folder = os.path.join(LOGS_DIR, report_id)
-    top_file = os.path.join(report_folder, TOP_FILE)
+    top_file = os.path.join(report_folder, TOP_FILE_NAME)
     TOP: dict[str, dict[str, list[dict]]] = file_functions.json_read(top_file)
     for boss_name, diffs in TOP.items():
         for diff, data in diffs.items():
@@ -140,7 +141,7 @@ def save_top(server_folder: str, boss_f_n: str, data: dict[str, dict[str, str]])
     data = sorted(data.values(), key=lambda x: x["t"])
 
     pc = perf_counter()
-    dfpath = os.path.join(server_folder, f"{boss_f_n}.zstd")
+    dfpath = os.path.join(server_folder, f"{boss_f_n}.{PANDAS_COMPRESSION}")
     _to_pickle(pandas.DataFrame.from_dict(data), dfpath)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Pandas saved')
 

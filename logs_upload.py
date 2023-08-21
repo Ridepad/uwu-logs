@@ -16,8 +16,15 @@ import file_functions
 import logs_archive
 import logs_fix
 from constants import (
-    LOGGER_UPLOADS, LOGS_CUT_NAME, LOGS_DIR, LOGS_RAW_DIR, PATH_DIR,
-    SERVERS, T_DELTA, UPLOADED_DIR, UPLOADS_DIR
+    LOGGER_UPLOADS,
+    LOGS_CUT_NAME,
+    LOGS_DIR,
+    LOGS_RAW_DIR,
+    PATH_DIR,
+    SERVERS,
+    T_DELTA,
+    UPLOADED_DIR,
+    UPLOADS_DIR,
 )
 
 ARCHIVE_ID_ERROR = "Bad archive.  Don't rename files to .zip/.7z, create archives from 0."
@@ -104,7 +111,7 @@ def raw_exists(logs_id):
 
 def slice_is_fully_processed(logs_id):
     logs_folder = os.path.join(LOGS_DIR, logs_id)
-    logs_name = os.path.join(logs_folder, f"{LOGS_CUT_NAME}.zlib")
+    logs_name = os.path.join(logs_folder, LOGS_CUT_NAME)
     return slice_exists(logs_name) and raw_exists(logs_id)
 
 def get_extracted_file_info(logs_path):
@@ -404,7 +411,7 @@ class NewUpload(Thread):
 
     def finish_slice(self, logs_id):
         logs_folder = os.path.join(LOGS_DIR, logs_id)
-        logs_name = os.path.join(logs_folder, f"{LOGS_CUT_NAME}.zlib")
+        logs_name = os.path.join(logs_folder, LOGS_CUT_NAME)
         if not self.forced and slice_exists(logs_name):
             return
         

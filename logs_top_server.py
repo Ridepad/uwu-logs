@@ -4,9 +4,13 @@ import os
 from collections import defaultdict
 
 import file_functions
-from constants import LOGS_DIR, TOP_DIR, running_time, get_report_name_info
-
-TOP_FILE = 'top.json'
+from constants import (
+    LOGS_DIR,
+    TOP_DIR,
+    TOP_FILE_NAME,
+    running_time,
+    get_report_name_info,
+)
 
 def save_top(server_folder: str, boss_f_n: str, data):
     print(boss_f_n)
@@ -48,7 +52,7 @@ def get_boss_top_wrap(server_folder: str, boss_f_n: str):
 
 def data_gen(report_name: str):
     report_folder = os.path.join(LOGS_DIR, report_name)
-    top_file = os.path.join(report_folder, TOP_FILE)
+    top_file = os.path.join(report_folder, TOP_FILE_NAME)
     TOP: dict[str, dict[str, list[dict]]] = file_functions.json_read(top_file)
     for boss_name, diffs in TOP.items():
         for diff, data in diffs.items():

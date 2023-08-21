@@ -6,7 +6,7 @@ import file_functions
 import logs_dmg_heals
 import logs_dmg_useful
 import logs_main
-from constants import LOGGER_REPORTS, get_ms_str, running_time
+from constants import LOGGER_REPORTS, TOP_FILE_NAME, get_ms_str, running_time
 from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
 
 try:
@@ -128,7 +128,7 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
 
 def make_report_top(report_id: str, rewrite=False):
     report = logs_main.THE_LOGS(report_id)
-    top_path = report.relative_path('top.json')
+    top_path = report.relative_path(TOP_FILE_NAME)
     if not rewrite and os.path.isfile(top_path):
         return
     

@@ -28,6 +28,7 @@ from constants import (
     LOGGER_REPORTS,
     LOGGER_UNUSUAL_SPELLS,
     LOGS_DIR,
+    LOGS_CUT_NAME,
     MONTHS,
     convert_to_html_name,
     duration_to_string,
@@ -302,7 +303,7 @@ class THE_LOGS:
         
     @running_time
     def __open_logs(self):
-        logs_cut_file_name = self.relative_path("LOGS_CUT")
+        logs_cut_file_name = self.relative_path(LOGS_CUT_NAME)
         return file_functions.zlib_text_read(logs_cut_file_name).splitlines()
         
     @property

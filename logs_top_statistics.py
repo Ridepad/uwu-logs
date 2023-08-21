@@ -1,11 +1,17 @@
 import json
 import os
 import numpy
-from constants import SPECS_LIST, TOP_DIR, CLASSES, running_time
 import pandas
 import file_functions
 
-COMPRESSION = "zstd"
+from constants import (
+    SPECS_LIST,
+    TOP_DIR,
+    CLASSES, 
+    PANDAS_COMPRESSION,
+    running_time,
+)
+
 CLASSES_LIST = list(CLASSES)
 SPECS_DATA: list[str] = []
 IGNORED_SPECS = [*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39]
@@ -87,11 +93,11 @@ def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
         mode = "25H"
 
     server_folder = os.path.join(TOP_DIR, server)
-    return os.path.join(server_folder, f"{boss} {mode}.{COMPRESSION}")
+    return os.path.join(server_folder, f"{boss} {mode}.{PANDAS_COMPRESSION}")
 
 @running_time
 def _from_pickle(fname) -> pandas.DataFrame:
-    return pandas.read_pickle(fname, compression=COMPRESSION)
+    return pandas.read_pickle(fname, compression=PANDAS_COMPRESSION)
 
 def _get_boss_data_cache(boss_file):
     def inner():

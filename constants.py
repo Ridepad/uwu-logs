@@ -6,6 +6,14 @@ from time import perf_counter
 
 import file_functions
 
+
+LOGS_CUT_NAME = "LOGS_CUT.zlib"
+TOP_FILE_NAME = "top.json"
+PANDAS_COMPRESSION = "zstd"
+NIL_GUID = '0x0000000000000000'
+
+REPORT_NAME_STRUCTURE = ("date", "time", "author", "server")
+
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
 LOGS_DIR = file_functions.new_folder_path(PATH_DIR, "LogsDir")
@@ -61,9 +69,6 @@ T_DELTA = {
     "14H": timedelta(hours=14),
 }
 
-LOGS_CUT_NAME = "LOGS_CUT"
-UPLOAD_STATUS_INFO = {}
-ICON_CDN_LINK = "https://wotlk.evowow.com/static/images/wow/icons/large"
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 FLAG_ORDER = [
@@ -934,7 +939,6 @@ def sort_dict_by_value(d: dict):
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
 
 
-NIL_GUID = '0x0000000000000000'
 def is_player(guid: str):
     return guid.startswith('0x0') and guid != NIL_GUID
 
@@ -1041,7 +1045,6 @@ def duration_to_string(t: float):
     return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
 
-REPORT_NAME_STRUCTURE = ("date", "time", "author", "server")
 def get_report_name_info(report_id: str):
     _report_id = report_id.split('--')
     while len(_report_id) < len(REPORT_NAME_STRUCTURE):
