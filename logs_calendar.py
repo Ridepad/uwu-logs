@@ -65,7 +65,8 @@ def _save_df_with_backup(df: pandas.DataFrame):
     PATH_BKP = os.path.join(PATH_DIR, f"{DF_MAIN_NAME}.bkp")
     PATH_TMP = os.path.join(PATH_DIR, f"{DF_MAIN_NAME}.tmp")
 
-    shutil.copy2(DF_MAIN_PATH, PATH_BKP)
+    if os.path.isfile(DF_MAIN_PATH):
+        shutil.copy2(DF_MAIN_PATH, PATH_BKP)
     _save_df(df, PATH_TMP)
     
     DF_MAIN_DATA["df"] = df
