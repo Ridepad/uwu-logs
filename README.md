@@ -8,6 +8,18 @@ Supports any Wrath of the Lich King (3.3.5) server.
 
 ❤️ Inspired by World of Logs, LegacyPlayers and Warcraft Logs.
 
+## Self hosting
+
+- Install packages from `requirements.txt`
+
+- Run Z_SERVER.py
+
+- Visit <http://localhost:5000/>
+
+#### Optional:
+
+- Spell/classes icon data - [download](https://drive.google.com/file/d/17DyiCJts01CkFIkd0-G1dVAypIlxd0pP) and extract to root folder.
+
 ## Showcase
 
 ### Top
