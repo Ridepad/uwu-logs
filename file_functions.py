@@ -58,14 +58,14 @@ def create_new_folders(root, *names):
     for name in names:
         new_folder_path(root, name)
 
-def fix_extention(ext: str):
+def fix_extension(ext: str):
     if ext[0] == '.':
         return ext
     return f".{ext}"
 
-def add_extention(path: str, ext=None):
+def add_extension(path: str, ext=None):
     if ext is not None:
-        ext = fix_extention(ext)
+        ext = fix_extension(ext)
         if not path.endswith(ext):
             path = path.split('.')[0]
             return f"{path}{ext}"
@@ -79,7 +79,7 @@ def save_backup(path):
         os.rename(path, old)
 
 def json_read(path: str):
-    path = add_extention(path, '.json')
+    path = add_extension(path, '.json')
     try:
         with open(path) as file:
             return json.load(file)
@@ -87,12 +87,12 @@ def json_read(path: str):
         return {}
 
 def json_read_no_exception(path: str):
-    path = add_extention(path, '.json')
+    path = add_extension(path, '.json')
     with open(path) as file:
         return json.load(file)
 
 def json_write(path: str, data, backup=False, indent=2, sep=None):
-    path = add_extention(path, '.json')
+    path = add_extension(path, '.json')
     if backup:
         save_backup(path)
     with open(path, 'w') as file:
@@ -100,7 +100,7 @@ def json_write(path: str, data, backup=False, indent=2, sep=None):
 
 
 def bytes_read(path: str, ext=None):
-    path = add_extention(path, ext)
+    path = add_extension(path, ext)
     try:
         with open(path, 'rb') as file:
             return file.read()
@@ -108,7 +108,7 @@ def bytes_read(path: str, ext=None):
         return b''
 
 def bytes_write(path: str, data: bytes, ext=None):
-    path = add_extention(path, ext)
+    path = add_extension(path, ext)
     with open(path, 'wb') as file:
         file.write(data)
 
@@ -117,14 +117,14 @@ def zlib_decompress(data: bytes):
     return zlib.decompress(data)
 
 def zlib_text_read(path: str):
-    path = add_extention(path, '.zlib')
+    path = add_extension(path, '.zlib')
     data_raw = bytes_read(path)
     data = zlib_decompress(data_raw)
     return data.decode()
 
 
 def file_read(path: str, ext=None):
-    path = add_extention(path, ext)
+    path = add_extension(path, ext)
     # try:
     #     raw = bytes_read(path, ext)
     #     return raw.decode()
@@ -138,7 +138,7 @@ def file_read(path: str, ext=None):
         return ""
 
 def file_write(path: str, data: str, ext=None):
-    path = add_extention(path, ext)
+    path = add_extension(path, ext)
     with open(path, 'w') as f:
         f.write(data)
 
@@ -155,7 +155,7 @@ def get_all_files(path=None, ext=None):
     files = get_files(path)
     if ext is None:
         return files
-    ext = fix_extention(ext)
+    ext = fix_extension(ext)
     return [file for file in files if file.endswith(ext)]
 
 def get_logs_filter(filter_file: str):
