@@ -1,3 +1,11 @@
+'''
+This file runs in a cron job on the server.
+Example (every minute with a lock):
+*/1 * * * * /usr/bin/flock -n /tmp/fcj.lockfile /usr/bin/python3 /home/uwu-logs/logs_auto.py
+
+For testing, run it when needed manually.
+'''
+
 import gzip
 import json
 import os
