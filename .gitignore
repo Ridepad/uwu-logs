@@ -10,7 +10,6 @@ q_*
 *.mp4
 *.old
 *.pem
-*.txt
 *.zip
 db*.*
 
