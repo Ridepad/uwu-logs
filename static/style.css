@@ -229,6 +229,8 @@ nav {
 
 
 footer {
+  display: flex;
+  align-items: end;
   bottom: 0;
   height: var(--bottom-row-one);
   background-color: var(--background);
@@ -284,9 +286,6 @@ footer {
 }
 
 @media (orientation: landscape) {
-  footer {
-    display: flex;
-  }
   footer > ul {
     row-gap: 1rem;
   }
