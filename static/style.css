@@ -360,7 +360,7 @@ footer {
 #fights-container .kill-link {color: aquamarine;}
 
 #fights-container {
-  z-index: 2;
+  z-index: 10;
   position: fixed;
   right: 1%;
   top: var(--nav-height);
@@ -384,11 +384,6 @@ footer {
   font-size: inherit;
   white-space: nowrap;
 }
-@media (orientation: portrait) {
-  #fights-container > h1 > a {
-    overflow: clip;
-  }
-}
 
 #fights-container ul {
   display: none;
@@ -399,7 +394,6 @@ footer {
 }
 #fights-container ul a {
   font-size: 2vh;
-  padding-inline: 1em;
 }
 #fights-container a:hover {
   color: var(--link-hover);
@@ -411,13 +405,6 @@ footer {
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
   background-color: var(--highlight-color); 
 }
-@media (orientation: portrait) {
-  #fights-container ul:not(.segments) > li::before {
-    content: '▶';
-    padding-left: 1em;
-    font-size: 125%;
-  }
-}
 
 #fights-container:hover .bosses, 
 #fights-container .bosses li:hover > .diffs,
@@ -426,14 +413,34 @@ footer {
 }
 #fights-container .diffs,
 #fights-container .segments {
-  z-index: 5;
   position: absolute;
-  left: 33%;
-  right: auto;
   top: 0;
+  left: 30vw;
+  right: auto;
+}
+#fights-container .diffs {
+  z-index: 15;
 }
 #fights-container .segments {
-  z-index: 10;
+  z-index: 20;
+}
+
+@media (orientation: portrait) {
+  #fights-container {
+    width: 95%;
+  }
+  #fights-container > h1 > a {
+    overflow: clip;
+  }
+  #fights-container ul:not(.segments) > li::before {
+    content: '▶';
+    box-shadow: inset -.2rem 0 var(--primary-color);
+    padding-inline: 2rem;
+    font-size: 125%;
+  }
+  #fights-container .diffs li {
+    padding-block: .5rem;
+  }
 }
 @media (orientation: landscape) {
   #fights-container .diffs,
@@ -441,11 +448,17 @@ footer {
     left: auto;
     right: 100%;
   }
+  #fights-container .diffs {
+    transform: translateY(-25%);
+  }
   #fights-container .diffs li:first-of-type {
     padding-top: 1rem;
   }
   #fights-container .diffs li:last-of-type {
     padding-bottom: 1rem;
+  }
+  #fights-container ul a {
+    padding-inline: 1em;
   }
 }
 
