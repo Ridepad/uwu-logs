@@ -61,7 +61,7 @@ def data_gen(report_id: str):
 def save_temp_top(report_id):
     pc = perf_counter()
     server = get_report_name_info(report_id)["server"]
-    SERVER_FOLDER = os.path.join(TOP_DIR, server)
+    SERVER_FOLDER = file_functions.new_folder_path(TOP_DIR, server)
     for boss_f_n, data in data_gen(report_id):
         _path = f"{boss_f_n}--{report_id}.json"
         full_path = os.path.join(SERVER_FOLDER, _path)
@@ -176,47 +176,78 @@ def top_grouped():
             yield full_server_folder_name, boss_f_n, json_files
 
 
+def main_sequential():
+    if not os.path.isdir(UPLOADS_TEXT):
+        return
+    
+    RAW_LOGS = [
+        file_name
+        for file_name in os.listdir(UPLOADS_TEXT)
+        if file_name.endswith(".txt")
+    ]
+    if not RAW_LOGS:
+        return
+    
+    RAW_LOGS_NO_EXT = [
+        os.path.splitext(fpath)[0]
+        for fpath in RAW_LOGS
+    ]
+
+    for report_id in RAW_LOGS_NO_EXT:
+        logs_top.make_report_top_wrap(report_id)
+
+    # needs player and encounter data, thats why after logs top
+    logs_calendar.add_new_logs()
+
+    for report_id in RAW_LOGS_NO_EXT:
+        save_temp_top(report_id)
+    
+    for _data in top_grouped():
+        top_add_new_data(*_data)
+    
+    if not os.path.exists(LOGS_RAW_DIR):
+        os.makedirs(LOGS_RAW_DIR, exist_ok=True)
+    
+    for report_id in RAW_LOGS:
+        save_raw_logs(report_id)
+
+
 def main():
     if not os.path.isdir(UPLOADS_TEXT):
         return
     
-    RAW_LOGS = [x for x in os.listdir(UPLOADS_TEXT) if x.endswith(".txt")]
+    RAW_LOGS = [
+        file_name
+        for file_name in os.listdir(UPLOADS_TEXT)
+        if file_name.endswith(".txt")
+    ]
     if not RAW_LOGS:
         return
     
-    RAW_LOGS_NO_EXT = [os.path.splitext(fpath)[0] for fpath in RAW_LOGS]
+    RAW_LOGS_NO_EXT = [
+        os.path.splitext(fpath)[0]
+        for fpath in RAW_LOGS
+    ]
     MAX_CPU = max(os.cpu_count() - 1, 1)
 
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(logs_top.make_report_top_wrap, RAW_LOGS_NO_EXT)
-        # for report_id in RAW_LOGS_NO_EXT:
-        #     executor.submit(logs_top.make_report_top_wrap, report_id)
-    # for report_id in RAW_LOGS_NO_EXT:
-    #     logs_top.make_report_top_wrap(report_id)
 
     # needs player and encounter data, thats why after logs top
     logs_calendar.add_new_logs()
 
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(save_temp_top, RAW_LOGS_NO_EXT)
-        # for report_id in RAW_LOGS_NO_EXT:
-        #     executor.submit(save_temp_top, report_id)
-    # for report_id in RAW_LOGS_NO_EXT:
-    #     save_temp_top(report_id)
     
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         for _data in top_grouped():
             executor.submit(top_add_new_data, *_data)
-    # for _data in top_grouped():
-    #     top_add_new_data(*_data)
     
     if not os.path.exists(LOGS_RAW_DIR):
         os.makedirs(LOGS_RAW_DIR, exist_ok=True)
     
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(save_raw_logs, RAW_LOGS)
-    # for report_id in RAW_LOGS:
-    #     save_raw_logs(report_id)
 
 def main_wrap():
     pc = perf_counter()
