@@ -42,23 +42,22 @@ button:hover {
 	font-size: clamp(1vw, 3rem, 5.5vw);
 }
 
-.sliced-control {
-  min-width: 10ch;
-}
 #player-info {
-	display: flex;
-	align-items: end;
-  flex-direction: column;
+  text-align: center;
+	display: grid;
+	align-items: baseline;
   font-size: 125%;
+  grid-template-columns: 3fr 1fr 1fr 1fr;
 }
 #player-info .player-name-big {
   font-size: 300%;
 }
-@media (orientation: landscape) {
+@media (orientation: portrait) {
   #player-info {
-    align-items: first baseline;
-    justify-content: space-evenly;
-    flex-direction: row;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  #player-info .player-name-big {
+    grid-column: span 3;
   }
 }
 
