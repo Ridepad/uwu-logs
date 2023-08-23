@@ -9,8 +9,6 @@ from datetime import datetime
 from threading import Thread
 from time import perf_counter
 
-import pytz
-
 import constants
 import file_functions
 import logs_archive
@@ -45,7 +43,6 @@ file_functions.create_new_folders(PATH_DIR, LOGS_DIR, UPLOADS_DIR, UPLOADED_DIR)
 
 UPLOADS_TEXT = file_functions.new_folder_path(UPLOADS_DIR, "0archive_pending")
 UPLOADED_FILE_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0file_info")
-UPLOADED_LOGS_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0logs_info")
 
 
 def format_filename(file_name):
@@ -65,20 +62,14 @@ def new_upload_folder(ip='localhost', timestamp: str=None):
     new_upload_dir = file_functions.new_folder_path(new_upload_dir_ip, timestamp)
     return new_upload_dir
 
-def save_upload_cache(_data, slices):
+def save_upload_cache(_data):
     file_id = _data["file_id"]
     new_file_info_file = os.path.join(UPLOADED_FILE_INFO, f"{file_id}.json")
-    new_logs_info_file = os.path.join(UPLOADED_LOGS_INFO, f"{file_id}.json")
     file_functions.json_write(new_file_info_file, _data)
-    file_functions.json_write(new_logs_info_file, slices)
 
 def get_uploaded_file_info(file_id):
     new_file_info_file = os.path.join(UPLOADED_FILE_INFO, f"{file_id}.json")
     return file_functions.json_read(new_file_info_file)
-
-def get_uploaded_logs_info(file_id):
-    new_logs_info_file = os.path.join(UPLOADED_LOGS_INFO, f"{file_id}.json")
-    return file_functions.json_read(new_logs_info_file)
 
 def get_logs_author_info(logs: list[bytes]):
     for line in logs:
@@ -463,12 +454,17 @@ class NewUpload(Thread):
         if self.forced or not self.upload_data:
             return False
         
+        old_server = self.upload_data.get("server")
+        if (not old_server or old_server == "Unknown") and self.server != "Unknown":
+            self.upload_data["server"] = self.server
+            return False
+        
         file_id = self.upload_data.get('file_id')
         if not file_id:
             return False
         
         done = True
-        self.slices = get_uploaded_logs_info(file_id)
+        self.slices = self.upload_data.get("slices", [])
         for slice_id in self.slices:
             if slice_is_fully_processed(slice_id):
                 self.has_duplicates = True
@@ -581,7 +577,8 @@ class NewUpload(Thread):
 
         self.upload_data.setdefault("ips", []).append(self.ip)
         self.upload_data.setdefault("timestamps", []).append(self.timestamp)
-        save_upload_cache(self.upload_data, self.slices)
+        self.upload_data["slices"] = self.slices
+        save_upload_cache(self.upload_data)
 
         if not self.keep_temp_folder:
             shutil.rmtree(self.upload_dir, ignore_errors=True)
