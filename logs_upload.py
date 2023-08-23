@@ -393,7 +393,14 @@ class NewUpload(Thread):
                     try:
                         _tdelta = self.get_timedelta(line, last_line)
                     except Exception:
-                        print("Exception: self.get_timedelta", line, last_line)
+                        print("Exception: self.get_timedelta")
+                        print(last_line)
+                        print(line)
+                        try:
+                            self.to_dt(last_line)
+                        except ValueError:
+                            last_timestamp = timestamp
+                            last_line = line
                         continue
                     
                     if _tdelta > SMALL_GAP:
