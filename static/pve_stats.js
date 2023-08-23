@@ -98,7 +98,9 @@ function update_row(row, data) {
   const cell = row.querySelector(".stats-cell-data");
   remove_children(cell);
   if (!data) {
-    row.setAttribute("data-sort", 0);
+    Array.from(row.attributes)
+         .filter(attr => attr.name.slice(0,4) == "data")
+         .forEach(attr => row.removeAttribute(attr.name));
     return;
   }
 
