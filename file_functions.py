@@ -17,12 +17,10 @@ def get_mtime(path):
 
 def cache_file_until_new(fname, callback):
     data = None
-    last_mtime = 0.0
+    last_mtime = -1.0
     def inner():
         nonlocal data, last_mtime
         current_mtime = get_mtime(fname)
-        print(current_mtime)
-        print(last_mtime)
         if current_mtime > last_mtime:
             data = callback()
             last_mtime = current_mtime + 10

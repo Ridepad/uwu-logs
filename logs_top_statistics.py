@@ -15,6 +15,7 @@ from constants import (
 CLASSES_LIST = list(CLASSES)
 SPECS_DATA: list[str] = []
 IGNORED_SPECS = [*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39]
+DUMMY_DATAFRAME = pandas.DataFrame()
 
 def get_class_spec_full(spec_index):
     spec, icon = SPECS_LIST[spec_index]
@@ -97,7 +98,10 @@ def get_boss_top_file(server: str=None, boss: str=None, mode: str=None):
 
 @running_time
 def _from_pickle(fname) -> pandas.DataFrame:
-    return pandas.read_pickle(fname, compression=PANDAS_COMPRESSION)
+    try:
+        return pandas.read_pickle(fname, compression=PANDAS_COMPRESSION)
+    except FileNotFoundError:
+        return DUMMY_DATAFRAME
 
 def _get_boss_data_cache(boss_file):
     def inner():
