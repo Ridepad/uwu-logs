@@ -413,8 +413,9 @@ class NewUpload(Thread):
         if not self.forced and slice_exists(logs_name):
             return
         
-        if logs_id in logs_folder:
-            shutil.rmtree(logs_folder, ignore_errors=True)
+        if os.path.isdir(logs_folder):
+            shutil.rmtree(logs_folder)
+        
         logs_folder = file_functions.new_folder_path(LOGS_DIR, logs_id)
         
         pc_slice_cleaner = perf_counter()
