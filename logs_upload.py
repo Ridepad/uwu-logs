@@ -14,6 +14,7 @@ import file_functions
 import logs_archive
 import logs_fix
 from constants import (
+    DEFAULT_SERVER_NAME,
     LOGGER_UPLOADS,
     LOGS_CUT_NAME,
     LOGS_DIR,
@@ -146,7 +147,7 @@ class NewUpload(Thread):
 
         self.server: str = upload_data.get("server")
         if not self.server or self.server in SERVERS.values():
-            self.server = "Unknown"
+            self.server = DEFAULT_SERVER_NAME
         self.forced = forced
         self.only_slices = only_slices
         self.keep_temp_folder = keep_temp_folder
@@ -456,7 +457,7 @@ class NewUpload(Thread):
             return False
         
         old_server = self.upload_data.get("server")
-        if (not old_server or old_server == "Unknown") and self.server != "Unknown":
+        if (not old_server or old_server == DEFAULT_SERVER_NAME) and self.server != DEFAULT_SERVER_NAME:
             self.upload_data["server"] = self.server
             return False
         

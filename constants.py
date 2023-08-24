@@ -7,6 +7,7 @@ from time import perf_counter
 import file_functions
 
 
+DEFAULT_SERVER_NAME = "Unknown"
 LOGS_CUT_NAME = "LOGS_CUT.zlib"
 TOP_FILE_NAME = "top.json"
 PANDAS_COMPRESSION = "zstd"
