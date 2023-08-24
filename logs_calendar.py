@@ -139,7 +139,7 @@ def get_logs_list_df_filter_to_calendar_wrap(_filter):
     df = get_logs_list_df()
     _filter = normalize_filter(_filter)
     df = get_logs_list_df_filter(df, _filter)
-    df.sort_values(by="time")
+    df.sort_values(by="time", inplace=True)
     return separate_to_days(df)
 
 def get_timezone_file(report_id):
