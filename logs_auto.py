@@ -21,6 +21,7 @@ import logs_archive
 import logs_calendar
 import logs_top
 from constants import (
+    DEFAULT_SERVER_NAME,
     LOGGER_UPLOADS,
     LOGS_DIR,
     LOGS_RAW_DIR,
@@ -43,6 +44,10 @@ def save_raw_logs(file_name: str):
     archive_path = os.path.join(LOGS_RAW_DIR, f"{report_id}.7z")
     return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
+        _server = get_report_name_info(report_id)["server"]
+        _unknown = archive_path.replace(_server, DEFAULT_SERVER_NAME)
+        if os.path.isfile(_unknown):
+            os.remove(_unknown)
         os.remove(logs_txt_path)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
     

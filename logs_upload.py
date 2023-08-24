@@ -24,6 +24,7 @@ from constants import (
     T_DELTA,
     UPLOADED_DIR,
     UPLOADS_DIR,
+    get_report_name_info,
 )
 
 ARCHIVE_ID_ERROR = "Bad archive.  Don't rename files to .zip/.7z, create archives from 0."
@@ -416,6 +417,11 @@ class NewUpload(Thread):
         
         if os.path.isdir(logs_folder):
             shutil.rmtree(logs_folder)
+        
+        _server = get_report_name_info(logs_id)["server"]
+        _unknown = logs_folder.replace(_server, DEFAULT_SERVER_NAME)
+        if os.path.isdir(_unknown):
+            shutil.rmtree(_unknown)
         
         logs_folder = file_functions.new_folder_path(LOGS_DIR, logs_id)
         
