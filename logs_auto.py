@@ -33,6 +33,16 @@ from constants import (
     get_report_name_info,
 )
 
+def remove_old_dublicate(report_id):
+    if DEFAULT_SERVER_NAME in report_id:
+        return
+    
+    _server = get_report_name_info(report_id)["server"]
+    report_id_old = report_id.replace(_server, DEFAULT_SERVER_NAME)
+    archive_path_old = os.path.join(LOGS_RAW_DIR, f"{report_id_old}.7z")
+    if os.path.isfile(archive_path_old):
+        os.remove(archive_path_old)
+
 def save_raw_logs(report_id: str):
     logs_txt_path = os.path.join(UPLOADS_TEXT, f"{report_id}.txt")
     if not os.path.isfile(logs_txt_path):
@@ -44,11 +54,7 @@ def save_raw_logs(report_id: str):
     return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
         os.remove(logs_txt_path)
-        if DEFAULT_SERVER_NAME not in report_id:
-            _server = get_report_name_info(report_id)["server"]
-            _unknown = archive_path.replace(_server, DEFAULT_SERVER_NAME)
-            if os.path.isfile(_unknown):
-                os.remove(_unknown)
+        remove_old_dublicate(report_id)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
 
 def _to_pickle(df: pandas.DataFrame, fname):
