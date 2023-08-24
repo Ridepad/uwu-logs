@@ -133,13 +133,13 @@ def separate_to_days(df: pandas.DataFrame):
 def get_logs_list_filter_json(_filter):
     df = get_logs_list_df()
     df = get_logs_list_df_filter(df, _filter)
-    df.sort_values(by="time")
     return json.dumps(list(df.index))
 
 def get_logs_list_df_filter_to_calendar_wrap(_filter):
     df = get_logs_list_df()
     _filter = normalize_filter(_filter)
     df = get_logs_list_df_filter(df, _filter)
+    df.sort_values(by="time")
     return separate_to_days(df)
 
 def get_timezone_file(report_id):
