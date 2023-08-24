@@ -595,6 +595,7 @@ class NewUpload(Thread):
             shutil.rmtree(self.upload_dir, ignore_errors=True)
 
         self.change_status(msg, 1)
+        self.add_logger_msg(msg)
 
 
 class FileSave:
