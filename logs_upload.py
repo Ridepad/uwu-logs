@@ -464,7 +464,9 @@ class NewUpload(Thread):
             return False
         
         old_server = self.upload_data.get("server")
-        if (not old_server or old_server == DEFAULT_SERVER_NAME) and self.server != DEFAULT_SERVER_NAME:
+        if old_server and old_server != DEFAULT_SERVER_NAME:
+            self.server = old_server
+        elif self.server != DEFAULT_SERVER_NAME:
             self.upload_data["server"] = self.server
             return False
         
