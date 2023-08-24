@@ -417,11 +417,12 @@ class NewUpload(Thread):
         
         if os.path.isdir(logs_folder):
             shutil.rmtree(logs_folder)
-        
-        _server = get_report_name_info(logs_id)["server"]
-        _unknown = logs_folder.replace(_server, DEFAULT_SERVER_NAME)
-        if os.path.isdir(_unknown):
-            shutil.rmtree(_unknown)
+
+        if DEFAULT_SERVER_NAME not in logs_id:
+            _server = get_report_name_info(logs_id)["server"]
+            _unknown = logs_folder.replace(_server, DEFAULT_SERVER_NAME)
+            if os.path.isdir(_unknown):
+                shutil.rmtree(_unknown)
         
         logs_folder = file_functions.new_folder_path(LOGS_DIR, logs_id)
         
