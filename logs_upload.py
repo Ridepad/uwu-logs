@@ -414,7 +414,7 @@ class NewUpload(Thread):
         logs_name = os.path.join(logs_folder, LOGS_CUT_NAME)
         if not self.forced and slice_exists(logs_name):
             return
-        
+
         if os.path.isdir(logs_folder):
             shutil.rmtree(logs_folder)
 
@@ -559,8 +559,8 @@ class NewUpload(Thread):
                 self.finish(FULL_DONE_PARTIAL)
             else:
                 self.finish(FULL_DONE)
-            
-    def finish(self, msg: str):
+    
+    def move_sliced_logs(self):
         for logs_id in self.slices:
             self.change_slice_status(logs_id, "Done!", slice_done=True)
             raw_path_current = os.path.join(self.upload_dir, f"{logs_id}.txt")
@@ -575,16 +575,18 @@ class NewUpload(Thread):
             else:
                 self.add_logger_msg(f"Raw exists | {logs_id}")
                 continue
-        
-        try:
-            old = self.archive_path or self.extracted_path
-            basename = os.path.basename(old)
-            _file_id = f"{self.ip}--{self.timestamp}--{basename}"
-            new_archive_name = os.path.join(UPLOADED_DIR, _file_id)
-            self.upload_data["uploaded"] = new_archive_name
-            os.rename(old, new_archive_name)
-        except Exception:
-            LOGGER_UPLOADS.exception(f"{self.upload_dir} | NewUpload cleaning")
+    
+    def move_uploaded_file(self):
+        old = self.archive_path or self.extracted_path
+        basename = os.path.basename(old)
+        _file_id = f"{self.ip}--{self.timestamp}--{basename}"
+        new_archive_name = os.path.join(UPLOADED_DIR, _file_id)
+        self.upload_data["uploaded"] = new_archive_name
+        os.rename(old, new_archive_name)
+
+    def finish(self, msg: str):
+        self.move_sliced_logs()
+        self.move_uploaded_file()
 
         self.upload_data.setdefault("ips", []).append(self.ip)
         self.upload_data.setdefault("timestamps", []).append(self.timestamp)
