@@ -9,7 +9,13 @@ import pandas
 
 import file_functions
 import logs_main
-from constants import LOGS_DIR, PATH_DIR, get_report_name_info, running_time
+from constants import (
+    DEFAULT_SERVER_NAME,
+    LOGS_DIR,
+    PATH_DIR,
+    get_report_name_info,
+    running_time,
+)
 
 CALENDAR = calendar.Calendar()
 
@@ -164,15 +170,31 @@ def make_new(folders: list[str]):
 
     return pandas.DataFrame.from_dict(data, orient="index").astype(COLUMN_TYPES)
 
-def add_new_logs(folders: list[str]=None):
+def _get_default_server(name: str):
+    _server = get_report_name_info(name)["server"]
+    return name.replace(_server, DEFAULT_SERVER_NAME)
+
+def add_new_logs(new_reports: list[str]=None):
+    if new_reports is None:
+        new_reports = os.listdir(LOGS_DIR)
+    new_reports = set(new_reports)
+    
     df = get_logs_list_df()
-    if folders is None:
-        folders = os.listdir(LOGS_DIR)
-    folders = (set(folders) - set(df.index))
+    df_index = set(df.index)
+    
+    default_copies = {
+        _get_default_server(report_id)
+        for report_id in new_reports
+        if DEFAULT_SERVER_NAME not in report_id
+    }
+    default_copies = default_copies & df_index
+
+    folders = new_reports - df_index
     new_df = make_new(folders)
-    if new_df is None:
+    if new_df is None and not default_copies:
         return
     
+    df.drop(default_copies, inplace=True)
     df = pandas.concat([df, new_df])
     df.sort_index()
     _save_df_with_backup(df)
