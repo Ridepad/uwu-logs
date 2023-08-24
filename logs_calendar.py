@@ -146,6 +146,9 @@ def make_new(folders: list[str]):
     
     data = {}
     for report_id in folders:
+        logs_dir = os.path.join(LOGS_DIR, report_id)
+        if not os.path.isdir(logs_dir):
+            continue
         report = logs_main.THE_LOGS(report_id)
         if not os.path.isfile(report.relative_path("PLAYERS_DATA.json")):
             continue
