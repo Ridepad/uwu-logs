@@ -44,13 +44,14 @@ def save_raw_logs(file_name: str):
     archive_path = os.path.join(LOGS_RAW_DIR, f"{report_id}.7z")
     return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
-        _server = get_report_name_info(report_id)["server"]
-        _unknown = archive_path.replace(_server, DEFAULT_SERVER_NAME)
-        if os.path.isfile(_unknown):
-            os.remove(_unknown)
         os.remove(logs_txt_path)
+        if DEFAULT_SERVER_NAME not in report_id:
+            _server = get_report_name_info(report_id)["server"]
+            _unknown = archive_path.replace(_server, DEFAULT_SERVER_NAME)
+            if os.path.isfile(_unknown):
+                os.remove(_unknown)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
-    
+
 def _to_pickle(df: pandas.DataFrame, fname):
     df.to_pickle(fname, compression=PANDAS_COMPRESSION)
 
