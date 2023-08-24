@@ -33,10 +33,8 @@ from constants import (
     get_report_name_info,
 )
 
-
-def save_raw_logs(file_name: str):
-    report_id, ext = os.path.splitext(file_name)
-    logs_txt_path = os.path.join(UPLOADS_TEXT, file_name)
+def save_raw_logs(report_id: str):
+    logs_txt_path = os.path.join(UPLOADS_TEXT, f"{report_id}.txt")
     if not os.path.isfile(logs_txt_path):
         return
     
@@ -183,41 +181,41 @@ def top_grouped():
             yield full_server_folder_name, boss_f_n, json_files
 
 
-def main_sequential():
-    if not os.path.isdir(UPLOADS_TEXT):
-        return
-    
-    RAW_LOGS = [
-        file_name
-        for file_name in os.listdir(UPLOADS_TEXT)
-        if file_name.endswith(".txt")
-    ]
-    if not RAW_LOGS:
-        return
-    
-    RAW_LOGS_NO_EXT = [
-        os.path.splitext(fpath)[0]
-        for fpath in RAW_LOGS
-    ]
-
-    for report_id in RAW_LOGS_NO_EXT:
+def main_sequential(new_logs):
+    for report_id in new_logs:
         logs_top.make_report_top_wrap(report_id)
 
     # needs player and encounter data, thats why after logs top
     logs_calendar.add_new_logs()
 
-    for report_id in RAW_LOGS_NO_EXT:
+    for report_id in new_logs:
         save_temp_top(report_id)
     
     for _data in top_grouped():
         top_add_new_data(*_data)
     
-    if not os.path.exists(LOGS_RAW_DIR):
-        os.makedirs(LOGS_RAW_DIR, exist_ok=True)
-    
-    for report_id in RAW_LOGS:
+    for report_id in new_logs:
         save_raw_logs(report_id)
 
+
+def main_proccess_pool(new_logs):
+    MAX_CPU = max(os.cpu_count() - 1, 1)
+
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.map(logs_top.make_report_top_wrap, new_logs)
+
+    # needs player and encounter data, thats why after logs top
+    logs_calendar.add_new_logs(new_logs)
+
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.map(save_temp_top, new_logs)
+
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        for _data in top_grouped():
+            executor.submit(top_add_new_data, *_data)
+
+    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.map(save_raw_logs, new_logs)
 
 def main():
     if not os.path.isdir(UPLOADS_TEXT):
@@ -235,26 +233,8 @@ def main():
         os.path.splitext(fpath)[0]
         for fpath in RAW_LOGS
     ]
-    MAX_CPU = max(os.cpu_count() - 1, 1)
-
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(logs_top.make_report_top_wrap, RAW_LOGS_NO_EXT)
-
-    # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs(RAW_LOGS_NO_EXT)
-
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(save_temp_top, RAW_LOGS_NO_EXT)
     
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        for _data in top_grouped():
-            executor.submit(top_add_new_data, *_data)
-    
-    if not os.path.exists(LOGS_RAW_DIR):
-        os.makedirs(LOGS_RAW_DIR, exist_ok=True)
-    
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(save_raw_logs, RAW_LOGS)
+    main_proccess_pool(RAW_LOGS_NO_EXT)
 
 def main_wrap():
     pc = perf_counter()
