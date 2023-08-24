@@ -566,15 +566,21 @@ class NewUpload(Thread):
             raw_path_current = os.path.join(self.upload_dir, f"{logs_id}.txt")
             if not os.path.isfile(raw_path_current):
                 continue
-            if self.forced or not raw_exists(logs_id):
-                raw_path_new = os.path.join(UPLOADS_TEXT, f"{logs_id}.txt")
-                if os.path.isfile(raw_path_new):
-                    os.remove(raw_path_new)
-                os.rename(raw_path_current, raw_path_new)
-                self.add_logger_msg(f"Raw moved  | {logs_id}")
-            else:
+            
+            if not self.forced and raw_exists(logs_id):
                 self.add_logger_msg(f"Raw exists | {logs_id}")
                 continue
+            
+            raw_path_new = os.path.join(UPLOADS_TEXT, f"{logs_id}.txt")
+            if os.path.isfile(raw_path_new):
+                os.remove(raw_path_new)
+            os.rename(raw_path_current, raw_path_new)
+            self.add_logger_msg(f"Raw moved  | {logs_id}")
+            
+            if self.timezone:
+                raw_path_tz = os.path.join(UPLOADS_TEXT, f"{logs_id}.timezone")
+                file_functions.file_write(raw_path_tz, self.timezone)
+                self.add_logger_msg(f"Timezone w | {logs_id}")
     
     def move_uploaded_file(self):
         old = self.archive_path or self.extracted_path

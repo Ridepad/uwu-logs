@@ -242,6 +242,11 @@ def main():
     
     main_proccess_pool(RAW_LOGS_NO_EXT)
 
+    for report_id in RAW_LOGS_NO_EXT:
+        tz_path = logs_calendar.get_timezone_file(report_id)
+        if os.path.isfile(tz_path):
+            os.remove(tz_path)
+
 def main_wrap():
     pc = perf_counter()
     try:

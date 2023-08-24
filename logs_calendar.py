@@ -4,8 +4,10 @@ import json
 import shutil
 from collections import defaultdict
 from typing import TypedDict
+from datetime import datetime
 
 import pandas
+import pytz
 
 import file_functions
 import logs_main
@@ -13,6 +15,7 @@ from constants import (
     DEFAULT_SERVER_NAME,
     LOGS_DIR,
     PATH_DIR,
+    UPLOADS_TEXT,
     get_report_name_info,
     running_time,
 )
@@ -138,7 +141,32 @@ def get_logs_list_df_filter_to_calendar_wrap(_filter):
     df = get_logs_list_df_filter(df, _filter)
     return separate_to_days(df)
 
+def get_timezone_file(report_id):
+    return os.path.join(UPLOADS_TEXT, f"{report_id}.timezone")
 
+def get_timezone(report_id):
+    tz_path = get_timezone_file(report_id)
+    timezone_str = file_functions.file_read(tz_path)
+    try:
+        return pytz.timezone(timezone_str)
+    except (ValueError, pytz.exceptions.UnknownTimeZoneError):
+        return pytz.utc
+
+def get_datetime(report_id):
+    _info = get_report_name_info(report_id)
+    date_str = f'{_info["date"]}--{_info["time"]}'
+    return datetime.strptime(date_str, "%y-%m-%d--%H-%M")
+
+def convert_timezone(report_id):
+    timezone = get_timezone(report_id)
+    dt_current = get_datetime(report_id)
+    dt = timezone.normalize(timezone.localize(dt_current)).astimezone(pytz.utc)
+    return {
+        "year": dt.year%1000,
+        "month": dt.month,
+        "day": dt.day,
+        "time": dt.strftime("%H:%M"),
+    }
 
 def make_new(folders: list[str]):
     if not folders:
@@ -155,11 +183,9 @@ def make_new(folders: list[str]):
         if not os.path.isfile(report.relative_path("ENCOUNTER_DATA.json")):
             continue
         try:
+            date = convert_timezone(report_id)
             report_name_info = get_report_name_info(report_id)
-            date = map(int, report_name_info["date"].split("-"))
-            date = dict(zip(("year", "month", "day"), date))
             data[report_id] = date | {
-                "time": report_name_info["time"].replace("-", ":"),
                 "author": report_name_info["author"],
                 "server": report_name_info["server"],
                 "player": tuple(report.get_players_guids().values()),
