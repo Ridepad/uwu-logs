@@ -121,18 +121,19 @@ def separate_to_days(df: pandas.DataFrame):
     i_server = columns.index("server") + 1
     i_author = columns.index("author") + 1
 
-    reports_by_day = defaultdict(set)
+    reports_by_day = defaultdict(list)
     for data in df.itertuples():
-        day_key = (f"{data[i_month]:0>2}-{data[i_day]:0>2}")
+        day_key = f"{data[i_month]:0>2}-{data[i_day]:0>2}"
         formatted_report_info = f"{data[i_time]} | {data[i_server]} | {data[i_author]}"
-        reports_by_day[day_key].add((data[0], formatted_report_info))
+        reports_by_day[day_key].append((data[0], formatted_report_info))
     
-    return {k: sorted(v) for k, v in reports_by_day.items()}
+    return reports_by_day
 
 @running_time
 def get_logs_list_filter_json(_filter):
     df = get_logs_list_df()
     df = get_logs_list_df_filter(df, _filter)
+    df.sort_values(by="time")
     return json.dumps(list(df.index))
 
 def get_logs_list_df_filter_to_calendar_wrap(_filter):
