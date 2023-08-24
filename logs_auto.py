@@ -42,6 +42,7 @@ def save_raw_logs(file_name: str):
     
     pc = perf_counter()
     archive_path = os.path.join(LOGS_RAW_DIR, f"{report_id}.7z")
+    file_functions.create_folder(LOGS_RAW_DIR)
     return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
         os.remove(logs_txt_path)
