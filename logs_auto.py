@@ -240,7 +240,7 @@ def main():
         executor.map(logs_top.make_report_top_wrap, RAW_LOGS_NO_EXT)
 
     # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs()
+    logs_calendar.add_new_logs(RAW_LOGS_NO_EXT)
 
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(save_temp_top, RAW_LOGS_NO_EXT)
