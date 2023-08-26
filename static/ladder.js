@@ -50,7 +50,7 @@ const mainshitbody = document.getElementById("mainshit-body");
 const mainshitfoot = document.getElementById("mainshit-foot");
 const FIGHTS_PLAYERS_TABLE = document.getElementById("fights-players-table");
 
-const ws_host = `ws://${window.location.hostname}:8765`
+const ws_host = `wss://${window.location.hostname}:8765`
 console.log(ws_host);
 const socket = new WebSocket(ws_host);
 
