@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+{% block head_meta %}
+<meta name="title" content="UwU Logs - Ladder Live">
+<meta name="description" content="Ladder live for UwU Logs.">
+<link rel="shortcut icon" href="/favicon.ico">
+{% endblock head_meta %}
+{% block scripts_head %}
+<script type="module" src="static/ladder.js?v={{ V }}"></script>
+{% endblock scripts_head %}
+{% block add_style %}
+<style>
+.hidden {
+  display: none;
+}
+td {
+  padding-inline: .25em;
+}
+
+#mainshit-table .live td {
+  /*background-color: hsl(271, 100%, 6%);*/
+}
+
+#mainshit-table .wipe td {
+  background-color: hsl(357, 100%, 13%);
+}
+
+#mainshit-table .kill td {
+  background-color: hsl(107, 100%, 12%);
+}
+
+.cell-guild {
+  min-width: 14em;
+}
+
+.cell-attempts {
+  min-width: 2em;
+  text-align: right;
+}
+.cell-server {
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.cell-mode {
+  min-width: 4em;
+}
+.cell-time {
+  min-width: 3em;
+  text-align: right;
+}
+
+.cell-size {
+  text-align: right;
+  min-width: 2em;
+}
+
+.cell-id {
+  display: none;
+}
+td.cell-id {
+  min-width: 6em;
+}
+
+.cell-boss {
+  text-align: center;
+  min-width: 13em;
+}
+
+#mainshit {
+  font-size: 150%;
+}
+
+img {
+  min-height: 1em;
+  max-height: 1em;
+  min-width: 1em;
+  max-width: 1em;
+  vertical-align: text-bottom;
+  padding-inline: .15em;
+}
+#fights-players {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+}
+.cell-name {
+  min-width: 9em;
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main>
+  <section id="mainshit">
+    <table id="mainshit-table">
+      <thead>
+        <tr>
+          <th class="cell-id">ID</th>
+          <th></th>
+          <th>Time</th>
+          <th>Try</th>
+          <th>Fight name</th>
+          <th colspan="2">Difficulty</th>
+          <th>Guild</th>
+        </tr>
+      </thead>
+      <tbody id="mainshit-body">
+      </tbody>
+      <tfoot id="mainshit-foot" style="display: none;"></tfoot>
+    </table>
+  </section>
+  <section id="fights-players">
+    <table id="fights-players-table">
+      <thead>
+        <tr>
+          <th>PLAYER</th>
+          <th>GUILD</th>
+        </tr>
+      </thead>
+      <tbody id="players-body">
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock the_main %}

@@ -668,6 +668,12 @@ def top_stats():
     
     return logs_top_statistics.get_boss_data(server, boss, diff)
 
+@SERVER.route("/ladder")
+def ladder():
+    return render_template_wrap(
+        'ladder.html',
+    )
+
 
 def connections():
     return
