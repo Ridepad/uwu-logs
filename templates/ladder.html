@@ -16,10 +16,6 @@ td {
   padding-inline: .25em;
 }
 
-#mainshit-table .live td {
-  /*background-color: hsl(271, 100%, 6%);*/
-}
-
 #mainshit-table .wipe td {
   background-color: hsl(357, 100%, 13%);
 }
@@ -79,8 +75,8 @@ img {
   padding-inline: .15em;
 }
 #fights-players {
-  position: absolute;
-  top: 0;
+  position: fixed;
+  top: calc(var(--nav-height) * 2);
   right: 0;
 
 }

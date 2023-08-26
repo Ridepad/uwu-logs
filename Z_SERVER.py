@@ -672,6 +672,7 @@ def top_stats():
 def ladder():
     return render_template_wrap(
         'ladder.html',
+        REPORT_NAME="PvE Ladder",
     )
 
 

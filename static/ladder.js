@@ -51,7 +51,6 @@ const mainshitfoot = document.getElementById("mainshit-foot");
 const FIGHTS_PLAYERS_TABLE = document.getElementById("fights-players-table");
 
 const ws_host = `wss://${window.location.hostname}:8765`
-console.log(ws_host);
 const socket = new WebSocket(ws_host);
 
 const intervals = {};
@@ -129,14 +128,6 @@ function players_span(players, guilds, pguilds, pspecs) {
   return body;
 }
 
-// function time_to_text(t) {
-//   let miliseconds = t % 10;
-//   let seconds = Math.floor(t / 10);
-//   const minutes = `${Math.floor(seconds/60)}`.padStart(2, '0');
-//   seconds = `${seconds%60}`.padStart(2, '0');
-//   return `${minutes}:${seconds}.${miliseconds}`
-// }
-
 function auto_hide(row) {
   setTimeout(() => {
     mainshitfoot.appendChild(row);
@@ -178,8 +169,8 @@ function add_row(data) {
 
   if (time == 0 && _type == "live") {
     const mtime = new Date(data["mtime"] * 1000);
-    const start = Math.floor((Date.now() - mtime) / 1000);
-    console.log(mtime, start);
+    const diff = (Date.now() - mtime) / 1000
+    const start = Math.max(Math.floor(diff), 0);
     add_stopwatch_cell(row, start);
   } else {
     clearInterval(intervals[row.id]);
@@ -217,10 +208,8 @@ function add_row(data) {
 }
 
 
-// Listen for messages
 socket.addEventListener("message", event => {
   const data = JSON.parse(event.data);
-  console.log(data);
   if (!Array.isArray(data)) {
     add_row(data);
     return
@@ -229,160 +218,3 @@ socket.addEventListener("message", event => {
     add_row(_data);
   }
 });
-
-
-function init() {
-  const t1 =  {
-    "parent": "wipe",
-    "id": "4477211",
-    "server": "Lordaeron",
-    "b": "Blood Prince Council",
-    "s": 25,
-    "m": 1,
-    "t": 186,
-    "w": 1,
-    "a": [],
-    "g": ["BURST DRAGON", "M E N T A L L Y"],
-    "pn": ["Hanzels", "Bluedog", "Shalmah", "Indraz", "Azretul", "Isowar", "Boluda", "Andolokazo", "Kennypat", "Azuredragon", "Sandroo", "Santarroza", "Keroppi", "Preyade", "Gustafox", "Clintonn", "Lexicus", "Vegel", "Akaya", "Whitejean", "Jhoselyn", "Nenytaa", "Nelielle", "Josephcum", "Poplolito"],
-    "pg": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "pf": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "pr": [4, 4, 5, 4, 1, 4, 4, 4, 4, 5, 5, 4, 4, 1, 3, 5, 2, 1, 5, 5, 1, 1, 1, 4, 3],
-    "pc": [8, 0, 1, 9, 4, 9, 3, 6, 4, 2, 1, 4, 4, 3, 3, 1, 2, 7, 0, 5, 9, 3, 7, 5, 3],
-    "ps": [34, 3, 6, 38, 18, 38, 14, 26, 17, 10, 5, 19, 17, 14, 14, 5, 10, 31, 1, 21, 38, 14, 31, 23, 14]
-  };
-  add_row(t1);
-
-  const t2 = {
-    "parent": "wipe",
-    "id": "4477281",
-    "server": "Lordaeron",
-    "b": "Deathbringer Saurfang",
-    "s": 10,
-    "m": 1,
-    "t": 1,
-    "w": 2,
-    "a": [],
-    "g": [
-      "",
-      "Circulo de Titanes",
-      "LAtinoSEXaltados",
-      "Poor Decisions",
-      "WetDreams",
-      "this not kirchoff"
-    ],
-    "pn": [
-      "Tedioso",
-      "Elgeimanco",
-      "Ahrimanx",
-      "Jhonnyg",
-      "Plagahot",
-      "Elpolinomio",
-      "Coronelbrant",
-      "Vascotron",
-      "Arwenx",
-      "Ccofi"
-    ],
-    "pg": [2, 3, 2, 2, 2, 5, 2, 0, 4, 1],
-    "pf": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "pr": [7, 8, 0, 0, 0, 9, 0, 8, 0, 0],
-    "pc": [1, 2, 6, 4, 4, 5, 0, 7, 3, 0],
-    "ps": [5, 10, 26, 17, 18, 23, 1, 31, 14, 2],
-  };
-  add_row(t2);
-
-  const t3 = {
-    "parent": "wipe",
-    "server": "Lordaeron",
-    "id": "4477468",
-    "mtime": 1693031582.790271,
-    "b": "The Lich King",
-    "s": 10,
-    "m": 0,
-    "t": 1,
-    "w": 7,
-    "a": [],
-    "g": [
-      "Butterfly Effect"
-    ],
-    "pn": [
-      "Balrogmq",
-      "Baqi",
-      "Buidekuai",
-      "Danbshaman",
-      "Fvzsq",
-      "Guangedaf",
-      "Guguda",
-      "Lddldd",
-      "Pantyhose",
-      "Wan"
-    ],
-    "pg": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "pf": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "pr": [9, 7, 8, 8, 0, 0, 0, 7, 6, 6],
-    "pc": [5, 7, 3, 2, 4, 4, 4, 1, 9, 0],
-    "ps": [21, 31, 14, 10, 18, 19, 17, 5, 38, 1],
-  };
-  add_row(t3);
-
-  const t4 = {
-    "parent": "kill",
-    "server": "Icecrown",
-    "id": "15217285",
-    "mtime": 1693032537.6815186,
-    "b": "Flame Leviathan",
-    "s": 10,
-    "m": 0,
-    "t": 119,
-    "w": 1,
-    "a": [],
-    "g": [
-      "",
-      "P L A"
-    ],
-    "pn": ["Glodfs","Nairobe"],
-    "pg": [1,0],
-    "pf": [0,0],
-    "pr": [4,3],
-    "pc": [3,3],
-    "ps": [14,14],
-  }
-  add_row(t4);
-
-  const t5 = {
-    "parent": "wipe",
-    "server": "Icecrown",
-    "id": "15217306",
-    "mtime": 1693032757.8561149,
-    "b": "Blood Prince Council",
-    "s": 10,
-    "m": 0,
-    "t": 1,
-    "w": 1,
-    "a": [],
-    "g": [
-      "",
-      "I N F I D E L S",
-      "JAKOS TO BEDZIE",
-      "SayNoToTryhard",
-      "Unpossibles"
-    ],
-    "pn": [
-      "Baankaai",
-      "Bnator",
-      "Brooks",
-      "Curb",
-      "Drsick",
-      "Ebyr",
-      "Galvayra",
-      "Kahynn",
-      "Palyz"
-    ],
-    "pg": [0, 3, 4, 1, 0, 0, 0, 0, 2],
-    "pf": [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "pr": [0, 8, 6, 0, 8, 0, 0, 8, 6],
-    "pc": [0, 2, 6, 4, 3, 3, 4, 5, 7],
-    "ps": [1, 10, 26, 19, 14, 14, 19, 23, 31],
-  }
-  add_row(t5);
-}
-// init()
