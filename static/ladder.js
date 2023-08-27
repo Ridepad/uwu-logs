@@ -44,36 +44,61 @@ const SPECS = [
 const CONFIG = {
   timeout: 30000,
 }
-
-const button = document.getElementById("sendshit");
-const mainshitbody = document.getElementById("mainshit-body");
-const mainshitfoot = document.getElementById("mainshit-foot");
-const FIGHTS_PLAYERS_TABLE = document.getElementById("fights-players-table");
-
-const ws_host = `wss://${window.location.hostname}:8765`
+// const ws_host = `wss://${window.location.hostname}:8765`
+const ws_host = `wss://uwu-logs.xyz:8765`
 const socket = new WebSocket(ws_host);
 
-const intervals = {};
 const fragments = {};
+const mtimes = {};
+const donetimes = {};
 
+const mainshitbody = document.getElementById("mainshit-body");
+const mainshitfoot = document.getElementById("mainshit-foot");
+const fightsplayers = document.getElementById("fights-players");
+const FIGHTS_PLAYERS_TABLE = document.getElementById("fights-players-table");
+
+const select_server = document.getElementById("select-server");
+const select_size = document.getElementById("select-size");
+const select_mode = document.getElementById("select-mode");
+const select_timeout = document.getElementById("select-timeout");
+const select_faction = document.getElementById("select-faction");
+const checkbox_show_done = document.getElementById("show-done");
+const checkbox_show_live = document.getElementById("show-live");
+const checkbox_players = document.getElementById("show-players");
+
+const dummy = () => true;
+const has_attr = (attr_name, value) => tr => tr.getAttribute(attr_name) == value;
+const has_attr_wrap = (attr_name, value) => value == "all" ? dummy : has_attr(attr_name, value);
+function show_row_wrap() {
+  const faction = has_attr_wrap("data-faction", select_faction.value);
+  const mode = has_attr_wrap("data-mode", select_mode.value);
+  const size = has_attr_wrap("data-size", select_size.value);
+  const server = has_attr_wrap("data-server", select_server.value);
+  return tr => faction(tr) && mode(tr) && size(tr) && server(tr);
+}
+function filter_table() {
+  const show_row = show_row_wrap();
+  mainshitbody.querySelectorAll("tr").forEach(tr => {
+    show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
+  });
+  checkbox_show_done_changed();
+}
+function checkbox_show_done_changed() {
+  if (!checkbox_show_done.checked) return;
+  checkbox_show_done.querySelectorAll("tr").forEach(tr => {
+    show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
+  });
+}
 function time_to_text(t) {
   const minutes = `${Math.floor(t/60)}`.padStart(2, '0');
-  const seconds = `${t%60}`.padStart(2, '0');
+  const seconds = `${Math.floor(t%60)}`.padStart(2, '0');
   return `${minutes}:${seconds}`
 }
-function interval_wrap(e, start) {
-  let v = start;
-  e.textContent = time_to_text(start);
-  const t = setInterval(() => {
-    v = v + 1;
-    e.textContent = time_to_text(v);
-  }, 1000);
-  return t;
-}
-function add_stopwatch_cell(row, start) {
+
+function add_stopwatch_cell(row, d) {
   const td = document.createElement("td");
-  td.classList.add(`cell-time`);
-  intervals[row.id] = interval_wrap(td, start);
+  td.classList.add("cell-time");
+  mtimes[row.id] = d;
   row.appendChild(td);
 }
 function add_cell(row, value, type, inner) {
@@ -101,9 +126,14 @@ function get_guild_index(dataset, guild_names) {
   return majority == undefined ? "Pug" : `Pug (${guild_names[majority]})`;
 }
 
-function players_span(players, guilds, pguilds, pspecs) {
+function players_span(data) {
+  const players = data["pn"];
+  const guilds = data["g"];
+  const pguilds = data["pg"];
+  const pspecs = data["ps"];
+  const mtime = (new Date(data["mtime"] * 1000)).valueOf();
   const body = document.createElement("tbody");
-  players.sort();
+
   for (const i in players) {
     const row = document.createElement("tr");
     const [spec, spec_icon, spec2] = SPECS[pspecs[i]]
@@ -125,10 +155,20 @@ function players_span(players, guilds, pguilds, pspecs) {
     row.appendChild(td_guild);
     body.appendChild(row);
   }
+  
+  const time_row = document.createElement("tr");
+  time_row.setAttribute("data-start", mtime);
+  const td_name = document.createElement("td");
+  td_name.append("Started");
+  time_row.appendChild(td_name);
+  time_row.appendChild(document.createElement("td"));
+  body.appendChild(time_row);
+  
   return body;
 }
 
 function auto_hide(row) {
+  delete mtimes[row.id];
   setTimeout(() => {
     mainshitfoot.appendChild(row);
   }, CONFIG.timeout);
@@ -146,7 +186,6 @@ function add_row(data) {
     
     auto_hide(prev_row);
 
-    clearInterval(intervals[_id]);
     prev_row.className = _type;
 
     prev_row.querySelector(".cell-time").textContent = time_to_text(time);
@@ -166,14 +205,12 @@ function add_row(data) {
   const img_server = document.createElement("img");
   img_server.src = `/static/${server}.png`;
   add_cell(row, img_server, "server");
+  row.setAttribute("data-server", server);
 
   if (time == 0 && _type == "live") {
     const mtime = new Date(data["mtime"] * 1000);
-    const diff = (Date.now() - mtime) / 1000
-    const start = Math.max(Math.floor(diff), 0);
-    add_stopwatch_cell(row, start);
+    add_stopwatch_cell(row, mtime);
   } else {
-    clearInterval(intervals[row.id]);
     add_cell(row, time_to_text(time), "time");
     auto_hide(row);
   }
@@ -184,29 +221,80 @@ function add_row(data) {
   add_cell(row, boss_name, "boss");
   
   add_cell(row, data["s"], "size");
+  row.setAttribute("data-size", data["s"]);
   
   const mode = data["m"] == 1 ? "Heroic" : "Normal"
   add_cell(row, mode, "mode");
+  row.setAttribute("data-mode", mode);
 
   const faction = data["pf"][0] == 1 ? "horde" : "alliance"
   const img = document.createElement("img");
   img.src = `/static/${faction}.png`;
   const guild = get_guild_index(data["pg"], data["g"]);
   add_cell(row, guild, "guild", img)
+  row.setAttribute("data-faction", faction);
 
+  show_row_wrap()(row) ? row.style.display = "" : row.style.display = "none";
   if (prev_row) {
     mainshitbody.replaceChild(row, prev_row);
   } else {
     mainshitbody.appendChild(row);
   }
 
-  fragments[_id] = players_span(data["pn"], data["g"], data["pg"], data["ps"]);
+  fragments[_id] = players_span(data);
 
   row.addEventListener("mouseenter", () => {
-    FIGHTS_PLAYERS_TABLE.replaceChild(fragments[row.id], FIGHTS_PLAYERS_TABLE.lastChild);
+    FIGHTS_PLAYERS_TABLE.replaceChild(fragments[row.id], FIGHTS_PLAYERS_TABLE.firstElementChild);
+    set_finish_time();
   });
 }
 
+function set_finish_time() {
+  const tr = FIGHTS_PLAYERS_TABLE.querySelector("tbody").lastElementChild;
+  if (!tr) return;
+  const diff = Date.now() - tr.getAttribute("data-start");
+  const t = Math.floor(diff / 1000 / 60);
+  tr.lastElementChild.textContent = `${t} minutes ago`;
+}
+
+
+checkbox_show_done.addEventListener("change", () => {
+  checkbox_show_done.checked ? mainshitfoot.style.display = "" : mainshitfoot.style.display = "none";
+  checkbox_show_done_changed();
+});
+checkbox_show_live.addEventListener("change", () => {
+  checkbox_show_live.checked ? mainshitbody.style.display = "" : mainshitbody.style.display = "none";
+});
+checkbox_players.addEventListener("change", () => {
+  checkbox_players.checked ? fightsplayers.style.display = "" : fightsplayers.style.display = "none";
+});
+select_timeout.addEventListener("change", () => {
+  CONFIG.timeout = select_timeout.value * 1000;
+  console.log(CONFIG.timeout);
+});
+
+for (const select of [select_server, select_size, select_mode, select_faction, ]) {
+  select.addEventListener("change", filter_table);
+}
+
+CONFIG.timeout = select_timeout.value * 1000;
+checkbox_players.checked ? fightsplayers.style.display = "" : fightsplayers.style.display = "none";
+checkbox_show_done.checked ? mainshitfoot.style.display = "" : mainshitfoot.style.display = "none";
+checkbox_show_live.checked ? mainshitbody.style.display = "" : mainshitbody.style.display = "none";
+
+setInterval(() => {
+  const now = Date.now();
+  for (const _id in mtimes) {
+    const td = document.getElementById(_id).querySelector(".cell-time");
+    const diff = now - mtimes[_id]
+    const v = Math.max(diff/1000, 0);
+    td.textContent = time_to_text(v);
+  }
+}, 1000);
+
+setInterval(() => {
+  set_finish_time();
+}, 10000);
 
 socket.addEventListener("message", event => {
   const data = JSON.parse(event.data);

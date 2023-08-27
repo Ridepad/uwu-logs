@@ -59,9 +59,9 @@ td.cell-id {
 
 .cell-boss {
   text-align: center;
-  min-width: 13em;
+  min-width: 13.5em;
 }
-
+#controls,
 #mainshit {
   font-size: 150%;
 }
@@ -75,13 +75,21 @@ img {
   padding-inline: .15em;
 }
 #fights-players {
+  margin-bottom: 1rem;
   position: fixed;
-  top: calc(var(--nav-height) * 2);
+  bottom: var(--bottom-row-one);
   right: 0;
-
 }
 .cell-name {
   min-width: 9em;
+}
+@media (orientation: portrait) {
+  #fights-players {
+    bottom: calc(var(--bottom-row-one) * 3);
+  }
+  footer {
+    height: calc(var(--bottom-row-one) * 3);
+  }
 }
 </style>
 {% endblock add_style %}
@@ -101,22 +109,64 @@ img {
           <th>Guild</th>
         </tr>
       </thead>
-      <tbody id="mainshit-body">
-      </tbody>
+      <tbody id="mainshit-body"></tbody>
       <tfoot id="mainshit-foot" style="display: none;"></tfoot>
     </table>
   </section>
   <section id="fights-players">
     <table id="fights-players-table">
-      <thead>
+      <tbody></tbody>
+      <tfoot>
         <tr>
           <th>PLAYER</th>
           <th>GUILD</th>
         </tr>
-      </thead>
-      <tbody id="players-body">
-      </tbody>
+      </tfoot>
     </table>
   </section>
 </main>
 {% endblock the_main %}
+{% block main_foot %}
+<footer>
+  <section id="controls">
+    <select id="select-server">
+      <option value="all">Any server</option>
+      <option value="lordaeron">Lordaeron</option>
+      <option value="icecrown">Icecrown</option>
+    </select>
+    <select id="select-size">
+      <option value="all">Any size</option>
+      <option value="10">10</option>
+      <option value="25">25</option>
+    </select>
+    <select id="select-mode">
+      <option value="all">Any mode</option>
+      <option value="Heroic">Heroic</option>
+      <option value="Normal">Normal</option>
+    </select>
+    <select id="select-faction">
+      <option value="all">Any faction</option>
+      <option value="alliance">Alliance</option>
+      <option value="horde">Horde</option>
+    </select>
+    <select id="select-timeout">
+      <option value="30">Auto hide</option>
+      <option value="0">0</option>
+      <option value="2">2</option>
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="30">30</option>
+      <option value="60">60</option>
+      <option value="120">120</option>
+      <option value="300">300</option>
+    </select>
+    <input type="checkbox" id="show-players" checked>
+    <label for="show-players">Show players</label>
+    <input type="checkbox" id="show-live" checked>
+    <label for="show-live">Show live</label>
+    <input type="checkbox" id="show-done">
+    <label for="show-done">Show done</label>
+  </section>
+</footer>
+{% endblock main_foot %}
