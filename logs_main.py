@@ -220,13 +220,13 @@ def sort_by_name_type(targets: list[tuple[str, str]]):
     targets.sort(key=lambda x: x[0][:5] == "0xF14")
     return dict(targets)
 
-def get_dict_int(d: dict, key, default=0):
+def get_dict_int(d: dict, key, default=None):
     try:
         v = d[key]
         try:
             return int(v)
         except Exception:
-            return v
+            return default
     except KeyError:
         return default
 
@@ -632,13 +632,13 @@ class THE_LOGS:
         ts = self.get_timestamp()
         sc = get_dict_int(args, "sc")
         fc = get_dict_int(args, "fc")
-        if sc > 0 and fc < len(ts):
+        if sc and fc and sc > 0 and fc < len(ts):
             slice_name = "Custom Slice"
             slice_tries = ""
             segments = [[ts[sc], ts[fc]]]
         elif not boss_name:
             slice_name = "Custom Slice"
-            slice_tries = "All"
+            slice_tries = ""
             s = get_dict_int(args, "s")
             f = get_dict_int(args, "f")
             if s and f:
