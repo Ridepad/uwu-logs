@@ -124,7 +124,9 @@ tr:nth-child(n+2) .player-cell div {
       </table>
     </div>
   </section>
-  <canvas id="chart"></canvas>
+  <section id="chart-wrap" style="display: none;">
+    <canvas id="chart"></canvas>
+  </section>
   <div class="min-max-slider" data-legendnum="2">
     <div class="min-max-slider-inputs">
       <input class="min min-max-slider-half" name="min" type="range" step="1"/>
@@ -149,91 +151,96 @@ tr:nth-child(n+2) .player-cell div {
 
 {% block the_scripts %}
 <script>
-  const thead = document.querySelector("thead");
-  const tbody = document.querySelector("tbody");
-  const getCellValue = (tr, className) => tr.querySelector(className).innerText.replace(/[% ]/g, "");
-  const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
-  document.querySelectorAll("th[class").forEach(th => th.addEventListener("click", () => {
-    const _class = th.className;
-    Array.from(tbody.querySelectorAll("tr"))
-         .sort(comparer(`.${th.className}`))
-         .forEach(tr => tbody.appendChild(tr));
-  }));
-  
-  async function draw_chart(datapoints) {
-    if (Object.keys(datapoints).length === 0) return;
-    const data = {
-      datasets: [
-        {
-          data: datapoints,
-          cubicInterpolationMode: 'monotone',
-          borderColor: '#FF0000',
-          pointBorderWidth: 0,
-        }
-      ]
-    };
+const tbody = document.querySelector("tbody");
+const getCellValue = (tr, className) => tr.querySelector(className).textContent.replace(/ /g, "");
+const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
+document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", () => {
+  Array.from(tbody.querySelectorAll("tr"))
+        .sort(comparer(`.total-cell.${th.classList[0]}`))
+        .forEach(tr => tbody.appendChild(tr));
+}));
 
-    const datapoints_values = Object.values(datapoints);
-    const datapoints_min = Math.min(...datapoints_values);
-    const graph_min = Math.floor(datapoints_min);
-    const datapoints_max = Math.max(...datapoints_values);
-    const graph_max = Math.ceil(datapoints_max);
+const GET_DPS_REQUEST = new XMLHttpRequest();
 
-    const options = {
-      animation: false,
-      responsive: true,
-      scales: {
-        y: {
-          grid: {
-            color: 'rgb(32, 32, 32)',
-            tickLength: 1,
-          },
-          min: graph_min,
-          max: graph_max,
-          display: true,
-          title: {
-            display: true,
-            text: 'DPS'
-          },
-          ticks: {
-            padding: 0
-          }
-        },
-        x: {
-          display: false
-        }
+const CHART_OPTIONS = {
+  maintainAspectRatio: false,
+  responsive: true,
+  animation: false,
+  scales: {
+    x: {
+      grid: {
+        color: '#141414',
+        tickLength: 1,
       },
-      plugins: {
-        tooltip: {
-          intersect: false
-        },
-        legend: {
-          display: false
-        }
-      }
-    };
-
-    const config = {
-      type: 'line',
-      data: data,
-      options: options,
-    };
-    new Chart(document.getElementById('chart'), config);
+    },
+    y: {
+      grid: {
+        color: '#141414',
+        tickLength: 1,
+      },
+      title: {
+        display: true,
+        text: 'DPS',
+      },
+      ticks: {
+        padding: 0,
+      },
+    },
+  },
+  plugins: {
+    tooltip: {
+      intersect: false,
+    },
+    legend: {
+      display: false,
+    },
+  },
+  interaction: {
+    mode: 'index',
   }
+};
+const CHART = new Chart(document.getElementById('chart'), {
+  type: 'line',
+  options: CHART_OPTIONS,
+});
 
-  const get_dps_request = new XMLHttpRequest();
-  get_dps_request.onreadystatechange = () => {
-    if (get_dps_request.readyState != 4 || get_dps_request.status != 200) return;
-    const datapoints = JSON.parse(get_dps_request.response);
-    draw_chart(datapoints);
+function make_new_dataset(datapoints) {
+  return {
+    data: datapoints,
+    cubicInterpolationMode: 'monotone',
+    borderColor: '#6900cc',
+    pointBorderWidth: 0,
   }
-  (function() {
-    const params = new URLSearchParams(window.location.search);
-    const paramsjson = Object.fromEntries(params);
-    const reportID = window.location.pathname.split('/')[2];
-    const END_POINT = `/reports/${reportID}/get_dps`;
-    get_dps_request.open("POST", END_POINT);
-    get_dps_request.send(JSON.stringify(paramsjson));
-  })();
+}
+
+function chartSetData(datapoints) {
+  if (Object.keys(datapoints).length === 0 && CHART.data.datasets.length === 0) {
+    return
+  }
+  const datapoints_values = Object.values(datapoints);
+  const datapoints_min = Math.min(...datapoints_values);
+  const datapoints_max = Math.max(...datapoints_values);
+  CHART.options.scales.y.min = Math.floor(datapoints_min);
+  CHART.options.scales.y.max = Math.ceil(datapoints_max);
+  CHART.data.datasets[0] = make_new_dataset(datapoints);
+  CHART.update();
+  document.getElementById('chart-wrap').style.removeProperty("display");
+}
+
+GET_DPS_REQUEST.onreadystatechange = () => {
+  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
+  
+  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
+  chartSetData(datapoints);
+}
+
+(() => {
+  const reportID = window.location.pathname.split('/')[2];
+  const END_POINT = `/reports/${reportID}/get_dps`;
+  const params = new URLSearchParams(window.location.search);
+  const params_obj = Object.fromEntries(params);
+  GET_DPS_REQUEST.open("POST", END_POINT);
+  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
+})();
 </script>
 {% endblock the_scripts %}

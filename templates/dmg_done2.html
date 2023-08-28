@@ -331,48 +331,25 @@ const TARGET_SELECT = document.getElementById("target-select");
 const CHART_ELEMENT_WRAP = document.getElementById('chart-wrap');
 const TOGGLE_GRAPH = document.getElementById('toggle-graph');
 const SELECT_SLICE_SECONDS = document.getElementById("sliced-sec");
-const GET_DPS_REQUEST = new XMLHttpRequest();
 const main = document.querySelector("main");
 const REPORT_ID = main.getAttribute("data-report-id");
 const SOURCE_NAME = main.getAttribute("data-source-name");
+
+const GET_DPS_REQUEST = new XMLHttpRequest();
 const QUERY_PARAMS = new URLSearchParams(location.search);
-const TARGET = QUERY_PARAMS.get('target');
-TARGET ? TARGET_SELECT.value = TARGET : TARGET_SELECT.selectedIndex = 0;
+const CACHED_GRAPHS = {};
 
-function redirect(event) {
-  const isReset = (TARGET_SELECT.selectedIndex == 0 || event.target == TARGET_RESET);
-  isReset ? QUERY_PARAMS.delete('target') : QUERY_PARAMS.set('target', TARGET_SELECT.value);
-  location.replace(`${location.origin}${location.pathname}?${QUERY_PARAMS}`);
-};
-
-function togglegraph() {
-  if (!TOGGLE_GRAPH.checked) {
-    CHART_ELEMENT_WRAP.style.display = "none";
-  } else {
-    send_post();
-    CHART_ELEMENT_WRAP.style.removeProperty("display");
-  }
-}
-
-function send_post() {
-  if (!TOGGLE_GRAPH.checked) return;
-  QUERY_PARAMS.set("player_name", SOURCE_NAME)
-  QUERY_PARAMS.set("sec", SELECT_SLICE_SECONDS.value);
-  const params_obj = Object.fromEntries(QUERY_PARAMS);
-  const END_POINT = `/reports/${REPORT_ID}/get_dps`;
-  GET_DPS_REQUEST.open("POST", END_POINT);
-  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
-}
-
-
-const options = {
+const CHART_OPTIONS = {
   maintainAspectRatio: false,
-    animation: false,
-    animation: false,
-    responsive: true,
+  responsive: true,
   animation: false,
-    responsive: true,
   scales: {
+    x: {
+      grid: {
+        color: '#141414',
+        tickLength: 1,
+      },
+    },
     y: {
       grid: {
         color: '#141414',
@@ -386,12 +363,6 @@ const options = {
         padding: 0,
       },
     },
-    x: {
-      grid: {
-        color: '#141414',
-        tickLength: 1,
-      },
-    }
   },
   plugins: {
     tooltip: {
@@ -407,14 +378,8 @@ const options = {
 };
 const CHART = new Chart(document.getElementById('chart'), {
   type: 'line',
-  options: options,
+  options: CHART_OPTIONS,
 });
-
-GET_DPS_REQUEST.onreadystatechange = () => {
-  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
-  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
-  chartSetData(datapoints);
-}
 
 function make_new_dataset(datapoints) {
   return {
@@ -438,10 +403,46 @@ function chartSetData(datapoints) {
   CHART.update();
 }
 
-togglegraph();
-TOGGLE_GRAPH.addEventListener("change", togglegraph);
+GET_DPS_REQUEST.onreadystatechange = () => {
+  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
+  
+  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
+  CACHED_GRAPHS[SELECT_SLICE_SECONDS.value] = datapoints;
+  chartSetData(datapoints);
+}
+
+function send_post() {
+  if (!TOGGLE_GRAPH.checked) return;
+
+  const params_obj = Object.fromEntries(QUERY_PARAMS);
+  params_obj["player_name"] = SOURCE_NAME;
+  params_obj["sec"] = SELECT_SLICE_SECONDS.value;
+  const END_POINT = `/reports/${REPORT_ID}/get_dps`;
+  GET_DPS_REQUEST.open("POST", END_POINT);
+  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
+}
+
+function toggle_graph() {
+  CHART_ELEMENT_WRAP.style.display = TOGGLE_GRAPH.checked ? "" : "none";
+  const data = CACHED_GRAPHS[SELECT_SLICE_SECONDS.value];
+  data ? chartSetData(data) : send_post();
+}
+
+function redirect(event) {
+  const isReset = (TARGET_SELECT.selectedIndex == 0 || event.target == TARGET_RESET);
+  isReset ? QUERY_PARAMS.delete('target') : QUERY_PARAMS.set('target', TARGET_SELECT.value);
+  location.replace(`${location.origin}${location.pathname}?${QUERY_PARAMS}`);
+};
+
+
+const TARGET = QUERY_PARAMS.get('target');
+TARGET ? TARGET_SELECT.value = TARGET : TARGET_SELECT.selectedIndex = 0;
+
 TARGET_RESET.addEventListener("click", redirect);
 TARGET_SELECT.addEventListener("change", redirect);
-SELECT_SLICE_SECONDS.addEventListener("change", send_post);
+
+toggle_graph();
+TOGGLE_GRAPH.addEventListener("change", toggle_graph);
+SELECT_SLICE_SECONDS.addEventListener("change", toggle_graph);
 </script>
 {% endblock the_scripts %}
