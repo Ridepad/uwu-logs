@@ -258,7 +258,7 @@ def before_request():
             return render_template_wrap('protected.html')
         return "", 403
 
-    if not SERVER.debug and request.path in CACHED_PAGES:
+    if not SERVER.debug and request.method == "GET" and request.path in CACHED_PAGES:
         query = get_formatted_query_string()
         pages = CACHED_PAGES[request.path]
         if query in pages:
