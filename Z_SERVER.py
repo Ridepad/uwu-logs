@@ -235,7 +235,7 @@ def before_request():
 
     report_id = url_comp[2]
     if not report_id:
-        return show_logs_list()
+        return redirect("/logs_list")
 
     report_folder = os.path.join(LOGS_DIR, report_id)
     if not os.path.isdir(report_folder):
