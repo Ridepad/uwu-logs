@@ -44,8 +44,7 @@ const SPECS = [
 const CONFIG = {
   timeout: 30000,
 }
-// const ws_host = `wss://${window.location.hostname}:8765`
-const ws_host = `wss://uwu-logs.xyz:8765`
+const ws_host = `wss://${window.location.hostname}:8765`
 const socket = new WebSocket(ws_host);
 
 const fragments = {};
