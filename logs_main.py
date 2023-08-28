@@ -81,6 +81,7 @@ SPEC_ICON_TO_POSITION = {
     for spec_i, icon in enumerate(specs)
 }
 
+TYPES = (str, bool, type(None))
 HIT_KEYS = {"CAST", "HIT", "PERIODIC"}
 REDUCED_KEYS = {"OVERKILL", "OVERHEAL", "ABSORBED", "RESISTED", "GLANCING", "BLOCKED"}
 MISS_KEYS = {"MISS", "PARRY", "DODGE", "ABSORB", "RESIST", "REFLECT", "IMMUNE", "DEFLECT", "EVADE", "BLOCK", "GLANCED"}
@@ -96,6 +97,13 @@ def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
     for source, amount in data_new.items():
         data_total[source] += amount
 
+def format_report_page_data(value: int, duration: float, max_value: int):
+    return {
+        "value": separate_thousands(value),
+        "per_second": separate_thousands(calc_per_sec(value, duration)),
+        "percent": calc_percent(value, max_value),
+    }
+
 def format_total_data(data: dict):
     data["Total"] = sum(data.values())
     return {k: separate_thousands(v) for k, v in data.items()}
@@ -106,67 +114,12 @@ def format_percentage(v, total):
     return f"{(v / total * 100):.1f}%"
 
 def calc_percent(value: int, max_value: int):
-    return int(value / max_value * 100)
-
-def calc_per_sec(value: int, duration: float, precision: int=1):
-    v = value / (duration or 1)
-    precision = 10**precision
-    v = int(v * precision) / precision
-    return separate_thousands(v)
+    return value * 100 // max_value
 
 def calc_per_sec(value: int, duration: float, precision: int=1):
     v = value / (duration or 1)
     precision = 10**precision
     return int(v * precision) / precision
-
-def convert_to_table(data: dict[str, int], duration):
-    if not data:
-        return ["- Total", "0", "0", "100"]
-    _data = list(data.items())
-    max_value = _data[0][1]
-    total = sum(data.values())
-    return [("- Total", separate_thousands(total), calc_per_sec(total, duration), "100")] + [
-        (
-            name,
-            separate_thousands(value),
-            calc_per_sec(value, duration),
-            calc_percent(value, max_value),
-        )
-        for name, value in _data
-    ]
-
-TABLE_VALUES: dict[str, tuple[str]] = {
-    "damage": ("damage", "dps", "d_p"),
-    "heal": ("heal", "hps", "h_p"),
-    "taken": ("taken", "tps", "t_p"),
-}
-
-TYPES = (str, bool, type(None))
-
-def add_new_data(data: dict, table: dict[str, dict], duration: float, _type: str):
-    KEYS = TABLE_VALUES[_type]
-    if not data:
-        return {KEYS[-1]: 0}
-    
-    TOTAL = {KEYS[-1]: 100}
-    MAX_VALUE = max(data.values())
-    for name, value in data.items():
-        UNIT_DATA = table.setdefault(name, {})
-
-        NEW_DATA = (
-            value,
-            calc_per_sec(value, duration),
-            calc_percent(value, MAX_VALUE)
-        )
-        
-        for key, new_value in zip(KEYS, NEW_DATA):
-            if not key.endswith("_p"):
-                UNIT_DATA[key] = separate_thousands(new_value)
-                TOTAL[key] = TOTAL.get(key, 0) + new_value
-            else:
-                UNIT_DATA[key] = new_value
-
-    return TOTAL
 
 def count_total(spell_data: dict[str, dict[str, list[int]]]):
     return {
@@ -808,12 +761,6 @@ class THE_LOGS:
 
         return data
     
-    def dry_data(self, data, slice_duration):
-        guids = self.get_all_guids()
-        data_with_pets = logs_dmg_heals.add_pets(data, guids)
-        data_sorted = sort_dict_by_value(data_with_pets)
-        return convert_to_table(data_sorted, slice_duration)
-
     def report_add_spec_info(self, specs: dict[str, int], data: dict[str, dict]):
         new_specs: dict[str, tuple(str, str)] = {}
         for unit_name in data:
@@ -826,52 +773,53 @@ class THE_LOGS:
         return new_specs
 
     def get_report_page_all(self, segments):
-        DATA = {
+        _first_hit = ""
+        _last_hit = ""
+        specs = {}
+        combined_data = {
             "damage": defaultdict(int),
             "heal": defaultdict(int),
             "taken": defaultdict(int),
         }
-        SPECS = {}
 
-        total = {}
-        TABLE = {
-            "Total": total
-        }
-
-        return_dict = {
-            "TABLE": TABLE,
-        }
-
+        GUIDS = self.get_all_guids()
+        DURATION = self.get_fight_duration_total(segments)
+        DEFAULT_SOURCE = tuple(zip(combined_data, [{}]*3))
+        REPORT_DATA = defaultdict(lambda: dict(DEFAULT_SOURCE))
 
         for s, f in segments:
             new_data = self.report_page(s, f)
-            for k, _data in DATA.items():
+            for k, _data in combined_data.items():
                 add_new_numeric_data(_data, new_data[k])
 
-            SPECS |= new_data['specs']
+            specs |= new_data['specs']
 
-            return_dict.setdefault("FIRST_HIT", new_data['first_hit'])
-            return_dict["LAST_HIT"] = new_data['last_hit']
+            _last_hit = new_data['last_hit']
+            if not _first_hit:
+                _first_hit = new_data['first_hit']
 
-        total_duration = self.get_fight_duration_total(segments)
-
-        GUIDS = self.get_all_guids()
-        for k, _data in DATA.items():
-            data_with_pets = logs_dmg_heals.add_pets(_data, GUIDS)
+        for k, _data in combined_data.items():
+            _data = logs_dmg_heals.add_pets(_data, GUIDS)
+            MAX_VALUE = max(_data.values())
+            _data["Total"] = sum(_data.values())
+            
             if k == "damage":
-                data_with_pets = sort_dict_by_value(data_with_pets)
-            total |= add_new_data(data_with_pets, TABLE, total_duration, k)
-
-        for k, v in total.items():
-            total[k] = separate_thousands(v) 
+                _data = sort_dict_by_value(_data)
+            
+            for name, value in _data.items():
+                REPORT_DATA[name][k] = format_report_page_data(value, DURATION, MAX_VALUE)
+            
+            REPORT_DATA["Total"][k]["percent"] = 100
         
-        SPECS = self.convert_dict_guids_to_names(SPECS)
-        SPECS = self.report_add_spec_info(SPECS, TABLE)
-        for name, (spec_name, spec_icon) in SPECS.items():
-            TABLE[name]['spec_name'] = spec_name
-            TABLE[name]['spec_icon'] = spec_icon
+        specs = self.convert_dict_guids_to_names(specs)
+        SPECS = self.report_add_spec_info(specs, REPORT_DATA)
         
-        return return_dict
+        return {
+            "TABLE": REPORT_DATA,
+            "SPECS": SPECS,
+            "FIRST_HIT": _first_hit,
+            "LAST_HIT": _last_hit,
+        }
 
 
     def get_spell_data_pet_name(self, spell_id: int, pet_name=None):

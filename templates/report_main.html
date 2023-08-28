@@ -2,42 +2,7 @@
 
 {% block add_style %}
 <style>
-.rectangle-cell,
-th {
-  border-left: 10px solid var(--table-border);
-}
-
-tr:is(:last-child, :first-child) td {
-  border-bottom: 1px solid var(--table-border);
-}
-.rectangle-cell > div {
-  width: var(--width);
-  height: 1em;
-  border-radius: 0.1em;
-}
-.damage-bar, .taken-bar {
-  box-shadow: .1em .1em 1em darkred;
-  animation: 3s linear infinite;
-  animation-name: dmgbar;
-}
-@keyframes dmgbar {
-  0%,
-  100% {background-color: hsl(0, 85%, 30%);}
-  50%  {background-color: hsl(0, 100%, 25%);}
-}
-
-.heal-bar {
-  box-shadow: .1em .1em 1em forestgreen;
-  animation: 3s linear infinite;
-  animation-name: healbar;
-}
-@keyframes healbar {
-  0%,
-  100% {background-color: hsl(120, 75%, 25%);}
-  50%  {background-color: hsl(120, 100%, 25%);}
-}
-
-.player-cell div {
+img {
   display: inline-block;
   vertical-align: text-bottom;
   max-height: 1.1em;
@@ -45,27 +10,43 @@ tr:is(:last-child, :first-child) td {
   min-height: 1.1em;
   min-width: 1.1em;
 }
-tr:nth-child(n+2) .player-cell div {
-  background-image: url('/class_icons.jpg?v=2');
-  background-repeat: no-repeat;
-  background-size: 400% 1100%;
-  height: 56px;
-  width: 56px;
-  background-position-x: calc(var(--spec-i)  * 33.33333%);
-  background-position-y: calc(var(--class-i) * 10%);
-}
-#chart {
-  max-height: 20vh;
-  width: 100%;
-}
+
 .rectangle-cell {
   width: 12rem;
+}
+.rectangle-cell,
+th {
+  border-left: 10px solid var(--table-border);
+}
+
+.percent-bar {
+  width: var(--width);
+  height: 1em;
+  border-radius: 0.1em;
+}
+.damage .percent-bar,
+.taken .percent-bar {
+  background-color: hsl(0, 100%, 30%);
+  box-shadow: .1em .1em 1em darkred;
+}
+.heal .percent-bar {
+  background-color: hsl(120, 100%, 25%);
+  box-shadow: .1em .1em 1em forestgreen;
+}
+
+#chart-wrap {
+  height: 20vh;
+  width: 100%;
+}
+#chart {
+  height: 100;
+  width: 100%;
 }
 </style>
 {% endblock add_style %}
 
 {% block scripts_head %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.1.2/chart.umd.min.js"></script>
+<script src="/static/chart-4.1.2.min.js"></script>
 {% endblock scripts_head %}
 
 {% block the_main %}
@@ -76,48 +57,27 @@ tr:nth-child(n+2) .player-cell div {
         <thead>
           <tr>
             <th class="player-cell">Name</th>
-            <th class="col-damage" colspan="3">Damage</th>
-            <th class="col-heal" colspan="3">Heal</th>
-            <th class="col-taken" colspan="3">Damage Taken</th>
+            <th class="damage sortable" colspan="3">Damage</th>
+            <th class="heal sortable" colspan="3">Heal</th>
+            <th class="taken sortable" colspan="3">Damage Taken</th>
           </tr> 
         </thead>
         <tbody class="table-has-total">
           {% for player_name, data in TABLE.items() %}
           <tr>
-            <td class="player-cell" title="{{ data['spec_name'] }}">
-              {% if data['spec_icon'] in SPEC_ICON_TO_POSITION %}
-              <div style="--class-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][0] }}; --spec-i: {{ SPEC_ICON_TO_POSITION[data['spec_icon']][1] }}"></div>
-              {% else %}
-              <div></div>
-              {% endif %}
+            <td class="player-cell" title="{{ SPECS[player_name][0] }}">
+              <img src="/static/icons/{{ SPECS[player_name][1] }}.jpg">
               <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
             </td>
-            <td class="rectangle-cell">
-              <!-- {{ data['damage'] }} -->
-              {% if 'd_p' in data %}
-              <div class="damage-bar" style="--width: {{ data['d_p'] }}%"></div>
+            {% for _type, type_data in data.items() %}
+            <td class="rectangle-cell {{ _type }}">
+              {% if type_data['percent'] %}
+              <div class="percent-bar" style="--width: {{ type_data['percent'] }}%"></div>
               {% endif %}
             </td>
-            <td class="total-cell col-damage">{{ data['damage'] }}</td>
-            <td class="per-sec-cell">{{ data['dps'] }}</td>
-  
-            <td class="rectangle-cell">
-              <!-- {{ data['heal'] }} -->
-              {% if 'h_p' in data %}
-              <div class="heal-bar" style="--width: {{ data['h_p'] }}%"></div>
-              {% endif %}
-            </td>
-            <td class="total-cell col-heal">{{ data['heal'] }}</td>
-            <td class="per-sec-cell">{{ data['hps'] }}</td>
-            
-            <td class="rectangle-cell">
-              <!-- {{ data['taken'] }} -->
-              {% if 't_p' in data %}
-              <div class="taken-bar" style="--width: {{ data['t_p'] }}%"></div>
-              {% endif %}
-            </td>
-            <td class="total-cell col-taken">{{ data['taken'] }}</td>
-            <td class="per-sec-cell">{{ data['tps'] }}</td>
+            <td class="total-cell {{ _type }}">{{ type_data['value'] }}</td>
+            <td class="per-sec-cell">{{ type_data['per_second'] }}</td>
+            {% endfor %}
           </tr>
           {% endfor %}
         </tbody>
