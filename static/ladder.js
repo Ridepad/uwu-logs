@@ -175,7 +175,8 @@ function add_row(data) {
   const _id = data["id"];
   const time = data["t"];
   const _type = data["parent"];
-
+  const attempts = _type == "kill" ? data["w"] + 1 : data["w"];
+  
   const prev_row = document.getElementById(_id);
 
   if (prev_row) {
@@ -186,7 +187,6 @@ function add_row(data) {
     prev_row.className = _type;
 
     prev_row.querySelector(".cell-time").textContent = time_to_text(time);
-    const attempts = _type == "kill" ? data["w"] + 1 : data["w"];
     prev_row.querySelector(".cell-attempts").textContent = attempts;
 
     return;
@@ -212,7 +212,7 @@ function add_row(data) {
     auto_hide(row);
   }
 
-  add_cell(row, data["w"], "attempts");
+  add_cell(row, attempts, "attempts");
   
   const boss_name = data["b"] != "" ? data["b"] : "Sister Svalna";
   add_cell(row, boss_name, "boss");
