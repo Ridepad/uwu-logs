@@ -428,6 +428,9 @@ class THE_LOGS:
             return self.__PLAYERS_NAMES
 
     def name_to_guid(self, name: str) -> str:
+        if name.startswith("0x"):
+            return name
+
         if name in self.PLAYERS_NAMES:
             return self.PLAYERS_NAMES[name]
         
@@ -911,7 +914,7 @@ class THE_LOGS:
                 _spell_data = self.get_spell_data_pet_name(_spell_id, pet_name)
             except KeyError:
                 _spell_data = self.get_spell_data_pet_name(spell_id, pet_name)
-            spell_name = f'{_spell_data["name"]}{_spell_data["id"]}'
+            spell_name = f'{_spell_data["id"]}{_spell_data["name"]}'
             if spell_name not in _spells:
                 _spells[spell_name] = _spell_data
             return spell_name
@@ -1048,22 +1051,26 @@ class THE_LOGS:
             "CASTS": CASTS,
         }
 
-
+    @running_time
     def get_comp_data(self, segments, class_filter: str, tGUID=None):
         class_filter = class_filter.lower()
-        response = []
+        players = []
+        targets = {}
+        spells = {}
         for guid, class_name in self.get_classes().items():
             if class_name != class_filter:
                 continue
-            name = self.guid_to_name(guid)
-            data_gen = self.player_damage_gen(segments, guid, tGUID)
-            data_sum = self.player_damage_sum(data_gen)
-            data = {
-                "name": name,
-                "data": self.player_damage_format(data_sum)
-            }
-            response.append(data)
-        return json.dumps(response)
+            data = self.get_numbers_breakdown_wrap(segments, guid, filter_guid=tGUID)
+            data["NAME"] = self.guid_to_name(guid)
+            targets |= data["TARGETS"]
+            spells |= data["SPELLS_DATA"]
+            players.append(data)
+
+        return json.dumps({
+            "PLAYERS": players,
+            "SPELLS": spells,
+            "TARGETS": sort_by_name_type(targets.items()),
+        })
 
     
     # POTIONS
