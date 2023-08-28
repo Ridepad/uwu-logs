@@ -167,6 +167,7 @@ function new_class_selected() {
   LOADING_SECTION.style.removeProperty("display");
 
   XHR_COMPARE.open("POST", POST_ENDPOINT);
+  XHR_COMPARE.setRequestHeader("Content-Type", "application/json");
   XHR_COMPARE.send(JSON.stringify(new_post_json()));
 }
 
