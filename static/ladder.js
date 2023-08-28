@@ -40,51 +40,47 @@ const SPECS = [
   ["Fury", "ability_warrior_innerrage", "warrior"],
   ["Protection", "ability_warrior_defensivestance", "warrior"]
 ]
+const MAIN_TABLE_BODY = document.getElementById("main-table-body");
+const MAIN_TABLE_FOOT = document.getElementById("main-table-foot");
+const PLAYERS_TABLE_WRAP = document.getElementById("players-table-wrap");
+const PLAYERS_TABLE = document.getElementById("players-table-table");
+
+const SELECT_SERVER = document.getElementById("select-server");
+const SELECT_SIZE = document.getElementById("select-size");
+const SELECT_MODE = document.getElementById("select-mode");
+const SELECT_TIMEOUT = document.getElementById("select-timeout");
+const SELECT_FACTION = document.getElementById("select-faction");
+const CHECKBOX_SHOW_DONE = document.getElementById("show-done");
+const CHECKBOX_SHOW_LIVE = document.getElementById("show-live");
+const CHECKBOX_PLAYERS = document.getElementById("show-players");
 
 const CONFIG = {
   timeout: 30000,
 }
-const ws_host = `wss://${window.location.hostname}:8765`
-const socket = new WebSocket(ws_host);
 
-const fragments = {};
-const mtimes = {};
-const donetimes = {};
-
-const mainshitbody = document.getElementById("mainshit-body");
-const mainshitfoot = document.getElementById("mainshit-foot");
-const fightsplayers = document.getElementById("fights-players");
-const FIGHTS_PLAYERS_TABLE = document.getElementById("fights-players-table");
-
-const select_server = document.getElementById("select-server");
-const select_size = document.getElementById("select-size");
-const select_mode = document.getElementById("select-mode");
-const select_timeout = document.getElementById("select-timeout");
-const select_faction = document.getElementById("select-faction");
-const checkbox_show_done = document.getElementById("show-done");
-const checkbox_show_live = document.getElementById("show-live");
-const checkbox_players = document.getElementById("show-players");
+const MOD_TIMES = {};
+const FRAGMENTS = {};
 
 const dummy = () => true;
 const has_attr = (attr_name, value) => tr => tr.getAttribute(attr_name) == value;
 const has_attr_wrap = (attr_name, value) => value == "all" ? dummy : has_attr(attr_name, value);
 function show_row_wrap() {
-  const faction = has_attr_wrap("data-faction", select_faction.value);
-  const mode = has_attr_wrap("data-mode", select_mode.value);
-  const size = has_attr_wrap("data-size", select_size.value);
-  const server = has_attr_wrap("data-server", select_server.value);
+  const faction = has_attr_wrap("data-faction", SELECT_FACTION.value);
+  const mode = has_attr_wrap("data-mode", SELECT_MODE.value);
+  const size = has_attr_wrap("data-size", SELECT_SIZE.value);
+  const server = has_attr_wrap("data-server", SELECT_SERVER.value);
   return tr => faction(tr) && mode(tr) && size(tr) && server(tr);
 }
 function filter_table() {
   const show_row = show_row_wrap();
-  mainshitbody.querySelectorAll("tr").forEach(tr => {
+  MAIN_TABLE_BODY.querySelectorAll("tr").forEach(tr => {
     show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
   });
   checkbox_show_done_changed();
 }
 function checkbox_show_done_changed() {
-  if (!checkbox_show_done.checked) return;
-  checkbox_show_done.querySelectorAll("tr").forEach(tr => {
+  if (!CHECKBOX_SHOW_DONE.checked) return;
+  CHECKBOX_SHOW_DONE.querySelectorAll("tr").forEach(tr => {
     show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
   });
 }
@@ -97,7 +93,7 @@ function time_to_text(t) {
 function add_stopwatch_cell(row, d) {
   const td = document.createElement("td");
   td.classList.add("cell-time");
-  mtimes[row.id] = d;
+  MOD_TIMES[row.id] = d;
   row.appendChild(td);
 }
 function add_cell(row, value, type, inner) {
@@ -167,9 +163,9 @@ function players_span(data) {
 }
 
 function auto_hide(row) {
-  delete mtimes[row.id];
+  delete MOD_TIMES[row.id];
   setTimeout(() => {
-    mainshitfoot.appendChild(row);
+    MAIN_TABLE_FOOT.appendChild(row);
   }, CONFIG.timeout);
 }
 
@@ -235,21 +231,21 @@ function add_row(data) {
 
   show_row_wrap()(row) ? row.style.display = "" : row.style.display = "none";
   if (prev_row) {
-    mainshitbody.replaceChild(row, prev_row);
+    MAIN_TABLE_BODY.replaceChild(row, prev_row);
   } else {
-    mainshitbody.appendChild(row);
+    MAIN_TABLE_BODY.appendChild(row);
   }
 
-  fragments[_id] = players_span(data);
+  FRAGMENTS[_id] = players_span(data);
 
   row.addEventListener("mouseenter", () => {
-    FIGHTS_PLAYERS_TABLE.replaceChild(fragments[row.id], FIGHTS_PLAYERS_TABLE.firstElementChild);
+    PLAYERS_TABLE.replaceChild(FRAGMENTS[row.id], PLAYERS_TABLE.firstElementChild);
     set_finish_time();
   });
 }
 
 function set_finish_time() {
-  const tr = FIGHTS_PLAYERS_TABLE.querySelector("tbody").lastElementChild;
+  const tr = PLAYERS_TABLE.querySelector("tbody").lastElementChild;
   if (!tr) return;
   const diff = Date.now() - tr.getAttribute("data-start");
   const t = Math.floor(diff / 1000 / 60);
@@ -257,51 +253,59 @@ function set_finish_time() {
 }
 
 
-checkbox_show_done.addEventListener("change", () => {
-  checkbox_show_done.checked ? mainshitfoot.style.display = "" : mainshitfoot.style.display = "none";
-  checkbox_show_done_changed();
-});
-checkbox_show_live.addEventListener("change", () => {
-  checkbox_show_live.checked ? mainshitbody.style.display = "" : mainshitbody.style.display = "none";
-});
-checkbox_players.addEventListener("change", () => {
-  checkbox_players.checked ? fightsplayers.style.display = "" : fightsplayers.style.display = "none";
-});
-select_timeout.addEventListener("change", () => {
-  CONFIG.timeout = select_timeout.value * 1000;
-  console.log(CONFIG.timeout);
-});
 
-for (const select of [select_server, select_size, select_mode, select_faction, ]) {
-  select.addEventListener("change", filter_table);
+function init() {
+  CHECKBOX_SHOW_DONE.addEventListener("change", () => {
+    CHECKBOX_SHOW_DONE.checked ? MAIN_TABLE_FOOT.style.display = "" : MAIN_TABLE_FOOT.style.display = "none";
+    checkbox_show_done_changed();
+  });
+  CHECKBOX_SHOW_LIVE.addEventListener("change", () => {
+    CHECKBOX_SHOW_LIVE.checked ? MAIN_TABLE_BODY.style.display = "" : MAIN_TABLE_BODY.style.display = "none";
+  });
+  CHECKBOX_PLAYERS.addEventListener("change", () => {
+    CHECKBOX_PLAYERS.checked ? PLAYERS_TABLE_WRAP.style.display = "" : PLAYERS_TABLE_WRAP.style.display = "none";
+  });
+  SELECT_TIMEOUT.addEventListener("change", () => {
+    CONFIG.timeout = SELECT_TIMEOUT.value * 1000;
+    console.log(CONFIG.timeout);
+  });
+  
+  for (const select of [SELECT_SERVER, SELECT_SIZE, SELECT_MODE, SELECT_FACTION, ]) {
+    select.addEventListener("change", filter_table);
+  }
+  
+  CONFIG.timeout = SELECT_TIMEOUT.value * 1000;
+  CHECKBOX_PLAYERS.checked ? PLAYERS_TABLE_WRAP.style.display = "" : PLAYERS_TABLE_WRAP.style.display = "none";
+  CHECKBOX_SHOW_DONE.checked ? MAIN_TABLE_FOOT.style.display = "" : MAIN_TABLE_FOOT.style.display = "none";
+  CHECKBOX_SHOW_LIVE.checked ? MAIN_TABLE_BODY.style.display = "" : MAIN_TABLE_BODY.style.display = "none";
+  
+  setInterval(() => {
+    const now = Date.now();
+    for (const _id in MOD_TIMES) {
+      const td = document.getElementById(_id).querySelector(".cell-time");
+      const diff = now - MOD_TIMES[_id]
+      const v = Math.max(diff/1000, 0);
+      td.textContent = time_to_text(v);
+    }
+  }, 1000);
+  
+  setInterval(() => {
+    set_finish_time();
+  }, 10000);
+  
+  // const ws_host = `wss://${window.location.hostname}:8765`
+  const ws_host = `ws://localhost:8765`
+  const socket = new WebSocket(ws_host);
+  socket.addEventListener("message", event => {
+    const data = JSON.parse(event.data);
+    if (!Array.isArray(data)) {
+      add_row(data);
+      return
+    }
+    for (const _data of data) {
+      add_row(_data);
+    }
+  });  
 }
 
-CONFIG.timeout = select_timeout.value * 1000;
-checkbox_players.checked ? fightsplayers.style.display = "" : fightsplayers.style.display = "none";
-checkbox_show_done.checked ? mainshitfoot.style.display = "" : mainshitfoot.style.display = "none";
-checkbox_show_live.checked ? mainshitbody.style.display = "" : mainshitbody.style.display = "none";
-
-setInterval(() => {
-  const now = Date.now();
-  for (const _id in mtimes) {
-    const td = document.getElementById(_id).querySelector(".cell-time");
-    const diff = now - mtimes[_id]
-    const v = Math.max(diff/1000, 0);
-    td.textContent = time_to_text(v);
-  }
-}, 1000);
-
-setInterval(() => {
-  set_finish_time();
-}, 10000);
-
-socket.addEventListener("message", event => {
-  const data = JSON.parse(event.data);
-  if (!Array.isArray(data)) {
-    add_row(data);
-    return
-  }
-  for (const _data of data) {
-    add_row(_data);
-  }
-});
+document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);
