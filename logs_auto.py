@@ -152,8 +152,8 @@ def save_top(server_folder: str, boss_f_n: str, data: dict[str, dict[str, str]])
     data = sorted(data.values(), key=lambda x: x["t"])
 
     pc = perf_counter()
-    dfpath = os.path.join(server_folder, f"{boss_f_n}.{PANDAS_COMPRESSION}")
-    _to_pickle(pandas.DataFrame.from_dict(data), dfpath)
+    df = pandas.DataFrame.from_dict(data)
+    file_functions.df_write(server_folder, boss_f_n, df)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Pandas saved')
 
     pc = perf_counter()

@@ -2,12 +2,14 @@ import json
 import os
 import shutil
 import zlib
+import pandas
 from pathlib import Path
 
 real_path = os.path.realpath(__file__)
 PATH_DIR = os.path.dirname(real_path)
 REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
 REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
+PANDAS_COMPRESSION = "zstd"
 
 def get_mtime(path):
     try:
@@ -139,6 +141,17 @@ def file_write(path: str, data: str, ext=None):
     path = add_extension(path, ext)
     with open(path, 'w') as f:
         f.write(data)
+
+def df_write(dir: str, name: str, df: pandas.DataFrame):
+    df_path = os.path.join(dir, f"{name}.{PANDAS_COMPRESSION}")
+    df.to_pickle(df_path, compression=PANDAS_COMPRESSION)
+
+def df_read(dir: str, name: str) -> pandas.DataFrame:
+    df_path = os.path.join(dir, f"{name}.{PANDAS_COMPRESSION}")
+    try:
+        return pandas.read_pickle(df_path, compression=PANDAS_COMPRESSION)
+    except FileNotFoundError:
+        return pandas.DataFrame()
 
 
 def get_folders(path) -> list[str]:
