@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import TypedDict
 
 from constants import TOC_CHAMPIONS, is_player, running_time
 
@@ -324,6 +325,12 @@ ALL_GUIDS = {
     },
 }
 
+
+class ValksDamage(TypedDict):
+    overkill: defaultdict[str, int]
+    useful: defaultdict[str, int]
+
+
 CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     "Lady Deathwhisper": {
         "Adds": ("0xF130009402", "0xF13000943D", "0xF130009655"),
@@ -380,7 +387,7 @@ def dmg_gen_valk(logs: list[str]):
             yield sGUID, tGUID, int(dmg)
 
 @running_time
-def get_valks_dmg(logs: list[str]):
+def get_valks_dmg(logs: list[str]) -> ValksDamage:
     valks_useful: defaultdict[str, int] = defaultdict(int)
     valks_overkill: defaultdict[str, int] = defaultdict(int)
 
