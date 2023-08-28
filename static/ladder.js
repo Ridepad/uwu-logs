@@ -295,8 +295,7 @@ function init() {
     set_finish_time();
   }, 10000);
   
-  // const ws_host = `wss://${window.location.hostname}:8765`
-  const ws_host = `ws://localhost:8765`
+  const ws_host = `wss://${window.location.hostname}:8765`
   const socket = new WebSocket(ws_host);
   socket.addEventListener("message", event => {
     const data = JSON.parse(event.data);
