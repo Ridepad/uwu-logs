@@ -1,47 +1,84 @@
 {% extends "layout_report.html" %}
 
 {% block scripts_head %}
-<script defer src="/static/compare.js"></script>
+<script src="/static/compare.js?v={{ V }} "defer></script>
 {% endblock scripts_head %}
+{% block add_style %}
+<style>
+.count-small {
+  min-width: 4rem;
+  text-align: right;
+}
+.count {
+  min-width: 4rem;
+  text-align: right;
+}
+#compare-inputs {
+  font-size: 175%;
+}
+.border {
+  border-right: .5rem solid var(--table-border);
+}
+.border-thin {
+  border-right: .25rem solid var(--table-border);
+}
+.player-cell a {
+  margin-left: .25em;
+}
+.str-no-players,
+.str-loading {
+  display: none;
+}
+#loading-info {
+  font-size: 300%;
+}
+#loading-info.loading .str-loading {
+  display: block;
+}
+#loading-info.no-players .str-no-players {
+  display: block;
+}
+</style>
+{% endblock add_style %}
 
 {% block the_main %}
 <main id="dmg-done">
-  <section id="compare-inputs">
-    <select id="select-class">
-      <option>Select class:</option>
-      <option value="death-knight">Death Knight</option>
-      <option value="druid">Druid</option>
-      <option value="hunter">Hunter</option>
-      <option value="mage">Mage</option>
-      <option value="paladin">Paladin</option>
-      <option value="priest">Priest</option>
-      <option value="rogue">Rogue</option>
-      <option value="shaman">Shaman</option>
-      <option value="warlock">Warlock</option>
-      <option value="warrior">Warrior</option>
-    </select>
-    <select id="select-spell">
-      <option>Spells</option>
-    </select>
-  </section>
-  <section id="dmg-done-main">
-    <table id="compare-field-table" style="display: none;">
+<section id="compare-inputs">
+  <select id="select-class">
+    <option>Select class:</option>
+    <option value="death-knight">Death Knight</option>
+    <option value="druid">Druid</option>
+    <option value="hunter">Hunter</option>
+    <option value="mage">Mage</option>
+    <option value="paladin">Paladin</option>
+    <option value="priest">Priest</option>
+    <option value="rogue">Rogue</option>
+    <option value="shaman">Shaman</option>
+    <option value="warlock">Warlock</option>
+    <option value="warrior">Warrior</option>
+  </select>
+  <select id="select-spell">
+  </select>
+  <select id="target-select">
+  </select>
+</section>
+<section id="dmg-done-main" class="table-wrap wrap-player">
+  <div>
+    <table id="compare-field-table" style="display: none;" class="add-player-rank">
       <thead>
         <tr>
           <th class="player-cell">-</th>
           <th colspan="2">Damage</th>
+          <th colspan="2"></th>
           <th colspan="6">Direct hits</th>
           <th colspan="6">Damage over time</th>
         </tr>
         <tr id="compare-field-table-headers">
           <th class="player-cell">Name</th>
           <th>Total</th>
-          <th>Resisted</th>
-          <th>Hits</th>
-          <th>Avg</th>
-          <th>Crits</th>
-          <th>Avg</th>
-          <th>%</th>
+          <th>Reduced</th>
+          <th>Cast</th>
+          <th>Miss</th>
           <th>Total</th>
           <th>Hits</th>
           <th>Avg</th>
@@ -49,11 +86,21 @@
           <th>Avg</th>
           <th>%</th>
           <th>Total</th>
+          <th>Hits</th>
+          <th>Avg</th>
+          <th>Crits</th>
+          <th>Avg</th>
+          <th>%</th>
         </tr>
       </thead>
       <tbody id="compare-field-table-tbody">
       </tbody>
     </table>
-  </section>
+  </div>
+</section>
+<section id="loading-info" class="no-players">
+<p class="str-loading">Loading...</p>
+<p class="str-no-players">No players found!</p>
+</section>
 </main>
 {% endblock the_main %}

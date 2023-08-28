@@ -1,311 +1,197 @@
-const selectClass = document.getElementById("select-class");
-const selectSpell = document.getElementById("select-spell");
-const compareTable = document.getElementById("compare-field-table");
-const compareTableBody = document.getElementById("compare-field-table-tbody");
+const SELECT_CLASS = document.getElementById("select-class");
+const SELECT_SPELL = document.getElementById("select-spell");
+const COMPARE_TABLE = document.getElementById("compare-field-table");
+const COMPARE_TABLE_BODY = document.getElementById("compare-field-table-tbody");
+const TARGET_SELECT = document.getElementById("target-select");
+const LOADING_SECTION = document.getElementById("loading-info");
 const POST_ENDPOINT = `${window.location.pathname}${window.location.search}`;
 const PLAYER_LINK = window.location.pathname.replace("compare", "player");
-const CACHE_COMP = {}
+const CACHE = {};
 
-const SPELLS = {
-  "mage": {
-    42833: "Fireball",
-    42891: "Pyroblast",
-    55362: "Living Bomb",
-    55360: "Living Bomb (DoT)",
-    12654: "Ignite",
-    42859: "Scorch",
-    42873: "Fire Blast",
-    42926: "Flamestrike",
-    42925: "Flamestrike (Rank 8)",
-    42938: "Blizzard",
-    42931: "Cone of Cold",
-    47610: "Frostfire Bolt",
+const XHR_COMPARE = new XMLHttpRequest();
 
-    42897: "Arcane Blast",
-    42845: "Arcane Missiles",
-    42921: "Arcane Explosion",
+const COLUMNS_ORDER = {
+  "total": "count-small border-thin",
+  "hits": "count-small",
+  "hit_avg": "count border-thin",
+  "crits": "count-small",
+  "crit_avg": "count",
+  "percent": "count border",
+};
 
-    42842: "Frostbolt",
-    71757: "Deep Freeze",
-  },
-  "warrior": {
-    47520: "Cleave",
-    23881: "Bloodthirst",
-    12721: "Deep Wounds",
-    47450: "Heroic Strike",
-    1680: "Whirlwind",
-    44949: "Whirlwind",
-    50783: "Slam",
-  },
-  "priest": {
-    58381: "Mind Flay",
-    53022: "Mind Sear",
-    48160: "Vampiric Touch",
-    48300: "Devouring Plague",
-    48125: "Shadow Word: Pain",
-    63675: "Improved Devouring Plague",
-    48127: "Mind Blast",
-    48158: "Shadow Word: Death",
-  },
-  "hunter": {
-    75: "Auto Shot",
-    53209: "Chimera Shot",
-    53352: "Explosive Shot",
-    49045: "Arcane Shot",
-    49052: "Steady Shot",
-    63468: "Piercing Shots",
-    61006: "Kill Shot",
-    49050: "Aimed Shot",
-    53353: "Chimera Shot - Serpent",
-    49001: "Serpent Sting",
-    49048: "Multi-Shot",
-    58433: "Volley",
-    49065: "Explosive Trap Effect",
-  },
-  "paladin": {
-    53385: "Divine Storm",
-    53739: "Seal of Corruption",
-    53733: "Judgement of Corruption",
-    61840: "Righteous Vengeance",
-    20424: "Seal of Command",
-    35395: "Crusader Strike",
-    48819: "Consecration",
-    53742: "Blood Corruption",
-    69403: "Seal of Command",
-    20467: "Judgement of Command",
-    71433: "Manifest Anger",
-    48801: "Exorcism",
-  },
-  "druid": {
-    48465: "Starfire",
-    48461: "Wrath",
-    53195: "Starfall",
-    53190: "Starfall (AoE)",
-    48466: "Hurricane",
-    48463: "Moonfire",
-    48468: "Insect Swarm",
-    53227: "Typhoon",
-    71023: "Languish",
+const get_cell_value = (tr, idx) => tr.children[idx].innerText.replace(/[% ]/g, "");
+const comparer = idx => (a, b) => get_cell_value(b, idx) - get_cell_value(a, idx);
+function sort_by_column(th) {
+  Array.from(COMPARE_TABLE_BODY.querySelectorAll("tr"))
+       .sort(comparer(th.cellIndex))
+       .forEach(tr => COMPARE_TABLE_BODY.appendChild(tr));
+}
 
-    62078: "Swipe (Cat)",
-    48572: "Shred",
-    49800: "Rip",
-    48574: "Rake",
-    48577: "Ferocious Bite",
-    48566: "Mangle (Cat)",
+function get_targets_cache() {
+  if (!CACHE[SELECT_CLASS.value]) CACHE[SELECT_CLASS.value] = {};
+  return CACHE[SELECT_CLASS.value];
+}
 
-  },
-  "rogue": {
-    48638: "Sinister Strike",
-    22482: "Blade Flurry",
-    51723: "Fan of Knives",
-    48672: "Rupture",
-    57841: "Killing Spree",
-    57965: "Instant Poison IX",
-    57970: "Deadly Poison IX",
+function object_is_empty(o) {
+  return Object.keys(o).length === 0;
+}
 
-    57993: "Envenom",
-    48665: "Mutilate",
-    48664: "Mutilate",
-  },
-  "warlock": {
-    47825: "Soul Fire",
-    47834: "Seed of Corruption",
-    47809: "Shadow Bolt",
-    47811: "Immolate",
-    50590: "Immolation",
-    47813: "Corruption",
-    47838: "Incinerate",
-    47867: "Curse of Doom",
-    61290: "Shadowflame",
-    47818: "Rain of Fire",
+function new_option(value, name) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.append(name);
+  return option;
+}
 
-    47855: "Drain Soul",
-    47843: "Unstable Affliction",
-    47864: "Curse of Agony",
-    59164: "Haunt",
-
-    17962: "Conflagrate",
-    59172: "Chaos Bolt",
-    47847: "Shadowfury",
-  },
-  "death-knight": {
-    56815: "Rune Strike",
-    49909: "Icy Touch",
-    52212: "Death and Decay",
-    55078: "Blood Plague",
-    49924: "Death Strike",
-    49941: "Blood Boil",
-    49921: "Plague Strike",
-    51411: "Howling Blast",
-    55268: "Frost Strike",
-    55095: "Frost Fever",
-    66962: "Frost Strike",
-    51425: "Obliterate",
-    51460: "Necrosis",
-    66979: "Blood Strike",
-    49930: "Blood Strike",
-    50463: "Blood-Caked Strike",
-    66992: "Plague Strike",
-    50401: "Razor Frost",
-    50526: "Wandering Plague",
-    55271: "Scourge Strike",
-    47632: "Death Coil",
-    49930: "Blood Strike",
-    70890: "Scourge Strike",
-    50536: "Unholy Blight",
-  },
-  "shaman": {
-    49238: "Lightning Bolt",
-    49271: "Chain Lightning",
-    60043: "Lava Burst",
-    49240: "Lightning Bolt (Proc)",
-    49269: "Chain Lightning (Proc)",
-    59159: "Thunderstorm",
-    10444: "Flametongue Attack",
-    61654: "Fire Nova",
-    49279: "Lightning Shield",
-    49233: "Flame Shock",
-    49231: "Earth Shock",
-    60103: "Lava Lash",
-    32175: "Stormstrike",
-    32176: "Stormstrike",
+function add_targets(targets) {
+  TARGET_SELECT.innerHTML = "";
+  TARGET_SELECT.style.display = object_is_empty(targets) ? "none" : "";
+  TARGET_SELECT.appendChild(new_option("all", "Any target"));
+  for (const guid in targets) {
+    TARGET_SELECT.appendChild(new_option(guid, targets[guid]));
   }
 }
 
-function newTableCell(value, class_name) {
+function add_spells(spells) {
+  SELECT_SPELL.innerHTML = "";
+  SELECT_SPELL.style.display = object_is_empty(spells) ? "none" : "";
+  for (const id in spells) {
+    SELECT_SPELL.appendChild(new_option(id, spells[id]["name"]));
+  }
+}
+
+function new_table_cell(value, class_name) {
   const td = document.createElement("td");
   td.className = class_name;
-  if (value) td.innerText = value;
+  if (value) td.append(value);
   return td;
 }
 
 function player_name_cell(player_name) {
   const a = document.createElement("a");
-  a.className = selectClass.value;
+  a.className = SELECT_CLASS.value;
   a.href = `${PLAYER_LINK}${player_name}/${window.location.search}`;
   a.target = "_blank";
-  a.innerText = player_name;
+  a.append(player_name);
 
-  const name_cell = newTableCell("", "player-cell");
-  name_cell.appendChild(a);
+  const name_cell = new_table_cell(a, "player-cell");
   return name_cell;
 }
 
-function addDamageCells(hits, row) {
-  if (hits === undefined) {
-    for (let i = 0; i < 12; i++)
-      row.appendChild(newTableCell("", "count"));
-    return;
-  }
-  
-  for (let q = 0; q < 2; q++) {
-    let ttl = 0;
-    const [hits2, perc] = hits[q];
-    for (let i = 0; i < 2; i++) {
-      const [_count, _avg] = hits2[i];
-      ttl = ttl + Number(_count.replace(/ /g, ""));
-      row.appendChild(newTableCell(_count, "count"));
-      row.appendChild(newTableCell(_avg[0], "count"));
-    }
-    row.appendChild(newTableCell(perc, "count"));
-    row.appendChild(newTableCell(ttl, "count"));
-  }
-}
-
-function addTableRow(data) {
+function new_table_row(spell_data) {
   const row = document.createElement("tr");
-  const spell_data = data["data"];
-  const spell_id = selectSpell.value;
 
-  row.appendChild(player_name_cell(data["name"]));
-  row.appendChild(newTableCell(spell_data["ACTUAL"][spell_id], "total-cell"));
-  row.appendChild(newTableCell(spell_data["REDUCED"][spell_id], "total-cell"));
-  const hits = spell_data["HITS"][spell_id];
-  addDamageCells(hits, row);
+  row.appendChild(player_name_cell(spell_data["NAME"]));
 
-  compareTableBody.append(row);
-}
-
-const getCellValue = (tr, idx) => tr.children[idx].innerText.replace(/[% ]/g, "");
-const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
-function sort_by_column(th) {
-  Array.from(compareTableBody.querySelectorAll("tr"))
-       .sort(comparer(th.cellIndex))
-       .forEach(tr => compareTableBody.appendChild(tr));
-}
-
-const xhttp_compare = new XMLHttpRequest();
-xhttp_compare.onreadystatechange = () => {
-  if (xhttp_compare.status != 200 || xhttp_compare.readyState != 4) return;
+  const spell_name = SELECT_SPELL.value;
+  row.appendChild(new_table_cell(spell_data.ACTUAL[spell_name] ?? "0", "total-cell"));
+  row.appendChild(new_table_cell(spell_data.REDUCED[spell_name], "total-cell border"));
+  row.appendChild(new_table_cell(spell_data.CASTS[spell_name], "count-small"));
+  row.appendChild(new_table_cell(spell_data.MISSES[spell_name], "count-small border"));
   
-  empty_table();
-  const parsed_json = JSON.parse(xhttp_compare.response);
-  if (parsed_json.length == 0) return;
-  
-  const spellCache = CACHE_COMP[selectClass.value];
-  for (let i = 0; i<parsed_json.length; i++) {
-    addTableRow(parsed_json[i]);
-    spellCache.push(parsed_json[i]);
+  const hits = spell_data.HITS[spell_name] ?? {};
+  for (const t of ["HIT", "DOT"]) {
+    const h = hits[t] ?? {};
+    for (const key in COLUMNS_ORDER) {
+      row.appendChild(new_table_cell(h[key], COLUMNS_ORDER[key]));
+    }
   }
+
+  return row;
+}
+
+function populate_table() {
+  COMPARE_TABLE_BODY.innerHTML = "";
+
+  const _cache = get_targets_cache();
+  const parsed_json = _cache[TARGET_SELECT.value];
+  if (!parsed_json || parsed_json.PLAYERS.length == 0) {
+    LOADING_SECTION.className = "no-players";
+    return;
+  }
+  
+  for (const player_data of parsed_json.PLAYERS) {
+    COMPARE_TABLE_BODY.append(new_table_row(player_data));
+  }
+
   const totalHeader = document.querySelector("th.player-cell + th");
   sort_by_column(totalHeader);
+
+  LOADING_SECTION.style.display = "none";
+  COMPARE_TABLE.style.removeProperty("display");
 }
 
-function empty_table() {
-  compareTableBody.innerHTML = "";
-}
+function display_new_data(parsed_json) {
+  COMPARE_TABLE.style.display = "none";
 
-function onSelectSpell() {
-  empty_table();
-  const data = CACHE_COMP[selectClass.value];
-  for (let i=0; i<data.length; i++) {
-    addTableRow(data[i]);
+  const current_target = TARGET_SELECT.value;
+  const current_spell = SELECT_SPELL.value;
+  
+  add_targets(parsed_json.TARGETS);
+  add_spells(parsed_json.SPELLS);
+  
+  if (!parsed_json || parsed_json.PLAYERS.length == 0) {
+    LOADING_SECTION.className = "no-players";
+    return;
   }
-  const totalHeader = document.querySelector("th.player-cell + th");
-  sort_by_column(totalHeader);
+  
+  TARGET_SELECT.value = current_target;
+  if (TARGET_SELECT.value == "") TARGET_SELECT.value = "all";
+  SELECT_SPELL.value = current_spell;
+  if (SELECT_SPELL.value == "") SELECT_SPELL.value = SELECT_SPELL.firstElementChild.value;
+
+  populate_table();
 }
 
-function newOption(spellID, spellsName) {
-  const option = document.createElement("option");
-  option.value = spellID;
-  option.innerHTML = spellsName;
-  return option;
+function new_post_json() {
+  const json = {
+    "class": SELECT_CLASS.value,
+  };
+  if (TARGET_SELECT.value && TARGET_SELECT.value != "all") {
+    json["target"] = TARGET_SELECT.value;
+  }
+  return json;
 }
 
-function onSelectClass() {
-  const spells = SPELLS[selectClass.value]
-  if (!spells) {
-    compareTable.style.display = "none";
+function new_class_selected() {
+  COMPARE_TABLE.style.display = "none";
+
+  const _cache = get_targets_cache();
+  const parsed_json = _cache[TARGET_SELECT.value];
+  if (parsed_json) {
+    display_new_data(parsed_json);
     return;
   }
 
-  compareTable.style.display = "";
-  selectSpell.innerHTML = "";
-  for (let spell_id in spells) {
-    selectSpell.appendChild(newOption(spell_id, spells[spell_id]));
-  }
-  selectSpell.appendChild(newOption(1, "Melee"));
-  
-  if (CACHE_COMP[selectClass.value]) {
-    onSelectSpell();
-    return;
-  }
+  LOADING_SECTION.className = "loading";
+  LOADING_SECTION.style.removeProperty("display");
 
-  CACHE_COMP[selectClass.value] = [];
-
-  xhttp_compare.open("POST", POST_ENDPOINT);
-  xhttp_compare.send(JSON.stringify({"class": selectClass.value}));
+  XHR_COMPARE.open("POST", POST_ENDPOINT);
+  XHR_COMPARE.send(JSON.stringify(new_post_json()));
 }
 
-document.querySelectorAll("#compare-field-table-headers th").forEach(th => th.addEventListener("click", () => sort_by_column(th)));
 
-selectClass.addEventListener("change", onSelectClass);
-selectSpell.addEventListener("change", onSelectSpell);
 function init() {
+  new_class_selected();
 
-  onSelectClass();
+  document.querySelectorAll("#compare-field-table-headers th").forEach(th => th.addEventListener("click", () => sort_by_column(th)));
+  
+  SELECT_CLASS.addEventListener("change", new_class_selected);
+  SELECT_SPELL.addEventListener("change", populate_table);
+  TARGET_SELECT.addEventListener("change", new_class_selected);
+
+  XHR_COMPARE.onreadystatechange = () => {
+    if (XHR_COMPARE.status != 200 || XHR_COMPARE.readyState != 4) return;
+    
+    const parsed_json = JSON.parse(XHR_COMPARE.response);
+    
+    const _cache = get_targets_cache();
+    const current_target = TARGET_SELECT.value || "all";
+    _cache[current_target] = parsed_json;
+  
+    
+    display_new_data(parsed_json);
+  }
 }
-
 
 document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);

@@ -560,7 +560,7 @@ def compare(report_id):
         report = load_report(report_id)
         default_params = report.get_default_params(request)
 
-        return render_template(
+        return render_template_cache(
             'compare.html', **default_params,
         )
     elif request.method == 'POST':
@@ -569,12 +569,14 @@ def compare(report_id):
             request_data = request.form
         class_name = request_data.get('class')
         if not class_name:
-            return "{}"
+            return "[]"
+        
+        target = request_data.get('target')
         
         report = load_report(report_id)
         default_params = report.get_default_params(request)
         segments = default_params["SEGMENTS"]
-        return report.get_comp_data(segments, class_name)
+        return report.get_comp_data(segments, class_name, tGUID=target)
 
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):
