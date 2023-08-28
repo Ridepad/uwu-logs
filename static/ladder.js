@@ -80,7 +80,9 @@ function filter_table() {
 }
 function checkbox_show_done_changed() {
   if (!CHECKBOX_SHOW_DONE.checked) return;
-  CHECKBOX_SHOW_DONE.querySelectorAll("tr").forEach(tr => {
+
+  const show_row = show_row_wrap();
+  MAIN_TABLE_FOOT.querySelectorAll("tr").forEach(tr => {
     show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
   });
 }
