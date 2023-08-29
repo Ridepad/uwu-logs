@@ -40,6 +40,7 @@ const SPECS = [
   ["Fury", "ability_warrior_innerrage", "warrior"],
   ["Protection", "ability_warrior_defensivestance", "warrior"]
 ]
+const MAIN_TABLE_WRAP = document.getElementById("main-table-wrap");
 const MAIN_TABLE_BODY = document.getElementById("main-table-body");
 const MAIN_TABLE_FOOT = document.getElementById("main-table-foot");
 const PLAYERS_TABLE_WRAP = document.getElementById("players-table-wrap");
@@ -61,6 +62,13 @@ const CONFIG = {
 const MOD_TIMES = {};
 const FRAGMENTS = {};
 
+function toogle_display(element, show) {
+  show ? element.style.removeProperty("display") : element.style.display = "none";
+}
+function toogle_display_checkbox(element, cbox) {
+  toogle_display(element, cbox.checked);
+}
+
 const dummy = () => true;
 const has_attr = (attr_name, value) => tr => tr.getAttribute(attr_name) == value;
 const has_attr_wrap = (attr_name, value) => value == "all" ? dummy : has_attr(attr_name, value);
@@ -74,7 +82,7 @@ function show_row_wrap() {
 function filter_table() {
   const show_row = show_row_wrap();
   MAIN_TABLE_BODY.querySelectorAll("tr").forEach(tr => {
-    show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
+    toogle_display(tr, show_row(tr))
   });
   checkbox_show_done_changed();
 }
@@ -83,7 +91,7 @@ function checkbox_show_done_changed() {
 
   const show_row = show_row_wrap();
   MAIN_TABLE_FOOT.querySelectorAll("tr").forEach(tr => {
-    show_row(tr) ? tr.style.display = "" : tr.style.display = "none";
+    toogle_display(tr, show_row(tr))
   });
 }
 function time_to_text(t) {
@@ -123,7 +131,21 @@ function get_guild_index(dataset, guild_names) {
   return majority == undefined ? "Pug" : `Pug (${guild_names[majority]})`;
 }
 
-function players_span(data) {
+function to_title(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function link(name, server, is_guild) {
+  const type = is_guild ? "guild" : "character";
+  const a = document.createElement("a");
+  a.target = "_blank";
+  a.href = `https://armory.warmane.com/${type}/${name}/${server}`;
+  a.append(name);
+  return a;
+}
+
+function players_span(data, server) {
+  server = to_title(server);
   const players = data["pn"];
   const guilds = data["g"];
   const pguilds = data["pg"];
@@ -137,16 +159,17 @@ function players_span(data) {
     
     const td_name = document.createElement("td");
     td_name.classList.add("cell-name");
-    td_name.classList.add(spec2);
     const _img = document.createElement("img");
     _img.src = `/static/icons/${spec_icon}.jpg`;
     _img.alt = spec;
     td_name.appendChild(_img);
-    td_name.append(players[i]);
+    const player_link = link(players[i], server);
+    player_link.classList.add(spec2);
+    td_name.appendChild(player_link);
   
     const td_guild = document.createElement("td");
-    td_guild.append(guilds[pguilds[i]]);
     td_guild.classList.add("cell-guild");
+    td_guild.appendChild(link(guilds[pguilds[i]], server, true));
 
     row.appendChild(td_name);
     row.appendChild(td_guild);
@@ -231,14 +254,15 @@ function add_row(data) {
   add_cell(row, guild, "guild", img)
   row.setAttribute("data-faction", faction);
 
-  show_row_wrap()(row) ? row.style.display = "" : row.style.display = "none";
+  const show_row = show_row_wrap();
+  toogle_display(row, show_row(row))
   if (prev_row) {
     MAIN_TABLE_BODY.replaceChild(row, prev_row);
   } else {
     MAIN_TABLE_BODY.appendChild(row);
   }
 
-  FRAGMENTS[_id] = players_span(data);
+  FRAGMENTS[_id] = players_span(data, server);
 
   row.addEventListener("mouseenter", () => {
     PLAYERS_TABLE.replaceChild(FRAGMENTS[row.id], PLAYERS_TABLE.firstElementChild);
@@ -254,32 +278,37 @@ function set_finish_time() {
   tr.lastElementChild.textContent = `${t} minutes ago`;
 }
 
+function onmsg(event) {
+  const data = JSON.parse(event.data);
+  if (!Array.isArray(data)) {
+    add_row(data);
+    return
+  }
+  for (const _data of data) {
+    add_row(_data);
+  }
+}
 
 
 function init() {
   CHECKBOX_SHOW_DONE.addEventListener("change", () => {
-    CHECKBOX_SHOW_DONE.checked ? MAIN_TABLE_FOOT.style.display = "" : MAIN_TABLE_FOOT.style.display = "none";
+    toogle_display_checkbox(MAIN_TABLE_FOOT, CHECKBOX_SHOW_DONE);
     checkbox_show_done_changed();
   });
   CHECKBOX_SHOW_LIVE.addEventListener("change", () => {
-    CHECKBOX_SHOW_LIVE.checked ? MAIN_TABLE_BODY.style.display = "" : MAIN_TABLE_BODY.style.display = "none";
+    toogle_display_checkbox(MAIN_TABLE_BODY, CHECKBOX_SHOW_LIVE);
   });
   CHECKBOX_PLAYERS.addEventListener("change", () => {
-    CHECKBOX_PLAYERS.checked ? PLAYERS_TABLE_WRAP.style.display = "" : PLAYERS_TABLE_WRAP.style.display = "none";
+    toogle_display_checkbox(PLAYERS_TABLE_WRAP, CHECKBOX_PLAYERS);
   });
   SELECT_TIMEOUT.addEventListener("change", () => {
     CONFIG.timeout = SELECT_TIMEOUT.value * 1000;
     console.log(CONFIG.timeout);
   });
   
-  for (const select of [SELECT_SERVER, SELECT_SIZE, SELECT_MODE, SELECT_FACTION, ]) {
+  for (const select of [SELECT_SERVER, SELECT_SIZE, SELECT_MODE, SELECT_FACTION]) {
     select.addEventListener("change", filter_table);
   }
-  
-  CONFIG.timeout = SELECT_TIMEOUT.value * 1000;
-  CHECKBOX_PLAYERS.checked ? PLAYERS_TABLE_WRAP.style.display = "" : PLAYERS_TABLE_WRAP.style.display = "none";
-  CHECKBOX_SHOW_DONE.checked ? MAIN_TABLE_FOOT.style.display = "" : MAIN_TABLE_FOOT.style.display = "none";
-  CHECKBOX_SHOW_LIVE.checked ? MAIN_TABLE_BODY.style.display = "" : MAIN_TABLE_BODY.style.display = "none";
   
   setInterval(() => {
     const now = Date.now();
@@ -295,18 +324,22 @@ function init() {
     set_finish_time();
   }, 10000);
   
-  const ws_host = `wss://${window.location.hostname}:8765`
+  // const ws_host = `wss://${window.location.hostname}:8765`
+  const ws_host = `ws://${window.location.hostname}:8765`
   const socket = new WebSocket(ws_host);
-  socket.addEventListener("message", event => {
-    const data = JSON.parse(event.data);
-    if (!Array.isArray(data)) {
-      add_row(data);
-      return
-    }
-    for (const _data of data) {
-      add_row(_data);
-    }
-  });  
+  socket.onmessage = event => {
+    CONFIG.timeout = 0;
+    onmsg(event);
+    setTimeout(() => {
+      MAIN_TABLE_WRAP.style.removeProperty("display");
+    });
+    
+    CONFIG.timeout = (SELECT_TIMEOUT.value ?? 30) * 1000;
+    toogle_display_checkbox(PLAYERS_TABLE_WRAP, CHECKBOX_PLAYERS);
+    toogle_display_checkbox(MAIN_TABLE_FOOT, CHECKBOX_SHOW_DONE);
+    toogle_display_checkbox(MAIN_TABLE_BODY, CHECKBOX_SHOW_LIVE);
+    socket.onmessage = onmsg;
+  };
 }
 
 document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);
