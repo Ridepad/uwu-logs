@@ -137,6 +137,9 @@ def get_logs_list_filter_json(_filter):
 
 def get_logs_list_df_filter_to_calendar_wrap(_filter):
     df = get_logs_list_df()
+    if df.empty:
+        return {}
+    
     _filter = normalize_filter(_filter)
     df = get_logs_list_df_filter(df, _filter)
     df.sort_values(by="time", inplace=True)
