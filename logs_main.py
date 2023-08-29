@@ -770,6 +770,8 @@ class THE_LOGS:
                 new_specs[unit_name] = ('Total', 'ability_hunter_readiness')
             elif unit_name in self.CLASSES_NAMES:
                 new_specs[unit_name] = logs_player_spec.get_spec_info(specs[unit_name])
+            else:
+                new_specs[unit_name] = (unit_name, UNKNOWN_ICON)
         return new_specs
 
     def get_report_page_all(self, segments):
