@@ -15,6 +15,14 @@
 td {
   padding-inline: .25em;
 }
+img {
+  min-height: 1em;
+  max-height: 1em;
+  min-width: 1em;
+  max-width: 1em;
+  vertical-align: text-bottom;
+  padding-inline: .15em;
+}
 
 #main-table .wipe td {
   background-color: hsl(357, 100%, 13%);
@@ -24,32 +32,6 @@ td {
   background-color: hsl(107, 100%, 12%);
 }
 
-.cell-guild {
-  min-width: 14em;
-}
-
-.cell-attempts {
-  min-width: 2em;
-  text-align: right;
-}
-.cell-server {
-  min-width: 1.5em;
-  text-align: center;
-}
-
-.cell-mode {
-  min-width: 4em;
-}
-.cell-time {
-  min-width: 3em;
-  text-align: right;
-}
-
-.cell-size {
-  text-align: right;
-  min-width: 2em;
-}
-
 .cell-id {
   display: none;
 }
@@ -57,23 +39,38 @@ td.cell-id {
   min-width: 6em;
 }
 
+.cell-server {
+  min-width: 1.5em;
+  text-align: center;
+}
+.cell-time {
+  min-width: 3em;
+  text-align: right;
+}
+.cell-attempts {
+  min-width: 1.25em;
+  text-align: right;
+}
 .cell-boss {
   text-align: center;
   min-width: 13.5em;
 }
+.cell-size {
+  text-align: right;
+  min-width: 2em;
+}
+.cell-mode {
+  min-width: 3.5em;
+}
+.cell-guild {
+  min-width: 14em;
+}
+
 #controls,
 #main-table-wrap {
   font-size: 150%;
 }
 
-img {
-  min-height: 1em;
-  max-height: 1em;
-  min-width: 1em;
-  max-width: 1em;
-  vertical-align: text-bottom;
-  padding-inline: .15em;
-}
 #players-table-wrap {
   margin-bottom: 1rem;
   position: fixed;
