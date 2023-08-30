@@ -801,6 +801,8 @@ class THE_LOGS:
                 _first_hit = new_data['first_hit']
 
         for k, _data in combined_data.items():
+            if not _data:
+                continue
             _data = logs_dmg_heals.add_pets(_data, GUIDS)
             MAX_VALUE = max(_data.values())
             _data["Total"] = sum(_data.values())
