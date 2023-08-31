@@ -652,12 +652,13 @@ def top():
     response.headers['X-Full-Content-length'] = get_uncompressed_size(p)
     return response
 
+@SERVER.route('/pve_stats', methods=["GET", "POST"])
 @SERVER.route('/top_stats', methods=["GET", "POST"])
-def top_stats():
+def pve_stats():
     if request.method == "GET":
         servers = file_functions.get_folders(TOP_DIR)
         return render_template_wrap(
-            'top_stats.html',
+            'pve_stats.html',
             SPECS_BASE=logs_top_statistics.get_specs_data(),
             SERVERS=servers,
         )
