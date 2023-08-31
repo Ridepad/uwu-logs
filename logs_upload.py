@@ -328,12 +328,8 @@ class NewUpload(Thread):
         pc_slice_save = perf_counter()
         slice_name = os.path.join(self.upload_dir, f"{logs_id}.txt")
         with open(slice_name, 'wb') as file:
-            for line in logs_slice:
-                file.write(line)
+            file.writelines(logs_slice)
         logs_slice.clear()
-        # data_joined, _ = b''.join(logs_slice), logs_slice.clear()
-        # file_functions.bytes_write(slice_name, data_joined)
-        # input(f'SLICE SAVED {logs_id}')
         os.utime(slice_name, (self.mtime, self.mtime))
 
         self.add_logger_msg(f"Saved      | {logs_id}", pc_slice_save)
