@@ -1,3 +1,36 @@
+'''
+trim_logs:
+Removes SPELL_CAST_FAILED lines
+Removes " from spells and names
+Removes unit flags
+Replaces gap after timestamp with ','
+Changes SWING_DAMAGE and SWING_MISSED to spell formatting
+Changes ENVIRONMENTAL_DAMAGE to spell formatting
+
+Before:
+6/25 21:04:15.468  SPELL_CAST_FAILED,0x060000000040F817,"Nomadra",0x511,0x0000000000000000,nil,0x80000000,48461,"Wrath",0x8,"Not yet recovered"
+6/25 21:04:14.319  SPELL_CAST_SUCCESS,0x060000000040F817,"Nomadra",0x511,0x0000000000000000,nil,0x80000000,24858,"Moonkin Form",0x1
+6/25 21:46:32.302  SPELL_DAMAGE,0x060000000040F817,"Nomadra",0x511,0xF130008F130004E9,"Rotface",0x10a48,48465,"Starfire",0x40,15783,0,64,3945,0,0,1,nil,nil
+6/25 21:05:30.116  SWING_DAMAGE,0xF13000908F00007F,"Deathbound Ward",0x10a48,0x060000000040F817,"Nomadra",0x511,11748,0,1,0,0,0,1,nil,nil
+6/25 22:43:00.924  SWING_MISSED,0xF13000910C00065E,"Ymirjar Battle-Maiden",0xa48,0x060000000040F817,"Nomadra",0x511,MISS
+6/25 22:52:55.576  ENVIRONMENTAL_DAMAGE,0x0000000000000000,nil,0x80000000,0x060000000040F817,"Nomadra",0x511,FALLING,5587,0,1,0,0,0,nil,nil,nil
+
+After:
+timestamp           flag                  source guid           source name              target guid           target name  spell id    spell name        school/dmg/etc
+6/25 21:04:14.319,  SPELL_CAST_SUCCESS,   0x060000000040F817,   Nomadra,                 0x0000000000000000,   nil,         24858,      Moonkin Form,     0x1
+6/25 21:46:32.302,  SPELL_DAMAGE,         0x060000000040F817,   Nomadra,                 0xF130008F130004E9,   Rotface,     48465,      Starfire,         0x40,15783,0,64,3945,0,0,1,nil,nil
+6/25 21:05:30.116,  SWING_DAMAGE,         0xF13000908F00007F,   Deathbound Ward,         0x060000000040F817,   Nomadra,         1,      Melee,            0x1,11748,0,1,0,0,0,1,nil,nil
+6/25 22:43:00.924,  SWING_MISSED,         0xF13000910C00065E,   Ymirjar Battle-Maiden,   0x060000000040F817,   Nomadra,         1,      Melee,            0x1,MISS
+6/25 22:52:55.576,  ENVIRONMENTAL_DAMAGE, 0x0000000000000000,   nil,                     0x000000000062341F,   Nomadra,     90001,      FALLING,          0x1,5587,0,1,0,0,0,nil,nil,nil
+
+Added tabs and column names to visualize - in the end all lines looks like this:
+6/25 21:46:32.302,SPELL_DAMAGE,0x060000000040F817,Nomadra,0xF130008F130004E9,Rotface,48465,Starfire,0x40,15783,0,64,3945,0,0,1,nil,nil
+
+
+remove_null:
+removes weird corruption - millions of b'\x00', which causes sometimes memory error on file read
+'''
+
 import os
 
 from constants import ENV_DAMAGE, LOGGER_UNUSUAL_SPELLS, running_time
