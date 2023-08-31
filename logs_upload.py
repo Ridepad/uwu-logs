@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 from threading import Thread
 from time import perf_counter
+from pathlib import Path
 
 import constants
 import file_functions
@@ -128,6 +129,17 @@ def get_extracted_file_info(logs_path):
         "year": year,
         "path": logs_path,
     }
+
+def remove_prev_folder(logs_id: str):
+    report_name_info = get_report_name_info(logs_id)
+    if report_name_info["server"] == DEFAULT_SERVER_NAME:
+        return
+    
+    report_name_info["server"] = DEFAULT_SERVER_NAME
+    prev_logs_id = "--".join(report_name_info.values())
+    prev_logs_folder = Path(LOGS_DIR).joinpath(prev_logs_id)
+    if prev_logs_folder.is_dir():
+        shutil.rmtree(prev_logs_folder)
 
 
 class NewUpload(Thread):
@@ -418,11 +430,7 @@ class NewUpload(Thread):
         if os.path.isdir(logs_folder):
             shutil.rmtree(logs_folder)
 
-        if DEFAULT_SERVER_NAME not in logs_id:
-            _server = get_report_name_info(logs_id)["server"]
-            _unknown = logs_folder.replace(_server, DEFAULT_SERVER_NAME)
-            if os.path.isdir(_unknown):
-                shutil.rmtree(_unknown)
+        remove_prev_folder(logs_id)
         
         logs_folder = file_functions.new_folder_path(LOGS_DIR, logs_id)
         
