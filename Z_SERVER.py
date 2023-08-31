@@ -41,8 +41,6 @@ except ImportError:
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-SERVER.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
-SERVER.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 USE_FILTER = True
 MAX_SURVIVE_LOGS = T_DELTA["30MIN"]
@@ -706,4 +704,5 @@ def custom_search(report_id):
     )
 
 if __name__ == "__main__":
-    SERVER.run(host="0.0.0.0", port=5000, debug=True)
+    SERVER.config["ENV"] = "development"
+    SERVER.run(host="0.0.0.0", port=5000, debug=True, reloader_type="stat")
