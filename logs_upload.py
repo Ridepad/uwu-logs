@@ -3,7 +3,6 @@ import os
 import re
 import shutil
 import sys
-import zlib
 from collections import defaultdict
 from datetime import datetime
 from threading import Thread
@@ -438,7 +437,7 @@ class NewUpload(Thread):
         logs = logs_fix.trim_logs(slice_name)
         logs = b'\n'.join(logs)
         self.change_slice_status(logs_id, "Saving slice...")
-        logs = zlib.compress(logs, level=7)
+        logs = file_functions.zstd_compress(logs)
         file_functions.bytes_write(logs_name, logs)
         self.change_slice_status(logs_id, "Done!", slice_done=True)
 

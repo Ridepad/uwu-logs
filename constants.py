@@ -8,7 +8,8 @@ import file_functions
 
 
 DEFAULT_SERVER_NAME = "Unknown"
-LOGS_CUT_NAME = "LOGS_CUT.zlib"
+LOGS_CUT_NAME = "LOGS_CUT.zstd"
+LOGS_CUT_NAME_OLD = "LOGS_CUT.zlib"
 TOP_FILE_NAME = "top.json"
 PANDAS_COMPRESSION = "zstd"
 NIL_GUID = '0x0000000000000000'

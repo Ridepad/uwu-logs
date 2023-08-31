@@ -27,6 +27,7 @@ from constants import (
     FLAG_ORDER,
     LOGGER_REPORTS,
     LOGGER_UNUSUAL_SPELLS,
+    LOGS_CUT_NAME_OLD,
     LOGS_DIR,
     LOGS_CUT_NAME,
     MONTHS,
@@ -257,7 +258,14 @@ class THE_LOGS:
     @running_time
     def __open_logs(self):
         logs_cut_file_name = self.relative_path(LOGS_CUT_NAME)
-        return file_functions.zlib_text_read(logs_cut_file_name).splitlines()
+        if os.path.isfile(logs_cut_file_name):
+            return file_functions.zstd_text_read(logs_cut_file_name).splitlines()
+        
+        logs_cut_file_name_old = self.relative_path(LOGS_CUT_NAME_OLD)
+        if os.path.isfile(logs_cut_file_name_old):
+            return file_functions.zlib_text_read(logs_cut_file_name_old).splitlines()
+
+        return []
         
     @property
     def LOGS(self):

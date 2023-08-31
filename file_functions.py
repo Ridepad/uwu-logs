@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import zlib
+import zstd
 import pandas
 from pathlib import Path
 
@@ -120,6 +121,19 @@ def zlib_text_read(path: str):
     path = add_extension(path, '.zlib')
     data_raw = bytes_read(path)
     data = zlib_decompress(data_raw)
+    return data.decode()
+
+
+def zstd_compress(data: bytes, compress_level=3):
+    return zstd.compress(data, compress_level)
+
+def zstd_decompress(data: bytes):
+    return zstd.decompress(data)
+
+def zstd_text_read(path: str):
+    path = add_extension(path, '.zstd')
+    data_raw = bytes_read(path)
+    data = zstd_decompress(data_raw)
     return data.decode()
 
 
