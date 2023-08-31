@@ -46,6 +46,9 @@ file_functions.create_new_folders(PATH_DIR, LOGS_DIR, UPLOADS_DIR, UPLOADED_DIR)
 UPLOADS_TEXT = file_functions.new_folder_path(UPLOADS_DIR, "0archive_pending")
 UPLOADED_FILE_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0file_info")
 
+BIG_GAP = T_DELTA["14H"]
+SMALL_GAP = T_DELTA["3MIN"]
+
 
 def format_filename(file_name):
     if not file_name:
@@ -336,9 +339,6 @@ class NewUpload(Thread):
         last_timestamp, last_line = _last
         current_segment = []
         last_segment = []
-
-        BIG_GAP = T_DELTA["14H"]
-        SMALL_GAP = T_DELTA["3MIN"]
 
         def is_big_gap():
             if not last_segment: return True
