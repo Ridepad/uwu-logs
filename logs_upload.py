@@ -28,8 +28,9 @@ from constants import (
     get_report_name_info,
 )
 
-ARCHIVE_ID_ERROR = "Bad archive.  Don't rename files to .zip/.7z, create archives from 0."
-ARCHIVE_ERROR = "Error unziping file.  Make sure logs file inside the archive without any folders."
+ARCHIVE_ID_ERROR = "Bad archive.  Don't change extension manually, create archives from 0."
+ARCHIVE_ERROR = "Error extracting logs file.  Make sure logs file inside the archive without any folders."
+UPLOAD_GONE = "Uploaded file disappeared. Try to upload again."
 LOGS_ERROR = "Error parsing logs."
 TOP_ERROR = "Done!  Select 1 of the reports below.  Top update encountered an error."
 ALREADY_DONE = "File has been uploaded already!  Select 1 of the reports below."
@@ -37,13 +38,14 @@ ALREADY_DONE_NONE_FOUND = "File has been uploaded already!  No boss segments wer
 FULL_DONE = "Done!  Select 1 of the reports below."
 FULL_DONE_PARTIAL = "Done!  Some of the raids were already uploaded.  Make sure to delete logs file to keep it fresh.  Select 1 of the reports below."
 FULL_DONE_NONE_FOUND = "Done!  No boss segments were found!  Make sure to use /combatlog"
+START_SLICING = "Determinating log slices..."
 SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
-TOP_UPDATE = "Updating top..."
 BUGGED_NAMES = {"nil", "Unknown"}
 LOGS_RAW_DIR_BKP = file_functions.get_backup_folder(LOGS_RAW_DIR)
 file_functions.create_new_folders(PATH_DIR, LOGS_DIR, UPLOADS_DIR, UPLOADED_DIR)
 
+UPLOADS_TODO = file_functions.new_folder_path(UPLOADS_DIR, "0todo")
 UPLOADS_TEXT = file_functions.new_folder_path(UPLOADS_DIR, "0archive_pending")
 UPLOADED_FILE_INFO = file_functions.new_folder_path(UPLOADS_DIR, "0file_info")
 
@@ -174,7 +176,7 @@ class NewUpload(Thread):
         self.slices: dict[str, dict] = {}
         self.status_dict = {
             'done': 0,
-            'status': 'Determinating log slices...',
+            'status': 'Starting...',
         }
 
     def status_to_json(self):
@@ -442,29 +444,10 @@ class NewUpload(Thread):
 
         self.add_logger_msg(f"Done       | {logs_id}", pc_slice_cleaner)
 
-    def main(self):
-        logs_fix.check_null_bug(self.extracted_path)
-        
-        self.slice_logs()
-
-        if not self.slices:
-            self.change_status(FULL_DONE_NONE_FOUND, 1)
-            return
-
-        if self.only_slices:
-            for logs_id in self.slices:
-                print(logs_id)
-            self.change_status(FULL_DONE, 1)
-            return
-
-        self.change_status(SAVING_SLICES)
-        for logs_id in self.slices:
-            self.finish_slice(logs_id)
-        
-        self.change_status(FULL_DONE, 1)
-
     def is_fully_proccessed(self):
         if self.forced or not self.upload_data:
+            return False
+        if not self.upload_data.get("slices"):
             return False
         
         old_server = self.upload_data.get("server")
@@ -479,7 +462,7 @@ class NewUpload(Thread):
             return False
         
         done = True
-        self.slices = self.upload_data.get("slices", [])
+        self.slices = self.upload_data["slices"]
         for slice_id in self.slices:
             if slice_is_fully_processed(slice_id):
                 self.has_duplicates = True
@@ -503,66 +486,69 @@ class NewUpload(Thread):
         if file_id is None:
             self.change_status(ARCHIVE_ID_ERROR, 1)
             self.add_logger_msg(ARCHIVE_ID_ERROR)
-            return
+            return False
 
-        _file_data = get_uploaded_file_info(file_id)
-        self.upload_data = self.upload_data | _file_data
-        if self.is_fully_proccessed():
-            return
+        self.upload_data["file_id"] = file_id
+        uploaded_file_info = get_uploaded_file_info(file_id)
+        self.upload_data = self.upload_data | uploaded_file_info
+        if uploaded_file_info and self.is_fully_proccessed():
+            return False
         
         self.change_status("Extracting...")
         pc_extract = perf_counter()
-        archive_data = logs_archive.get_archive_data(self.archive_path)
-        if not archive_data:
-            self.change_status(ARCHIVE_ERROR, 1)
-            self.add_logger_msg(ARCHIVE_ERROR, is_error=True)
-            return
-        self.add_logger_msg("Extracted", pc_extract)
+        uploaded_file_info = logs_archive.get_archive_data(self.archive_path)
+        if not uploaded_file_info:
+            self.finish(ARCHIVE_ERROR, True)
+            return False
         
-        self.extracted_name = archive_data["extracted"]
-        self.extracted_path = os.path.join(self.upload_dir, self.extracted_name)
-        return archive_data
+        self.add_logger_msg("Extracted", pc_extract)
 
-    def run(self):
+        self.upload_data = self.upload_data | uploaded_file_info
+        self.extracted_name = uploaded_file_info["extracted"]
+        self.extracted_path = os.path.join(self.upload_dir, self.extracted_name)
+        return True
+
+    def main(self):
+        self.pc_main = perf_counter()
+
         if os.path.isfile(self.extracted_path):
-            _file_data = get_extracted_file_info(self.extracted_path)
-            self.upload_data = self.upload_data | _file_data
+            uploaded_file_info = get_extracted_file_info(self.extracted_path)
+            self.upload_data = self.upload_data | uploaded_file_info
             if self.is_fully_proccessed():
                 return
         elif os.path.isfile(self.archive_path):
-            archive_data = self.extract_archive()
-            if not archive_data:
+            if not self.extract_archive():
                 return
-            self.upload_data = self.upload_data | archive_data
         else:
-            self.change_status(ARCHIVE_ERROR, 1)
-            self.add_logger_msg(ARCHIVE_ERROR, is_error=True)
+            self.finish(UPLOAD_GONE, True)
             return
 
-        self.year = archive_data["year"]
+        self.year = self.upload_data["year"]
         self.mtime = os.path.getmtime(self.extracted_path)
-        
-        pc_main = perf_counter()
 
-        logs_error = False
-        try:
-            self.main()
-        
-        except Exception:
-            logs_error = True
-            LOGGER_UPLOADS.exception(f"{self.upload_dir} | NewUpload run")
-            self.status_dict['slices'] = {}
-        
-        finally:
-            self.add_logger_msg("Done", pc_main)
-            if logs_error:
-                self.finish(LOGS_ERROR)
-            elif not self.slices:
-                self.finish(FULL_DONE_NONE_FOUND)
-            elif self.has_duplicates:
-                self.finish(FULL_DONE_PARTIAL)
-            else:
-                self.finish(FULL_DONE)
+        logs_fix.check_null_bug(self.extracted_path)
+
+        self.change_status(START_SLICING)
+        self.slice_logs()
+
+        if not self.slices:
+            self.finish(FULL_DONE_NONE_FOUND)
+            return
+
+        if self.only_slices:
+            for logs_id in self.slices:
+                print(logs_id)
+            self.change_status(FULL_DONE, 1)
+            return
+
+        self.change_status(SAVING_SLICES)
+        for logs_id in self.slices:
+            self.finish_slice(logs_id)
+
+        if self.has_duplicates:
+            self.finish(FULL_DONE_PARTIAL)
+        else:
+            self.finish(FULL_DONE)
     
     def move_sliced_logs(self):
         for logs_id in self.slices:
@@ -586,17 +572,21 @@ class NewUpload(Thread):
                 file_functions.file_write(raw_path_tz, self.timezone)
                 self.add_logger_msg(f"Timezone w | {logs_id}")
     
-    def move_uploaded_file(self):
+    def move_uploaded_file(self, is_error=False):
         old = self.archive_path or self.extracted_path
         basename = os.path.basename(old)
         _file_id = f"{self.ip}--{self.timestamp}--{basename}"
-        new_archive_name = os.path.join(UPLOADED_DIR, _file_id)
-        self.upload_data["uploaded"] = new_archive_name
+        if is_error:
+            new_archive_name = os.path.join(UPLOADS_TODO, _file_id)
+        else:
+            new_archive_name = os.path.join(UPLOADED_DIR, _file_id)
+            self.upload_data["uploaded"] = new_archive_name
         os.rename(old, new_archive_name)
 
-    def finish(self, msg: str):
+    def finish(self, msg: str, is_error=False):
+        self.change_status(SEMI_DONE)
         self.move_sliced_logs()
-        self.move_uploaded_file()
+        self.move_uploaded_file(is_error)
 
         self.upload_data.setdefault("ips", []).append(self.ip)
         self.upload_data.setdefault("timestamps", []).append(self.timestamp)
@@ -607,7 +597,16 @@ class NewUpload(Thread):
             shutil.rmtree(self.upload_dir, ignore_errors=True)
 
         self.change_status(msg, 1)
-        self.add_logger_msg(msg)
+        self.add_logger_msg(msg, pc=self.pc_main, is_error=is_error)
+
+    def run(self):
+        try:
+            self.main()
+        
+        except Exception:
+            LOGGER_UPLOADS.exception(f"{self.upload_dir} | NewUpload run")
+            self.status_dict['slices'] = {}
+            self.finish(LOGS_ERROR)
 
 
 class FileSave:
