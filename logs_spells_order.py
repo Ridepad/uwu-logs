@@ -39,44 +39,64 @@ def convert_keys(data: dict[str, int]):
 
 def to_float(s: str):
     minutes, seconds = s[-9:].split(":", 1)
-    return int(minutes) * 60000 + float(seconds) * 1000
+    return int(minutes), float(seconds)
+
+def _timestamp(s: str):
+    return s.split(',', 1)[0]
+
+def get_delta_wrap(logs_slice, start_index):
+    start_minutes, start_seconds = to_float(_timestamp(logs_slice[start_index]))
+    first_minutes, _ = to_float(_timestamp(logs_slice[0]))
+    end_minutes, _ = to_float(_timestamp(logs_slice[-1]))
+    if first_minutes > start_minutes:
+        def get_delta(current_ts):
+            _minutes, _seconds = to_float(current_ts)
+            _seconds = _seconds - start_seconds
+            if _minutes > 50:
+                _minutes = _minutes - start_minutes - 60
+            else:
+                _minutes = _minutes - start_minutes
+            return int((_minutes * 60 + _seconds)*1000)
+    elif start_minutes > end_minutes:
+        def get_delta(current_ts: str):
+            _minutes, _seconds = to_float(current_ts)
+            _seconds = _seconds - start_seconds
+            if _minutes < 20:
+                _minutes = _minutes - start_minutes + 60
+            else:
+                _minutes = _minutes - start_minutes
+            return int((_minutes * 60 + _seconds)*1000)
+    else:
+        def get_delta(current_ts):
+            _minutes, _seconds = to_float(current_ts)
+            _seconds = _seconds - start_seconds
+            _minutes = _minutes - start_minutes
+            return int((_minutes * 60 + _seconds)*1000)
+    return get_delta
 
 @running_time
-def get_history(logs: list[str], source_guid: str, ignored_guids: set[str]=None):
-    def get_delta_from_start(current_ts: str):
-        new_key = to_float(current_ts) - FIRST_KEY
-        if new_key < 0:
-            new_key = new_key + 3600000
-        return new_key / 1000
-    
-    history = defaultdict(list)
+def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str], start_index: int):
     flags = set()
-    FIRST_KEY = to_float(logs[0].split(",", 1)[0])
+    history = defaultdict(list)
 
-    if ignored_guids is None:
+    get_delta = get_delta_wrap(logs_slice, start_index)
+
+    if not ignored_guids:
         ignored_guids = set()
     elif source_guid in ignored_guids:
         ignored_guids.remove(source_guid)
     
-    for line in logs:
+    for line in logs_slice:
         if source_guid not in line:
             continue
         try:
             timestamp, flag, _, sName, tGUID, tName, spell_id, _, etc = line.split(',', 8)
             if flag in IGNORED_FLAGS or tGUID in ignored_guids:
                 continue
-            _delta = get_delta_from_start(timestamp)
+            _delta = get_delta(timestamp)
             history[spell_id].append((_delta, flag, sName, tName, tGUID, etc))
-            # history[spell_id].append({
-            #     "ts": _delta,
-            #     "flag": flag,
-            #     "sName": sName,
-            #     "tName": tName,
-            #     "etc": etc,
-            # })
             flags.add(flag)
         except ValueError:
-            print(line)
             continue
 
     for spell_id in list(history):
