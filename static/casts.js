@@ -4,6 +4,7 @@ const TIMELINE_MULT_LABEL = document.getElementById("spell-timeline-mult-label")
 const TIMELINE_RULER = document.getElementById("timeline-ruler");
 const SECTION_FAV = document.getElementById("spells-fav");
 const TABS_WRAP = document.getElementById("tabs-wrap");
+const FIGHT_START = document.getElementById("fight-start");
 
 const TOOLTIP = document.getElementById("the-tooltip");
 const TOOLTIP_TIME = document.getElementById("tooltip-time");
@@ -16,10 +17,10 @@ const AURA_CONTROLS = document.getElementById("aura-controls");
 const BUTTON_FAV = document.getElementById("button-fav");
 const BUTTON_HIDE = document.getElementById("button-hide");
 const BUTTON_UNHIDE = document.getElementById("button-unhide");
+const SELECT_BEFORE_PULL = document.getElementById("before-pull");
 
 const TABLE_WRAP = document.querySelector(".table-wrap");
 const SPELL_TOGGLE_HIDDEN = document.getElementById("spell-toggle-hidden");
-const CDN_LINK = "https://icons.wowdb.com/retail/large";
 const AURA_REFRESH = ["SPELL_AURA_APPLIED_DOSE", "SPELL_AURA_REMOVED_DOSE", "SPELL_AURA_REFRESH"];
 const AURA_ONOFF = ["SPELL_AURA_APPLIED", "SPELL_AURA_REMOVED"];
 
@@ -66,6 +67,11 @@ const SPELLS_HIDE = new Set(localStorage_to_array("hide"));
 
 const CHARACTERS = [];
 
+CONFIG = {
+  max_duration: 0,
+  shift: 0,
+}
+
 function get_pad_value(element) {
   return element.getAttribute("data-pad");
 }
@@ -79,7 +85,7 @@ function create_new_cleu(flag) {
 
 function new_fake_applied(cleu) {
   const _applied = create_new_cleu("SPELL_AURA_APPLIED");
-  _applied.setAttribute("data-time", "0.0");
+  _applied.setAttribute("data-time", (-CONFIG.shift).toFixed(1));
   for (let attr of ["data-source", "data-target", "data-etc", "data-guid"]) {
     _applied.setAttribute(attr, cleu.getAttribute(attr));
   }
@@ -150,13 +156,19 @@ function toggle_aura_duration(row) {
   }
 }
 
-function get_uptime(events) {
+function get_uptime(events, duration) {
+  const shifted_dur = duration + CONFIG.shift;
   const applied = events.filter(e => e.classList.contains("SPELL_AURA_APPLIED"));
   let uptime = 0;
   for (const event of applied) {
-    uptime += parseFloat(event.style.getPropertyValue("width") || 0);
+    const width = parseFloat(event.style.getPropertyValue("width")) || 0;
+    const buff_duration = width * shifted_dur;
+    const t = Number(event.getAttribute("data-time")) || 0;
+    const before_combat = Math.abs(Math.min(t, 0)) * 100;
+    if (buff_duration < before_combat) continue;
+    uptime += buff_duration - before_combat;
   }
-  return uptime.toFixed(1) + "%";
+  return (uptime / duration).toFixed(1) + "%";
 }
 
 function spell_row_click(event) {
@@ -181,10 +193,12 @@ function spell_row_click(event) {
   row.style.setProperty("--row-targets", len+2);
   row.setAttribute("data-len", len+2);
 
+  const tab_n = row.getAttribute("data-tab-n");
+  const duration = CHARACTERS[tab_n].DURATION;
   for (const guid in events_split) {
     const spellinfo = document.createElement("div");
     spellinfo.className = "copy";
-    spellinfo.setAttribute("data-uptime", get_uptime(events_split[guid]));
+    spellinfo.setAttribute("data-uptime", get_uptime(events_split[guid], duration));
     const tname = events_split[guid][0].getAttribute("data-target");
     spellinfo.append(tname);
     spellnamewrap.appendChild(spellinfo);
@@ -319,24 +333,38 @@ function new_timeline_text(sec, tenth) {
   const seconds = `${sec%60}`.padStart(2, '0');
   return tenth ? `${minutes}:${seconds}.${tenth}` : `${minutes}:${seconds}`;
 }
-function create_timeline_tick(milliseconds) {
+function create_timeline_tick(milliseconds, negative) {
   const tick = document.createElement("div");
   const tenth_of_sec = milliseconds%10;
   const tick_type = TIMELINE_TICK_TYPES[tenth_of_sec] ?? "timeline-ruler-tenth-second";
   tick.classList.add("timeline-ruler-tick", tick_type);
   const number = document.createElement("div");
   number.classList.add("timeline-ruler-number");
+  if (negative) {
+    number.classList.add("negative");
+  }
   const seconds = Math.floor(milliseconds/10);
-  number.innerText = new_timeline_text(seconds, tenth_of_sec);
+  number.append(new_timeline_text(seconds, tenth_of_sec));
   tick.appendChild(number);
-  return tick
+  if (milliseconds == 0) {
+    tick.appendChild(FIGHT_START);
+  }
+  return tick;
 }
-function make_timeline(start) {
+function make_timeline(milliseconds) {
   console.time('make_timeline');
 
+  let shift_ms = CONFIG.shift * 10;
   const fragment = new DocumentFragment();
-  const duration = TIMELINE_RULER.getAttribute("data-duration") * 10 - 1;
-  let milliseconds = start ?? 0;
+  const duration = CONFIG.max_duration * 10 - 1;
+
+  if (!milliseconds) {
+    milliseconds = 0;
+    for (; shift_ms>0; shift_ms--) {
+      fragment.appendChild(create_timeline_tick(shift_ms, true));
+    }
+
+  }
   for (; milliseconds<=duration; milliseconds++) {
     fragment.appendChild(create_timeline_tick(milliseconds));
   }
@@ -409,12 +437,12 @@ function reveal_new_flags(flags_list) {
 }
 
 function check_timeline(new_duraion) {
-  const current_duration = parseFloat(TIMELINE_RULER.getAttribute("data-duration") || 0);
+  const current_duration = CONFIG.max_duration;
   console.log(new_duraion, current_duration);
   if (current_duration >= new_duraion) return;
   
-  TIMELINE_RULER.setAttribute("data-duration", new_duraion);
-  TABLE_WRAP.style.setProperty("--duration", new_duraion);
+  CONFIG.max_duration = new_duraion;
+  TABLE_WRAP.style.setProperty("--duration", new_duraion+CONFIG.shift);
   make_timeline(parseInt(current_duration*10));
   change_zoom();
 }
@@ -426,6 +454,7 @@ function makeQuery(name) {
   const boss = current_query.get("boss");
   const new_query = {
     name: name,
+    shift: CONFIG.shift,
   };
   if (!boss) return;
   
@@ -440,11 +469,13 @@ function makeQuery(name) {
 }
 
 function new_timestamp(t) {
+  const negative = t.charAt(0) == "-" ? "-" : "";
   const [_s, _ms] = t.split(".");
-  const m = ~~(_s / 60);
-  const s = (_s % 60).toString().padStart(2, "0");
+  const _s_abs = Math.abs(_s)
+  const m = Math.floor(_s_abs / 60);
+  const s = Math.floor(_s_abs % 60).toString().padStart(2, "0");
   const ms = _ms.padEnd(3, "0");
-  return `${m}:${s}.${ms}`;
+  return `${negative}${m}:${s}.${ms}`;
 }
 
 function section_append(section, row) {
@@ -469,9 +500,6 @@ function section_append(section, row) {
 
 class Character {
   constructor(report_id, name) {
-    this.CASTS_SECTION = document.createElement("div");
-    this.CASTS_SECTION.style.display = "none";
-    CASTS_SECTION_WRAP.appendChild(this.CASTS_SECTION);
     this.REPORT_ID = report_id;
     this.NAME = name;
 
@@ -490,22 +518,30 @@ class Character {
       
       const PARSED_DATA = req.response ? JSON.parse(req.response) : {};
 
-      console.log(this.PARSED_DATA);
       this.SPELLS = PARSED_DATA.SPELLS;
       this.CASTS_DATA = PARSED_DATA.DATA;
 
       Character.PLAYER_CLASS = Character.PLAYER_CLASS ?? PARSED_DATA.CLASS
       
       this.DURATION = parseFloat(PARSED_DATA.RDURATION);
-      this.WIDTH = `calc(var(--mult) * ${(this.DURATION*10).toFixed(2)}px)`;
-      
-      setTimeout(() => reveal_new_flags(PARSED_DATA.FLAGS));
-      setTimeout(() => check_timeline(this.DURATION));
-      setTimeout(() => this.new_character());
+      setTimeout(() => {
+        this.init();
+        reveal_new_flags(PARSED_DATA.FLAGS);
+      });
     }
     req.open("POST", `/reports/${report_id}/casts/`);
     req.setRequestHeader("Content-Type", "application/json");
     req.send(makeQuery(name));
+  }
+
+  init() {
+    this.CASTS_SECTION = document.createElement("div");
+    this.CASTS_SECTION.style.display = "none";
+    CASTS_SECTION_WRAP.appendChild(this.CASTS_SECTION);
+
+    this.WIDTH = `calc(var(--mult) * ${((this.DURATION + CONFIG.shift)*10).toFixed(2)}px)`;
+    check_timeline(this.DURATION);
+    this.new_character();
   }
 
   new_spell_name_cell(spell_id) {
@@ -529,17 +565,17 @@ class Character {
   }
 
   new_cleu(cleu_data) {
-    const timestamp = cleu_data[0];
-    const pad = timestamp / this.DURATION * 100;
-    const spellCleu = create_new_cleu(cleu_data[1]);
-    spellCleu.style.setProperty("left", `${pad}%`);
-    spellCleu.setAttribute("data-time", timestamp);
-    spellCleu.setAttribute("data-source", cleu_data[2]);
-    spellCleu.setAttribute("data-target", cleu_data[3]);
-    spellCleu.setAttribute("data-guid", cleu_data[4]);
-    spellCleu.setAttribute("data-etc", cleu_data.at(-1));
-    spellCleu.setAttribute("data-pad", pad);
-    return spellCleu;
+    const timestamp = cleu_data[0]/1000;
+    const pad = (timestamp + CONFIG.shift) / (this.DURATION+CONFIG.shift) * 100;
+    const spell_cleu = create_new_cleu(cleu_data[1]);
+    spell_cleu.style.setProperty("left", `${pad}%`);
+    spell_cleu.setAttribute("data-time", timestamp);
+    spell_cleu.setAttribute("data-source", cleu_data[2]);
+    spell_cleu.setAttribute("data-target", cleu_data[3]);
+    spell_cleu.setAttribute("data-guid", cleu_data[4]);
+    spell_cleu.setAttribute("data-etc", cleu_data.at(-1));
+    spell_cleu.setAttribute("data-pad", pad);
+    return spell_cleu;
   }
 
   new_spell_history_cell(spell_id) {
@@ -866,3 +902,17 @@ if (boss) {
 } else {
   BOSS_REMINDER.style.display = "";
 }
+SELECT_BEFORE_PULL.addEventListener("change", () => {
+  CONFIG.max_duration = 0;
+  CONFIG.shift = parseInt(SELECT_BEFORE_PULL.value);
+  HTML_MAIN.appendChild(FIGHT_START);
+  HTML_MAIN.appendChild(BUTTON_ADD_CHARACTER);
+  TIMELINE_RULER.innerHTML = "";
+  TABS_WRAP.innerHTML = "";
+  TABS_WRAP.appendChild(BUTTON_ADD_CHARACTER);
+  CASTS_SECTION_WRAP.querySelectorAll(".casts-section").forEach(e => CASTS_SECTION_WRAP.removeChild(e));
+  SECTION_FAV.querySelectorAll(".spell-row").forEach(e => SECTION_FAV.removeChild(e));
+  for (const char of CHARACTERS) {
+    char.init();
+  }
+})

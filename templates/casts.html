@@ -76,6 +76,7 @@
   --tenth-width: calc(var(--mult) * 1px);
   --event-width: calc(var(--event-width-mult) * var(--tenth-width));
   width: calc(var(--mult) * var(--duration) * 10px + 2px);
+  overflow-y: clip;
 }
 .spell-row {
   --row-targets: 1;
@@ -157,6 +158,9 @@ spell-cleu {
   z-index: 5;
 }
 
+.negative::before {
+  content: '-';
+}
 #timeline-ruler {
   padding-top: 1rem;
   background-color: black;
@@ -298,6 +302,19 @@ spells-main #button-unhide,
 spells-hide #button-hide {
   display: none;
 }
+
+#fight-start {
+  position: absolute;
+  height: 250rem;
+  width: 1px;
+  background-color: gainsboro;
+  z-index: 1;
+}
+
+#before-pull {
+  font-size: 150%;
+  background-color: var(--background);
+}
 </style>
 {% endblock add_style %}
 
@@ -337,6 +354,19 @@ spells-hide #button-hide {
 </section>
 <section class="table-wrap wrap-spell" style="display: none;">
   <div id="casts-section-wrap">
+    <div id="fight-start"></div>
+    <div class="spell-name">
+      <select id="before-pull">
+        <option value="0">Before pull</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="30">30</option>
+        <option value="60">60</option>
+        <option value="120">120</option>
+        <option value="180">180</option>
+      </select>
+    </div>
     <div id="timeline-ruler"></div>
     <div id="spells-fav">
       <aside id="spells-fav-reminder">

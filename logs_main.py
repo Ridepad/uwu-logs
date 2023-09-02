@@ -1423,10 +1423,13 @@ class THE_LOGS:
         return new_data
 
     @cache_wrap
-    def get_spell_history(self, s, f, guid) -> dict[str, defaultdict[str, int]]:
-        logs_slice = self.LOGS[s:f]
+    def get_spell_history(self, s: int, f: int, guid: str) -> dict[str, defaultdict[str, int]]:
+        ts = self.get_timestamp()
+        s_shifted = ts[self.find_index(s, 180)]
+        logs_slice = self.LOGS[s_shifted:f]
+
         players_and_pets = self.get_players_and_pets_guids()
-        data = logs_spells_order.get_history(logs_slice, guid, players_and_pets)
+        data = logs_spells_order.get_history(logs_slice, guid, players_and_pets, s-s_shifted)
 
         _spells = self.SPELLS_WITH_ICONS
         data["SPELLS"] = {
