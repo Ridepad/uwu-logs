@@ -372,15 +372,16 @@ function make_timeline(milliseconds) {
 
   console.timeEnd('make_timeline');
 }
-
-function array_remove(array, item) {
-  let index = array.indexOf(item);
-  while (index > -1) {
-    array.splice(index, 1);
-    index = array.indexOf(item);
-  }
+function new_timestamp(t) {
+  if (t == 0) return "0:00.000";
+  const negative = t.charAt(0) == "-" ? "-" : "";
+  const [_s, _ms] = t.split(".");
+  const _s_abs = Math.abs(_s)
+  const m = Math.floor(_s_abs / 60);
+  const s = Math.floor(_s_abs % 60).toString().padStart(2, "0");
+  const ms = _ms.padEnd(3, "0");
+  return `${negative}${m}:${s}.${ms}`;
 }
-
 function format_dmg_line(e) {
   const [, dmg, ok, , res, , abs, iscrit,] = e.map(v => parseInt(v)); 
   const crit = iscrit ? "🌟" : "";
@@ -466,16 +467,6 @@ function makeQuery(name) {
   }
   console.log(JSON.stringify(new_query));
   return JSON.stringify(new_query);
-}
-
-function new_timestamp(t) {
-  const negative = t.charAt(0) == "-" ? "-" : "";
-  const [_s, _ms] = t.split(".");
-  const _s_abs = Math.abs(_s)
-  const m = Math.floor(_s_abs / 60);
-  const s = Math.floor(_s_abs % 60).toString().padStart(2, "0");
-  const ms = _ms.padEnd(3, "0");
-  return `${negative}${m}:${s}.${ms}`;
 }
 
 function section_append(section, row) {
