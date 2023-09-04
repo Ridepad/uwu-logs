@@ -1438,7 +1438,7 @@ class THE_LOGS:
         }
         data["RDURATION"] = self.get_slice_duration(s, f)
         data["NAME"] = self.guid_to_name(guid)
-        data["CLASS"] = self.get_classes()[guid]
+        data["CLASS"] = self.get_classes().get(guid, "npc")
 
         return data
     

@@ -888,7 +888,7 @@ const boss = current_query.get("boss");
 if (boss) {
   TABS_WRAP.style.display = "";
   BOSS_REMINDER.style.display = "none";
-  const _pathname = window.location.pathname.split('/');
+  const _pathname = decodeURI(window.location.pathname).split('/');
   new Character(_pathname[2], _pathname[4]);
 } else {
   BOSS_REMINDER.style.display = "";
