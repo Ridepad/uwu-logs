@@ -680,14 +680,16 @@ class THE_LOGS:
         except AttributeError:
             spells_data_file_name = self.relative_path("SPELLS_DATA.json")
             if rewrite or self.cache_files_missing(spells_data_file_name):
-                self.SPELLS = logs_spells_list.get_all_spells(self.LOGS)
-                file_functions.json_write(spells_data_file_name, self.SPELLS)
+                _spells = logs_spells_list.get_all_spells(self.LOGS)
+                file_functions.json_write(spells_data_file_name, _spells)
             else:
                 _spells = file_functions.json_read_no_exception(spells_data_file_name)
+            
             for spell_id, new_name in CUSTOM_SPELL_NAMES.items():
                 if spell_id in _spells:
                     _spells[spell_id]["name"] = new_name
             self.SPELLS = logs_spells_list.spell_id_to_int(_spells)
+            
             return self.SPELLS
 
     @property
