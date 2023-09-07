@@ -87,6 +87,16 @@ def get_logs_author_info(logs: list[bytes]):
         name = name.replace('"', '')
         if name not in BUGGED_NAMES:
             return guid, name
+    
+    for line in logs[:1000]:
+        if b"0x0" not in line:
+            continue
+        if b"nil" in line:
+            continue
+        line = line.decode()
+        guid = line.split(',', 2)[1]
+        return guid, "Unknown"
+    
     return None
 
 def _format_name(name: bytes):
@@ -353,9 +363,9 @@ class NewUpload(Thread):
             if not last_segment: return True
             
             segments_tdelta = self.get_timedelta(current_segment[0], last_segment[-1])
-            print("is_big_gap segments_tdelta", segments_tdelta)
-            print(last_segment[-1])
-            print(current_segment[0])
+            # print("is_big_gap segments_tdelta", segments_tdelta)
+            # print(last_segment[-1])
+            # print(current_segment[0])
             return segments_tdelta > BIG_GAP
 
         def __save_segment():
@@ -372,11 +382,11 @@ class NewUpload(Thread):
                 different_raid = len(_intersection) < max_len // 2
 
             if different_raid or is_big_gap():
-                print("different_raid")
-                print("players_lst", sorted(players_last))
-                print("players_now ", sorted(players_current))
-                print("bosses_lst ", sorted(last_slice_info.get("bosses", [])))
-                print("bosses_now ", sorted(current_slice_info.get("bosses", [])))
+                # print("different_raid")
+                # print("players_lst", sorted(players_last))
+                # print("players_now ", sorted(players_current))
+                # print("bosses_lst ", sorted(last_slice_info.get("bosses", [])))
+                # print("bosses_now ", sorted(current_slice_info.get("bosses", [])))
                 self.save_slice_cache_wrap(last_segment)
             last_segment.extend(current_segment)
             current_segment.clear()
@@ -387,7 +397,7 @@ class NewUpload(Thread):
                 try:
                     timestamp = self.to_int(line)
                 except Exception:
-                    print("Exception: self.to_int", line)
+                    # print("Exception: self.to_int", line)
                     continue
                 
                 _delta = timestamp - last_timestamp
@@ -395,19 +405,19 @@ class NewUpload(Thread):
                     try:
                         _tdelta = self.get_timedelta(line, last_line)
                     except Exception:
-                        print("Exception: self.get_timedelta")
-                        print(last_line)
-                        print(line)
+                        # print("Exception: self.get_timedelta")
+                        # print(last_line)
+                        # print(line)
                         try:
                             self.to_dt(last_line)
-                        except ValueError:
+                        except TypeError:
                             last_timestamp = timestamp
                             last_line = line
                         continue
                     
                     if _tdelta > SMALL_GAP:
-                        print(f"\nNew jump: {last_timestamp:0>6} {timestamp:0>6}")
-                        print(last_line.decode() + line.decode())
+                        # print(f"\nNew jump: {last_timestamp:0>6} {timestamp:0>6}")
+                        # print(last_line.decode() + line.decode())
                         __save_segment()
 
                 current_segment.append(line)
