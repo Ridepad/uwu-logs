@@ -3,6 +3,7 @@ legacy*
 test*
 q_*
 *.7z
+*.db
 *.exe
 *.ini
 *.json
