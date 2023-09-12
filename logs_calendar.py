@@ -33,8 +33,6 @@ def get_calend_days(y, m):
     ]
 
 
-TEST_FOLDER = file_functions.new_folder_path(PATH_DIR, "_test")
-
 DF_MAIN_NAME = "_logs_list"
 DF_MAIN_EXT = "pkl"
 DF_MAIN_FULL_NAME = f"{DF_MAIN_NAME}.{DF_MAIN_EXT}"
