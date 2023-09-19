@@ -82,6 +82,8 @@ def get_logs_author_info(logs: list[bytes]):
     for line in logs:
         if b"SPELL_CAST_FAILED" not in line:
             continue
+        if line.count(b'  ') > 1:
+            continue
         line = line.decode()
         guid, name = line.split(',', 3)[1:3]
         name = name.replace('"', '')
