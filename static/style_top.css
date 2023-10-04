@@ -52,6 +52,13 @@ html::-webkit-scrollbar {
 .druid {color:darkorange;}
 .warlock {color:slateblue;}
 
+.top1 {color: #e5cc80;}
+.top99 {color: #e268a8;}
+.top95 {color: #ff8000;}
+.top75 {color: #a335ee;}
+.top50 {color: #0070ff;}
+.top25 {color: #1eff00;}
+.topkek {color: #666666;}
       
 #home-button {
   text-align: center;
@@ -99,7 +106,7 @@ img {
   padding-inline: .15em;
 }
 
-#table-container {
+main {
   padding-bottom: 4vh;
 }
 
@@ -149,10 +156,13 @@ td.table-t {
   width: 6ch;
 }
 td.table-n {
-  width: 21ch;
+  width: 13rem;
   text-align: left;
   overflow: hidden;
   white-space: nowrap;
+}
+td.table-points {
+  width: 4rem;
 }
 tbody tr {
   counter-increment: rowNumber;
@@ -160,7 +170,7 @@ tbody tr {
 td.table-n::before {
   display: inline-block;
   content: counter(rowNumber);
-  width: 4rem;
+  width: 3rem;
   text-align: right;
   color: var(--main-white);
 }
@@ -281,7 +291,7 @@ input[type=checkbox] {
 
 
 #the-tooltip {
-  position: absolute;
+  position: fixed;
   width: fit-content;
   background-color: var(--background);
   padding: .5em;

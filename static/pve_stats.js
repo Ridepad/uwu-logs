@@ -67,11 +67,11 @@ function add_bosses() {
 function make_query() {
   const sizeValue = sizeSelect.value;
   const diffValue = difficultyCheckbox.checked ? 'H' : 'N';
-  const diff_str = `${sizeValue}${diffValue}`;
+  const mode_str = `${sizeValue}${diffValue}`;
   const q = {
     server: serverSelect.value,
     boss: bossSelect.value,
-    diff: diff_str,
+    mode: mode_str,
   };
   return JSON.stringify(q);
 }

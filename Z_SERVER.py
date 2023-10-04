@@ -1,7 +1,6 @@
 import os
 import threading
 from datetime import datetime
-from struct import unpack
 
 from flask import (
     Flask, request,
@@ -19,6 +18,7 @@ import logs_top_statistics
 import file_functions
 import logs_calendar
 import logs_main
+import logs_top_db
 import logs_upload
 from constants import (
     ALL_FIGHT_NAMES,
@@ -38,6 +38,8 @@ try:
 except ImportError:
     _validate = None
 
+
+DB_LOCK = threading.RLock()
 
 SERVER = Flask(__name__)
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -614,18 +616,10 @@ def powers(report_id):
     )
 
 
-def get_uncompressed_size(filename):
-    try:
-        with open(filename, 'rb') as f:
-            f.seek(-4, 2)
-            return unpack('I', f.read(4))[0]
-    except FileNotFoundError:
-        return 0
-
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
     if request.method == "GET":
-        servers = file_functions.get_folders(TOP_DIR)
+        servers = logs_top_db.server_list()
         return render_template_wrap(
             'top.html',
             SERVERS=servers,
@@ -635,29 +629,32 @@ def top():
 
     server = _data.get("server")
     boss = _data.get("boss")
-    diff = _data.get("diff")
-    if not any({server, boss, diff}):
+    mode = _data.get("mode")
+
+    if not all({server, boss, mode}):
         return '', 400
     
-    server_folder = file_functions.new_folder_path(TOP_DIR, server)
-    fname = f"{boss} {diff}.gzip"
-    p = os.path.join(server_folder, fname)
-    content = file_functions.bytes_read(p)
-
-    response = make_response(content)
-    response.headers['Content-Encoding'] = 'gzip'
-    response.headers['Content-length'] = len(content)
-    response.headers['X-Full-Content-length'] = get_uncompressed_size(p)
+    with DB_LOCK:
+        top = logs_top_db.Top(**_data)
+        if boss == "Points":
+            z = top.parse_top_points()
+        else:
+            z = top.get_data()
+    response = make_response(z["data"])
+    response.headers["Content-Type"] = "application/json"
+    response.headers["Content-Encoding"] = "gzip"
+    response.headers["Content-Length"] = z["length_compressed"]
+    response.headers["Content-Length-Full"] = z["length"]
     return response
 
 @SERVER.route('/pve_stats', methods=["GET", "POST"])
 @SERVER.route('/top_stats', methods=["GET", "POST"])
 def pve_stats():
     if request.method == "GET":
-        servers = file_functions.get_folders(TOP_DIR)
+        servers = logs_top_db.server_list()
         return render_template_wrap(
             'pve_stats.html',
-            SPECS_BASE=logs_top_statistics.get_specs_data(),
+            SPECS_BASE=logs_top_statistics.SPECS_DATA_NOT_IGNORED,
             SERVERS=servers,
         )
     
@@ -665,9 +662,45 @@ def pve_stats():
 
     server = _data.get("server")
     boss = _data.get("boss")
-    diff = _data.get("diff")
+    mode = _data.get("mode")
+
+    if not all({server, boss, mode}):
+        return '', 400
     
-    return logs_top_statistics.get_boss_data(server, boss, diff)
+    with DB_LOCK:
+        data = logs_top_db.PveStats(server).get_data(boss, mode)
+    
+    if data is None:
+        return '', 400
+    
+    return data
+
+@SERVER.route('/character', methods=["GET", "POST"])
+def character():
+    _data: dict = request.args
+    name = _data.get("name")
+    server = _data.get("server")
+    if not name or not server:
+        name = "Safiyah"
+        server = "Lordaeron"
+    
+    spec = _data.get("spec", type=int)
+    if spec not in range(1,4):
+        spec = None
+    
+    
+    if request.method == "GET":
+        return render_template_wrap(
+            'character.html',
+            NAME=name,
+        )
+
+    with DB_LOCK:
+        d = logs_top_db.parse_player(server, name, spec=spec)
+    
+    if not d:
+        return '', 400
+    return d
 
 @SERVER.route("/ladder")
 def ladder():

@@ -6,185 +6,90 @@ Example (every minute with a lock):
 For testing, run it when needed manually.
 '''
 
-import gzip
+import itertools
 import json
 import os
 
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 from time import perf_counter
 
-import pandas
-
-import file_functions
+import logs_top_db
 import logs_archive
 import logs_calendar
 import logs_top
 from constants import (
     DEFAULT_SERVER_NAME,
     LOGGER_UPLOADS,
-    LOGS_DIR,
-    LOGS_RAW_DIR,
-    TOP_DIR,
     TOP_FILE_NAME,
-    PANDAS_COMPRESSION,
-    UPLOADS_TEXT,
     get_ms_str,
     get_report_name_info,
 )
 
-def remove_old_dublicate(report_id):
+
+PATH = Path().resolve()
+PATH_LOGS_DIR = PATH.joinpath("LogsDir")
+PATH_LOGS_RAW_DIR = PATH.joinpath("LogsRaw")
+PATH_TOP_DIR = PATH.joinpath("top")
+UPLOADS_PENDING = PATH.joinpath("uploads", "0archive_pending")
+
+
+def remove_old_dublicate(report_id: str):
     if DEFAULT_SERVER_NAME in report_id:
         return
     
     _server = get_report_name_info(report_id)["server"]
     report_id_old = report_id.replace(_server, DEFAULT_SERVER_NAME)
-    archive_path_old = os.path.join(LOGS_RAW_DIR, f"{report_id_old}.7z")
-    if os.path.isfile(archive_path_old):
-        os.remove(archive_path_old)
+    archive_path_old = PATH_LOGS_RAW_DIR.joinpath(f"{report_id_old}.7z")
+    if archive_path_old.is_file():
+        archive_path_old.unlink()
 
 def save_raw_logs(report_id: str):
-    logs_txt_path = os.path.join(UPLOADS_TEXT, f"{report_id}.txt")
-    if not os.path.isfile(logs_txt_path):
+    logs_txt_path = UPLOADS_PENDING.joinpath(f"{report_id}.txt")
+    if not logs_txt_path.is_file():
         return
     
     pc = perf_counter()
-    archive_path = os.path.join(LOGS_RAW_DIR, f"{report_id}.7z")
-    file_functions.create_folder(LOGS_RAW_DIR)
+    PATH_LOGS_RAW_DIR.mkdir(exist_ok=True)
+    archive_path = PATH_LOGS_RAW_DIR.joinpath(f"{report_id}.7z")
     return_code = logs_archive.archive_file(archive_path, logs_txt_path)
     if return_code == 0:
-        os.remove(logs_txt_path)
+        logs_txt_path.unlink()
         remove_old_dublicate(report_id)
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
 
-def _to_pickle(df: pandas.DataFrame, fname):
-    df.to_pickle(fname, compression=PANDAS_COMPRESSION)
-
-def data_gen(report_id: str):
-    report_folder = os.path.join(LOGS_DIR, report_id)
-    top_file = os.path.join(report_folder, TOP_FILE_NAME)
-    TOP: dict[str, dict[str, list[dict]]] = file_functions.json_read(top_file)
-    for boss_name, diffs in TOP.items():
-        for diff, data in diffs.items():
-            boss_f_n = f"{boss_name} {diff}"
-            yield boss_f_n, data
-
-def save_temp_top(report_id):
-    pc = perf_counter()
-    server = get_report_name_info(report_id)["server"]
-    SERVER_FOLDER = file_functions.new_folder_path(TOP_DIR, server)
-    for boss_f_n, data in data_gen(report_id):
-        _path = f"{boss_f_n}--{report_id}.json"
-        full_path = os.path.join(SERVER_FOLDER, _path)
-        file_functions.json_write(full_path, data, indent=None, sep=(',', ':'))
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | New temp top')
-    
-
-def get_player_id(item: dict[str, str]):
-    report_name = item['r']
-    player_guid = item['i'][-7:]
-    report_date = get_report_name_info(report_name)["date"]
-    return f"{report_date}-{player_guid}"
-
-def get_boss_top(server_folder: str, boss_f_n: str) -> list[dict]:
-    if not os.path.isdir(server_folder):
-        server_folder = os.path.join(TOP_DIR, server_folder)
-    top_path = os.path.join(server_folder, boss_f_n)
-    f = file_functions.bytes_read(top_path, ext="gzip")
-    if not f:
-        return []
-    g = gzip.decompress(f)
-    return json.loads(g)
-
-def get_boss_top_wrap(server_folder: str, boss_f_n: str):
-    _top = get_boss_top(server_folder, boss_f_n)
-    return {get_player_id(item): item for item in _top}
-
-def __data_gen_list(new_data: list[dict[str, str]]):
-    for item in new_data:
-        player_id = get_player_id(item)
-        yield player_id, item
-
-def __data_gen_dict(new_data: dict[str, dict[str, str]]):
-    for player_id, item in new_data.items():
-        yield player_id, item
-
-def __data_gen(new_data):
-    if isinstance(new_data, list):
-        return __data_gen_list(new_data)
-    else:
-        return __data_gen_dict(new_data)
-
-def _dps(entry):
-    return entry["u"] / entry["t"]
-
-def update_top(top: dict[str, dict], new_data):
-    modified = False
-    for player_id, new_entry in __data_gen(new_data):
-        cached_report = top.get(player_id)
-        if not cached_report or _dps(new_entry) > _dps(cached_report):
-            modified = True
-            top[player_id] = new_entry
-    return modified
-
-def combine_jsons(json_files: list[str]):
-    top = {}
-    for json_file in json_files:
-        _top = file_functions.json_read(json_file)
-        update_top(top, _top)
-    return top
-
-def group_by_top_file(server_folder: str):
-    if not os.path.isdir(server_folder):
+def _json_read(path: Path) -> dict:
+    try:
+        return json.loads(path.read_bytes())
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
         return {}
+
+def _report_server(report_id: str):
+    return get_report_name_info(report_id)["server"]
+
+def add_new_top_data(server, reports):
+    top_data: dict[str, dict[str, list[dict]]]
+
+    print(server)
+    pc = perf_counter()
+
+    _data = defaultdict(list)
+    for report_id in reports:
+        top_file = PATH_LOGS_DIR.joinpath(report_id, TOP_FILE_NAME)
+        top_data = _json_read(top_file)
+        for boss_name, modes in top_data.items():
+            for mode, data in modes.items():
+                table_name = logs_top_db.get_table_name(boss_name, mode)
+                _data[table_name].extend(data)
+
+    logs_top_db.add_new_entries_wrap(server, _data)
     
-    grouped = defaultdict(list)
-    for file in next(os.walk(server_folder))[2]:
-        if not file.endswith(".json"):
-            continue
-        boss_f_n = file.split("--", 1)[0]
-        full_name = os.path.join(server_folder, file)
-        grouped[boss_f_n].append(full_name)
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Saved top | {server}')
 
-    return grouped
-
-def save_top(server_folder: str, boss_f_n: str, data: dict[str, dict[str, str]]):
-    data = sorted(data.values(), key=lambda x: x["t"])
-
-    pc = perf_counter()
-    df = pandas.DataFrame.from_dict(data)
-    file_functions.df_write(server_folder, boss_f_n, df)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Pandas saved')
-
-    pc = perf_counter()
-    top_path = os.path.join(server_folder, f"{boss_f_n}.gzip")
-    top_path_tmp = f"{top_path}.tmp"
-    data = json.dumps(data, separators=(',', ':'), ).encode()
-    data = gzip.compress(data, compresslevel=5)
-    file_functions.bytes_write(top_path_tmp, data)
-    os.replace(top_path_tmp, top_path)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Top saved')
-
-def top_add_new_data(full_server_folder_name, boss_f_n, json_files):
-    pc = perf_counter()
-    new_top_data = combine_jsons(json_files)
-    pc_get_top = perf_counter()
-    current_top = get_boss_top_wrap(full_server_folder_name, boss_f_n)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc_get_top)} | {boss_f_n:50} | Cache read')
-    modified = update_top(current_top, new_top_data)
-    if modified:
-        save_top(full_server_folder_name, boss_f_n, current_top)
-    for json_file in json_files:
-        if os.path.isfile(json_file):
-            os.remove(json_file)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {boss_f_n:50} | Modified: {modified}')
-
-def top_grouped():
-    for server_folder_name in next(os.walk(TOP_DIR))[1]:
-        full_server_folder_name = os.path.join(TOP_DIR, server_folder_name)
-        grouped_json_files = group_by_top_file(full_server_folder_name)
-        for boss_f_n, json_files in grouped_json_files.items():
-            yield full_server_folder_name, boss_f_n, json_files
+def group_reports_by_server(new_logs):
+    new_logs = sorted(new_logs, key=_report_server)
+    return itertools.groupby(new_logs, key=_report_server)
 
 
 def main_sequential(new_logs):
@@ -192,13 +97,10 @@ def main_sequential(new_logs):
         logs_top.make_report_top_wrap(report_id)
 
     # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs()
-
-    for report_id in new_logs:
-        save_temp_top(report_id)
+    logs_calendar.add_new_logs(new_logs)
     
-    for _data in top_grouped():
-        top_add_new_data(*_data)
+    for server, reports in group_reports_by_server(new_logs):
+        add_new_top_data(server, reports)
     
     for report_id in new_logs:
         save_raw_logs(report_id)
@@ -210,42 +112,33 @@ def main_proccess_pool(new_logs):
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(logs_top.make_report_top_wrap, new_logs)
 
-    # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs(new_logs)
-
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(save_temp_top, new_logs)
-
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        for _data in top_grouped():
-            executor.submit(top_add_new_data, *_data)
-
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
+        executor.submit(logs_calendar.add_new_logs, new_logs)
+        
+        for server, reports in group_reports_by_server(new_logs):
+            executor.submit(add_new_top_data, server, reports)
+        
         executor.map(save_raw_logs, new_logs)
 
 def main():
-    if not os.path.isdir(UPLOADS_TEXT):
+    if not UPLOADS_PENDING.is_dir():
         return
     
-    RAW_LOGS = [
-        file_name
-        for file_name in os.listdir(UPLOADS_TEXT)
-        if file_name.endswith(".txt")
+    NEW_LOGS = [
+        file_path.stem
+        for file_path in UPLOADS_PENDING.iterdir()
+        if file_path.suffix == ".txt"
     ]
-    if not RAW_LOGS:
+    if not NEW_LOGS:
         return
-    
-    RAW_LOGS_NO_EXT = [
-        os.path.splitext(fpath)[0]
-        for fpath in RAW_LOGS
-    ]
-    
-    main_proccess_pool(RAW_LOGS_NO_EXT)
 
-    for report_id in RAW_LOGS_NO_EXT:
-        tz_path = logs_calendar.get_timezone_file(report_id)
-        if os.path.isfile(tz_path):
-            os.remove(tz_path)
+    main_proccess_pool(NEW_LOGS)
+    # main_sequential(NEW_LOGS)
+
+    for report_id in NEW_LOGS:
+        tz_path = UPLOADS_PENDING.joinpath(f"{report_id}.timezone")
+        if tz_path.is_file():
+            tz_path.unlink()
 
 def main_wrap():
     pc = perf_counter()

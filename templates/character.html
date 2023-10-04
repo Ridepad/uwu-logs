@@ -1,0 +1,205 @@
+{% extends "layout.html" %}
+
+{% block scripts_head %}
+<script src="/static/character.js?v={{ V }}" defer></script>
+{% endblock scripts_head %}
+
+{% block add_style %}
+<style>
+.top1 {color: #e5cc80;}
+.top99 {color: #e268a8;}
+.top95 {color: #ff8000;}
+.top75 {color: #a335ee;}
+.top50 {color: #0070ff;}
+.top25 {color: #1eff00;}
+.topkek {color: #666666;}
+td {
+  text-align: right;
+  padding-inline: .25em; 
+}
+section {
+  font-size: 200%;
+}
+
+#player-name {
+  min-width: 11em;
+}
+#player-server {
+  min-width: 7em;
+}
+#player-overall {
+  min-width: max-content;
+}
+#player-overall-points {
+  display: inline-block;
+  min-width: 3.2em;
+  text-align: right;
+}
+#player-overall-rank {
+  display: inline-block;
+  font-size: 33%;
+  min-width: 4em;
+  text-align: left;
+}
+#spec-wrap {
+  min-width: max-content;
+}
+#spec-wrap label {
+  padding: 0;
+}
+img {
+  opacity: .2;
+  max-width: 1em;
+  min-width: 1em;
+  max-height: 1em;
+  min-height: 1em;
+}
+input:checked + label > img {
+  opacity: 1;
+}
+
+#main-body tr:nth-child(10) td {
+  border-bottom: .1em solid var(--primary-color);
+}
+.table-wrap {
+	--min-width: 6em;
+	--max-width: 21em;
+}
+.cell-dps {
+  min-width: 4em;
+}
+.cell-rank,
+.cell-points {
+  min-width: 3.2em;
+}
+.cell-dur {
+  min-width: 2.6em;
+}
+.cell-dur {
+  min-width: 2.6em;
+}
+.cell-date {
+  width: 4.1em;
+}
+
+.tooltip {
+  position: fixed;
+  width: fit-content;
+  background-color: var(--background);
+  padding: .5em;
+  border-radius: 6px;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  z-index: 5;
+}
+.tooltip td {
+  min-width: fit-content;
+  text-align: right;
+}
+tr.no-decimal td.value {
+  padding-right: 1em;
+}
+#top-player-info {
+	text-align: center;
+	display: grid;
+	align-items: baseline;
+	font-size: 250%;
+}
+@media (orientation: landscape) {
+  #top-player-info {
+    grid-auto-flow: column;
+  }
+  main > div.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.table-wrap-wrap {
+  position: relative;
+}
+
+.table-wrap :is(.spell-name, .player-cell) {
+	width: clamp(var(--min-width), 40vw, var(--max-width));
+}
+.table-wrap > div {
+	padding-left: calc(clamp(var(--min-width), 40vw, var(--max-width)));
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main>
+<div class="main">
+  <section id="top-player-info">
+    <div id="player-name">.</div>
+    <div id="player-server">.</div>
+    <div id="player-overall">
+      <span id="player-overall-points">.</span>
+      <span id="player-overall-rank">.</span>
+    </div>
+    <div id="spec-wrap">
+      <input id="spec-1-input" type="radio" name="spec">
+      <label id="spec-1-label" for="spec-1-input"><img></label>
+      <input id="spec-2-input" type="radio" name="spec">
+      <label id="spec-2-label" for="spec-2-input"><img></label>
+      <input id="spec-3-input" type="radio" name="spec">
+      <label id="spec-3-label" for="spec-3-input"><img></label>
+    </div>
+  </section>
+  <div class="table-wrap-wrap">
+    <section class="table-wrap">
+      <div>
+        <table>
+          <thead>
+            <tr>
+              <th class="player-cell">Boss</th>
+              <th>Rank</th>
+              <th>Points</th>
+              <th>Best Dps</th>
+              <th>Dur</th>
+              <th>Raids</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="main-body">
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+<aside id="tooltip" class="tooltip" style="display: none;">
+  <table>
+    <tbody>
+      <tr class="row-players no-decimal">
+        <td>Player rank</td>
+        <td class="td-player value"></td>
+        <td>/</td>
+        <td class="td-max value"></td>
+        <td>=</td>
+        <td class="td-points"></td>
+        <td>points</td>
+      </tr>
+      <tr class="row-raids no-decimal">
+        <td>Raid rank</td>
+        <td class="td-player value"></td>
+        <td>/</td>
+        <td class="td-max value"></td>
+        <td>=</td>
+        <td class="td-points"></td>
+        <td>points</td>
+      </tr>
+      <tr class="row-dps">
+        <td>Dps diff</td>
+        <td class="td-player"></td>
+        <td>/</td>
+        <td class="td-max"></td>
+        <td>=</td>
+        <td class="td-points"></td>
+        <td>points</td>
+      </tr>
+    </tbody>
+  </table>
+</aside>
+</main>
+{% endblock the_main %}

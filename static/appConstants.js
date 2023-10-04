@@ -1,4 +1,3 @@
-const ICON_CDN_URL = "https://wotlk.evowow.com/static/images/wow/icons/large";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CLASSES = ["Death Knight", "Druid", "Hunter", "Mage", "Paladin", "Priest", "Rogue", "Shaman", "Warlock", "Warrior"]
 const AURAS_COLUMNS = ["ext", "self", "rekt"];
@@ -151,6 +150,5 @@ export {
   SPECS_SELECT_OPTIONS,
   AURAS_COLUMNS,
   AURAS_ICONS,
-  ICON_CDN_URL,
   MONTHS,
 }

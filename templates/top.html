@@ -82,7 +82,7 @@
         <select id="select-spec"></select>
       </section>
       <section id="table-container">
-        <table id="main-table">
+        <table id="table-top">
           <thead>
             <tr>
               <th id="head-name" class="table-n sortable">Name</th>
@@ -97,7 +97,17 @@
               <th id="head-date" class="table-r sortable">Date</th>
             </tr>
           </thead>
-          <tbody id="main-table-body"></tbody>
+          <tbody></tbody>
+        </table>
+        <table id="table-points">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>%</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
         </table>
       </section>
       <section id="loading-info-panel" style="display: none;">
@@ -115,17 +125,17 @@
           </tbody>
         </table>
       </aside>
-      <footer>
-        <section>
-          <a id="home-button" href="/">UwU LOGS</a>
-          <input id="toggle-total-damage" type="checkbox">
-          <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
-          <input id="toggle-useful-damage" type="checkbox">
-          <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
-          <input id="toggle-limit" type="checkbox">
-          <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
-        </section>
-      </footer>
     </main>
+    <footer>
+      <section>
+        <a id="home-button" href="/">UwU LOGS</a>
+        <input id="toggle-total-damage" type="checkbox">
+        <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
+        <input id="toggle-useful-damage" type="checkbox">
+        <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
+        <input id="toggle-limit" type="checkbox">
+        <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
+      </section>
+    </footer>
   </body>
 </html>
