@@ -1,18 +1,19 @@
-from collections import defaultdict
-import sqlite3
-from pathlib import Path
 import gzip
 import json
+import sqlite3
+from collections import defaultdict
 from datetime import datetime, timedelta
-from itertools import islice, groupby
-import numpy
+from itertools import groupby, islice
+from pathlib import Path
 from typing import TypedDict
+
+import numpy
 
 from constants import get_report_name_info, running_time, sort_dict_by_value
 from logs_top_statistics import convert_boss_data
 
-DIR = Path().resolve()
-TOP_PATH = DIR.joinpath("top")
+PATH = Path(__file__).parent
+TOP_PATH = PATH.joinpath("top")
 
 FIFTEEN_MINUTES = timedelta(minutes=15)
 

@@ -9,16 +9,15 @@ For testing, run it when needed manually.
 import itertools
 import json
 import os
-
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from time import perf_counter
 
-import logs_top_db
 import logs_archive
 import logs_calendar
 import logs_top
+import logs_top_db
 from constants import (
     DEFAULT_SERVER_NAME,
     LOGGER_UPLOADS,
@@ -28,7 +27,7 @@ from constants import (
 )
 
 
-PATH = Path().resolve()
+PATH = Path(__file__).parent
 PATH_LOGS_DIR = PATH.joinpath("LogsDir")
 PATH_LOGS_RAW_DIR = PATH.joinpath("LogsRaw")
 PATH_TOP_DIR = PATH.joinpath("top")
