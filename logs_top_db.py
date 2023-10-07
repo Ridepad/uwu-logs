@@ -787,18 +787,23 @@ def squash_top(new_data: list[dict]):
     return top
 
 def add_new_entries_wrap(server, data: dict[str, list]):
-    def better_dps(_id, new_entry):
-        row = db.execute(query_dps_player_id(_id)).fetchone()
+    def better_dps(table_name, _id, new_entry):
+        row = db.execute(query_dps_player_id(table_name, _id)).fetchone()
         return row is None or _dps(new_entry) > row[0]
 
     with new_db_connection_top(server) as db:
         for table_name, data_list in data.items():
             combined_data = squash_top(data_list)
-            to_insert = [
-                new_entry
-                for _id, new_entry in combined_data.items()
-                if better_dps(_id, new_entry)
-            ]
+            
+            try:
+                to_insert = [
+                    new_entry
+                    for _id, new_entry in combined_data.items()
+                    if better_dps(table_name, _id, new_entry)
+                ]
+            except sqlite3.OperationalError:
+                to_insert = combined_data.values()
+            
             add_new_entries(db, table_name, to_insert)
 
 
