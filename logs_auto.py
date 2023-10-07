@@ -70,7 +70,6 @@ def _report_server(report_id: str):
 def add_new_top_data(server, reports):
     top_data: dict[str, dict[str, list[dict]]]
 
-    print(server)
     pc = perf_counter()
 
     _data = defaultdict(list)
@@ -115,6 +114,7 @@ def main_proccess_pool(new_logs):
         executor.submit(logs_calendar.add_new_logs, new_logs)
         
         for server, reports in group_reports_by_server(new_logs):
+            reports = tuple(reports)
             executor.submit(add_new_top_data, server, reports)
         
         executor.map(save_raw_logs, new_logs)
