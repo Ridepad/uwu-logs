@@ -121,12 +121,14 @@ def new_db_connection(path: Path):
 def get_top_db_path(server):
     return TOP_PATH.joinpath(f"{server}.db")
 
-def new_db_connection_top(server: str):
-    p = get_top_db_path(server)
-    return new_db_connection(p)
+def new_db_connection_top(server: str, new=False):
+    db_path = get_top_db_path(server)
+    if not new and not db_path.is_file():
+        return
+    return new_db_connection(db_path)
 
 def get_db_data(db: sqlite3.Cursor, query: str):
-    if not query:
+    if not db or not query:
         return None
     try:
         return db.execute(query)
@@ -796,7 +798,7 @@ def only_better(db: sqlite3.Connection, table_name: str, combined_data: dict[str
     return to_insert
 
 def add_new_entries_wrap(server, data: dict[str, list]):
-    with new_db_connection_top(server) as db:
+    with new_db_connection_top(server, new=True) as db:
         for table_name, data_list in data.items():
             combined_data = squash_top(data_list)
             
@@ -825,7 +827,7 @@ def convert_gzip_to_db_table(server, boss, mode):
     j = read_gzip_top(boss_path)
     j = load_gzip_top(j)
 
-    with new_db_connection_top(server) as db:
+    with new_db_connection_top(server, new=True) as db:
         db_top_create_table(db, table_name, True)
         db_top_add_new_rows(db, table_name, map(new_db_row, j))
         db_top_add_indexes(db, table_name)
@@ -851,7 +853,7 @@ def __test_add_new_entries(server, boss, mode):
     j = load_gzip_top(j)
     j = {get_player_id(i):i for i in j}
     
-    with new_db_connection_top(server) as db:
+    with new_db_connection_top(server, new=True) as db:
         table_name = get_table_name(boss, mode)
         add_new_entries(db, table_name, j)
 
