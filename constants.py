@@ -917,6 +917,7 @@ SERVERS = {
     "0x0D": "Frostmourne3",
     "0x0C": "Frostmourne2",
     "0x0A": "Blackrock",
+    "0x0E": "Onyxia",
 }
 
 def get_ms(timestamp):
