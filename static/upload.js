@@ -100,6 +100,9 @@ fileSelect.onchange = () => {
   } else if (file.size < 16384) {
     alert('Archive is too small, did you archive correct file?');
     fileSelect.value = "";
+  } else if (file.size > 1024**4) {
+    alert("Archive is too big.\nAre you sure it's the correct file?\nAre you sure you compressed it?");
+    fileSelect.value = "";
   }
 }
 
