@@ -3,6 +3,7 @@ const CLASSES = ["Death Knight", "Druid", "Hunter", "Mage", "Paladin", "Priest",
 const AURAS_COLUMNS = ["ext", "self", "rekt"];
 
 const BOSSES = {
+  "Points": ["Points"],
   "Icecrown Citadel": [
     "The Lich King",
     "Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang",
