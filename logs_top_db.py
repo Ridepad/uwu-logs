@@ -647,6 +647,8 @@ class PveStats(Cache):
     m_time = defaultdict(float)
     access = defaultdict(datetime.now)
 
+    cooldown = timedelta(hours=1)
+
     def __init__(self, server: str) -> None:
         self.server = server
 
