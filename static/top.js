@@ -469,7 +469,7 @@ xrequest.onprogress = e => {
   if (e.lengthComputable) {
     contentLength = e.total;
   } else {
-    contentLength = parseInt(e.target.getResponseHeader('X-Full-Content-length'));
+    contentLength = parseInt(e.target.getResponseHeader('Content-Length-Full'));
   }
   update_progress(e.loaded, contentLength);
 };
