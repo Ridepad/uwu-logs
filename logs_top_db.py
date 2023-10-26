@@ -13,9 +13,7 @@ from constants import get_report_name_info, running_time, sort_dict_by_value
 from logs_top_statistics import convert_boss_data
 
 PATH = Path(__file__).parent
-TOP_PATH = PATH.joinpath("top")
-
-FIFTEEN_MINUTES = timedelta(minutes=15)
+TOP_DIR_PATH = PATH.joinpath("top")
 
 PAGE_LIMIT = 1000
 QUERY_LIMIT = 10000
@@ -109,17 +107,17 @@ DTYPES = [
 ]
 
 def server_list():
-    return [
+    return sorted(
         file_name.stem
-        for file_name in TOP_PATH.iterdir()
+        for file_name in TOP_DIR_PATH.iterdir()
         if file_name.suffix == ".db"
-    ]
+    )
 
 def new_db_connection(path: Path):
     return sqlite3.connect(path)
 
 def get_top_db_path(server):
-    return TOP_PATH.joinpath(f"{server}.db")
+    return TOP_DIR_PATH.joinpath(f"{server}.db")
 
 def new_db_connection_top(server: str, new=False):
     db_path = get_top_db_path(server)
@@ -194,6 +192,8 @@ class Cache:
     cache: defaultdict[str, dict]
     server: str
 
+    cooldown = timedelta(seconds=15)
+
     def db_is_old(self):
         if self.access_cd():
             return True
@@ -219,7 +219,7 @@ class Cache:
         if last_check > now:
             return True
         
-        self.access[self.server] = now + FIFTEEN_MINUTES
+        self.access[self.server] = now + self.cooldown
         return False
 
 
@@ -498,6 +498,7 @@ class PlayerData(Cache):
     m_time = defaultdict(float)
     access = defaultdict(datetime.now)
     cache: defaultdict[str, dict] = defaultdict(dict)
+    cooldown = timedelta(minutes=15)
     
     def __init__(self, server: str) -> None:
         self.server = server
@@ -818,22 +819,26 @@ def read_gzip_top(boss_path: Path):
 def load_gzip_top(b: bytes):
     return json.loads(gzip.decompress(b))
 
+def convert_gzip_to_db_rows(boss_path: Path):
+    _bytes = read_gzip_top(boss_path)
+    _json = load_gzip_top(_bytes)
+    return map(new_db_row, _json)
+
 @running_time
 def convert_gzip_to_db_table(server, boss, mode):
     print(boss)
     table_name = get_table_name(boss, mode)
 
-    boss_path = TOP_PATH.joinpath(server, f"{boss} {mode}.gzip")
-    j = read_gzip_top(boss_path)
-    j = load_gzip_top(j)
+    boss_path = TOP_DIR_PATH.joinpath(server, f"{boss} {mode}.gzip")
+    rows = convert_gzip_to_db_rows(boss_path)
 
     with new_db_connection_top(server, new=True) as db:
         db_top_create_table(db, table_name, True)
-        db_top_add_new_rows(db, table_name, map(new_db_row, j))
+        db_top_add_new_rows(db, table_name, rows)
         db_top_add_indexes(db, table_name)
 
 def convert_old_top():
-    for server_folder in TOP_PATH.iterdir():
+    for server_folder in TOP_DIR_PATH.iterdir():
         if not server_folder.is_dir():
             continue
         server = server_folder.stem
@@ -848,7 +853,7 @@ def convert_old_top():
 
 
 def __test_add_new_entries(server, boss, mode):
-    boss_path = TOP_PATH.joinpath(server, f"{boss} {mode}.gzip")
+    boss_path = TOP_DIR_PATH.joinpath(server, f"{boss} {mode}.gzip")
     j = read_gzip_top(boss_path)
     j = load_gzip_top(j)
     j = {get_player_id(i):i for i in j}
@@ -858,7 +863,7 @@ def __test_add_new_entries(server, boss, mode):
         add_new_entries(db, table_name, j)
 
 def __test_add_new_entries_wrap():
-    for server_folder in TOP_PATH.iterdir():
+    for server_folder in TOP_DIR_PATH.iterdir():
         if not server_folder.is_dir():
             continue
         server = server_folder.stem
