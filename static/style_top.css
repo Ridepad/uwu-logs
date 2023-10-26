@@ -237,6 +237,10 @@ select:hover {
 input[type=checkbox] {
   display: none;
 }
+select:disabled,
+input:disabled + label {
+  opacity: .25;
+}
 
 #ladder {
   display: flex;

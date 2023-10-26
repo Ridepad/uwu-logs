@@ -42,6 +42,15 @@ const toggleLimit = document.getElementById('toggle-limit');
 const theTooltip = document.getElementById("the-tooltip");
 const theTooltipBody = document.getElementById("tooltip-body");
 
+const IRRELEVANT_FOR_POINTS = [
+  selectSize,
+  checkboxDifficulty,
+  checkboxCombine,
+  toggleTotalDamage,
+  toggleUsefulDamage,
+  toggleLimit,
+];
+
 const screenX = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
@@ -51,6 +60,7 @@ const HAS_HEROIC = new Set([
   "Halion",
   "Points",
 ]);
+const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
   column: headUsefulDps,
   reversed: false,
@@ -85,6 +95,9 @@ function get_icon_link(icon_name) {
 
 function is_heroic() {
   return HAS_HEROIC.has(selectBoss.value) && checkboxDifficulty.checked;
+}
+function is_points() {
+  return selectInstance.value == "Points";
 }
 
 function make_query() {
@@ -375,7 +388,6 @@ function cell_points(v, is_total) {
 }
 function new_row_points(data, spec) {
   const row = document.createElement('tr');
-  console.log(data);
   const [
     p_relative,
     p_total,
@@ -415,7 +427,7 @@ function table_add_new_data(table, data) {
   const spec = parseInt(selectClass.value)*4+parseInt(selectSpec.value);
   const points = i => new_row_points(data[i], spec);
   const top = i => new_row(data[i]);
-  const _new_row = selectBoss.value == "Points" ? points : top;
+  const _new_row = is_points() ? points : top;
 
   console.time("tableAddRows");
   (function chunk() {
@@ -451,7 +463,7 @@ function table_add_new_data(table, data) {
 function table_add_new_data_wrap(data) {
   tableContainer.style.display = "none";
   let t1, t2;
-  if (selectBoss.value == "Points") {
+  if (is_points()) {
     t1 = tablePoints;
     t2 = tableTop;
   } else {
@@ -495,13 +507,10 @@ function fetch_data() {
   const query = make_query();
   CACHE.lastQuery = query;
   const data = CACHE[query];
-  console.log(data);
   data ? table_add_new_data_wrap(data) : query_server(query);
 }
 
 function search_changed() {
-  if (selectBoss.value == "Points" && selectSpec.value == -1) return;
-
   const __diff = is_heroic() ? 'H' : "N";
   const title = `UwU Logs - Top - ${selectBoss.value} - ${selectSize.value}${__diff}`;
   document.title = title;
@@ -558,10 +567,14 @@ function new_option(value, index) {
   return _option;
 }
 
-function add_bosses() {
+function on_change_instance() {
   selectBoss.innerHTML = "";
-  selectBoss.appendChild(new_option("Points"));
   BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(new_option(boss_name)));
+  
+  const points_selected = is_points();
+  IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = points_selected);
+  
+  on_change_class();
 };
 
 function add_specs() {
@@ -573,6 +586,34 @@ function add_specs() {
 
   specs.forEach((spec_name, i) => selectSpec.appendChild(new_option(spec_name, i + 1)));
 };
+function on_change_class(_new) {
+  if (is_points() && selectClass.value == -1) {
+    selectClass.selectedIndex = 1;
+    _new = true;
+  }
+  
+  if (_new != undefined) add_specs();
+
+  on_change_spec();
+}
+
+function on_change_spec() {
+  if (is_points() && selectSpec.value == -1) {
+    selectSpec.selectedIndex = DEFAULT_SPEC[selectClass.value];
+  }
+}
+function add_on_change_events(elm) {
+  if (elm == selectInstance) {
+    on_change_instance();
+    elm.addEventListener('change', on_change_instance);
+  } else if (elm == selectClass) {
+    on_change_class(true);
+    elm.addEventListener('change', on_change_class);
+  } else if (elm == selectSpec) {
+    elm.addEventListener('change', on_change_spec);
+  }
+  elm.addEventListener('change', search_changed);
+}
 
 function init() {
   Object.keys(BOSSES).forEach(name => selectInstance.appendChild(new_option(name)));
@@ -589,17 +630,7 @@ function init() {
     } else {
       elm.selectedIndex = get_default_index(elm);
     }
-
-    if (elm == selectInstance) {
-      elm.addEventListener('change', add_bosses);
-      add_bosses();
-    } else if (elm == selectClass) {
-      elm.addEventListener('change', add_specs);
-      add_specs();
-    // } else if (elm == selectBoss) {
-    //   elm.addEventListener('change', add_specs);
-    }
-    elm.addEventListener('change', search_changed);
+    add_on_change_events(elm);
   }
 
   if (screenX.matches) {
