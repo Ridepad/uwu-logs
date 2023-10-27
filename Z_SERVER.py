@@ -283,7 +283,7 @@ def show_logs_list():
         resp.headers.add("Content-Type", "application/json")
         return resp
     
-    servers = file_functions.get_folders(TOP_DIR)
+    servers = logs_top_db.server_list()
     server = request.args.get("server")
     YEAR_REQUEST = request.args.get("year", type=int)
     MONTH_REQUEST = request.args.get("month", type=int)
