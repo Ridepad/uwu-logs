@@ -412,7 +412,7 @@ class NewUpload(Thread):
                         # print(line)
                         try:
                             self.to_dt(last_line)
-                        except TypeError:
+                        except (TypeError, ValueError):
                             last_timestamp = timestamp
                             last_line = line
                         continue
