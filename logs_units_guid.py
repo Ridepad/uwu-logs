@@ -134,6 +134,8 @@ PET_FILTER_SPELLS = {
 
 BOSS_PETS = {
     "008F0B": "008F04", # Bone Spike
+    "009738": "008F04", # Bone Spike
+    "009737": "008F04", # Bone Spike
     # "0008F4": "008F04", # Coldflame
     # "00954E": "008FF7", # Vengeful Shade
     # "009765": "008EF5", # Defile

@@ -15,6 +15,8 @@ USEFUL = {
     "Lord Marrowgar": {
         "0xF130008F04": "Lord Marrowgar",
         "0xF150008F0B": "Bone Spike",
+        "0xF150009738": "Bone Spike",
+        "0xF150009737": "Bone Spike",
     },
     "Lady Deathwhisper": {
         "0xF130008FF7": "Lady Deathwhisper",
