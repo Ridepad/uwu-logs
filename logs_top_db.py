@@ -199,9 +199,7 @@ class Cache:
             return True
 
         db_mtime = self.m_time[self.server]
-        _mtime = get_top_db_path(self.server).stat().st_mtime
-        _mtime = int(_mtime)
-        print('='*50, db_mtime, _mtime)
+        _mtime = int(get_top_db_path(self.server).stat().st_mtime)
         if not db_mtime:
             self.m_time[self.server] = _mtime
             return True
@@ -222,6 +220,14 @@ class Cache:
         self.access[self.server] = now + self.cooldown
         return False
 
+    @property
+    def cursor(self):
+        try:
+            return self.__cursor
+        except AttributeError:
+            pass
+        self.__cursor = new_db_connection_top(self.server)
+        return self.__cursor
 
 
 @running_time
@@ -520,10 +526,9 @@ class PlayerData(Cache):
 
     @running_time
     def renew_player_data(self):
-        db = new_db_connection_top(self.server)
         table_name = get_table_name("Deathbringer Saurfang", "25H")
         query = query_player(table_name)
-        data = db.execute(query).fetchall()
+        data = self.cursor.execute(query).fetchall()
         
         d: dict[str, dict] = {}
         g = {}
@@ -546,7 +551,6 @@ class PlayerPoints(Cache):
     cache: defaultdict[str, dict] = defaultdict(dict)
 
     def __init__(self, server: str, guid: str, spec: int) -> None:
-        self.cursor = new_db_connection_top(server)
         self.server = server
         self.guid = guid
         self.spec = spec
