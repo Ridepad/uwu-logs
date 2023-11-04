@@ -96,7 +96,6 @@ def render_template_cache(file: str, **kwargs):
     page = render_template(
         file,
         **kwargs,
-        V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
     )
     pages = CACHED_PAGES.setdefault(path, {})
     pages[query] = page
@@ -106,7 +105,6 @@ def render_template_wrap(file: str, **kwargs):
     return render_template(
         file,
         **kwargs,
-        V=SERVER.debug and datetime.now() or SERVER_STARTED_STR,
     )
 
 
