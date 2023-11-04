@@ -734,4 +734,5 @@ def custom_search(report_id):
 
 if __name__ == "__main__":
     SERVER.config["ENV"] = "development"
+    SERVER.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
     SERVER.run(host="0.0.0.0", port=5000, debug=True, reloader_type="stat")
