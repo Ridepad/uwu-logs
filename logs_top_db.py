@@ -160,6 +160,12 @@ def query_dps_player_id(table_name, player_raid_id):
     FROM [{table_name}]
     WHERE {COLUMN_PLAYER_RAID_ID}='{player_raid_id}'
     """
+def query_top1_spec(table_name, spec):
+    return f"""
+    SELECT MAX({COLUMN_USEFUL_DPS})
+    FROM [{table_name}]
+    WHERE {COLUMN_SPEC}={spec}
+    """
 
 def to_int(v):
     try:
@@ -229,6 +235,38 @@ class Cache:
         self.__cursor = new_db_connection_top(self.server)
         return self.__cursor
 
+
+class SpecTop1(Cache):
+    m_time = defaultdict(float)
+    access = defaultdict(datetime.now)
+    cache: defaultdict[str, dict] = defaultdict(dict)
+    cooldown = timedelta(minutes=15)
+
+    def __init__(self, server: str, boss: str, mode: str) -> None:
+        self.server = server
+        self.table_name = get_table_name(boss, mode)
+
+    def renew_spec(self, spec_index):
+        if spec_index % 4 == 0:
+            return 10**6
+        query = query_top1_spec(self.table_name, spec_index)
+        r = self.cursor.execute(query).fetchone()[0]
+        return r or 10**6
+
+    def _get_data(self):
+        _cache = self.cache[self.server]
+        if self.table_name in _cache and self.db_is_old():
+            return _cache[self.table_name]
+                
+        _cache[self.table_name] = {}
+        return _cache[self.table_name]
+
+    def get(self, spec_index):
+        _data = self._get_data()
+        if spec_index in _data:
+            return _data[spec_index]
+        _data[spec_index] = self.renew_spec(spec_index)
+        return _data[spec_index]
 
 @running_time
 def gzip_compress(data: bytes):

@@ -381,12 +381,10 @@ def upload():
 @SERVER.route("/reports/<report_id>/")
 def report_page(report_id):
     report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
-    data = report.get_report_page_all(segments)
+    data = report.get_report_page_all_wrap(request)
 
     return render_template_cache(
-        'report_main.html', **default_params, **data,
+        'report_main.html', **data,
     )
 
 @SERVER.route("/reports/<report_id>/download")

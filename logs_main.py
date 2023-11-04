@@ -17,6 +17,7 @@ import logs_player_spec
 import logs_power
 import logs_spell_info
 import logs_spells_list
+import logs_top_db
 import logs_units_guid
 import logs_valk_grabs
 from constants import (
@@ -785,19 +786,13 @@ class THE_LOGS:
         return new_specs
 
     def get_report_page_all(self, segments):
-        _first_hit = ""
-        _last_hit = ""
+        _first_hit = None
         specs = {}
         combined_data = {
             "damage": defaultdict(int),
             "heal": defaultdict(int),
             "taken": defaultdict(int),
         }
-
-        GUIDS = self.get_all_guids()
-        DURATION = self.get_fight_duration_total(segments)
-        DEFAULT_SOURCE = tuple(zip(combined_data, [{}]*3))
-        REPORT_DATA = defaultdict(lambda: dict(DEFAULT_SOURCE))
 
         for s, f in segments:
             new_data = self.report_page(s, f)
@@ -809,30 +804,85 @@ class THE_LOGS:
             _last_hit = new_data['last_hit']
             if not _first_hit:
                 _first_hit = new_data['first_hit']
-
-        for k, _data in combined_data.items():
-            if not _data:
-                continue
-            _data = logs_dmg_heals.add_pets(_data, GUIDS)
-            MAX_VALUE = max(_data.values())
-            _data["Total"] = sum(_data.values())
-            
-            if k == "damage":
-                _data = sort_dict_by_value(_data)
-            
-            for name, value in _data.items():
-                REPORT_DATA[name][k] = format_report_page_data(value, DURATION, MAX_VALUE)
-            
-            REPORT_DATA["Total"][k]["percent"] = 100
-        
-        specs = self.convert_dict_guids_to_names(specs)
-        SPECS = self.report_add_spec_info(specs, REPORT_DATA)
         
         return {
-            "TABLE": REPORT_DATA,
-            "SPECS": SPECS,
+            "DATA": combined_data,
+            "SPECS": specs,
             "FIRST_HIT": _first_hit,
             "LAST_HIT": _last_hit,
+        }
+
+    def convert_to_table_data(self, _data, duration):
+        if not _data:
+            return {}
+
+        GUIDS = self.get_all_guids()
+        _data = logs_dmg_heals.add_pets(_data, GUIDS)
+        MAX_VALUE = max(_data.values())
+
+        d = {}
+        _total = sum(_data.values())
+        d["Total"] = format_report_page_data(_total, duration, MAX_VALUE)
+        d["Total"]["percent"] = 0
+        
+        for name, value in _data.items():
+            d[name] = format_report_page_data(value, duration, MAX_VALUE)
+            
+        return d
+
+    def get_report_page_all_wrap(self, request):
+        default_params = self.get_default_params(request)
+        segments = default_params["SEGMENTS"]
+        boss_name = default_params["BOSS_NAME"]
+        mode = request.args.get("mode")
+        
+        DURATION = self.get_fight_duration_total(segments)
+
+
+        if boss_name:
+            _useful = self.useful_damage_all(segments, boss_name)["USEFUL"]
+            _useful = sort_dict_by_value(_useful)
+        else:
+            _useful = {}    
+        
+        DD = self.get_report_page_all(segments)
+        columns = {
+            "useful": _useful,
+        } | DD["DATA"]
+
+        TABLE = {}
+        PLAYERS = {}
+        for k, d in columns.items():
+            TABLE[k] = self.convert_to_table_data(d, DURATION)
+            PLAYERS.update(TABLE[k])
+        
+        specs = self.convert_dict_guids_to_names(DD["SPECS"])
+        SPECS = self.report_add_spec_info(specs, PLAYERS)
+
+        if not mode or not _useful or boss_name == "Valithria Dreamwalker":
+            points = {}
+        else:
+            _useful_dps = self.convert_dict_guids_to_names({
+                guid: dmg / DURATION
+                for guid, dmg in _useful.items()
+            })
+
+            server = get_report_name_info(self.NAME)["server"]
+            top1 = logs_top_db.SpecTop1(server, boss_name, mode)
+            spec_top1 = {
+                spec: top1.get(spec)
+                for spec in set(specs.values())
+            }
+            points = {
+                name: f"{udps * 100 / spec_top1[specs[name]]:.1f}"
+                for name, udps in _useful_dps.items()
+                if name in specs
+            }
+
+        return default_params | DD | {
+            "DATA": TABLE,
+            "SPECS": SPECS,
+            "POINTS": points,
         }
 
 
@@ -1207,61 +1257,51 @@ class THE_LOGS:
 
     @running_time
     def useful_damage_all(self, segments: list, boss_name: str):
-        all_data = defaultdict(lambda: defaultdict(int))
-        all_data_useful = defaultdict(lambda: defaultdict(int))
+        DAMAGE = defaultdict(lambda: defaultdict(int))
+        USEFUL = defaultdict(lambda: defaultdict(int))
 
         boss_guid_id = self.name_to_guid(boss_name)
         targets = logs_dmg_useful.get_all_targets(boss_name, boss_guid_id)
         targets_useful = targets["useful"]
         targets_all = targets["all"]
-        table_heads = []
 
         for s, f in segments:
             data = self.useful_damage(s, f, targets_all, boss_name)
-            for target_name in data["useful"]:
-                targets_useful[target_name] = target_name
+            for guid_id, _dmg_new in data["damage"].items():
+                add_new_numeric_data(DAMAGE[guid_id], _dmg_new)
             
-            _damage: dict[str, dict[str, int]] = data["damage"]
-            for guid_id, _dmg_new in _damage.items():
-                add_new_numeric_data(all_data[guid_id], _dmg_new)
-            
-            _damage: dict[str, dict[str, int]] = data["damage"] | data["useful"]
-            for guid_id, _dmg_new in _damage.items():
-                add_new_numeric_data(all_data_useful[guid_id], _dmg_new)
+            for guid_id, _dmg_new in data["useful"].items():
+                targets_useful[guid_id] = guid_id
+                add_new_numeric_data(USEFUL[guid_id], _dmg_new)
 
         guids = self.get_all_guids()
-        all_data = logs_dmg_useful.combine_pets_all(all_data, guids, trim_non_players=True)
-        all_data_useful = logs_dmg_useful.combine_pets_all(all_data_useful, guids, trim_non_players=True)
+        damage_with_pets = logs_dmg_useful.combine_pets_all(DAMAGE, guids, trim_non_players=True, ignore_abom=True)
+        useful_with_pets = logs_dmg_useful.combine_pets_all(USEFUL, guids, trim_non_players=True, ignore_abom=True)
 
-        dmg_total = logs_dmg_useful.get_total_damage(all_data)
-        dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
+        _combined = damage_with_pets | useful_with_pets
+        damage_total = logs_dmg_useful.get_total_damage(damage_with_pets)
+        useful_total = logs_dmg_useful.get_total_damage(_combined, targets_useful)
 
-        players = dmg_total | dmg_useful
-        players = self.add_total_and_names(players)
+        custom_units = logs_dmg_useful.guid_to_useful_name(useful_with_pets)
+        custom_groups = logs_dmg_useful.add_custom_units(damage_with_pets, boss_name)
 
-        dmg_useful = self.data_visual_format(dmg_useful)
-        table_heads.append("Total Useful")
-        
-        dmg_total = self.data_visual_format(dmg_total)
-        table_heads.append("Total")
-    
-        custom_units = logs_dmg_useful.add_custom_units(all_data, boss_name)
-        all_data = custom_units | all_data
+        data_all = {
+            "Useful": useful_total,
+            "Total": damage_total,
+        } | custom_units | custom_groups | damage_with_pets
 
-        dmg_to_target = {}
-        ____data = logs_dmg_useful.guid_to_useful_name(all_data_useful) | all_data
-        for guid_id, _data in ____data.items():
-            if not _data:
-                continue
-            table_heads.append(targets_all.get(guid_id, guid_id))
-            dmg_to_target[guid_id] = self.data_visual_format(_data)
+        dmg_to_target = {
+            targets_all.get(guid_id, guid_id): self.data_visual_format(_data)
+            for guid_id, _data in data_all.items()
+            if _data
+        }
+
+        players = self.add_total_and_names(useful_total)
 
         return {
-            "HEADS": table_heads,
-            "TOTAL": dmg_total,
-            "TOTAL_USEFUL": dmg_useful,
             "TARGETS": dmg_to_target,
             "PLAYERS": players,
+            "USEFUL": useful_total,
         }
 
     def pretty_print_players_data(self, data):

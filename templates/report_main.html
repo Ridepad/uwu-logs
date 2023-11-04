@@ -14,16 +14,30 @@ img {
 .rectangle-cell {
   width: 12rem;
 }
+.points,
 .rectangle-cell,
 th {
   border-left: 10px solid var(--table-border);
 }
+
+.points {
+  min-width: 3rem;
+  text-align: right;
+}
+.top100 {color: #e5cc80;}
+.top99 {color: #e268a8;}
+.top95 {color: #ff8000;}
+.top75 {color: #a335ee;}
+.top50 {color: #0070ff;}
+.top25 {color: #1eff00;}
+.top0 {color: #666666;}
 
 .percent-bar {
   width: var(--width);
   height: 1em;
   border-radius: 0.1em;
 }
+.useful .percent-bar,
 .damage .percent-bar,
 .taken .percent-bar {
   background-color: hsl(0, 100%, 30%);
@@ -57,26 +71,29 @@ th {
         <thead>
           <tr>
             <th class="player-cell">Name</th>
+            <th></th>
+            <th class="useful sortable" colspan="3">Useful</th>
             <th class="damage sortable" colspan="3">Damage</th>
             <th class="heal sortable" colspan="3">Heal</th>
             <th class="taken sortable" colspan="3">Damage Taken</th>
           </tr> 
         </thead>
         <tbody class="table-has-total">
-          {% for player_name, data in TABLE.items() %}
+          {% for player_name, (spec_name, spec_icon) in SPECS.items() %}
           <tr>
-            <td class="player-cell" title="{{ SPECS[player_name][0] }}">
-              <img src="/static/icons/{{ SPECS[player_name][1] }}.jpg">
+            <td class="player-cell" title="{{ spec_name }}">
+              <img src="/static/icons/{{ spec_icon }}.jpg">
               <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
             </td>
-            {% for _type, type_data in data.items() %}
-            <td class="rectangle-cell {{ _type }}">
-              {% if type_data['percent'] %}
-              <div class="percent-bar" style="--width: {{ type_data['percent'] }}%"></div>
+            <td class="points">{{ POINTS[player_name] }}</td>
+            {% for _type, players in DATA.items() %}
+            <td class="{{ _type }} rectangle-cell">
+              {% if players.get(player_name) %}
+              <div class="percent-bar" style="--width: {{ players.get(player_name, {})['percent'] }}%"></div>
               {% endif %}
             </td>
-            <td class="total-cell {{ _type }}">{{ type_data['value'] }}</td>
-            <td class="per-sec-cell">{{ type_data['per_second'] }}</td>
+            <td class="{{ _type }} total-cell">{{ players.get(player_name, {})['value'] }}</td>
+            <td class="{{ _type }} per-sec-cell">{{ players.get(player_name, {})['per_second'] }}</td>
             {% endfor %}
           </tr>
           {% endfor %}
@@ -120,6 +137,7 @@ document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("clic
         .forEach(tr => tbody.appendChild(tr));
 }));
 
+const POINTS = [100, 99, 95, 75, 50, 25, 0];
 const GET_DPS_REQUEST = new XMLHttpRequest();
 
 const CHART_OPTIONS = {
@@ -201,6 +219,15 @@ GET_DPS_REQUEST.onreadystatechange = () => {
   const params_obj = Object.fromEntries(params);
   GET_DPS_REQUEST.open("POST", END_POINT);
   GET_DPS_REQUEST.send(JSON.stringify(params_obj));
+
+  for (const td of document.querySelectorAll(".points")) {
+    for (const i of POINTS) {
+      if (td.textContent - i >= 0) {
+        td.classList.add(`top${i}`);
+        break;
+      }
+    }
+  }
 })();
 </script>
 {% endblock the_scripts %}

@@ -38,7 +38,7 @@ th {
         <thead>
           <tr>
             <th class="player-cell"></th>
-            {% for _th in HEADS %}
+            {% for _th in TARGETS %}
             <th>{{ _th }}</th>
             {% endfor %}
           </tr>
@@ -49,10 +49,8 @@ th {
             <td class="player-cell">
               <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
             </td>
-            <td class="total-cell">{{ TOTAL_USEFUL[player_name] }}</td>
-            <td class="total-cell">{{ TOTAL[player_name] }}</td>
             {% for tguid, players_damage in TARGETS.items() %}
-            <td class="total-cell">{{ players_damage.get(player_name, 0) }}</td>
+            <td class="total-cell">{{ players_damage[player_name] }}</td>
             {% endfor %}
           </tr>
           {% endfor %}
