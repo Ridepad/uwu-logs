@@ -133,8 +133,9 @@ def make_report_top(report_id: str, rewrite=False):
         return
     
     pc = perf_counter()
-    if _validate and _validate.pure_dog_water(report):
-        LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Dog water')
+    q = _validate and _validate.pure_dog_water(report)
+    if q:
+        LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {report_id:50} | Dog water | {q}')
         return
 
     report_top = defaultdict(dict)
