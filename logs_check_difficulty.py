@@ -7,6 +7,8 @@ SPELLS: dict[str, tuple[str]] = {
         ("69146", "70824", "70823", "70825"), # Coldflame
     "Lady Deathwhisper":
         ("71254", "72503", "72008", "72504"), # Shadow Bolt
+    "Lady Deathwhisper2":
+        ("71001", "72109", "72108", "72110"), # Death and Decay
     "Gunship":
         ("70162", "72567", "72566", "72568"), # Shoot
     "Gunship2":
