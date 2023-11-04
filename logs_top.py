@@ -80,18 +80,18 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
 
     if boss_name == "Valithria Dreamwalker":
         vali_data = get_vali_heal(SLICE)
-        dmg_useful = defaultdict(int)
-        dmg_total = defaultdict(int)
+        _useful = defaultdict(int)
+        _total = defaultdict(int)
         for tguid, sources in vali_data.items():
             # totems worked until ~21-12-20
             # if tguid[5:12] == "0008FB5":
             #     for sguid, v in sources.items():
             #         dmg_useful[_sguid] += v
             if tguid[5:12] == "0008FB5":
-                dmg_useful = sources
+                _useful = sources
             for sguid, v in sources.items():
                 _sguid = report.get_master_guid(sguid)
-                dmg_total[_sguid] += v
+                _total[_sguid] += v
 
     else:
         boss_guid_id = report.name_to_guid(boss_name)
@@ -105,11 +105,11 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
         
         useful_damage = data["damage"] | data["useful"]
         all_data_useful = logs_dmg_useful.combine_pets_all(useful_damage, GUIDS, trim_non_players=True, ignore_abom=True)
-        dmg_useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
+        _useful = logs_dmg_useful.get_total_damage(all_data_useful, targets_useful)
 
         pp = report.get_players_and_pets_guids()
-        dmg_total = logs_dmg_heals.parse_dmg_all_no_friendly(SLICE, pp)
-        dmg_total = logs_dmg_useful.combine_pets(dmg_total, GUIDS, trim_non_players=True)
+        _total = logs_dmg_heals.parse_dmg_all_no_friendly(SLICE, pp)
+        _total = logs_dmg_useful.combine_pets(_total, GUIDS, trim_non_players=True)
 
     return [
         {
@@ -118,11 +118,11 @@ def make_boss_top(report: logs_main.THE_LOGS, boss_name: str, kill_segment: dict
             'i': guid[-7:],
             'n': PLAYERS[guid],
             'u': useful,
-            'd': dmg_total[guid],
+            'd': _total[guid],
             's': SPECS[guid],
             'a': f_auras(AURAS[guid], SPECS[guid])
         }
-        for guid, useful in dmg_useful.items()
+        for guid, useful in _useful.items()
         if is_player(guid)
     ]
 
