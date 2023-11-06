@@ -1,11 +1,19 @@
+const player_points_wrap = document.getElementById("player-points-wrap");
 const main_body = document.getElementById("main-body");
 const tooltip = document.getElementById("tooltip");
 const player_name = document.getElementById("player-name");
 const player_server = document.getElementById("player-server");
 const player_overall_points = document.getElementById("player-overall-points");
 const player_overall_rank = document.getElementById("player-overall-rank");
+const BUTTON_TOGGLE_MORE_BOSSES = document.getElementById("toggle-more-bosses");
+const POINTS = [100, 99, 95, 75, 50, 25, 0];
+const ARMORY_SERVERS = [
+    "Lordaeron",
+    "Icecrown",
+    "Onyxia",
+];
 const SPEC_BUTTONS = [1,2,3].map(i => ({
-    i: i,
+    index: i,
     input: document.getElementById(`spec-${i}-input`),
     label: document.getElementById(`spec-${i}-label`),
 }));
@@ -28,9 +36,12 @@ char_request.onreadystatechange = () => {
     if (char_request.status != 200 || char_request.readyState != 4) return;
 
     const j = JSON.parse(char_request.response);
-    console.log(j);
     CACHE[window.location.search] = j;
     table_add_new_data(j);
+    player_points_wrap.style.removeProperty("display");
+    
+    toggle_more_bosses();
+    BUTTON_TOGGLE_MORE_BOSSES.addEventListener("click", toggle_more_bosses);
 }
 
 
@@ -111,29 +122,14 @@ function format_duration(dur) {
 }
 
 function points_rank_class(v) {
-    let class_color;
-    if (v > 99.99) {
-        class_color = "top1";
-    } else if (v >= 99) {
-        class_color = "top99";
-    } else if (v >= 95) {
-        class_color = "top95";
-    } else if (v >= 75) {
-        class_color = "top75";
-    } else if (v >= 50) {
-        class_color = "top50";
-    } else if (v >= 25) {
-        class_color = "top25";
-    } else {
-        class_color = "topkek";
-    }
-    return class_color;
+    for (const i of POINTS) if (v - i >= 0) return `top${i}`;
 }
 
 function cell_points(v) {
+    const _class = points_rank_class(v/100);
     v = add_point(v);
     const td = cell(v, "cell-points");
-    td.classList.add(points_rank_class(v));
+    td.classList.add(_class);
     return td;
 }
 
@@ -180,7 +176,6 @@ function row(boss_name, data) {
         return tr;
     };
 
-    console.log(data["raids"]);
     tr.appendChild(cell(split_thousands(data["rank_players"]), "cell-rank"));
     tr.appendChild(cell_points(data["points"]));
     tr.appendChild(cell(format_dps(data["dps_max"]), "cell-dps"));
@@ -212,6 +207,13 @@ function table_add_new_data(data) {
         main_body.appendChild(tr);
     }
     player_name.textContent = data.name;
+    if (ARMORY_SERVERS.includes(data.server)) {
+        player_name.href = `https://armory.warmane.com/character/${data.name}/${data.server}`
+        player_name.target = "_blank";
+    } else {
+        player_name.removeAttribute("href");
+        player_name.removeAttribute("target");
+    }
     player_server.textContent = data.server;
     const _overall = add_point(data.overall_points);
     player_overall_points.textContent = _overall;
@@ -224,7 +226,7 @@ function table_add_new_data(data) {
     const _class = data.class * 4;
     player_name.className = SPECS[_class][2];
     for (const spec_button of SPEC_BUTTONS) {
-        const icon_name = SPECS[_class + spec_button.i][1];
+        const icon_name = SPECS[_class + spec_button.index][1];
         spec_button.label.querySelector("img").src = `static/icons/${icon_name}.jpg`;
     }
 }
@@ -237,7 +239,7 @@ function fetch_data() {
     const search = new URLSearchParams(window.location.search);
     const spec = search.get("spec");
     for (const spec_button of SPEC_BUTTONS) {
-        if (spec == spec_button.i) spec_button.input.checked = true;
+        if (spec == spec_button.index) spec_button.input.checked = true;
     }
 
     const data = CACHE[window.location.search];
@@ -250,10 +252,22 @@ function new_spec(spec) {
     history.pushState(null, "", `?${search}`);
     fetch_data();
 }
+function toggle_more_bosses(e) {
+    const other_bosses_rows = Array.from(main_body.querySelectorAll("tr")).splice(10);
+    let show = window.localStorage.getItem("show-more-bosses") == "true";
+    if (e) {
+        show = !show;
+        window.localStorage.setItem("show-more-bosses", show);
+    }
+    for (const tr of other_bosses_rows) {
+        tr.style.display = show ? "" : "none";
+    }
+    BUTTON_TOGGLE_MORE_BOSSES.textContent = show ? "Hide other bosses" : "Show other bosses";
+}
 
 function init() {
     for (const spec_button of SPEC_BUTTONS) {
-        spec_button.input.addEventListener("click", () => new_spec(spec_button.i));
+        spec_button.input.addEventListener("click", () => new_spec(spec_button.index));
     }
     window.addEventListener("popstate", fetch_data);
     fetch_data();

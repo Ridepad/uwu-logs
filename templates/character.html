@@ -6,13 +6,13 @@
 
 {% block add_style %}
 <style>
-.top1 {color: #e5cc80;}
+.top100 {color: #e5cc80;}
 .top99 {color: #e268a8;}
 .top95 {color: #ff8000;}
 .top75 {color: #a335ee;}
 .top50 {color: #0070ff;}
 .top25 {color: #1eff00;}
-.topkek {color: #666666;}
+.top0 {color: #666666;}
 td {
   text-align: right;
   padding-inline: .25em; 
@@ -23,6 +23,9 @@ section {
 
 #player-name {
   min-width: 11em;
+}
+#player-name[href]:hover {
+  text-shadow: 0 0 3rem currentColor, 0 0 1rem currentColor;
 }
 #player-server {
   min-width: 7em;
@@ -58,8 +61,8 @@ input:checked + label > img {
   opacity: 1;
 }
 
-#main-body tr:nth-child(10) td {
-  border-bottom: .1em solid var(--primary-color);
+#main-body tr:nth-child(11) td {
+  border-top: .1em solid var(--primary-color);
 }
 .table-wrap {
 	--min-width: 6em;
@@ -108,7 +111,7 @@ tr.no-decimal td.value {
   #top-player-info {
     grid-auto-flow: column;
   }
-  main > div.main {
+  #player-points-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -119,19 +122,26 @@ tr.no-decimal td.value {
 }
 
 .table-wrap :is(.spell-name, .player-cell) {
-	width: clamp(var(--min-width), 40vw, var(--max-width));
+	width: clamp(var(--min-width), 30vw, var(--max-width));
 }
 .table-wrap > div {
-	padding-left: calc(clamp(var(--min-width), 40vw, var(--max-width)));
+	padding-left: calc(clamp(var(--min-width), 30vw, var(--max-width)));
+}
+
+#toggle-more-bosses-wrap {
+  margin-top: 1em;
+}
+#toggle-more-bosses {
+  font-size: 300%;
 }
 </style>
 {% endblock add_style %}
 
 {% block the_main %}
 <main>
-<div class="main">
+<div id="player-points-wrap" class="main" style="display: none;">
   <section id="top-player-info">
-    <div id="player-name">.</div>
+    <a id="player-name">.</a>
     <div id="player-server">.</div>
     <div id="player-overall">
       <span id="player-overall-points">.</span>
@@ -157,7 +167,7 @@ tr.no-decimal td.value {
               <th>Points</th>
               <th>Best Dps</th>
               <th>Dur</th>
-              <th>Raids</th>
+              <th>Kills</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -167,6 +177,12 @@ tr.no-decimal td.value {
       </div>
     </section>
   </div>
+  <div id="toggle-more-bosses-wrap">
+    <button id="toggle-more-bosses">Show more</button>
+  </div>
+</div>
+<div id="not-found" style="display: none;">
+  <p>Player wasn't found!</p>
 </div>
 <aside id="tooltip" class="tooltip" style="display: none;">
   <table>
