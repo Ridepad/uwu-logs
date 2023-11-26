@@ -387,6 +387,7 @@ MULTIBOSSES = {
     "M'uru": ["00648D", "0064F0"],
 
     "Twin Emperors": ["003BAC", "003BAB"],
+    "Bug Trio": ["003CB7", "003CB8", "003C97"],
 }
 
 def convert_to_html_name(name: str):
