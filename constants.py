@@ -292,7 +292,41 @@ BOSSES_GUIDS = {
     "00624D": "Lady Sacrolash",
     "00648D": "M'uru",
     "0064F0": "Entropius",
-    "0062E3": "Kil'jaeden"
+    "0062E3": "Kil'jaeden",
+
+    # AhnQiraj:
+    "003B9F": "The Prophet Skeram",
+    "003C9C": "Battleguard Sartura",
+    "003C96": "Fankriss the Unyielding",
+    "003C95": "Princess Huhuran",
+    "003BAC": "Emperor Vek'lor",
+    "003BAB": "Emperor Vek'nilash",
+    "003D6F": "C'Thun",
+    "003CB7": "Princess Yauj",
+    "003CB8": "Vem",
+    "003C97": "Lord Kri",
+    "003BC3": "Viscidus",
+    "003C9D": "Ouro",
+    # Molten Core:
+    "002F56": "Lucifron",
+    "002ECE": "Magmadar",
+    "002FE3": "Gehennas",
+    "002F19": "Garr",
+    "002FE8": "Shazzrah",
+    "002F18": "Baron Geddon",
+    "002ED4": "Golemagg the Incinerator",
+    "002F42": "Sulfuron Harbringer",
+    "002EF2": "Majordomo Executus",
+    "002CEE": "Ragnaros",
+    # Blackwing Lair:
+    "002CEE": "Razorgore the Untamed",
+    "0032DC": "Vaelastrasz the Corrupt",
+    "002EF1": "Broodlord Lashlayer",
+    "002ECF": "Firemaw",
+    "003909": "Ebonroc",
+    "002ECD": "Flamegor",
+    "0036C4": "Chromaggus",
+    "002D3F": "Nefarian",
 }
 
 TOC_CHAMPIONS = {
@@ -351,6 +385,8 @@ MULTIBOSSES = {
     "Kalecgos": ["006112", "00613C"],
     "Eredar Twins": ["00624E", "00624D"],
     "M'uru": ["00648D", "0064F0"],
+
+    "Twin Emperors": ["003BAC", "003BAB"],
 }
 
 def convert_to_html_name(name: str):
