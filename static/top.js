@@ -245,56 +245,51 @@ function cell_date(report_ID) {
   return cell;
 }
 
+let timeout_hide;
+let timeout_show_rows;
 function show_tooltip(td) {
+  clearTimeout(timeout_show_rows);
   const dataset = td.dataset;
-  const fragment = new DocumentFragment();
   const sorted = Object.keys(dataset).sort();
-  for (const spell_id of sorted) {
-    const tr = document.createElement("tr");
+  const rows = Array.from(theTooltipBody.children);
+  for (const i in sorted) {
+    const tr = rows[i];
+    const spell_id = sorted[i];
     const [count, uptime] = dataset[spell_id].split(',');
 
-    const td_icon = document.createElement("td");
-    const img = document.createElement("img");
+    const img = tr.querySelector("img");
     img.src = get_icon_link(AURAS_ICONS[spell_id]);
     img.alt = spell_id;
-    td_icon.appendChild(img);
     
-    const td_count = document.createElement("td");
-    td_count.append(count);
-
-    const td_uptime = document.createElement("td");
-    td_uptime.append(parseFloat(uptime).toFixed(1) + "%");
-
-    tr.appendChild(td_icon);
-    tr.appendChild(td_count);
-    tr.appendChild(td_uptime);
-    fragment.appendChild(tr);
+    tr.querySelector(".count").textContent = count;
+    tr.querySelector(".uptime").textContent = `${parseFloat(uptime).toFixed(1)}%`;
   }
-
-  while(theTooltipBody.firstChild) theTooltipBody.removeChild(theTooltipBody.firstChild);
-  theTooltipBody.append(fragment);
+  timeout_show_rows = setTimeout(() => {
+    for (const i in rows) {
+      const tr = rows[i];
+      if (i < sorted.length) {
+        tr.classList.remove("hidden");
+      } else {
+        tr.classList.add("hidden");
+      }
+    }
+  }, toggleLimit.checked ? 10 : 150);
 }
-
-let hidetimeout;
-
 function mouseenter(event) {
-  clearTimeout(hidetimeout);
+  clearTimeout(timeout_hide);
   const td = event.target;
-  setTimeout(() => {
-    const bodyRect = document.body.getBoundingClientRect();
-    const trRect = td.getBoundingClientRect();
-    theTooltip.style.top = trRect.bottom + 'px';
-    theTooltip.style.right = bodyRect.right - trRect.left + 'px';
-    theTooltip.style.removeProperty("display");
-  });
   show_tooltip(td);
+  const bodyRect = document.body.getBoundingClientRect();
+  const trRect = td.getBoundingClientRect();
+  theTooltip.style.top = `${trRect.bottom}px`;
+  theTooltip.style.right = `${bodyRect.right - trRect.left}px`;
+  theTooltip.style.removeProperty("display");
 }
-
 function mouseleave() {
-  clearTimeout(hidetimeout);
-  hidetimeout = setTimeout(() => {
+  clearTimeout(timeout_hide);
+  timeout_hide = setTimeout(() => {
     theTooltip.style.display = "none"
-  }, 100);
+  }, 300);
 }
 
 function cell_auras(auras) {

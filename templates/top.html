@@ -122,6 +122,13 @@
       <aside id="the-tooltip" style="display: none;">
         <table>
           <tbody id="tooltip-body">
+            {% for _ in range(10) %}
+            <tr class="hidden">
+              <td><img></td>
+              <td class="count"></td>
+              <td class="uptime"></td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
       </aside>

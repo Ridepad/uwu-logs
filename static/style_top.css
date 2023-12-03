@@ -314,6 +314,9 @@ input:disabled + label {
   min-width: 3em;
 }
 
+.hidden {
+  display: none;
+}
 
 #progress-bar {
   width: 100%;
