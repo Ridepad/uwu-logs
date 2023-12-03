@@ -51,6 +51,7 @@ const IRRELEVANT_FOR_POINTS = [
   toggleLimit,
 ];
 
+const ROW_LIMIT = 1000;
 const screenX = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
@@ -420,7 +421,7 @@ function table_add_new_data(table, data) {
 
   loadingInfo.textContent = "Building table...";
   loadingInfoPanel.style.removeProperty("display");
-  const LIMIT = data.length;
+  const LIMIT = toggleLimit.checked ? ROW_LIMIT : data.length;
   const fragment = new DocumentFragment();
   let i = 0;
 
