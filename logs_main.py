@@ -82,6 +82,10 @@ SPEC_ICON_TO_POSITION = {
     for class_i, specs in enumerate(_ICONS)
     for spec_i, icon in enumerate(specs)
 }
+BOSSES_SKIP_POINTS = {
+    "Valithria Dreamwalker",
+    "Gunship",
+}
 
 TYPES = (str, bool, type(None))
 HIT_KEYS = {"CAST", "HIT", "PERIODIC"}
@@ -859,9 +863,8 @@ class THE_LOGS:
         specs = self.convert_dict_guids_to_names(DD["SPECS"])
         SPECS = self.report_add_spec_info(specs, PLAYERS)
 
-        if not mode or not _useful or boss_name == "Valithria Dreamwalker":
-            points = {}
-        else:
+        points = {}
+        if mode and _useful and boss_name not in BOSSES_SKIP_POINTS:
             _useful_dps = self.convert_dict_guids_to_names({
                 guid: dmg / DURATION
                 for guid, dmg in _useful.items()
@@ -869,15 +872,19 @@ class THE_LOGS:
 
             server = get_report_name_info(self.NAME)["server"]
             top1 = logs_top_db.SpecTop1(server, boss_name, mode)
-            spec_top1 = {
-                spec: top1.get(spec)
-                for spec in set(specs.values())
-            }
-            points = {
-                name: f"{udps * 100 / spec_top1[specs[name]]:.1f}"
-                for name, udps in _useful_dps.items()
-                if name in specs
-            }
+            try:
+                spec_top1 = {
+                    spec: top1.get(spec)
+                    for spec in set(specs.values())
+                }
+                points = {
+                    name: f"{udps * 100 / spec_top1[specs[name]]:.1f}"
+                    for name, udps in _useful_dps.items()
+                    if name in specs
+                }
+            except (FileNotFoundError, AttributeError):
+                pass
+                
 
         return default_params | DD | {
             "DATA": TABLE,

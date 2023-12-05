@@ -37,7 +37,10 @@ from constants import ENV_DAMAGE, LOGGER_UNUSUAL_SPELLS, running_time
 
 SWING_FLAGS = {b"SWING_DAMAGE", b"SWING_MISSED"}
 LOST_SWING = [b"1", b"Melee", b"0x1"]
-CAST_FAILED = b"SPELL_CAST_FAILED"
+SKIP_FLAGS = {
+    b"SPELL_CAST_FAILED",
+    b"SPELL_DURABILITY_DAMAGE",
+}
 ENVIRONMENTAL_DAMAGE = b"ENVIRONMENTAL_DAMAGE"
 
 NULL = b'\x00'
@@ -72,7 +75,7 @@ def trim_logs(fname: str):
             try:
                 _line = _line.replace(b'  ', b',', 1).replace(b'"', b'').replace(b', ', b' ')
                 line = _line.split(b',', 8)
-                if line[1] == CAST_FAILED:
+                if line[1] in SKIP_FLAGS:
                     continue
                 if line[1] == ENVIRONMENTAL_DAMAGE:
                     line = env_f(_line)

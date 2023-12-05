@@ -486,8 +486,8 @@ COMBINE_SPELLS = {
     "47834": "47836", # Seed of Corruption",
     "47818": "47820", # Rain of Fire",
     "61291": "61290", # Shadowflame",
-    "63321": "57946", # Life Tap",
-    "31818": "57946", # Life Tap",
+    # "63321": "57946", # Life Tap",
+    # "31818": "57946", # Life Tap",
     
     "53195": "53201", # Starfall",
     "48466": "48467", # Hurricane",
@@ -570,11 +570,17 @@ SPELL_BOOK = {
     "33831": [1, "Force of Nature"],
     "48391": [1, "Owlkin Frenzy"],
     "22812": [1, "Barkskin"],
+    "14325": [2, "Hunter's Mark"],
+    "53338": [2, "Hunter's Mark"],
+    "14290": [2, "Multi-Shot"],
+    "20904": [2, "Aimed Shot"],
     "49050": [2, "Aimed Shot"],
     "53209": [2, "Chimera Shot"],
     "35079": [2, "Misdirection"],
     "49001": [2, "Serpent Sting"],
     "58433": [2, "Volley"],
+    "10181": [3, "Frostbolt"],
+    "10216": [3, "Flamestrike"],
     "36032": [3, "Arcane Blast"],
     "42921": [3, "Arcane Explosion"],
     "12042": [3, "Arcane Power"],
@@ -605,10 +611,15 @@ SPELL_BOOK = {
     "54172": [4, "Divine Storm"],
     "59578": [4, "The Art of War"],
     "35395": [4, "Crusader Strike"],
+    "9474": [5, "Flash Heal"],
+    "14751": [5, "Inner Focus"],
+    "10929": [5, "Renew"],
+    "10965": [5, "Greater Heal"],
     "48089": [5, "Circle of Healing"],
     "47753": [5, "Divine Aegis"],
     "58381": [5, "Mind Flay"],
     "53000": [5, "Penance"],
+    "10901": [5, "Power Word: Shield"],
     "25217": [5, "Power Word: Shield"],
     "25392": [5, "Prayer of Fortitude"],
     "48170": [5, "Prayer of Shadow Protection"],
@@ -633,7 +644,12 @@ SPELL_BOOK = {
     "51886": [7, "Cleanse Spirit"],
     "16246": [7, "Clearcasting"],
     "379": [7, "Earth Shield"],
+    "547": [7, "Healing Wave"],
+    "8005": [7, "Healing Wave"],
+    "10623": [7, "Chain Heal"],
+    "10468": [7, "Lesser Healing Wave"],
     "16166": [7, "Elemental Mastery"],
+    "16188": [7, "Nature's Swiftness"],
     "51533": [7, "Feral Spirit"],
     "60043": [7, "Lava Burst"],
     "49238": [7, "Lightning Bolt"],
@@ -645,22 +661,29 @@ SPELL_BOOK = {
     "53390": [7, "Tidal Waves"],
     "57961": [7, "Water Shield"],
     "25504": [7, "Windfury Attack"],
+    "11722": [8, "Curse of the Elements"],
+    "47865": [8, "Curse of the Elements"],
+    "11672": [8, "Corruption"],
     "47813": [8, "Corruption"],
     "47893": [8, "Fel Armor"],
+    "11689": [8, "Life Tap"],
     "63321": [8, "Life Tap"],
     "47241": [8, "Metamorphosis"],
     "686": [8, "Shadow Bolt"],
+    "11661": [8, "Shadow Bolt"],
     "25228": [8, "Soul Link"],
     "47843": [8, "Unstable Affliction"],
     "2457": [9, "Battle Stance"],
     "2458": [9, "Berserker Stance"],
     "29131": [9, "Bloodrage"],
+    "23894": [9, "Bloodthirst"],
     "23880": [9, "Bloodthirst"],
     "47440": [9, "Commanding Shout"],
     "59653": [9, "Damage Shield"],
     "12292": [9, "Death Wish"],
     "12721": [9, "Deep Wounds"],
     "71": [9, "Defensive Stance"],
+    "11567": [9, "Heroic Strike"],
     "47450": [9, "Heroic Strike"],
     "44949": [9, "Whirlwind"]
 }
@@ -726,6 +749,8 @@ SPELL_BOOK_SPEC = {
         "57475": 1, # Kindred Spirits
         "75447": 1, # Ferocious Inspiration
         "53209": 2, # Chimera Shot
+        "20904": 2, # Aimed Shot
+        "49050": 2, # Aimed Shot
         "53301": 3, # Explosive Shot (Rank 1)
         "60051": 3, # Explosive Shot (Rank 2)
         "60052": 3, # Explosive Shot (Rank 3)
@@ -837,6 +862,7 @@ SPELL_BOOK_SPEC = {
         "59172": 3, # Chaos Bolt
         "47847": 3, # Shadowfury
         "17962": 3, # Conflagrate
+        "18871": 3, # Shadowburn
     },
     "warrior": {
         "7384": 1, # Overpower
@@ -845,8 +871,10 @@ SPELL_BOOK_SPEC = {
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
 
+        "23894": 2, # Bloodthirst
         "23881": 2, # Bloodthirst
         "12292": 2, # Death Wish
+        "12328": 2, # Death Wish
 
         "46968": 3, # Shockwave
         "47498": 3, # Devastate
