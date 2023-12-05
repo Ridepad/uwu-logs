@@ -6,7 +6,7 @@ import {
   AURAS_COLUMNS,
   AURAS_ICONS,
   MONTHS,
-} from "./appConstants.js"
+} from "./constants.js"
 
 const selectServer = document.getElementById('select-server');
 const selectInstance = document.getElementById('select-instance');
@@ -384,6 +384,7 @@ function cell_points(v, is_total) {
 }
 function new_row_points(data, spec) {
   const row = document.createElement('tr');
+  console.log(data);
   const [
     p_relative,
     p_total,
