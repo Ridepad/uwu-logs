@@ -769,6 +769,7 @@ SPELL_BOOK_SPEC = {
     },
     "paladin": {
         "53654": 1, # Beacon of Light
+        "25903": 1, # Holy Shock
         "48825": 1, # Holy Shock
         "54149": 1, # Infusion of Light
         "31842": 1, # Divine Illumination
