@@ -150,6 +150,7 @@ td:is(.table-dmg, .table-dps) {
   text-align: right;
 }
 td.table-r {
+  min-width: 4rem;
   width: 14ch;
 }
 td.table-t {
