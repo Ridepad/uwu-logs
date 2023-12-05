@@ -417,7 +417,7 @@ function table_add_new_data(table, data) {
 
   loadingInfo.textContent = "Building table...";
   loadingInfoPanel.style.removeProperty("display");
-  const LIMIT = toggleLimit.checked ? ROW_LIMIT : data.length;
+  const LIMIT = toggleLimit.checked ? Math.min(ROW_LIMIT, data.length) : data.length;
   const fragment = new DocumentFragment();
   let i = 0;
 
