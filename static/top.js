@@ -384,7 +384,6 @@ function cell_points(v, is_total) {
 }
 function new_row_points(data, spec) {
   const row = document.createElement('tr');
-  console.log(data);
   const [
     p_relative,
     p_total,
