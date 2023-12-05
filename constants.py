@@ -319,7 +319,7 @@ BOSSES_GUIDS = {
     "002EF2": "Majordomo Executus",
     "002CEE": "Ragnaros",
     # Blackwing Lair:
-    "002CEE": "Razorgore the Untamed",
+    "003093": "Razorgore the Untamed",
     "0032DC": "Vaelastrasz the Corrupt",
     "002EF1": "Broodlord Lashlayer",
     "002ECF": "Firemaw",
