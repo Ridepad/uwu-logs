@@ -845,7 +845,6 @@ SPELL_BOOK_SPEC = {
         "61301": 3, # Riptide
         "16190": 3, # Mana Tide Totem
         "51886": 3, # Cleanse Spirit
-        "58757": 3, # Healing Stream Totem
     },
     "warlock": {
         "59161": 1, # Haunt (Rank 2)
