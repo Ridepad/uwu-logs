@@ -191,6 +191,9 @@ def get_player_id(item: dict[str, str]):
 def _dps(entry):
     return round(entry["u"] / entry["t"], 2)
 
+def points_relative_calc(points, points_top1):
+    return int(points / points_top1 * 10000)
+
 
 class Cache:
     m_time: defaultdict[str, float]
@@ -416,12 +419,14 @@ class Top(Cache):
         
         guids = PlayerData(self.server).get_guids()
         player_points = PlayerPoints(self.server, None, self.spec).get_combined_boss_data()
-        top1points = player_points[next(iter(player_points))]
+        points_top1 = player_points[next(iter(player_points))]
         d = []
         for guid, points in player_points.items():
-            d.append((points/top1points*10000, points, guids.get(guid, guid)))
+            p = points_relative_calc(points, points_top1)
+            name = guids.get(guid, guid)
+            d.append((p, points, name))
             # try:
-            #     d.append((points/top1points*10000, points, guids[guid]))
+            #     d.append((p, points, guids[guid]))
             # except KeyError:
             #     break
         d = self._compress(json.dumps(d).encode())
@@ -642,17 +647,17 @@ class PlayerPoints(Cache):
         return _server[self.spec]
 
     def _get_player_data(self):
-        points = self.get_combined_boss_data()
-        if self.guid not in points:
+        all_points = self.get_combined_boss_data()
+        if self.guid not in all_points:
             return {}
         
-        guids = list(points)
-        r1_points = points[guids[0]]
+        guids = list(all_points)
+        points_top1 = all_points[guids[0]]
         rank = guids.index(self.guid) + 1
-        points = int(points[self.guid] * 10000 / r1_points)
+        points_relative = points_relative_calc(all_points[self.guid], points_top1)
         return {
             "overall_rank": rank,
-            "overall_points": points,
+            "overall_points": points_relative,
             "bosses": self.get_boss_data_all(),
         }
 
