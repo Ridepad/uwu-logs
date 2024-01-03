@@ -85,6 +85,8 @@ SPEC_ICON_TO_POSITION = {
 BOSSES_SKIP_POINTS = {
     "Valithria Dreamwalker",
     "Gunship",
+    "Heroic Training Dummy",
+    "Highlord's Nemesis Trainer",
 }
 
 TYPES = (str, bool, type(None))
