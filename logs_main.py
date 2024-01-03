@@ -923,7 +923,7 @@ class THE_LOGS:
         for s,f in segments:
             yield func(s, f, source_guid_id, heal)
 
-    def get_data_breakdown(self, segments, source, heal, taken) -> logs_dmg_breakdown.BreakdownTypeExtended:
+    def get_data_breakdown(self, segments_data) -> logs_dmg_breakdown.BreakdownTypeExtended:
         _other = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         _damage = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         _spells = {}
@@ -950,7 +950,7 @@ class THE_LOGS:
                         spell_name = get_spell_data_pet_name_wrap(spell_id, pet_name)
                         yield target_id, spell_name, types
 
-        for data in self.data_breakdown_gen(segments, source, heal, taken):
+        for data in segments_data:
             for target_id, spell_name, types in reduce_data(data["DAMAGE"]):
                 for t, v in types.items():
                     _damage[target_id][spell_name][t].extend(v)
@@ -968,11 +968,13 @@ class THE_LOGS:
         }
     
     def get_numbers_breakdown_wrap(self, segments: list, source: str, filter_guid=None, heal=False, taken=False):
-        source = self.name_to_guid(source)
-        if source.startswith("0xF"):
-            source = source[:12]
+        if not source.startswith("0x"):
+            source = self.name_to_guid(source)
+            if source.startswith("0xF"):
+                source = source[:12]
         
-        _parsed = self.get_data_breakdown(segments, source, heal, taken)
+        _segments_data = self.data_breakdown_gen(segments, source, heal, taken)
+        _parsed = self.get_data_breakdown(_segments_data)
         _spells = _parsed["SPELLS"]
 
         if not filter_guid:
