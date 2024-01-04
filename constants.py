@@ -779,7 +779,6 @@ SPELL_BOOK_SPEC = {
         "48827": 2, # Avenger's Shield
         "20132": 2, # Redoubt
         "48952": 2, # Holy Shield
-        "57319": 2, # Blessing of Sanctuary
         "70760": 2, # Deliverance
         
         "59578": 3, # The Art of War
