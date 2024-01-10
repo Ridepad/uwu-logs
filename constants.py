@@ -551,13 +551,20 @@ SPELL_BOOK = {
     "51124": [0, "Killing Machine"],
     "66992": [0, "Plague Strike"],
     "50526": [0, "Wandering Plague"],
+    "2782": [1, "Remove Curse"],
+    "29166": [1, "Innervate"],
+    "5570": [1, "Insect Swarm"],
+    "24977": [1, "Insect Swarm"],
     "48468": [1, "Insect Swarm"],
     "24932": [1, "Leader of the Pack"],
     "48566": [1, "Mangle (Cat)"],
     "48422": [1, "Master Shapeshifter"],
     "48463": [1, "Moonfire"],
     "48574": [1, "Rake"],
+    "9858": [1, "Regrowth"],
     "48443": [1, "Regrowth"],
+    "8910": [1, "Rejuvenation"],
+    "9841": [1, "Rejuvenation"],
     "70691": [1, "Rejuvenation"],
     "52610": [1, "Savage Roar"],
     "48572": [1, "Shred"],
@@ -631,12 +638,14 @@ SPELL_BOOK = {
     "22482": [6, "Blade Flurry"],
     "35548": [6, "Combat Potency"],
     "57993": [6, "Envenom"],
+    "11300": [6, "Eviscerate"],
     "48668": [6, "Eviscerate"],
     "52874": [6, "Fan of Knives"],
     "48659": [6, "Feint"],
     "51637": [6, "Focused Attacks"],
     "8643": [6, "Kidney Shot"],
     "57842": [6, "Killing Spree"],
+    "11294": [6, "Sinister Strike"],
     "48638": [6, "Sinister Strike"],
     "1784": [6, "Stealth"],
     "57933": [6, "Tricks of the Trade"],
@@ -646,6 +655,7 @@ SPELL_BOOK = {
     "379": [7, "Earth Shield"],
     "547": [7, "Healing Wave"],
     "8005": [7, "Healing Wave"],
+    "1064": [7, "Chain Heal"],
     "10623": [7, "Chain Heal"],
     "10468": [7, "Lesser Healing Wave"],
     "16166": [7, "Elemental Mastery"],
@@ -732,6 +742,7 @@ SPELL_BOOK_SPEC = {
         "17099": 2, # Furor
         "48577": 2, # Ferocious Bite
         "49376": 2, # Feral Charge - Cat
+        "17392": 2, # Faerie Fire (Feral)
         "16857": 2, # Faerie Fire (Feral)
         "47468": 2, # Claw
 
@@ -814,6 +825,7 @@ SPELL_BOOK_SPEC = {
         "48666": 1, # Mutilate
         "14177": 1, # Cold Blood
 
+        "11294": 2, # Sinister Strike
         "48638": 2, # Sinister Strike
         "13750": 2, # Adrenaline Rush
         "13877": 2, # Blade Flurry
@@ -842,8 +854,10 @@ SPELL_BOOK_SPEC = {
         "53390": 3, # Tidal Waves
         "52752": 3, # Ancestral Awakening
         "61301": 3, # Riptide
+        "17359": 3, # Mana Tide Totem
         "16190": 3, # Mana Tide Totem
         "51886": 3, # Cleanse Spirit
+        "16188": 3, # Nature's Swiftness
     },
     "warlock": {
         "59161": 1, # Haunt (Rank 2)
@@ -982,6 +996,34 @@ SERVERS = {
     "0x0C": "Frostmourne2",
     "0x0A": "Blackrock",
     "0x0E": "Onyxia",
+}
+
+GEAR = {
+    "LEFT": [     
+        "head",
+        "neck",
+        "shoulder",
+        "cloak",
+        "chest",
+        "shirt",
+        "tabard",
+        "wrist",
+    ],
+    "RIGHT": [
+        "hands",
+        "belt",
+        "legs",
+        "boots",
+        "ring1",
+        "ring2",
+        "trinket1",
+        "trinket2",
+    ],
+    "WEAPONS": [
+        "main-hand",
+        "off-hand",
+        "backup",
+    ],
 }
 
 def get_ms(timestamp):
