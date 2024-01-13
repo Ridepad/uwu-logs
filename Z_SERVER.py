@@ -619,6 +619,7 @@ def top():
         return render_template_wrap(
             'top.html',
             SERVERS=servers,
+            REPORT_NAME="Top",
         )
     
     _data: dict = request.get_json()
