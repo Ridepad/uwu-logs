@@ -22,6 +22,7 @@ th {
 
 .points {
   min-width: 3rem;
+  width: 3rem;
   text-align: right;
 }
 .top100 {color: #e5cc80;}
@@ -31,6 +32,17 @@ th {
 .top50 {color: #0070ff;}
 .top25 {color: #1eff00;}
 .top0 {color: #666666;}
+
+.damage {
+  display: none;
+}
+.swap-damage {
+  position: absolute;
+  right: 0;
+}
+:is(.useful, .damage).sortable {
+  position: relative;
+}
 
 .percent-bar {
   width: var(--width);
@@ -61,6 +73,8 @@ th {
 
 {% block scripts_head %}
 <script src="/static/chart-4.1.2.min.js"></script>
+<script defer src="/static/report_main.js"></script>
+<script defer src="/static/range.js"></script>
 {% endblock scripts_head %}
 
 {% block the_main %}
@@ -72,8 +86,8 @@ th {
           <tr>
             <th class="player-cell">Name</th>
             <th class="points sortable"></th>
-            <th class="useful sortable" colspan="3">Useful</th>
-            <th class="damage sortable" colspan="3">Damage</th>
+            <th class="useful sortable" colspan="3">Useful Damage<button class="swap-damage">⇄</button></th>
+            <th class="damage sortable" colspan="3">Total Damage<button class="swap-damage">⇄</button></th>
             <th class="heal sortable" colspan="3">Heal</th>
             <th class="taken sortable" colspan="3">Damage Taken</th>
           </tr> 
@@ -121,114 +135,6 @@ th {
     <p>First Hit: {{ FIRST_HIT }}</p>
     <p>Last Hit: {{ LAST_HIT }}</p>
   </section>
-  <script defer src="/static/range.js"></script>
 </main>
 
 {% endblock the_main %}
-
-{% block the_scripts %}
-<script>
-const tbody = document.querySelector("tbody");
-const getCellValue = (tr, className) => tr.querySelector(className).textContent.replace(/ /g, "");
-const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
-document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", () => {
-  Array.from(tbody.querySelectorAll("tr"))
-        .splice(1)
-        .sort(comparer(`.total-cell.${th.classList[0]}`))
-        .forEach(tr => tbody.appendChild(tr));
-}));
-
-const POINTS = [100, 99, 95, 75, 50, 25, 0];
-const GET_DPS_REQUEST = new XMLHttpRequest();
-
-const CHART_OPTIONS = {
-  maintainAspectRatio: false,
-  responsive: true,
-  animation: false,
-  scales: {
-    x: {
-      grid: {
-        color: '#141414',
-        tickLength: 1,
-      },
-    },
-    y: {
-      grid: {
-        color: '#141414',
-        tickLength: 1,
-      },
-      title: {
-        display: true,
-        text: 'DPS',
-      },
-      ticks: {
-        padding: 0,
-      },
-    },
-  },
-  plugins: {
-    tooltip: {
-      intersect: false,
-    },
-    legend: {
-      display: false,
-    },
-  },
-  interaction: {
-    mode: 'index',
-  }
-};
-const CHART = new Chart(document.getElementById('chart'), {
-  type: 'line',
-  options: CHART_OPTIONS,
-});
-
-function make_new_dataset(datapoints) {
-  return {
-    data: datapoints,
-    cubicInterpolationMode: 'monotone',
-    borderColor: '#6900cc',
-    pointBorderWidth: 0,
-  }
-}
-
-function chartSetData(datapoints) {
-  if (Object.keys(datapoints).length === 0 && CHART.data.datasets.length === 0) {
-    return
-  }
-  const datapoints_values = Object.values(datapoints);
-  const datapoints_min = Math.min(...datapoints_values);
-  const datapoints_max = Math.max(...datapoints_values);
-  CHART.options.scales.y.min = Math.floor(datapoints_min);
-  CHART.options.scales.y.max = Math.ceil(datapoints_max);
-  CHART.data.datasets[0] = make_new_dataset(datapoints);
-  CHART.update();
-  document.getElementById('chart-wrap').style.removeProperty("display");
-}
-
-GET_DPS_REQUEST.onreadystatechange = () => {
-  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
-  
-  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
-  chartSetData(datapoints);
-}
-
-(() => {
-  const reportID = window.location.pathname.split('/')[2];
-  const END_POINT = `/reports/${reportID}/get_dps`;
-  const params = new URLSearchParams(window.location.search);
-  const params_obj = Object.fromEntries(params);
-  GET_DPS_REQUEST.open("POST", END_POINT);
-  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
-
-  for (const td of document.querySelectorAll(".points")) {
-    for (const i of POINTS) {
-      if (td.textContent - i >= 0) {
-        td.classList.add(`top${i}`);
-        break;
-      }
-    }
-  }
-})();
-</script>
-{% endblock the_scripts %}
