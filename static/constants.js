@@ -28,6 +28,54 @@ const BOSSES = {
     "Assembly of Iron", "Kologarn", "Auriaya", "Hodir", "Thorim", "Freya", "Mimiron",
     "General Vezax", "Yogg-Saron", "Algalon the Observer"
   ],
+  "Magtheridon's Lair": ["Magtheridon"],
+  "Karazhan": [
+    "Servant Quarters", "Attumen the Huntsman", "Moroes",
+    "Opera House", "Maiden of Virtue", "The Curator",
+    "Chess Event", "Terestian Illhoof", "Shade of Aran",
+    "Netherspite", "Nightbane", "Prince Malchezaar",
+  ],
+  "Gruul's Lair": [
+    "High King Maulgar", "Gruul the Dragonkiller",
+  ],
+  "Serpentshrine Cavern": [
+    "Hydross the Unstable", "The Lurker Below", "Leotheras the Blind",
+    "Fathom-Lord Karathress", "Morogrim Tidewalker", "Lady Vashj",
+  ],
+  "The Eye": [
+    "Void Reaver", "Al'ar", "High Astromancer Solarian", "Kael'thas Sunstrider",
+  ],
+  "Black Temple": [
+    "High Warlord Naj'entus", "Supremus", "Shade of Akama", "Teron Gorefiend", "Gurtogg Bloodboil",
+    "Reliquary of Souls", "Mother Shahraz", "The Illidari Council", "Illidan",
+  ],
+  "Mount Hyjal": [
+    "Rage Winterchill", "Anetheron", "Kaz'rogal", "Azgalor", "Archimonde",
+  ],
+  "Zul'Aman": [
+    "Akil'zon", "Nalorakk", "Jan'alai", "Halazzi", "Hex Lord Malacrass", "Zul'jin",
+  ],
+  "Sunwell Plateau": [
+    "Kalecgos", "Sathrovarr",
+    "Brutallus",
+    "Felmyst",
+    "Alythess", "Sacrolash",
+    "M'uru", "Entropius",
+    "Kil'jaeden",
+  ],
+  "Ahn'Qiraj": [
+    "The Prophet Skeram", "Battleguard Sartura", "Fankriss the Unyielding",
+    "Princess Huhuran", "Twin Emperors", "C'Thun",
+    "Bug Trio", "Viscidus", "Ouro",
+  ],
+  "Molten Core": [
+    "Lucifron", "Magmadar", "Gehennas", "Garr", "Shazzrah", "Baron Geddon",
+    "Golemagg the Incinerator", "Sulfuron Harbinger", "Majordomo Executus", "Ragnaros",
+  ],
+  "Blackwing Lair": [
+    "Razorgore the Untamed", "Vaelastrasz the Corrupt", "Broodlord Lashlayer",
+    "Firemaw", "Ebonroc", "Flamegor", "Chromaggus", "Nefarian",
+  ],
 };
 
 const SPECS = [
