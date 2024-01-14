@@ -2,11 +2,11 @@ _*
 legacy*
 test*
 q_*
+x_*
 *.7z
 *.db
 *.exe
 *.ini
-*.json
 *.log
 *.mp4
 *.old
@@ -14,9 +14,12 @@ q_*
 *.zip
 db*.*
 
+.*/
 bkup/
+cache/
 LogsDir/
 LogsRaw/
+parsed/
 top/
 uploads/
 static/icons/
