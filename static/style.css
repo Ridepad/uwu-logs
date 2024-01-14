@@ -464,9 +464,10 @@ footer {
 
 main {
   position: relative;
-  margin-top: calc(var(--nav-height) + 2.5rem);
-  margin-bottom: calc(var(--nav-height) + 1rem);
-  padding-bottom: 5vh;
+  margin-top: var(--nav-height);
+  margin-bottom: var(--bottom-row-one);
+  padding-top: 1rem;
+  padding-bottom: 5rem;
 }
 
 #report-main-tables {
