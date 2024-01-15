@@ -81,7 +81,7 @@ def load_report(report_id: str):
         return report
     
     if _validate:
-        _limit = _validate.rate_limited(ip, report_id)
+        _limit = _validate.rate_limited_reports(ip, report_id)
         if _limit:
             add_log_entry(ip, "SPAM", report_id)
             raise TooManyRequests(retry_after=_limit)
@@ -706,6 +706,14 @@ def ladder():
 
 @SERVER.route("/missing/<type>/<id>", methods=["PUT"])
 def missing(type, id):
+    if _validate:
+        ip = request.remote_addr
+        url = request.url
+        _limit = _validate.rate_limited_missing(ip, url)
+        if _limit:
+            add_log_entry(ip, "SPAM", url)
+            raise TooManyRequests(retry_after=_limit)
+    
     return_code = 400
     if type == "item":
         return_code = logs_item_parser.parse_and_save(id)

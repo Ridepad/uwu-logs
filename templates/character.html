@@ -2,186 +2,122 @@
 
 {% block scripts_head %}
 <script src="/static/character.js" defer></script>
+<script type="module" src="/static/char_parser.js"></script>
 {% endblock scripts_head %}
 
-{% block add_style %}
-<style>
-.top100 {color: #e5cc80;}
-.top99 {color: #e268a8;}
-.top95 {color: #ff8000;}
-.top75 {color: #a335ee;}
-.top50 {color: #0070ff;}
-.top25 {color: #1eff00;}
-.top0 {color: #666666;}
-td {
-  text-align: right;
-  padding-inline: .25em; 
-}
-section {
-  font-size: 200%;
-}
-
-#player-name {
-  min-width: 11em;
-}
-#player-name[href]:hover {
-  text-shadow: 0 0 3rem currentColor, 0 0 1rem currentColor;
-}
-#player-server {
-  min-width: 7em;
-}
-#player-overall {
-  min-width: max-content;
-}
-#player-overall-points {
-  display: inline-block;
-  min-width: 3.2em;
-  text-align: right;
-}
-#player-overall-rank {
-  display: inline-block;
-  font-size: 33%;
-  min-width: 4em;
-  text-align: left;
-}
-#spec-wrap {
-  min-width: max-content;
-}
-#spec-wrap label {
-  padding: 0;
-}
-img {
-  opacity: .2;
-  max-width: 1em;
-  min-width: 1em;
-  max-height: 1em;
-  min-height: 1em;
-}
-input:checked + label > img {
-  opacity: 1;
-}
-
-#main-body tr:nth-child(11) td {
-  border-top: .1em solid var(--primary-color);
-}
-.table-wrap {
-	--min-width: 6em;
-	--max-width: 21em;
-}
-.cell-dps {
-  min-width: 4em;
-}
-.cell-rank,
-.cell-points {
-  min-width: 3.2em;
-}
-.cell-dur {
-  min-width: 2.6em;
-}
-.cell-date {
-  min-width: 4.1em;
-}
-
-.tooltip {
-  position: fixed;
-  width: fit-content;
-  background-color: var(--background);
-  padding: .5em;
-  border-radius: 6px;
-  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
-  z-index: 5;
-}
-.tooltip td {
-  min-width: fit-content;
-  text-align: right;
-}
-tr.no-decimal td.value {
-  padding-right: 1em;
-}
-#top-player-info {
-	text-align: center;
-	display: grid;
-	align-items: baseline;
-	font-size: 250%;
-}
-@media (orientation: landscape) {
-  #top-player-info {
-    grid-auto-flow: column;
-  }
-  #player-points-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-}
-.table-wrap-wrap {
-  position: relative;
-}
-
-.table-wrap :is(.spell-name, .player-cell) {
-	width: clamp(var(--min-width), 30vw, var(--max-width));
-}
-.table-wrap > div {
-	padding-left: calc(clamp(var(--min-width), 30vw, var(--max-width)));
-}
-
-#toggle-more-bosses-wrap {
-  margin-top: 1em;
-}
-#toggle-more-bosses {
-  font-size: 300%;
-}
-</style>
-{% endblock add_style %}
+{% block add_css_file %}
+<link rel="stylesheet" type="text/css" href="/static/character.css">
+{% endblock add_css_file %}
 
 {% block the_main %}
 <main>
-<div id="player-points-wrap" class="main" style="display: none;">
-  <section id="top-player-info">
-    <a id="player-name">.</a>
-    <div id="player-server">.</div>
-    <div id="player-overall">
-      <span id="player-overall-points">.</span>
-      <span id="player-overall-rank">.</span>
+<section id="top-player-info">
+  <a id="player-name">.</a>
+  <div id="player-server">.</div>
+  <div id="player-overall">
+    <span id="player-overall-points">.</span>
+    <span id="player-overall-rank">.</span>
+  </div>
+  <div id="spec-wrap">
+    {% for i in range(1,4) %}
+    <input id="spec-{{ i }}-input" type="radio" name="spec">
+    <label id="spec-{{ i }}-label" for="spec-{{ i }}-input"><img></label>
+    {% endfor %}
+  </div>
+</section>
+<div id="wraprwprperweproe">
+  <section id="gear-wrap" style="display: none;">
+    <div id="gear-left">
+      {% for slotname in LEFT %}
+      <div class="slot {{ slotname }} hidden">
+        <img>
+        <span></span>
+      </div>
+      {% endfor %}
     </div>
-    <div id="spec-wrap">
-      <input id="spec-1-input" type="radio" name="spec">
-      <label id="spec-1-label" for="spec-1-input"><img></label>
-      <input id="spec-2-input" type="radio" name="spec">
-      <label id="spec-2-label" for="spec-2-input"><img></label>
-      <input id="spec-3-input" type="radio" name="spec">
-      <label id="spec-3-label" for="spec-3-input"><img></label>
-    </div>
-  </section>
-  <div class="table-wrap-wrap">
-    <section class="table-wrap">
-      <div>
-        <table>
-          <thead>
-            <tr>
-              <th class="player-cell">Boss</th>
-              <th>Rank</th>
-              <th>Points</th>
-              <th>Best Dps</th>
-              <th>Dur</th>
-              <th>Kills</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="main-body">
-          </tbody>
+    <div id="gear-info">
+      <aside id="tooltip-stats" class="hidden"></aside>
+      <table id="table-info">
+        <tbody id="table-info-body">
+          <tr>
+            <td id="gear-info-gs"></td>
+            <td id="char-class"></td>
+          </tr>
+          <tr>
+            <td id="char-level"></td>
+            <td id="char-race"></td>
+          </tr>
+          {% for i in range(2) %}
+          <tr class="row-spec">
+            <td class="value"><a target="_blank"></a></td>
+            <td class="name"></td>
+          </tr>
+          {% endfor %}
+          {% for i in range(2) %}
+          <tr class="row-prof">
+            <td class="value"></td>
+            <td class="name"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      
+      <div id="table-stats-wrap">
+        <table id="table-stats">
+          <tbody id="table-stats-body"></tbody>
         </table>
       </div>
-    </section>
-  </div>
-  <div id="toggle-more-bosses-wrap">
-    <button id="toggle-more-bosses">Show more</button>
-  </div>
+      <div id="set-wrap">
+        <button id="set-prev">&lt</button>
+        <span id="set-name"></span>
+        <button id="set-next">&gt</button>
+      </div>
+    </div>
+    <div id="gear-right">
+      {% for slotname in RIGHT %}
+      <div class="slot {{ slotname }} hidden">
+        <img>
+        <span></span>
+      </div>
+      {% endfor %}
+    </div>
+    <div id="weapons">
+      {% for slotname in WEAPONS %}
+      <div class="slot {{ slotname }} hidden">
+        <img>
+        <span></span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section id="player-points-wrap" style="display: none;">
+    <div class="table-wrap-wrap">
+      <div class="table-wrap">
+        <div id="points-wrap-inner">
+          <table>
+            <thead>
+              <tr>
+                <th class="player-cell">Boss</th>
+                <th>Rank</th>
+                <th>Points</th>
+                <th>Best Dps</th>
+                <th>Dur</th>
+                <th>Kills</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="points-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="toggle-more-bosses-wrap">
+      <button id="toggle-more-bosses">Show more</button>
+    </div>
+  </section>
 </div>
-<div id="not-found" style="display: none;">
-  <p>Player wasn't found!</p>
-</div>
-<aside id="tooltip" class="tooltip" style="display: none;">
+<aside id="tooltip-points" style="display: none;">
   <table>
     <tbody>
       <tr class="row-players no-decimal">
