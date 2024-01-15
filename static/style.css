@@ -466,7 +466,7 @@ main {
   position: relative;
   margin-top: var(--nav-height);
   margin-bottom: var(--bottom-row-one);
-  padding-top: 1rem;
+  padding-top: 2.5rem;
   padding-bottom: 5rem;
 }
 
