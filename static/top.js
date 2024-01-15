@@ -61,6 +61,7 @@ const HAS_HEROIC = new Set([
   "Halion",
   "Points",
 ]);
+const POINTS = [100, 99, 95, 75, 50, 25, 0];
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
   column: headUsefulDps,
@@ -354,23 +355,7 @@ function new_row(_data) {
 }
 
 function points_rank_class(v) {
-    let class_color;
-    if (v > 99.99) {
-        class_color = "top1";
-    } else if (v >= 99) {
-        class_color = "top99";
-    } else if (v >= 95) {
-        class_color = "top95";
-    } else if (v >= 75) {
-        class_color = "top75";
-    } else if (v >= 50) {
-        class_color = "top50";
-    } else if (v >= 25) {
-        class_color = "top25";
-    } else {
-        class_color = "topkek";
-    }
-    return class_color;
+    for (const i of POINTS) if (v - i >= 0) return `top${i}`;
 }
 function cell_points(v, is_total) {
   const cell = document.createElement('td');
