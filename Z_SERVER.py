@@ -1,6 +1,7 @@
 import os
 import threading
 from datetime import datetime
+from pathlib import Path
 
 from flask import (
     Flask, request,
@@ -14,6 +15,10 @@ import psutil
 from werkzeug.exceptions import NotFound, TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# import test_prev_kills
+import logs_item_parser
+import logs_ench_parser
+
 import logs_top_statistics
 import file_functions
 import logs_calendar
@@ -23,6 +28,7 @@ import logs_upload
 from constants import (
     ALL_FIGHT_NAMES,
     FLAG_ORDER,
+    GEAR,
     LOGGER_CONNECTIONS,
     LOGGER_MEMORY,
     LOGS_DIR,
@@ -39,9 +45,13 @@ except ImportError:
     _validate = None
 
 
+PATH = Path(__file__).parent
+CACHE_DIR = PATH.joinpath("cache")
+
 DB_LOCK = threading.RLock()
 
 SERVER = Flask(__name__)
+# SERVER = Flask(__name__, static_url_path='')
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 USE_FILTER = True
@@ -108,18 +118,6 @@ def render_template_wrap(file: str, **kwargs):
     )
 
 
-@SERVER.route('/favicon.ico')
-def favicon():
-    response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/x-icon')
-    response.cache_control.max_age = 30 * 24 * 60 * 60
-    return response
-
-@SERVER.route('/class_icons.jpg')
-def class_icons():
-    response = send_from_directory(STATIC_DIR, 'class_icons.jpg', mimetype='image/jpeg')
-    response.cache_control.max_age = 30 * 24 * 60 * 60
-    return response
-
 @SERVER.errorhandler(404)
 def method404(e):
     response = ""
@@ -180,10 +178,10 @@ def __cleaner():
 
 cleaner = __cleaner()
 
-@SERVER.teardown_request
+@SERVER.after_request
 def after_request_callback(response):
     cleaner()
-    
+
     return response
 
 @SERVER.route("/pw_validate", methods=["POST"])
@@ -685,11 +683,11 @@ def character():
     if spec not in range(1,4):
         spec = None
     
-    
     if request.method == "GET":
         return render_template_wrap(
             'character.html',
             NAME=name,
+            **GEAR,
         )
 
     with DB_LOCK:
@@ -706,34 +704,78 @@ def ladder():
         REPORT_NAME="PvE Ladder",
     )
 
+@SERVER.route("/missing/<type>/<id>", methods=["PUT"])
+def missing(type, id):
+    return_code = 400
+    if type == "item":
+        return_code = logs_item_parser.parse_and_save(id)
+    elif type == "enchant":
+        return_code = logs_ench_parser.parse_and_save(id)
+    elif type == "icon":
+        return_code = logs_item_parser.save_icon(id)
 
-def connections():
-    return
+    return "", return_code
 
 
-@SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
-def custom_search_post(report_id):
-    data = None
-    try:
-        data = request.get_json(force=True)
-    except Exception:
-        pass
-    if not data:
-        return ('', 204)
-    report = load_report(report_id)
-    return report.logs_custom_search(data)
+# def connections():
+#     return
 
-@SERVER.route("/reports/<report_id>/custom_search/")
-def custom_search(report_id):
-    report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
 
-    return render_template(
-        'custom_search.html', **default_params,
-    )
+# @SERVER.route("/reports/<report_id>/custom_search_post", methods=["POST"])
+# def custom_search_post(report_id):
+#     data = None
+#     try:
+#         data = request.get_json(force=True)
+#     except Exception:
+#         pass
+#     if not data:
+#         return ('', 204)
+#     report = load_report(report_id)
+#     return report.logs_custom_search(data)
+
+# @SERVER.route("/reports/<report_id>/custom_search/")
+# def custom_search(report_id):
+#     report = load_report(report_id)
+#     default_params = report.get_default_params(request)
+#     segments = default_params["SEGMENTS"]
+
+#     return render_template(
+#         'custom_search.html', **default_params,
+#     )
+
+# @SERVER.route("/guilds/<server>")
+# def guilds(server):
+#     return render_template_wrap(
+#         'guilds.html',
+#         CALEND=test_prev_kills.main(server),
+#         len=len,
+#     )
+
+
 
 if __name__ == "__main__":
     SERVER.config["ENV"] = "development"
     SERVER.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+
+    @SERVER.route('/favicon.ico')
+    def favicon():
+        response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/x-icon')
+        response.cache_control.max_age = 30 * 24 * 60 * 60
+        return response
+
+    @SERVER.route('/class_icons.jpg')
+    def class_icons():
+        response = send_from_directory(STATIC_DIR, 'class_icons.jpg', mimetype='image/jpeg')
+        response.cache_control.max_age = 30 * 24 * 60 * 60
+        return response
+
+    @SERVER.route('/', defaults={'path': ''})
+    @SERVER.route('/cache/<path:path>')
+    def cache(path):
+        p = CACHE_DIR / Path(path)
+        if not p.parent.is_dir():
+            return {}, 404
+        response = send_from_directory(p.parent, p.name, mimetype='application/json')
+        return response
+    
     SERVER.run(host="0.0.0.0", port=5000, debug=True, reloader_type="stat")

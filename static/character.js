@@ -163,16 +163,20 @@ function cell_date(report_ID) {
     return cell;
 }
 
+function add_dummy_cells(tr) {
+    tr.appendChild(cell("", "cell-rank"));
+    tr.appendChild(cell_points(0));
+    tr.appendChild(cell("", "cell-dps"));
+    tr.appendChild(cell("", "cell-dur"));
+    tr.appendChild(cell("", "cell-raids"));
+    tr.appendChild(cell("", "cell-date"));
+}
+
 function row(boss_name, data) {
     const tr = document.createElement("tr");
     tr.appendChild(cell(boss_name, "player-cell"));
     if (!data["rank_players"]) {
-        tr.appendChild(cell("", "cell-rank"));
-        tr.appendChild(cell_points(0));
-        tr.appendChild(cell("", "cell-dps"));
-        tr.appendChild(cell("", "cell-dur"));
-        tr.appendChild(cell("", "cell-raids"));
-        tr.appendChild(cell("", "cell-date"));
+        add_dummy_cells(tr);
         return tr;
     };
 
