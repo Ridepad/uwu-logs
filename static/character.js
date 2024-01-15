@@ -6,7 +6,7 @@ const player_server = document.getElementById("player-server");
 const player_overall_points = document.getElementById("player-overall-points");
 const player_overall_rank = document.getElementById("player-overall-rank");
 const BUTTON_TOGGLE_MORE_BOSSES = document.getElementById("toggle-more-bosses");
-const POINTS = [100, 99, 95, 75, 50, 25, 0];
+const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const ARMORY_SERVERS = [
     "Lordaeron",
     "Icecrown",

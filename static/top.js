@@ -61,7 +61,7 @@ const HAS_HEROIC = new Set([
   "Halion",
   "Points",
 ]);
-const POINTS = [100, 99, 95, 75, 50, 25, 0];
+const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
   column: headUsefulDps,
