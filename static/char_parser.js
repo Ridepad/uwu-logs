@@ -26,6 +26,15 @@ const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
 
 const URL_PREFIX_ICON = "/cache/icon";
 const URL_PREFIX_CHARACTER = "/cache/character";
+const RELEVANT_PROFS = ["Enchanting", "Blacksmithing"];
+const DEFAULT_NAME_VALUE = {
+  specs: ["No spec", "0/0/0"],
+  profs: ["No prof", "0"],
+};
+const DEFAULT_SELECTOR = {
+  specs: [".name", ".value a"],
+  profs: [".name", ".value"],
+};
 
 function add_value(object, key, value) {
   object[key] = (object[key] ?? 0) + Number(value);
@@ -122,19 +131,17 @@ function get_socket_amount(item_data) {
   return socket_amount;
 }
 
-function add_relevant_profs(SET) {
-  if (SET["profs"]["Enchanting"]) {
-    GEAR_WRAP.setAttribute("data-enchanter", true);
-  } else {
-    GEAR_WRAP.removeAttribute("data-enchanter");
+function cnv_legacy(object) {
+  if (!object) return [];
+  if (object.map) return object;
+  
+  const a = [];
+  for (const name in object) {
+    a.push([name, object[name]]);
   }
-
-  if (SET["profs"]["Blacksmithing"]) {
-    GEAR_WRAP.setAttribute("data-blacksmithing", true);
-  } else {
-    GEAR_WRAP.removeAttribute("data-blacksmithing");
-  }
+  return a;
 }
+
 function format_timestamp(t) {
   const timestamp = Number(t);
   if (isNaN(timestamp)) return t;
@@ -170,6 +177,21 @@ function slot_item_changed(slot_element, item_id) {
   return current_item_id != item_id;
 }
 
+function set_new_spec_profs_values(e, data, type, talents) {
+  const [query_name, query_value] = DEFAULT_SELECTOR[type];
+  const element_name = e.querySelector(query_name);
+  const element_value = e.querySelector(query_value);
+  const [name, value] = data ?? DEFAULT_NAME_VALUE[type];
+  element_name.textContent = name;
+  element_value.textContent = value;
+  if (talents) {
+    element_value.href = `https://wotlk.evowow.com/?talent#${talents}`;
+  } else {
+    element_value.removeAttribute("href");
+  }
+}
+
+
 class Gear {
   constructor(server, name) {
     this.SERVER = server;
@@ -185,8 +207,6 @@ class Gear {
   
       BUTTON_SET_PREV.addEventListener("click", this); // this.handleEvent
       BUTTON_SET_NEXT.addEventListener("click", this); // this.handleEvent
-      
-      GEAR_WRAP.style.removeProperty("display");
     }))
   }
   handleEvent(event) {
@@ -207,62 +227,51 @@ class Gear {
     const timestamp = this.SET_NAMES[this.CURRENT_SET_INDEX];
     ELEMENT_SET_NAME.textContent = format_timestamp(timestamp);
     this.apply_basic_info();
+    this.add_relevant_profs();
     this.add_specs();
     this.add_profs();
-    this.apply_new_items();
+
+    const stats = {};
+    this.add_set_stats(stats);
+    this.apply_new_items(stats);
   }
   apply_basic_info() {
     const SET = this.get_current_set_data();
-    this.CURRENT_ITEMS = SET["gear_data"];
-
-    add_relevant_profs(SET);
     CHAR_LEVEL.textContent = SET["level"];
     CHAR_CLASS.textContent = SET["class"];
     CHAR_RACE.textContent = SET["race"];
   }
+  add_relevant_profs() {
+    const SET = this.get_current_set_data();
+    const _profs = cnv_legacy(SET.profs);
+    const profs = _profs.map(e => e[0]);
+    RELEVANT_PROFS.forEach(prof_name => {
+      const data_name = `data-${prof_name.toLowerCase()}`;
+      if (profs.includes(prof_name)) {
+        GEAR_WRAP.setAttribute(data_name, true);
+      } else {
+        GEAR_WRAP.removeAttribute(data_name);
+      }
+    });
+  }
   add_specs() {
     const SET = this.get_current_set_data();
-    const _data = SET["specs"] ?? {};
-    const _keys = Object.keys(_data);
+    const data = cnv_legacy(SET["specs"]);
+    const talents = SET.talents ?? [];
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
-      const spec_name = _keys[i];
-      const element_name = e.querySelector(".name");
-      const element_value = e.querySelector(".value a");
-      // element_value.href = "#";
-      element_value.removeAttribute("href");
-      if (!spec_name) {
-        element_name.textContent = "No spec";
-        element_value.textContent = "0/0/0";
-        return;
-      }
-      if (SET.talents) {
-        element_value.href = `https://wotlk.evowow.com/?talent#${SET.talents[i]}`;
-      }
-      element_value.textContent = _data[spec_name];
-      element_name.textContent = spec_name;
+      set_new_spec_profs_values(e, data[i], "specs", talents[i]);
     })
   }
   add_profs() {
     const SET = this.get_current_set_data();
-    const _data = SET["profs"] ?? {};
-    const _keys = Object.keys(_data);
+    const data = cnv_legacy(SET["profs"]);
     Array.from(document.querySelectorAll(".row-prof")).forEach((e, i) => {
-      const spec_name = _keys[i];
-      const element_name = e.querySelector(".name");
-      const element_value = e.querySelector(".value");
-      if (!spec_name) {
-        element_name.textContent = "No prof";
-        element_value.textContent = "0";
-        return;
-      }
-      element_name.textContent = spec_name;
-      element_value.textContent = _data[spec_name];
+      set_new_spec_profs_values(e, data[i], "profs");
     })
   }
-  apply_new_items() {
-    const stats = {};
-    this.add_set_stats(stats);
-    this.CURRENT_ITEMS.forEach((slot_data, slot_i) => {
+  apply_new_items(stats) {
+    const SET = this.get_current_set_data();
+    SET.gear_data.forEach((slot_data, slot_i) => {
       const slot_element = GEAR_SLOTS[slot_i];
       reset_slot_element(slot_element);
   
