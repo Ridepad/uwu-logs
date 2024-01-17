@@ -96,16 +96,16 @@ def get_gear(profile: BeautifulSoup):
 
 def get_stats_data(stats: Tag, class_name: str) -> dict[str, str]:
     if class_name not in FORMAT_FUNCTION:
-        return {}
+        return []
 
     text: Tag
-    data = {}
+    data = []
     format_value = FORMAT_FUNCTION[class_name]
     for tag in stats.find_all(class_=class_name):
         for text in tag.find_all(class_="text"):
             try:
                 name, value = text.stripped_strings
-                data[name] = format_value(value)
+                data.append([name, format_value(value)])
             except ValueError:
                 pass
 
@@ -188,13 +188,14 @@ def get_profile(char_name: str, server: str):
     
     soup = BeautifulSoup(response.text, "html.parser")
     stats = soup.find(id="character-profile").find(class_="information-right")
+    talents = get_talents_strings(char_name, server)
     
     profile_dict = get_basic_info(soup)
     profile_dict["guild"] = soup.find(class_="guild-name").text
     profile_dict["specs"] = get_stats_data(stats, CLASS_NAME_SPEC)
     profile_dict["profs"] = get_stats_data(stats, CLASS_NAME_PROF)
+    profile_dict["talents"] = talents
     profile_dict["gear_data"] = get_gear(soup)
-    profile_dict["talents"] = get_talents_strings(char_name, server)
     return profile_dict
 
 
@@ -285,7 +286,7 @@ def __test():
         "name": "Nomadra",
         "server": "Lordaeron",
     }
-    q = parse_and_save_wrap(d)
+    q = get_profile(d["name"], d["server"])
     print(q)
     return
 
