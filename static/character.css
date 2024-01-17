@@ -126,6 +126,9 @@ main {
 #player-points-wrap {
   font-size: 200%;
 }
+.hide-other-bosses tr:nth-child(n+11) {
+  display: none;
+}
 
 #points-wrap-inner {
   --width: 24vw;

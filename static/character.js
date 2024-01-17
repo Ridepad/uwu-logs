@@ -39,9 +39,6 @@ char_request.onreadystatechange = () => {
     CACHE[window.location.search] = j;
     table_add_new_data(j);
     player_points_wrap.style.removeProperty("display");
-    
-    toggle_more_bosses();
-    BUTTON_TOGGLE_MORE_BOSSES.addEventListener("click", toggle_more_bosses);
 }
 
 
@@ -257,14 +254,15 @@ function new_spec(spec) {
     fetch_data();
 }
 function toggle_more_bosses(e) {
-    const other_bosses_rows = Array.from(main_body.querySelectorAll("tr")).splice(10);
     let show = window.localStorage.getItem("show-more-bosses") == "true";
     if (e) {
         show = !show;
         window.localStorage.setItem("show-more-bosses", show);
     }
-    for (const tr of other_bosses_rows) {
-        tr.style.display = show ? "" : "none";
+    if (show) {
+        main_body.classList.remove("hide-other-bosses");
+    } else {
+        main_body.classList.add("hide-other-bosses");
     }
     BUTTON_TOGGLE_MORE_BOSSES.textContent = show ? "Hide other bosses" : "Show other bosses";
 }
@@ -275,6 +273,9 @@ function init() {
     }
     window.addEventListener("popstate", fetch_data);
     fetch_data();
+    
+    toggle_more_bosses();
+    BUTTON_TOGGLE_MORE_BOSSES.addEventListener("click", toggle_more_bosses);
 }
 
   
