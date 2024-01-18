@@ -215,7 +215,8 @@ class Gear {
   get_current_set_data() {
     const set_date = this.SET_NAMES[this.CURRENT_SET_INDEX];
     let set = this.CHAR_DATA[set_date];
-    for (var i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
+      if (isNaN(set)) break;
       set = this.CHAR_DATA[set];
     }
     return set;
