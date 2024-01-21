@@ -268,7 +268,10 @@ class SpecTop1(Cache):
         _data = self._get_data()
         if spec_index in _data:
             return _data[spec_index]
-        _data[spec_index] = self.renew_spec(spec_index)
+        try:
+            _data[spec_index] = self.renew_spec(spec_index)
+        except sqlite3.OperationalError:
+            _data[spec_index] = 1
         return _data[spec_index]
 
 @running_time
