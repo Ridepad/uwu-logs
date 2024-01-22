@@ -150,9 +150,8 @@ def query_points(table_name):
     """
 def query_player(table_name):
     return f"""
-    SELECT MAX({COLUMN_TIMESTAMP}), {COLUMN_NAME}, {COLUMN_GUID}, {COLUMN_SPEC}
+    SELECT {COLUMN_TIMESTAMP}, {COLUMN_NAME}, {COLUMN_GUID}, {COLUMN_SPEC}
     FROM [{table_name}]
-    GROUP BY {COLUMN_GUID}
     """
 def query_dps_player_id(table_name, player_raid_id):
     return f"""
@@ -574,13 +573,12 @@ class PlayerData(Cache):
     def renew_player_data(self):
         table_name = get_table_name("Deathbringer Saurfang", "25H")
         query = query_player(table_name)
-        data = self.cursor.execute(query).fetchall()
+        data = self.cursor.execute(query)
+        data = sorted(data, key=lambda x: x[0])
         
         d: dict[str, dict] = {}
-        g = {}
+        g: dict[str, str] = {}
         for  _, name, guid, spec in data:
-            if guid in ['0462EA6', '0195E7B']:
-                print(guid, name)
             g[guid] = name
             d[name] = {
                 "guid": guid,
@@ -959,8 +957,11 @@ def __test_delete():
 
 
 def main():
-    convert_old_top()
-
+    # convert_old_top()
+    pd = PlayerData("Icecrown")
+    q = pd.renew_player_data()
+    for x, y in q["guids"].items():
+        print(x, y)
     # __test_add_new_entries_wrap()
     # p = PointsBySpec(LORDAERON, None, None)
     # print(p.cursor)
