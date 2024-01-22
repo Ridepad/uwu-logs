@@ -96,13 +96,14 @@ COWARDS_NAMES = set(COWARDS.values())
 def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
     for line in logs_slice[:2000]:
-        if "SPELL_DAMAGE" not in line:
-            continue
         guid = line.split(',', 3)[2]
-        if guid[:3] == '0x0':
-            players.add(guid)
-            if len(players) > 11:
-                return DIFFICULTY[2]
+        if guid[:3] != '0x0':
+            continue
+        
+        players.add(guid)
+        if len(players) > 11:
+            return DIFFICULTY[2]
+    
     return DIFFICULTY[0]
 
 def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
