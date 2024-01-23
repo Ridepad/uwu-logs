@@ -453,7 +453,7 @@ footer {
   #fights-container .diffs li:first-of-type {
     padding-top: 1rem;
   }
-  #fights-container .diffs li:last-of-type {
+  #fights-container li:last-of-type {
     padding-bottom: 1rem;
   }
   #fights-container ul a {
