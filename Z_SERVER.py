@@ -57,7 +57,7 @@ SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_pref
 USE_FILTER = True
 MAX_SURVIVE_LOGS = T_DELTA["30MIN"]
 IGNORED_PATHS = {"/upload", "/upload_progress"}
-LOGS_LIST_MONTHS = list(enumerate(MONTHS, 1))
+LOGS_LIST_MONTHS = list(enumerate(MONTHS))
 SERVER_STARTED = datetime.now()
 SERVER_STARTED_STR = SERVER_STARTED.strftime("%y-%m-%d")
 YEARS = list(range(2018, SERVER_STARTED.year+2))
@@ -286,21 +286,20 @@ def show_logs_list():
     if YEAR_REQUEST is None or MONTH_REQUEST is None:
         DATE_CURRENT = datetime.now()
         YEAR_REQUEST = DATE_CURRENT.year
-        MONTH_REQUEST = DATE_CURRENT.month
+        MONTH_REQUEST = DATE_CURRENT.month - 1
 
-    MONTH_PREV = (MONTH_REQUEST + 10) % 12 + 1
-    YEAR_PREV = YEAR_REQUEST-1 if MONTH_PREV == 12 else YEAR_REQUEST
+    MONTH_PREV = (MONTH_REQUEST + 11) % 12
+    YEAR_PREV = YEAR_REQUEST-1 if MONTH_REQUEST == 0 else YEAR_REQUEST
 
     r = dict(request.args)
-    r["month"] = MONTH_REQUEST
+    r["month"] = MONTH_REQUEST + 1
     r["year"] = YEAR_REQUEST % 1000
     current_month = logs_calendar.get_logs_list_df_filter_to_calendar_wrap(r)
-    r["month"] = MONTH_PREV
+    r["month"] = MONTH_PREV + 1
     r["year"] = YEAR_PREV % 1000
     prev_month = logs_calendar.get_logs_list_df_filter_to_calendar_wrap(r)
     new_month = prev_month | current_month
 
-    month_name = MONTHS[MONTH_REQUEST-1]
     calend_prev = logs_calendar.get_calend_days(YEAR_PREV, MONTH_PREV)
     calend = logs_calendar.get_calend_days(YEAR_REQUEST, MONTH_REQUEST)
     calend_prev_last_week = calend_prev[-1]
@@ -310,10 +309,14 @@ def show_logs_list():
 
     return render_template_wrap(
         'logs_list.html',
-        MONTH=new_month, CALEND=calend,
-        CURRENT_MONTH=month_name, CURRENT_YEAR=YEAR_REQUEST,
+        MONTH=new_month,
+        CALEND=calend,
+        CURRENT_MONTH=MONTH_REQUEST,
+        CURRENT_YEAR=YEAR_REQUEST,
         CURRENT_SERVER=server,
-        MONTHS=LOGS_LIST_MONTHS, YEARS=YEARS, SERVERS=servers,
+        MONTHS=LOGS_LIST_MONTHS,
+        YEARS=YEARS,
+        SERVERS=servers,
         ALL_FIGHT_NAMES=ALL_FIGHT_NAMES,
     )
 

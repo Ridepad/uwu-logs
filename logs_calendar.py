@@ -23,7 +23,7 @@ from constants import (
 CALENDAR = calendar.Calendar()
 
 def get_calend_days(y, m):
-    this_month = CALENDAR.monthdatescalendar(y, m)
+    this_month = CALENDAR.monthdatescalendar(y, m + 1)
     return [
         [
             (cell.strftime("%m-%d"), cell.day)

@@ -80,7 +80,7 @@
           <a id="month-prev">&lt;&lt;</a>
           <select id="select-month">
             {% for month_n, month_name in MONTHS %}
-            <option value="{{ month_n }}"{% if month_name == CURRENT_MONTH %} selected{% endif %}>{{ month_name }}</option>
+            <option value="{{ month_n }}"{% if month_n == CURRENT_MONTH %} selected{% endif %}>{{ month_name }}</option>
             {% endfor %}
           </select>
           <select id="select-year">
@@ -164,18 +164,20 @@ INPUT_PLAYER.value = CURRENT_QUERY.get("player");
 INPUT_AUTHOR.value = CURRENT_QUERY.get("author");
 
 const CURRENT_DATE = new Date();
-const YEAR_REQUEST = parseInt(CURRENT_QUERY.get("year") ??  CURRENT_DATE.getFullYear());
+const YEAR_REQUEST = parseInt(CURRENT_QUERY.get("year") ?? CURRENT_DATE.getFullYear());
 const MONTH_REQUEST = parseInt(CURRENT_QUERY.get("month") ?? CURRENT_DATE.getMonth());
-const MONTH_PREV = (MONTH_REQUEST + 10) % 12 + 1;
-const YEAR_PREV = MONTH_PREV == 12 ? YEAR_REQUEST-1 : YEAR_REQUEST;
+const MONTH_PREV = (MONTH_REQUEST + 11) % 12;
+const MONTH_NEXT = (MONTH_REQUEST + 1) % 12;
+const YEAR_NEXT = MONTH_REQUEST == 11 ? YEAR_REQUEST+1 : YEAR_REQUEST;
+const YEAR_PREV = MONTH_REQUEST == 0 ? YEAR_REQUEST-1 : YEAR_REQUEST;
+
 if (YEAR_PREV >= SELECT_YEAR.firstElementChild.value) {
   CURRENT_QUERY.set("month", MONTH_PREV);
   CURRENT_QUERY.set("year", YEAR_PREV);
   const MONTH_PREV_A = document.getElementById("month-prev");
   MONTH_PREV_A.href = `?${CURRENT_QUERY}`;
 }
-const MONTH_NEXT = MONTH_REQUEST % 12 + 1;
-const YEAR_NEXT = MONTH_NEXT == 1 ? YEAR_REQUEST+1 : YEAR_REQUEST;
+
 if (YEAR_NEXT <= SELECT_YEAR.lastElementChild.value) {
   CURRENT_QUERY.set("month", MONTH_NEXT);
   CURRENT_QUERY.set("year", YEAR_NEXT);
