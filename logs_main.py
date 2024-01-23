@@ -418,7 +418,7 @@ class THE_LOGS:
             for full_guid, p in guids.items():
                 if guid in full_guid:
                     return p['name']
-        
+
     def convert_dict_guids_to_names(self, data: dict[str]):
         return {
             self.guid_to_name(guid): value
@@ -520,22 +520,48 @@ class THE_LOGS:
         f = self.find_index(f, 1)
         return s, f
         
-    def make_segment_query_segment(self, seg_info, boss_name, href2):
+    def make_segment_query_segment(self, seg_info, boss_name, href_prefix):
         attempt = seg_info['attempt']
         s, f = self.attempt_time(boss_name, attempt)
-        href3 = f"{href2}&s={s}&f={f}&attempt={attempt}"
+        href = f"{href_prefix}&s={s}&f={f}&attempt={attempt}"
         class_name = f"{seg_info['attempt_type']}-link"
         segment_str = f"{seg_info['duration_str']} | {seg_info['segment_type']}"
-        return {"href": href3, "class_name": class_name, "text": segment_str}
-    
-    def make_segment_query_diff(self ,segments, boss_name, href1, diff_id):
-        href2 = f"{href1}&mode={diff_id}"
-        a = {"href": href2, "class_name": "boss-link", "text": f"{diff_id} {boss_name}"}
         return {
-            'link': a,
-            'links': [
-                self.make_segment_query_segment(seg_info, boss_name, href2)
+            "href": href,
+            "class_name": class_name,
+            "text": segment_str,
+        }
+    
+    def make_segment_query_diff(self, segments, boss_name, href_prefix, diff_id):
+        href = f"{href_prefix}&mode={diff_id}"
+        return {
+            "href": href,
+            "class_name": "boss-link",
+            "text": f"{diff_id} {boss_name}",
+            "children": [
+                self.make_segment_query_segment(seg_info, boss_name, href)
                 for seg_info in segments
+            ]
+        }
+    
+    def make_segment_query_boss(self, boss_name: str, diffs: dict=None):
+        href = f"?boss={convert_to_html_name(boss_name)}"
+
+        if boss_name == "all":
+            text = f"All boss segments"
+        else:
+            text = f"All {boss_name} segments"
+        
+        if diffs is None:
+            diffs = {}
+        
+        return {
+            "href": href,
+            "class_name": "boss-link",
+            "text": text,
+            "children": [
+                self.make_segment_query_diff(segments, boss_name, href, diff_id)
+                for diff_id, segments in diffs.items()
             ]
         }
 
@@ -561,17 +587,11 @@ class THE_LOGS:
         try:
             return self.__SEGMENTS_QUERIES
         except AttributeError:
-            segm_links: dict[str, dict] = {}
-            for boss_name, diffs in self.SEGMENTS_SEPARATED.items():
-                href1 = f"?boss={convert_to_html_name(boss_name)}"
-                a = {"href": href1, "class_name": "boss-link", "text": f"All {boss_name} segments"}
-                segm_links[boss_name] = {
-                    'link': a,
-                    'links': {
-                        diff_id: self.make_segment_query_diff(segments, boss_name, href1, diff_id)
-                        for diff_id, segments in diffs.items()
-                    }
-                }
+            segm_links = [
+                self.make_segment_query_boss(boss_name, diffs)
+                for boss_name, diffs in self.SEGMENTS_SEPARATED.items()
+            ]
+            segm_links.insert(0, self.make_segment_query_boss("all"))
             self.__SEGMENTS_QUERIES = segm_links
             return segm_links
 
@@ -599,7 +619,7 @@ class THE_LOGS:
     def parse_request(self, path: str, args: dict) -> dict:
         segment_difficulty = args.get("mode")
         attempt = get_dict_int(args, "attempt")
-        boss_name = BOSSES_FROM_HTML.get(args.get("boss"))
+        boss_name = args.get("boss")
         ts = self.get_timestamp()
         sc = get_dict_int(args, "sc")
         fc = get_dict_int(args, "fc")
@@ -607,7 +627,14 @@ class THE_LOGS:
             slice_name = "Custom Slice"
             slice_tries = ""
             segments = [[ts[sc], ts[fc]]]
-        elif not boss_name:
+        
+        elif boss_name == "all":
+            enc_data = self.get_enc_data()
+            slice_name = "Bosses"
+            segments = [x for y in enc_data.values() for x in y]
+            slice_tries = "All"
+        
+        elif boss_name not in BOSSES_FROM_HTML:
             slice_name = "Custom Slice"
             slice_tries = ""
             s = get_dict_int(args, "s")
@@ -619,6 +646,7 @@ class THE_LOGS:
         
         else:
             enc_data = self.get_enc_data()
+            boss_name = BOSSES_FROM_HTML[boss_name]
             slice_name = boss_name
             if attempt is not None:
                 segments = [enc_data[boss_name][attempt], ]
@@ -762,21 +790,30 @@ class THE_LOGS:
             for spell_id, spell_v in _spells.items()
             if INPUT in spell_v
         }
-
+    
 
     @cache_wrap
-    def report_page(self, s, f) -> dict[str, defaultdict[str, int]]:
+    def get_slice_damage_heal(self, s, f):
         logs_slice = self.LOGS[s:f]
         players_and_pets = self.get_players_and_pets_guids()
-        data = logs_dmg_heals.parse_both(logs_slice, players_and_pets)
-        
-        data['specs'] = self.get_players_specs_in_segments(s, f)
-        data['first_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[0])
-        data['last_hit'] = logs_dmg_heals.readable_logs_line(logs_slice[-1])
+        return logs_dmg_heals.parse_both(logs_slice, players_and_pets)
+    
+    @cache_wrap
+    def get_slice_damage_heal_absorbs(self, s, f):
+        data = self.get_slice_damage_heal(s, f)
         for guid, v in self.get_absorbs_by_source(s, f).items():
             data["heal"][guid] += v
-
         return data
+
+    def get_slice_first_last_hit(self, s: int=None, f: int=None):
+        if not s or type(s) != int:
+            s = 0
+        if not f or type(f) != int:
+            f = 0
+        return {
+            "FIRST_HIT": logs_dmg_heals.readable_logs_line(self.LOGS[s]),
+            "LAST_HIT": logs_dmg_heals.readable_logs_line(self.LOGS[f-1]),
+        }
     
     def report_add_spec_info(self, specs: dict[str, int], data: dict[str, dict]):
         new_specs: dict[str, tuple(str, str)] = {}
@@ -792,8 +829,6 @@ class THE_LOGS:
         return new_specs
 
     def get_report_page_all(self, segments):
-        _first_hit = None
-        specs = {}
         combined_data = {
             "damage": defaultdict(int),
             "heal": defaultdict(int),
@@ -801,22 +836,40 @@ class THE_LOGS:
         }
 
         for s, f in segments:
-            new_data = self.report_page(s, f)
+            new_data = self.get_slice_damage_heal_absorbs(s, f)
             for k, _data in combined_data.items():
                 add_new_numeric_data(_data, new_data[k])
 
-            specs |= new_data['specs']
-
-            _last_hit = new_data['last_hit']
-            if not _first_hit:
-                _first_hit = new_data['first_hit']
-        
-        return {
+        specs = self.get_players_specs_in_segments(*segments[0])
+        return_data = {
             "DATA": combined_data,
             "SPECS": specs,
-            "FIRST_HIT": _first_hit,
-            "LAST_HIT": _last_hit,
         }
+        return_data.update(self.get_slice_first_last_hit(segments[0][0], segments[-1][-1]))
+        return return_data
+
+    @running_time
+    def get_report_page_boss_only(self):
+        enc_data = self.get_enc_data()
+        segments = [x for y in enc_data.values() for x in y]
+        combined_data = {
+            "damage": defaultdict(int),
+            "heal": defaultdict(int),
+            "taken": defaultdict(int),
+        }
+        for s, f in segments:
+            new_data = self.get_slice_damage_heal(s, f)
+            for k, _data in combined_data.items():
+                add_new_numeric_data(_data, new_data[k])
+
+        specs = self.get_players_specs_in_segments(None, None)
+
+        return_data = {
+            "DATA": combined_data,
+            "SPECS": specs,
+        }
+        return_data.update(self.get_slice_first_last_hit(segments[0][0], segments[-1][-1]))
+        return return_data
 
     def convert_to_table_data(self, _data, duration):
         if not _data:
@@ -836,25 +889,29 @@ class THE_LOGS:
             
         return d
 
+    @running_time
     def get_report_page_all_wrap(self, request):
         default_params = self.get_default_params(request)
         segments = default_params["SEGMENTS"]
         boss_name = default_params["BOSS_NAME"]
         mode = request.args.get("mode")
-        
+
         DURATION = self.get_fight_duration_total(segments)
 
-
-        if boss_name:
+        if boss_name and boss_name != "all":
             _useful = self.useful_damage_all(segments, boss_name)["USEFUL"]
             _useful = sort_dict_by_value(_useful)
         else:
             _useful = {}    
         
-        DD = self.get_report_page_all(segments)
         columns = {
             "useful": _useful,
-        } | DD["DATA"]
+        }
+        if boss_name == "all":
+            DD = self.get_report_page_boss_only()
+        else:
+            DD = self.get_report_page_all(segments)
+        columns.update(DD["DATA"])
 
         TABLE = {}
         PLAYERS = {}
@@ -886,7 +943,6 @@ class THE_LOGS:
                 }
             except (FileNotFoundError, AttributeError):
                 pass
-                
 
         return default_params | DD | {
             "DATA": TABLE,

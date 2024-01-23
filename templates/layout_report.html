@@ -26,15 +26,15 @@
 <aside id="fights-container">
   <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
   <ul class="bosses">
-    {% for boss_name, boss_data in SEGMENTS_LINKS.items() %}
+    {% for boss_data in SEGMENTS_LINKS %}
     <li>
-      <a href="{{ boss_data['link']['href'] }}" class="{{ boss_data['link']['class_name'] }}">{{ boss_data['link']['text'] }}</a>
+      <a href="{{ boss_data['href'] }}" class="{{ boss_data['class_name'] }}">{{ boss_data['text'] }}</a>
       <ul class="diffs">
-        {% for diff_id, diff_data in boss_data['links'].items() %}
+        {% for diff_data in boss_data['children'] %}
         <li>
-          <a href="{{ diff_data['link']['href'] }}" class="{{ diff_data['link']['class_name'] }}">{{ diff_data['link']['text'] }}</a>
+          <a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a>
           <ul class="segments">
-            {% for segment in diff_data['links'] %}
+            {% for segment in diff_data['children'] %}
             <li>
               <a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a>
             </li>
