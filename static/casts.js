@@ -96,8 +96,12 @@ function new_fake_applied(cleu) {
 function add_fake_applied(spellHistory, events) {
   const first_cleu = events[0];
   if (first_cleu.className == "SPELL_AURA_REMOVED") {
-    const _applied = new_fake_applied(first_cleu);
-    spellHistory.insertBefore(_applied, spellHistory.firstChild);
+    const end = Math.abs(first_cleu.getAttribute("data-time"));
+    const start = SELECT_BEFORE_PULL.value;
+    if (start > end) {
+      const _applied = new_fake_applied(first_cleu);
+      spellHistory.insertBefore(_applied, spellHistory.firstChild);
+    }
   }
   
   const last_cleu = events.at(-1);
