@@ -19,6 +19,7 @@ import logs_spell_info
 import logs_spells_list
 import logs_top_db
 import logs_units_guid
+import logs_lady_spirits
 import logs_valk_grabs
 from constants import (
     BOSSES_FROM_HTML,
@@ -1381,7 +1382,7 @@ class THE_LOGS:
     def grabs_info(self, s, f):
         logs_slice = self.LOGS[s:f]
         players = self.get_players_guids()
-        return logs_valk_grabs.main(logs_slice, players)
+        return logs_valk_grabs.test1(logs_slice, players)
 
     def valk_info_all(self, segments):
         grabs_total = defaultdict(int)
@@ -1642,4 +1643,26 @@ class THE_LOGS:
         logs = self.get_logs()
         # for 
         return 'Spell not found'
+    
+
+    def lady_spirits(self, s, f):
+        logs_slice = self.LOGS[s:f]
+        data = logs_lady_spirits.filter_spirits(logs_slice)
+        key_by = logs_lady_spirits.KEY_LADY_POPED_BY
+        k_dmg = logs_lady_spirits.KEY_LADY_DAMAGE
+        k_prev = logs_lady_spirits.KEY_LADY_PREVENTED
+        players = self.get_players_guids()
+        for x in data:
+            guid = x[key_by]
+            x[key_by] = players.get(guid, guid)
+            x["targets_n"] = len(x[logs_lady_spirits.KEY_LADY_TARGETS])
+            x[k_dmg] = separate_thousands(x[k_dmg])
+            x[k_prev] = separate_thousands(x[k_prev])
+        return data
+    
+    def lady_spirits_wrap(self, segments):
+        pulls = []
+        for s, f in segments:
+            pulls.append(self.lady_spirits(s, f))
+        return pulls
     

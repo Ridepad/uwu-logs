@@ -1,0 +1,50 @@
+{% extends "layout_report.html" %}
+
+{% block add_style %}
+<style>
+#lady-spirits {
+  display: grid;
+}
+td:not(.player-cell) {
+  text-align: right;
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main id="lady-spirits">
+  {% for pull in PULLS %}
+  <section class="pull table-wrap wrap-player">
+    <div>
+      <table>
+        <thead>
+          <tr>
+            <th class="player-cell">-</th>
+            <th>Players</th>
+            <th colspan="2">Damage</th>
+          </tr>
+          <tr>
+            <th class="player-cell">Player</th>
+            <th>Hit</th>
+            <th>Caused</th>
+            <th>Prevented</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for x in pull %}
+          <tr>
+            <td class="player-cell">
+              <a class="{{ PLAYER_CLASSES[x['by']] }}" href="/reports/{{ REPORT_ID }}/player/{{ x['by'] }}/{{ QUERY }}">{{ x['by'] }}</a>
+            </td>
+            <td>{{x['targets_n']}}</td>
+            <td class="total-cell">{{x['damage']}}</td>
+            <td class="total-cell">{{x['prevented']}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endfor %}
+</main>
+{% endblock the_main %}

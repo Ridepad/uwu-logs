@@ -587,6 +587,18 @@ def valks(report_id):
         'valks.html', **default_params, **data,
     )
 
+@SERVER.route("/reports/<report_id>/lady_spirits/")
+def lady_spirits(report_id):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+    
+    data = report.lady_spirits_wrap(segments)
+    return render_template_cache(
+        'lady_spirits.html', **default_params,
+        PULLS=data,
+    )
+
 @SERVER.route("/reports/<report_id>/deaths/")
 def deaths(report_id):
     report = load_report(report_id)
