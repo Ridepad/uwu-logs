@@ -69,7 +69,7 @@ const CHARACTERS = [];
 
 CONFIG = {
   max_duration: 0,
-  shift: 0,
+  shift: parseInt(SELECT_BEFORE_PULL.value),
 }
 
 function get_pad_value(element) {
