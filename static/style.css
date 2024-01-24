@@ -729,7 +729,7 @@ input[type="checkbox"],
   --mult: 5;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--secondary-color) black;
+  scrollbar-color: var(--secondary-color) var(--background);
 }
 .table-wrap > div {
   padding-left: calc(clamp(var(--min-width), 20vw, var(--max-width)));
