@@ -649,15 +649,26 @@ select:hover {
   box-shadow: inset 0 0 .6em currentColor, 0 .1em 1em currentColor;
 }
 
-button,
-.swap-button {
+button {
+  position: relative;
   cursor: pointer;
+  padding: 0 .1em;
   background: var(--background);
-  border: .1rem solid var(--primary-color);
-  border-radius: .2rem;
+  border: none;
+  border-radius: .3rem;
 }
-button:hover,
-.swap-button:hover {
+button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: inherit;
+  box-shadow: inset  .1rem  .1rem .1em var(--primary-color),
+              inset -.1rem -.1rem .1em var(--primary-color);
+}
+button:hover {
   color: var(--primary-color);
   box-shadow: inset 0 0 .4em currentColor, 0 .1em .7em currentColor;
   text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
