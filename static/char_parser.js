@@ -332,8 +332,7 @@ class Gear {
         const gem_data = result.value;
         add_new_stats(all_stats, gem_data.stats);
 
-        const gem_name = gem_data.names[1].toLowerCase();
-        const gem_data1 = find_gem_data_by_name(gem_name);
+        const gem_data1 = find_gem_data_by_name(gem_data.names[1]);
         sbonus.forEach((v, i) => sbonus[i] = v - gem_data1.socket[i]);
       })
       if (item_data.socketbonus && socket_bonus_reached(sbonus)) {
@@ -391,6 +390,7 @@ class Gear {
 }
 
 function find_gem_data_by_name(gem_name) {
+  gem_name = gem_name.toLowerCase().replace("perfect ", "");
   const _values = Object.values(GEM_DATA);
   for (const color_data of _values) {
     if (color_data.unique.includes(gem_name)) {
@@ -411,8 +411,7 @@ function item_enchantable(item_data) {
 }
 
 function get_gem_color(gem_data) {
-  const gem_name = gem_data.names[1].toLowerCase().replace("perfect ", "");
-  const gem_data1 = find_gem_data_by_name(gem_name);
+  const gem_data1 = find_gem_data_by_name(gem_data.names[1]);
   return `#${gem_data1.color_hex}`;
 }
 
