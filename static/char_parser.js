@@ -411,7 +411,7 @@ function item_enchantable(item_data) {
 }
 
 function get_gem_color(gem_data) {
-  const gem_name = gem_data.names[1].toLowerCase();
+  const gem_name = gem_data.names[1].toLowerCase().replace("perfect ", "");
   const gem_data1 = find_gem_data_by_name(gem_name);
   return `#${gem_data1.color_hex}`;
 }
