@@ -576,7 +576,14 @@ class PlayerData(Cache):
     def renew_player_data(self):
         table_name = get_table_name("Deathbringer Saurfang", "25H")
         query = query_player(table_name)
-        data = self.cursor.execute(query)
+        try:
+            data = self.cursor.execute(query)
+        except Exception:
+            return {
+                "names": {},
+                "guids": {},
+            }
+
         data = sorted(data, key=lambda x: x[0])
         
         d: dict[str, dict] = {}
