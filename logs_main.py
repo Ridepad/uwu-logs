@@ -725,7 +725,7 @@ class THE_LOGS:
                     _spells = file_functions.json_read_no_exception(spells_data_file_name)
                 except Exception:
                     return self.get_spells(rewrite=True)
-                    
+
             for spell_id, new_name in CUSTOM_SPELL_NAMES.items():
                 if spell_id in _spells:
                     _spells[spell_id]["name"] = new_name
@@ -1032,6 +1032,10 @@ class THE_LOGS:
     def get_numbers_breakdown_wrap(self, segments: list, source: str, filter_guid=None, heal=False, taken=False):
         if not source.startswith("0x"):
             source = self.name_to_guid(source)
+            if not source:
+                return {
+                    "TARGETS": {},
+                }
             if source.startswith("0xF"):
                 source = source[:12]
         
