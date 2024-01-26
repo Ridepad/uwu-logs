@@ -15,15 +15,15 @@ main {
 
 
 #top-player-info {
-	text-align: center;
 	display: grid;
-	align-items: baseline;
-	font-size: 250%;
   position: sticky;
   top: var(--nav-height);
-  z-index: 5;
-  background-color: black;
   width: 100%;
+	font-size: 250%;
+	text-align: center;
+  background-color: var(--background);
+	align-items: baseline;
+  z-index: 5;
 }
 @media (orientation: landscape) {
   #top-player-info {
@@ -35,7 +35,9 @@ main {
   min-width: 11em;
 }
 #player-name[href]:hover {
-  text-shadow: 0 0 3rem currentColor, 0 0 1rem currentColor;
+  text-shadow:
+    0 0 3rem currentColor,
+    0 0 1rem currentColor;
 }
 #player-server {
   min-width: 7em;
@@ -98,7 +100,9 @@ main {
   background-color: var(--background);
   padding: .5em;
   border-radius: 6px;
-  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  box-shadow:
+    inset 0 0 .25rem .1rem var(--primary-color),
+          0 0  .5rem .1rem var(--primary-color);
   z-index: 5;
 }
 #tooltip-points td {
@@ -258,10 +262,11 @@ main {
   bottom: 0;
   font-size: 125%;
   text-shadow:
-  #000000 -.1em -.1em .1em,
-  #000000  .1em -.1em .1em,
-  #000000 -.1em  .1em .1em,
-  #000000  .1em  .1em .1em;
+    -.1em -.1em .1em var(--background),
+     .1em -.1em .1em var(--background),
+    -.1em  .1em .1em var(--background),
+     .1em  .1em .1em var(--background);
+  z-index: 1;
 }
 
 .item-name {
@@ -288,7 +293,9 @@ main {
   background-color: var(--background);
   padding: .5em;
   border-radius: 6px;
-  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  box-shadow:
+    inset 0 0 .25rem .1rem var(--primary-color),
+          0 0  .5rem .1rem var(--primary-color);
 }
 #tooltip-stats span {
   display: inline-block;
