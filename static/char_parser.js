@@ -264,7 +264,7 @@ class Gear {
   constructor(server, name) {
     this.SERVER = to_title(server);
     this.NAME = to_title(name);
-    const url = get_char_data_url(server, name);
+    const url = get_char_data_url(this.SERVER, this.NAME);
     fetch(url).then(j => j.json().then(data => {
       this.CHAR_DATA = data;
       this.SET_NAMES = Object.keys(data);
