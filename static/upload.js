@@ -183,6 +183,9 @@ fileSubmit.onclick = () => {
   sendnewchunk();
 }
 
+fileSelect.value = "";
+fileSelect.accept = ALLOWED_EXTENSIONS.map(e => `.${e}`);
+
 requestLogsProcessingInfo.timeout = 2500;
 requestLogsProcessingInfo.ontimeout = logsProcessingCheck;
 requestLogsProcessingInfo.onreadystatechange = upload_progress;
