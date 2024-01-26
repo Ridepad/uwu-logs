@@ -6,16 +6,16 @@ img {
   max-width: 100%;
 }
 #upload-progress-bar-wrapper {
-  box-shadow: inset 0 0 .5em var(--unfocused), 0 0 .5em var(--unfocused);
-  border-radius: .5em;
+  --radius: .5em;
   position: relative;
   height: 1.25em;
   margin-top: .25em;
   margin-bottom: .25em;
+  box-shadow: inset 0 0 var(--radius) var(--unfocused), 0 0 var(--radius) var(--unfocused);
+  border-radius: var(--radius);
 }
 #upload-progress-bar {
-  position: relative;
-  border-radius: .5em;
+  border-radius: var(--radius);
   background-color: var(--secondary-color);
   width: 0%;
   height: 100%;
@@ -23,7 +23,7 @@ img {
 #upload-progress-bar-percentage {
   text-align: right;
   position: absolute;
-  right: .5em;
+  right: var(--radius);
   bottom: 5%;
 }
 .upload {
@@ -47,8 +47,7 @@ img {
   padding-inline: 1em;
 }
 .upload span {
-  color: bisque;
-  background-color: var(--highlight-color);
+  text-shadow: .1em .1em .1em var(--secondary-color);
 }
 #server-input {
   width: 100%;
@@ -71,7 +70,7 @@ img {
 <section id="upload-section" class="upload">
   <h2>Upload new file</h2>
   <form method="post" enctype="multipart/form-data">
-    <input id="upload-form-select" type="file" name="file" accept=".7z, .zip">
+    <input id="upload-form-select" type="file" name="file">
     <button id="upload-form-submit" type="button">Upload File</button>
   </form>
   <div id="server-select">
