@@ -36,6 +36,14 @@ const DEFAULT_SELECTOR = {
   profs: [".name", ".value"],
 };
 
+const TIMEOUTS = {};
+function throttle(fn, timeout=50) {
+  return function(...args) {
+    clearTimeout(TIMEOUTS[fn.name]);
+    TIMEOUTS[fn.name] = setTimeout(() => fn(...args), timeout);
+  }
+}
+
 function add_value(object, key, value) {
   object[key] = (object[key] ?? 0) + Number(value);
 }
@@ -207,9 +215,48 @@ function add_stat_row(stat_name, stat_value) {
   TABLE_STATS_BODY.appendChild(row);
 }
 
+function add_stat_rows(stats) {
+  TABLE_STATS_BODY.innerHTML = "";
+  const _ap = stats["attack power"] ?? 0;
+  const _sp = stats["spell power"] ?? 0;
+  const order = _ap > _sp ? STATS_ORDER.ap : STATS_ORDER.caster;
+  ["main", "other"].forEach(t => {
+    order[t].forEach(stat_name => {
+      add_stat_row(stat_name, stats[stat_name]);
+    });
+  });
+}
+
+function calc_gs() {
+  let main_hand
+  let total_gs = 0;
+  GEAR_SLOTS.forEach((slot_element, slot_i) => {
+    if (slot_element.classList.contains("hidden")) return;
+    
+    const item_id = slot_element.getAttribute("data-item-id");
+    CACHE.get_item_data(item_id).then(item_data => {
+      if (!item_data || slot_item_changed(slot_element, item_id)) return;
+      
+      const gs = get_gs(slot_i, item_data, item_id);
+      if (!gs) return;
+      if (slot_i == 16 && is_two_hand(item_data.slot)) {
+        main_hand = gs;
+      }
+      if (slot_i == 17 && main_hand) {
+        total_gs = total_gs - (main_hand - gs) / 2;
+      } else {
+        total_gs = total_gs + gs;
+      }
+      SPAN_GS.textContent = total_gs.toFixed(0);
+    })
+  })
+}
+
 
 class Gear {
-  throttlers = {}
+  calc_gs = throttle(calc_gs);
+  add_stat_rows = throttle(add_stat_rows);
+
   constructor(server, name) {
     this.SERVER = server;
     this.NAME = name;
@@ -359,41 +406,6 @@ class Gear {
         slot_element.setAttribute("data-socket-bonus", true);
       }
       this.add_stat_rows(all_stats);
-    });
-  }
-  calc_gs() {
-    let main_hand
-    let total_gs = 0;
-    GEAR_SLOTS.forEach((slot_element, slot_i) => {
-      if (slot_element.classList.contains("hidden")) return;
-      
-      const item_id = slot_element.getAttribute("data-item-id");
-      CACHE.get_item_data(item_id).then(item_data => {
-        if (!item_data || slot_item_changed(slot_element, item_id)) return;
-        
-        const gs = get_gs(slot_i, item_data, item_id);
-        if (!gs) return;
-        if (slot_i == 16 && is_two_hand(item_data.slot)) {
-          main_hand = gs;
-        }
-        if (slot_i == 17 && main_hand) {
-          total_gs = total_gs - (main_hand - gs) / 2;
-        } else {
-          total_gs = total_gs + gs;
-        }
-        SPAN_GS.textContent = total_gs.toFixed(0);
-      })
-    })
-  }
-  add_stat_rows(stats) {
-    TABLE_STATS_BODY.innerHTML = "";
-    const _ap = stats["attack power"] ?? 0;
-    const _sp = stats["spell power"] ?? 0;
-    const order = _ap > _sp ? STATS_ORDER.ap : STATS_ORDER.caster;
-    ["main", "other"].forEach(t => {
-      order[t].forEach(stat_name => {
-        add_stat_row(stat_name, stats[stat_name]);
-      });
     });
   }
 }
