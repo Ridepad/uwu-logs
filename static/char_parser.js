@@ -44,6 +44,10 @@ function throttle(fn, timeout=50) {
   }
 }
 
+function to_title(string) {
+  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
+}
+
 function add_value(object, key, value) {
   object[key] = (object[key] ?? 0) + Number(value);
 }
@@ -258,8 +262,8 @@ class Gear {
   add_stat_rows = throttle(add_stat_rows);
 
   constructor(server, name) {
-    this.SERVER = server;
-    this.NAME = name;
+    this.SERVER = to_title(server);
+    this.NAME = to_title(name);
     const url = get_char_data_url(server, name);
     fetch(url).then(j => j.json().then(data => {
       this.CHAR_DATA = data;
