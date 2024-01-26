@@ -694,6 +694,9 @@ def character():
         name = "Safiyah"
         server = "Lordaeron"
     
+    name = name.title()
+    server = server.title()
+    
     spec = _data.get("spec", type=int)
     if spec not in range(1,4):
         spec = None
