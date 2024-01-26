@@ -291,7 +291,10 @@ def db_q_to_list(cursor: sqlite3.Cursor, limit: bool=True):
     try:
         first = cursor.fetchone()
     except (AttributeError, StopIteration):
-        return
+        return []
+    
+    if not first:
+        return []
 
     limit = PAGE_LIMIT if limit else QUERY_LIMIT
     limit -= 1
