@@ -356,11 +356,13 @@ class THE_LOGS:
             if rewrite or self.cache_files_missing(files):
                 _guids, _players, _classes = self.new_guids()
             else:
-                _guids, _players, _classes = [
-                    file_functions.json_read_no_exception(_file_name)
-                    for _file_name in files
-                ]
-            
+                try:
+                    _guids, _players, _classes = [
+                        file_functions.json_read_no_exception(_file_name)
+                        for _file_name in files
+                    ]
+                except Exception:
+                    return self.get_guids(rewrite=True)
             self.GUIDS, self.PLAYERS, self.CLASSES = _guids, _players, _classes
             return self.GUIDS, self.PLAYERS, self.CLASSES
 
@@ -719,8 +721,11 @@ class THE_LOGS:
                 _spells = logs_spells_list.get_all_spells(self.LOGS)
                 file_functions.json_write(spells_data_file_name, _spells)
             else:
-                _spells = file_functions.json_read_no_exception(spells_data_file_name)
-            
+                try:
+                    _spells = file_functions.json_read_no_exception(spells_data_file_name)
+                except Exception:
+                    return self.get_spells(rewrite=True)
+                    
             for spell_id, new_name in CUSTOM_SPELL_NAMES.items():
                 if spell_id in _spells:
                     _spells[spell_id]["name"] = new_name
