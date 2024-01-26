@@ -110,13 +110,13 @@ def main_proccess_pool(new_logs):
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
         executor.map(logs_top.make_report_top_wrap, new_logs)
 
+    # needs player and encounter data, thats why after logs top
+    logs_calendar.add_new_logs(new_logs)
+    
+    for server, reports in group_reports_by_server(new_logs):
+        add_new_top_data(server, reports)
+    
     with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.submit(logs_calendar.add_new_logs, new_logs)
-        
-        for server, reports in group_reports_by_server(new_logs):
-            reports = tuple(reports)
-            executor.submit(add_new_top_data, server, reports)
-        
         executor.map(save_raw_logs, new_logs)
 
 def main():
