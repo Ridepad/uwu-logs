@@ -1391,7 +1391,7 @@ class THE_LOGS:
     def grabs_info(self, s, f):
         logs_slice = self.LOGS[s:f]
         players = self.get_players_guids()
-        return logs_valk_grabs.test1(logs_slice, players)
+        return logs_valk_grabs.main(logs_slice, players)
 
     def valk_info_all(self, segments):
         grabs_total = defaultdict(int)
