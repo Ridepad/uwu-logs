@@ -191,8 +191,25 @@ function set_new_spec_profs_values(e, data, type, talents) {
   }
 }
 
+function add_stat_row(stat_name, stat_value) {
+  if (!stat_value) return;
+
+  const row = document.createElement("tr");
+  
+  const cell_value = document.createElement("td");
+  cell_value.append(stat_value);
+  row.appendChild(cell_value);
+
+  const cell_name = document.createElement("td");
+  cell_name.append(stat_name);
+  row.appendChild(cell_name);
+
+  TABLE_STATS_BODY.appendChild(row);
+}
+
 
 class Gear {
+  throttlers = {}
   constructor(server, name) {
     this.SERVER = server;
     this.NAME = name;
@@ -370,22 +387,14 @@ class Gear {
   }
   add_stat_rows(stats) {
     TABLE_STATS_BODY.innerHTML = "";
-    STATS_ORDER.forEach(stat_name => {
-      const value = stats[stat_name];
-      if (!value) return;
-  
-      const row = document.createElement("tr");
-      
-      const cell_value = document.createElement("td");
-      cell_value.append(value);
-      row.appendChild(cell_value);
-  
-      const cell_name = document.createElement("td");
-      cell_name.append(stat_name);
-      row.appendChild(cell_name);
-  
-      TABLE_STATS_BODY.appendChild(row);
-    })
+    const _ap = stats["attack power"] ?? 0;
+    const _sp = stats["spell power"] ?? 0;
+    const order = _ap > _sp ? STATS_ORDER.ap : STATS_ORDER.caster;
+    ["main", "other"].forEach(t => {
+      order[t].forEach(stat_name => {
+        add_stat_row(stat_name, stats[stat_name]);
+      });
+    });
   }
 }
 
