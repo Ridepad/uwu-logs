@@ -425,16 +425,16 @@ class Top(Cache):
         guids = PlayerData(self.server).get_guids()
         player_points = PlayerPoints(self.server, None, self.spec).get_combined_boss_data()
         points_top1 = player_points[next(iter(player_points))]
-        d = []
-        for guid, points in player_points.items():
-            p = points_relative_calc(points, points_top1)
-            name = guids.get(guid, guid)
-            d.append((p, points, name))
-            # try:
-            #     d.append((p, points, guids[guid]))
-            # except KeyError:
-            #     break
-        d = self._compress(json.dumps(d).encode())
+        a = [
+            [
+                points_relative_calc(points, points_top1),
+                int(points),
+                guids.get(guid, guid),
+            ]
+            for guid, points in player_points.items()
+        ]
+        j = json.dumps(a, separators=(",", ":"))
+        d = self._compress(j.encode())
         _server[self.spec] = d
         return d
 
