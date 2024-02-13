@@ -48,7 +48,6 @@ const IRRELEVANT_FOR_POINTS = [
   checkboxCombine,
   toggleTotalDamage,
   toggleUsefulDamage,
-  toggleLimit,
 ];
 
 const ROW_LIMIT = 1000;
