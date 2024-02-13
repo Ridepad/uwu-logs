@@ -51,7 +51,7 @@ const IRRELEVANT_FOR_POINTS = [
 ];
 
 const ROW_LIMIT = 1000;
-const screenX = window.matchMedia("(orientation: landscape)");
+const is_landscape = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
 const xrequest = new XMLHttpRequest();
 const HAS_HEROIC = new Set([
@@ -231,7 +231,7 @@ function cell_date(report_ID) {
   const report_date = report_ID.toString().slice(0, 15);
   const [year, month, day, _, hour, minute] = report_date.split('-');
   const months_str = MONTHS[month - 1];
-  const date_text = screenX.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
+  const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
 
   const a = document.createElement('a');
   a.href = `/reports/${report_ID}--${selectServer.value}`;
@@ -613,13 +613,13 @@ function init() {
     add_on_change_events(elm);
   }
 
-  if (screenX.matches) {
+  if (is_landscape.matches) {
     document.getElementById("head-external").textContent = "Ext";
     document.getElementById("head-self").textContent = "Slf";
     document.getElementById("head-rekt").textContent = "Rkt";
   }
 
-  toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : screenX.matches;
+  toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : is_landscape.matches;
   toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
   toggleLimit.checked = localStorage.getItem("showlimit") == "false" ? false : true;
 
