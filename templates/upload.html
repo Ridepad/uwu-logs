@@ -5,8 +5,19 @@
 img {
   max-width: 100%;
 }
-#upload-section {
-  font-size: 125%;
+@media (orientation: landscape) {
+  #upload-section {
+    font-size: 125%;
+  }
+  #upload-section #upload-form-submit {
+    font-size: 125%;
+  }
+}
+#upload-section form * {
+  font-size: inherit;
+}
+#server-select input {
+  font-size: inherit;
 }
 #upload-progress-bar-wrapper {
   --radius: .5em;
@@ -46,6 +57,11 @@ img {
 .upload h2 {
   font-size: 300%;
 }
+@media (orientation: portrait) {
+  .upload h2 {
+    font-size: 200%;
+  }
+}
 .upload td {
   padding-inline: 1em;
 }
@@ -77,8 +93,8 @@ img {
     <button id="upload-form-submit" type="button">Upload File</button>
   </form>
   <div id="server-select">
-    <input id="server-input" type="text" placeholder="Optional: Type in any server name (if not Warmane)" list="server-list">
-    <p>Just the server name, don't add date, raid name, etc.</p>
+    <input id="server-input" type="text" placeholder="Optional: Type here any server name (if not Warmane)" list="server-list">
+    <p>Just the server/realm name, don't add date, raid name</p>
     <datalist id="server-list">
       {% for server in SERVERS %}
       <option value="{{ server }}"></option>
