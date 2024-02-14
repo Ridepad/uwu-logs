@@ -1,6 +1,6 @@
 const getCellValue = (tr, className) => tr.querySelector(className).textContent.replace(/ /g, "");
 const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
-function th_sort(th) {
+function table_sort_by_th(th) {
   const tbody = document.querySelector("tbody");
   Array.from(tbody.querySelectorAll("tr"))
        .splice(1)
@@ -79,7 +79,6 @@ function chartSetData(datapoints) {
 }
 
 function get_dps() {
-  console.log(window.location.pathname.split('/'));
   const reportID = window.location.pathname.split('/')[2];
   const END_POINT = `/reports/${reportID}/get_dps`;
   const params = new URLSearchParams(window.location.search);
@@ -94,29 +93,27 @@ function get_dps() {
   };
   fetch(END_POINT, request).then(r => r.json()).then(datapoints => chartSetData(datapoints));
 }
-function swap_damage(is_useful) {
-  const to_hide = is_useful ? "useful" : "damage";
-  const to_show = is_useful ? "damage" : "useful";
+
+const TOTAL = {
+  "useful": "damage",
+  "heal": "heal_total",
+}
+function add_style(to_show, to_hide) {
   const style = document.createElement("style");
   style.append(`.${to_show} {display: revert} .${to_hide} {display: none}`);
   document.head.appendChild(style);
-  th_sort(document.querySelector(`.${to_show}.sortable`));
 }
-function swap_damage_click(e) {
-  const is_useful = e.target.parentElement.classList.contains("useful");
-  swap_damage(is_useful);
-  e.stopPropagation();
-}
-(() => {
-  get_dps();
-
-  if (!document.querySelector(".useful.total-cell").textContent.length) {
-    swap_damage(true);
+function swap_click_wrap(useful_class_name) {
+  return e => {
+    const useful_shown = e.target.parentElement.classList.contains(useful_class_name);
+    const to_hide = useful_shown ? useful_class_name : TOTAL[useful_class_name];
+    const to_show = useful_shown ? TOTAL[useful_class_name] : useful_class_name;
+    add_style(to_show, to_hide);
+    table_sort_by_th(document.querySelector(`.${to_show}.sortable`));
+    e.stopPropagation();
   }
-
-  document.querySelectorAll(".swap-damage").forEach(e => e.addEventListener("click", swap_damage_click));
-  document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", e => th_sort(e.target)));
-
+}
+function add_points_color() {
   for (const td of document.querySelectorAll(".points")) {
     for (const i of POINTS) {
       if (td.textContent - i >= 0) {
@@ -125,4 +122,19 @@ function swap_damage_click(e) {
       }
     }
   }
+}
+(() => {
+  get_dps();
+
+  add_style("heal", "heal_total");
+  if (!document.querySelector(".useful.total-cell").textContent.length) {
+    add_style(TOTAL["useful"], "useful");
+    table_sort_by_th(document.querySelector(`.${TOTAL["useful"]}.sortable`));
+  }
+
+  add_points_color();
+
+  document.querySelectorAll(".swap-damage").forEach(button => button.addEventListener("click", swap_click_wrap("useful")));
+  document.querySelectorAll(".swap-heal").forEach(button => button.addEventListener("click", swap_click_wrap("heal")));
+  document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", e => table_sort_by_th(e.target)));
 })();

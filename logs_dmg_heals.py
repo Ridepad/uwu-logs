@@ -97,6 +97,7 @@ def parse_both(logs: list[str], players_and_pets: set[str]):
     DMG: defaultdict[str, int] = defaultdict(int)
     HEAL: defaultdict[str, int] = defaultdict(int)
     TAKEN: defaultdict[str, int] = defaultdict(int)
+    HEAL_TOTAL: defaultdict[str, int] = defaultdict(int)
     
     for line in logs:
         if "_DAMAGE" in line:
@@ -108,13 +109,16 @@ def parse_both(logs: list[str], players_and_pets: set[str]):
         
         elif "_H" in line:
             _, _, guid, _, _, _, _, _, _, d, ok, _ = line.split(',', 11)
+            d_int = int(d)
+            HEAL_TOTAL[guid] += d_int
             if d != ok:
-                HEAL[guid] += int(d) - int(ok)
+                HEAL[guid] += d_int - int(ok)
 
     return {
         "damage": DMG,
         "heal": HEAL,
-        "taken": TAKEN
+        "taken": TAKEN,
+        "heal_total": HEAL_TOTAL,
     }
 
 def parse_dmg_all_no_friendly(logs: list[str], players_and_pets: set[str]):

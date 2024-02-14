@@ -809,6 +809,7 @@ class THE_LOGS:
         data = self.get_slice_damage_heal(s, f)
         for guid, v in self.get_absorbs_by_source(s, f).items():
             data["heal"][guid] += v
+            data["heal_total"][guid] += v
         return data
 
     def get_slice_first_last_hit(self, s: int=None, f: int=None):
@@ -838,6 +839,7 @@ class THE_LOGS:
         combined_data = {
             "damage": defaultdict(int),
             "heal": defaultdict(int),
+            "heal_total": defaultdict(int),
             "taken": defaultdict(int),
         }
 
