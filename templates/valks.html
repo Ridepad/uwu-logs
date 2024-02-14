@@ -6,7 +6,11 @@
   text-align: right;
 }
 #valks-table-tbody .total-cell {
-  min-width: 5ch;
+  min-width: 6ch;
+  width: 6ch;
+}
+#valks-table-tbody td {
+  min-width: 3ch;
 }
 #valks-table-tbody .grab {
   background-color: crimson;
@@ -19,6 +23,9 @@
 
 {% block the_main %}
 <main id="valks">
+  <p>
+    To group waves - click on the column's top cell (Total, 1, 2, etc.)
+  </p>
   <table>
     <caption>Valk grabs per wave</caption>
     <thead>
