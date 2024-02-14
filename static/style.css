@@ -458,7 +458,7 @@ footer {
     right: 100%;
   }
   #fights-container .diffs {
-    transform: translateY(-25%);
+    transform: translateY(-1rem);
   }
   #fights-container .diffs li:first-of-type {
     padding-top: 1rem;
