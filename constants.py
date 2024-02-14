@@ -317,6 +317,8 @@ BOSSES_GUIDS = {
     "002ED4": "Golemagg the Incinerator",
     "002F42": "Sulfuron Harbringer",
     "002EF2": "Majordomo Executus",
+    "002D90": "Flamewaker Elite",
+    "002D8F": "Flamewaker Healer",
     "002CEE": "Ragnaros",
     # Blackwing Lair:
     "003093": "Razorgore the Untamed",
@@ -388,6 +390,10 @@ MULTIBOSSES = {
 
     "Twin Emperors": ["003BAC", "003BAB"],
     "Bug Trio": ["003CB7", "003CB8", "003C97"],
+
+    "Majordomo Executus": ["002EF2", "002D90", "002D8F"],
+    "Gehennas": ["002FE3", "002D8D"],
+    "Sulfuron Harbringer": ["002F42", "002D8E"],
 }
 
 def convert_to_html_name(name: str):

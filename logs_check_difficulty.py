@@ -68,8 +68,8 @@ SPELLS: dict[str, tuple[str]] = {
     "Anub'arak":
         ("66013", "68509", "67700", "68510"), # Penetrating Cold
 
-    "Onyxia":
-        ("18435", "", "68970", ""), # Flame Breath
+    # "Onyxia":
+    #     ("18435", "", "68970", ""), # Flame Breath
     "Malygos":
         ("61693", "", "61694", ""), # Arcane Storm
     "Sartharion":

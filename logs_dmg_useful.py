@@ -206,6 +206,32 @@ USEFUL = {
         "0xF1300083B7": "Emerald Consort",
         "0xF130008299": "Suit of Armor",
     },
+
+    "Majordomo Executus": {
+        # "0xF130002EF2": "Majordomo Executus",
+        "0xF130002D90": "Flamewaker Elite",
+        "0xF130002D8F": "Flamewaker Healer",
+    },
+    "Gehennas": {
+        "0xF130002FE3": "Gehennas",
+        "0xF130002D8D": "Flamewaker",
+    },
+    "Sulfuron Harbringer": {
+        "0xF130002F42": "Sulfuron Harbinger",
+        "0xF130002D8E": "Flamewaker Priest",
+    },
+    "Lucifron": {
+        "0xF130002F56": "Lucifron",
+        "0xF130002F57": "Flamewaker Protector",
+    },
+    "Golemagg the Incinerator": {
+        "0xF130002ED4": "Golemagg the Incinerator",
+        "0xF130002D98": "Core Rager",
+    },
+    "0xF130002F43": {
+        "0xF130002F19": "Garr",
+        "0xF130002F43": "Firesworn",
+    },
 }
 
 ALL_GUIDS = {
