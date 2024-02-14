@@ -330,6 +330,11 @@ footer {
   right: 0;
   bottom: 0;
 }
+#filtered-spells-wrap {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
 #filtered-spells-container > div {
   display: none;  
   position: absolute;
@@ -342,7 +347,7 @@ footer {
   border-radius: .5em;
 }
 #filtered-spells-container:focus-within > div {
-  display: table;
+  display: block;
 }
 #filtered-spells > a {
   display: table-row;
@@ -356,6 +361,7 @@ footer {
   font-size: inherit;
   padding-right: 1ch;
   text-align: left;
+  min-width: max-content;
 }
 #filtered-spells > a > span:first-child {
   min-width: 6ch;
