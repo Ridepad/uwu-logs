@@ -201,6 +201,12 @@ function search_changed() {
   fetch_data();
 }
 
+function add_separator(n) {
+  if (n < 1000) return n;
+  const thousands = Math.floor(n / 1000);
+  const remainder = (n % 1000).toString().padStart(3, "0");
+  return `${thousands} ${remainder}`;
+}
 
 function add_tooltip_info(tr) {
   theTooltipSpec.innerHTML = "";
@@ -210,8 +216,12 @@ function add_tooltip_info(tr) {
   
   for (const _row of theTooltipBody.children) {
     const _name = _row.className;
-    if (_name != "max") _row.querySelector(".npoints").innerText = tr.getAttribute(`data-${_name}-n`);
-    if (_name != "all") _row.querySelector(".percentile").innerText = tr.getAttribute(`data-${_name}-p`);
+    const points = tr.getAttribute(`data-${_name}-p`);
+    const players = tr.getAttribute(`data-${_name}-n`);
+    const points_cell = _row.querySelector(".percentile");
+    const players_cell = _row.querySelector(".npoints");
+    if (_name != "max") players_cell.innerText = add_separator(players);
+    if (_name != "all") points_cell.innerText = add_separator(points);
   }
 }
 function move_tooltip_to(tr) {
