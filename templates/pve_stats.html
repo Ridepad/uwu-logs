@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block scripts_head %}
-<script type="module" src="static/pve_stats.js"></script>
+<script type="module" src="/static/pve_stats.js"></script>
 {% endblock scripts_head %}
 {% block add_style %}
 <style>
@@ -121,7 +121,7 @@ table {
 #select-boss {
   min-width: 26ch;
 }
-#controls * {
+#controls {
   font-size: 150%;
 }
 
@@ -140,12 +140,12 @@ table {
   justify-content: space-between;
   gap: 1rem;
 }
-#the-tooltip .percentile {
-  width: 6ch;
-  text-align: right;
+#the-tooltip .column-names td {
+  text-align: center;
 }
+#the-tooltip .percentile,
 #the-tooltip .npoints {
-  width: 5ch;
+  min-width: 4rem;
   text-align: right;
 }
 #the-tooltip td:first-of-type {
@@ -237,7 +237,7 @@ table {
     <table>
       <thead>
         <tr><td colspan="3" id="tooltip-spec-info"></td></tr>
-        <tr><td></td><td class="npoints">n</td><td class="percentile">DPS</td></tr>
+        <tr class="column-names"><td></td><td>Raids</td><td>DPS</td></tr>
       </thead>
       <tbody id="tooltip-body">
         <tr class="max"><td>Top 1:</td><td class="npoints"></td><td class="percentile"></td></tr>
