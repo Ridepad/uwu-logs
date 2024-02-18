@@ -29,7 +29,7 @@ const bossSelect = document.getElementById("select-boss");
 const sizeSelect = document.getElementById("select-mode");
 const difficultyCheckbox = document.getElementById("difficulty-checkbox");
 const submitButton = document.getElementById("submit-button");
-const chartTimeline = document.getElementById("chart-timeline-wrap");
+const chartTimeline = document.getElementById("chart-timeline");
 const statsTableBody = document.getElementById("stats-tbody");
 const theTooltip = document.getElementById("the-tooltip");
 const theTooltipSpec = document.getElementById("tooltip-spec-info");
@@ -41,7 +41,9 @@ const INTERACTABLES = {
   size: sizeSelect,
 };
 
-const DPS_JUMP = 2500;
+const KEY_DPS = "v";
+const KEY_QUANTITY = "n";
+const DPS_JUMP = 1000;
 const CACHE = {};
 const xrequest = new XMLHttpRequest();
 
@@ -83,8 +85,14 @@ function new_dps_line(v) {
   const line = document.createElement("div");
   line.className = "chart-column";
   line.style.left = to_width_percent(v*DPS_JUMP/maxvalue*100);
-  line.setAttribute("data-dps", v*DPS_JUMP);
+  line.setAttribute("data-label", `${v}k`);
   chartTimeline.appendChild(line);
+}
+function new_dps_columns() {
+  remove_children(chartTimeline);
+  for (let i=0; i<maxvalue/DPS_JUMP; i++) {
+    new_dps_line(i); 
+  }
 }
 
 function new_div(classname, pos) {
@@ -100,53 +108,48 @@ function update_row(row, data) {
   if (!data) {
     Array.from(row.attributes)
          .filter(attr => attr.name.slice(0,4) == "data")
+         .splice(2)
          .forEach(attr => row.removeAttribute(attr.name));
     return;
   }
 
-  row.setAttribute("data-sort", data.p99.p);
-  
   const _divs = {};
   const _values = {};
   for (let k in data) {
-    const _percentile = data[k].p;
-    const _amount = data[k].n;
-    row.setAttribute(`data-${k}-p`, Math.round(_percentile));
-    row.setAttribute(`data-${k}-n`, _amount);
+    const _value = Math.round(data[k][KEY_DPS]);
+    const _amount = data[k][KEY_QUANTITY];
+    row.setAttribute(`data-${k}-${KEY_DPS}`, _value);
+    row.setAttribute(`data-${k}-${KEY_QUANTITY}`, _amount);
+    if (k == "all") continue;
 
-    const _pos = _percentile/maxvalue*100;
+    const _pos = _value/maxvalue*100;
     const _div = new_div(k, _pos);
     cell.appendChild(_div);
 
     _divs[k] = _div;
     _values[k] = _pos;
   }
-
-  const a = Array.from(Object.keys(data)).filter(e => e[0] == "p").sort()
-  for (let i=1; i<a.length-1; i++) {
-    _divs[a[i]].style.width = to_width_percent(_values[a[i+1]] - _values[a[i]]);
+  const _data = Array.from(Object.keys(data)).sort((a, b) => b.replace("top") - a.replace("top"));
+  for (let i=0; i<_data.length-3; i++) {
+    _divs[_data[i+1]].style.width = to_width_percent(_values[_data[i]] - _values[_data[i+1]]);
   }
 
-  const passthrudiv = new_div("passthrudiv", _values.p10);
-  passthrudiv.style.width = to_width_percent(_values.max - _values.p10);
+  row.setAttribute("data-sort", data[_data[1]][KEY_DPS]);
+
+  const passthrudiv = new_div("passthrudiv", _values.top10);
+  passthrudiv.style.width = to_width_percent(_values.top100 - _values.top10);
   cell.insertBefore(passthrudiv, cell.children[0]);
 }
 
 function table_add_new_data(data) {
-  let max_v = 0;
-  for (const classname in data) {
-    const cur_max = data[classname].max.p;
-    if (cur_max > max_v) max_v = cur_max;
-  }
+  const max_v = Math.max(...Object.values(data).map(d => d.top100[KEY_DPS]));
   maxvalue = Math.ceil((max_v+500)/1000)*1000;
+  
+  new_dps_columns();
   
   const rows = Array.from(statsTableBody.querySelectorAll("tr"));
   for (const tr of rows) {
     update_row(tr, data[tr.id]);
-  }
-  remove_children(chartTimeline);
-  for (let i=0; i<maxvalue/DPS_JUMP; i++) {
-    new_dps_line(i); 
   }
 
   rows.sort((a, b) => b.getAttribute("data-sort") - a.getAttribute("data-sort"))
@@ -216,8 +219,8 @@ function add_tooltip_info(tr) {
   
   for (const _row of theTooltipBody.children) {
     const _name = _row.className;
-    const points = tr.getAttribute(`data-${_name}-p`);
-    const players = tr.getAttribute(`data-${_name}-n`);
+    const points = tr.getAttribute(`data-${_name}-${KEY_DPS}`);
+    const players = tr.getAttribute(`data-${_name}-${KEY_QUANTITY}`);
     const points_cell = _row.querySelector(".percentile");
     const players_cell = _row.querySelector(".npoints");
     if (_name != "max") players_cell.innerText = add_separator(players);
@@ -251,7 +254,7 @@ function add_tooltip_events() {
   document.querySelectorAll(".stats-cell-row").forEach(tr => {
     tr.addEventListener("mouseleave", hide_tooltip);
     tr.addEventListener("mouseenter", () => {
-      if (!tr.getAttribute("data-all-n")) return;
+      if (!tr.getAttribute(`data-all-${KEY_QUANTITY}`)) return;
       clearTimeout(tt_hide_timeout);
       add_tooltip_info(tr);
       move_tooltip_to(tr);
@@ -291,15 +294,15 @@ function init() {
   search_changed();
 
   const button_click = e => {
-    const sortby = e.target.getAttribute("data-sort-by");
+    const sortby = `data-${e.target.className}-${KEY_DPS}`;
     Array.from(statsTableBody.children)
     .sort((a,b) => b.getAttribute(sortby) - a.getAttribute(sortby))
     .forEach(tr => statsTableBody.appendChild(tr));
   }
-  const tableInfo = document.getElementById("table-info");
-  for (const button of tableInfo.getElementsByTagName('button')) {
+  const table_sort = document.getElementById("table-sort");
+  for (const button of table_sort.getElementsByTagName('button')) {
     button.addEventListener("click", button_click);
   }
 }
 
-window.addEventListener("DOMContentLoaded", init);
+document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);

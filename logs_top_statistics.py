@@ -37,10 +37,19 @@ def n_greater_than(data: numpy.ndarray, value: float):
     return int((data > value).sum())
 
 def get_percentile(data, percentile):
-    _percentile = round(numpy.percentile(data, percentile), 2)
+    if percentile == 100:
+        v = max(data)
+        n = 1
+    elif percentile == 0:
+        v = 0
+        n = len(data)
+    else:
+        v = round(numpy.percentile(data, percentile), 2)
+        n = n_greater_than(data, v)
+    
     return {
-        "p": _percentile,
-        "n": n_greater_than(data, _percentile),
+        "v": v,
+        "n": n,
     }
 
 @running_time
@@ -55,13 +64,13 @@ def convert_boss_data(data: dict[int, list[float]]):
         data_s = numpy.fromiter(values, dtype=numpy.float64)
         spec_html = SPECS_DATA[spec_index]["spec_html"]
         BOSS_DATA[spec_html] = {
-            "max": {"p": max(data_s), "n": 0},
-            "p99": get_percentile(data_s, 99),
-            "p95": get_percentile(data_s, 95),
-            "p90": get_percentile(data_s, 90),
-            "p75": get_percentile(data_s, 75),
-            "p50": get_percentile(data_s, 50),
-            "p10": get_percentile(data_s, 10),
-            "all": {"p": 0, "n": len(data_s)},
+            "top100": get_percentile(data_s, 100),
+            "top99": get_percentile(data_s, 99),
+            "top95": get_percentile(data_s, 95),
+            "top90": get_percentile(data_s, 90),
+            "top75": get_percentile(data_s, 75),
+            "top50": get_percentile(data_s, 50),
+            "top10": get_percentile(data_s, 10),
+            "all": get_percentile(data_s, 0),
         }
     return BOSS_DATA
