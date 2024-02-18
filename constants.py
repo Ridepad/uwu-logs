@@ -805,7 +805,6 @@ SPELL_BOOK_SPEC = {
         "53385": 3, # Divine Storm
     },
     "priest": {
-        "63944": 1, # Renewed Hope
         "47755": 1, # Rapture
         "52985": 1, # Penance
         "47753": 1, # Divine Aegis
