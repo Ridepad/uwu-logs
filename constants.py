@@ -765,9 +765,11 @@ SPELL_BOOK_SPEC = {
         "53257": 1, # Cobra Strikes
         "57475": 1, # Kindred Spirits
         "75447": 1, # Ferocious Inspiration
+        "53220": 2, # Improved Steady Shot
         "53209": 2, # Chimera Shot
-        "20904": 2, # Aimed Shot
-        "49050": 2, # Aimed Shot
+        "53353": 2, # Chimera Shot - Serpent
+        "23989": 2, # Readiness
+        "63468": 2, # Piercing Shots
         "53301": 3, # Explosive Shot (Rank 1)
         "60051": 3, # Explosive Shot (Rank 2)
         "60052": 3, # Explosive Shot (Rank 3)
