@@ -34,7 +34,7 @@ button:hover {
 }
 #target-select-wrap button,
 #target-select-wrap select {
-	font-size: clamp(1vw, 3rem, 5.5vw);
+	font-size: clamp(1vw, 2rem, 5.5vw);
 }
 
 #player-info {
@@ -45,7 +45,9 @@ button:hover {
   grid-template-columns: 3fr 1fr 1fr 1fr;
 }
 #player-info .player-name-big {
-  font-size: 300%;
+  font-size: 200%;
+  justify-self: start;
+  padding-left: 1em;
 }
 @media (orientation: portrait) {
   #player-info {
@@ -72,15 +74,6 @@ button:hover {
 #dmg-done-main > table > tbody > tr > td:hover {
   background-color: hsl(285, 100%, 15%);
 }
-/* #dmg-done th:nth-child(n+2),
-#dmg-done td:nth-child(2),
-#dmg-done td:nth-child(4),
-#dmg-done td:nth-child(6),
-#dmg-done td:nth-child(8),
-#dmg-done td:nth-child(11),
-#dmg-done td:nth-child(13) {
-  border-left: 3px solid dimgray;
-} */
 #dmg-done-main > table > tfoot > tr > td {
   border-top: 3px solid dimgray;
 }
@@ -97,7 +90,7 @@ button:hover {
   min-width: 4rem;
 }
 .count-small {
-  min-width: 3rem;
+  min-width: 3.2rem;
 }
 td:hover > table {
   display: table;
@@ -132,10 +125,10 @@ td:hover > table {
   background-color: hsl(20, 100%, 10%);
 }
 .border {
-  border-right: .5rem solid var(--table-border);
+  border-right: .6rem solid var(--table-border);
 }
 .border-thin {
-  border-right: .25rem solid var(--table-border);
+  border-right: .4rem solid var(--table-border);
 }
 </style>
 {% endblock add_style %}
