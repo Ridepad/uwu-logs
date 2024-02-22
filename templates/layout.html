@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html style="background-color: black;">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-3K322W7YVS"></script>
@@ -12,20 +13,9 @@
   
   <title>UwU Logs{% if REPORT_NAME %} - {{ REPORT_NAME }}{% endif %}</title>
   <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'>
-  <style>
-    html {
-      background-color: black;
-      overflow: none;
-      -ms-overflow-style: none; /*IE Edge*/
-      scrollbar-width: none;  /*Firefox*/
-    }
-    html::-webkit-scrollbar {
-      display: none; /*Chrome Safari Opera*/
-    }
-  </style>
   <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <link rel="stylesheet" type="text/css" href="/static/ubuntu.css">
   {% block add_css_file %}{% endblock add_css_file %}
-  <link rel="stylesheet" href="/static/ubuntu.css">
   {% block head_meta %}{% endblock head_meta %}
   {% block scripts_head %}{% endblock scripts_head %}
   {% block add_style %}{% endblock add_style %}
@@ -75,12 +65,13 @@
       </a>
       <a href="/pve_stats">STATS</a>
       <a href="/ladder">LADDER</a>
-      <a href="/about">ABOUT</a>
+      <a href="/about">OTHER</a>
     </div>
   </nav>
-  {% block the_main %}{% endblock the_main %}
   {% block fight_aside %}{% endblock fight_aside %}
+  {% block the_main %}{% endblock the_main %}
   {% block main_foot %}{% endblock main_foot %}
   {% block main_scripts %}{% endblock main_scripts %}
   {% block the_scripts %}{% endblock the_scripts %}
 </body>
+</html>
