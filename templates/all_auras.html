@@ -2,13 +2,19 @@
 
 {% block add_style %}
 <style>
+#auras-table th {
+  min-height: 3rem;
+}
 #auras-table th img {
   min-height: 2em;
   max-height: 2em;
   min-width: 2em;
 }
 #auras-table td:not(.player-cell):nth-child(odd) {
-  min-width: 7.5ch;
+  min-width: 4rem;
+}
+#auras-table td:not(.player-cell):nth-child(even) {
+  min-width: 2rem;
 }
 #auras-table td:not(.player-cell) {
   text-align: right;
@@ -55,14 +61,14 @@
 
 {% block the_scripts %}
 <script>
-  const aurasTableBody = document.getElementById("auras-table-body");
-  const getCellValue = (tr, idx) => tr.children[idx].innerText;
-  const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+const aurasTableBody = document.getElementById("auras-table-body");
+const getCellValue = (tr, idx) => tr.children[idx].innerText;
+const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
 
-  document.querySelectorAll('th:nth-child(n+2)').forEach(th => th.addEventListener('click', () => {
-    Array.from(aurasTableBody.querySelectorAll('tr:nth-child(n+2)'))
-         .sort(comparer(th.cellIndex*2))
-         .forEach(tr => aurasTableBody.appendChild(tr));
-  }));
+document.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+  Array.from(aurasTableBody.querySelectorAll('tr'))
+        .sort(comparer(th.cellIndex*2))
+        .forEach(tr => aurasTableBody.appendChild(tr));
+}));
 </script>
 {% endblock the_scripts %}
