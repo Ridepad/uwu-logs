@@ -27,9 +27,11 @@ img {
 #main-table .wipe td {
   background-color: hsl(357, 100%, 13%);
 }
-
 #main-table .kill td {
-  background-color: hsl(107, 100%, 12%);
+  background-color: hsl(107, 100%, 10%);
+}
+#main-table .unknown td {
+  background-color: hsl(53, 100%, 12%);
 }
 
 .cell-id {
@@ -63,7 +65,7 @@ td.cell-id {
   min-width: 3.5em;
 }
 .cell-guild {
-  min-width: 14em;
+  min-width: 15em;
 }
 
 #controls,
@@ -103,7 +105,7 @@ td.cell-id {
           <th>Try</th>
           <th>Fight name</th>
           <th colspan="2">Difficulty</th>
-          <th>Guild</th>
+          <th>Guild (majority)</th>
         </tr>
       </thead>
       <tbody id="main-table-body"></tbody>
