@@ -1,87 +1,54 @@
 {% extends "layout_report.html" %}
 
-{% block add_style %}
-<style>
-img {
-  display: inline-block;
-  vertical-align: text-bottom;
-  max-height: 1.1em;
-  max-width: 1.1em;
-  min-height: 1.1em;
-  min-width: 1.1em;
-}
-
-.rectangle-cell {
-  width: 12rem;
-}
-.points,
-.rectangle-cell,
-th {
-  border-left: 10px solid var(--table-border);
-}
-
-.points {
-  min-width: 3rem;
-  width: 3rem;
-  text-align: right;
-}
-.top100 {color: #e5cc80;}
-.top99 {color: #e268a8;}
-.top95 {color: #ff8000;}
-.top75 {color: #a335ee;}
-.top50 {color: #0070ff;}
-.top25 {color: #1eff00;}
-.top0 {color: #666666;}
-
-.damage {
-  display: none;
-}
-.swap {
-  position: absolute;
-  right: 0;
-  padding-inline: .2em;
-  font-weight: 600;
-}
-.sortable {
-  position: relative;
-}
-
-.percent-bar {
-  width: var(--width);
-  height: 1em;
-  border-radius: 0.1em;
-}
-.useful .percent-bar,
-.damage .percent-bar,
-.taken .percent-bar {
-  background-color: hsl(0, 100%, 30%);
-  box-shadow: .1em .1em 1em darkred;
-}
-.heal .percent-bar,
-.heal_total .percent-bar {
-  background-color: hsl(120, 100%, 25%);
-  box-shadow: .1em .1em 1em forestgreen;
-}
-
-#chart-wrap {
-  height: 20vh;
-  width: 100%;
-}
-#chart {
-  height: 100;
-  width: 100%;
-}
-</style>
-{% endblock add_style %}
-
 {% block scripts_head %}
 <script src="/static/chart-4.1.2.min.js"></script>
-<script defer src="/static/report_main.js"></script>
-<script defer src="/static/range.js"></script>
+<script src="/static/report_main.js" async defer></script>
+<script src="/static/range.js" async defer></script>
+<script src="/static/dps_chart.js" async defer></script>
 {% endblock scripts_head %}
+
+{% block add_css_file %}
+<link rel="stylesheet" type="text/css" href="/static/report.css">
+{% endblock add_css_file %}
 
 {% block the_main %}
 <main id="report-main">
+  <section>
+    <ul id="chart-controls">
+      <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
+      <li class="sliced-control">
+        <span>Sliced</span>
+        <select id="sliced-sec">
+          <option value=0 selected>0</option>
+          <option value=1>1</option>
+          <option value=2>2</option>
+          <option value=3>3</option>
+          <option value=5>5</option>
+          <option value=10>10</option>
+          <option value=15>15</option>
+          <option value=20>20</option>
+          <option value=30>30</option>
+        </select>
+        <span>sec</span>
+      </li>
+    </ul>
+    <div class="min-max-slider" data-legendnum="2">
+      <div class="min-max-slider-inputs">
+        <input class="min min-max-slider-half" name="min" type="range" step="1"/>
+        <input class="max min-max-slider-half" name="max" type="range" step="1"/>
+      </div>
+      <div class="min-max-slider-values">
+        <span class="min-value"></span>
+        <span> - </span>
+        <span class="max-value"></span>
+        <span class="total-value"></span>
+      </div>
+      <button class="min-max-slider-submit" type="submit">Slice</button>
+    </div>
+    <section id="chart-wrap" style="display: none;">
+      <canvas id="chart"></canvas>
+    </section>
+  </section>
   <section class="table-wrap wrap-player">
     <div>
       <table class="add-player-rank">
@@ -122,22 +89,6 @@ th {
       </table>
     </div>
   </section>
-  <section id="chart-wrap" style="display: none;">
-    <canvas id="chart"></canvas>
-  </section>
-  <div class="min-max-slider" data-legendnum="2">
-    <div class="min-max-slider-inputs">
-      <input class="min min-max-slider-half" name="min" type="range" step="1"/>
-      <input class="max min-max-slider-half" name="max" type="range" step="1"/>
-    </div>
-    <div class="min-max-slider-values">
-      <span class="min-value"></span>
-      <span> - </span>
-      <span class="max-value"></span>
-      <span class="total-value"></span>
-    </div>
-    <button class="min-max-slider-submit" type="submit">Slice</button>
-  </div>
   <section style="display: none;">
     <p>First Hit: {{ FIRST_HIT }}</p>
     <p>Last Hit: {{ LAST_HIT }}</p>

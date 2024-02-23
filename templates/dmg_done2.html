@@ -2,6 +2,7 @@
 
 {% block scripts_head %}
 <script src="/static/chart-4.1.2.min.js"></script>
+<script src="/static/dps_chart.js" async defer></script>
 {% endblock scripts_head %}
 
 {% block add_style %}
@@ -42,7 +43,7 @@ button:hover {
 	display: grid;
 	align-items: baseline;
   font-size: 125%;
-  grid-template-columns: 3fr 1fr 1fr 1fr;
+  grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
 }
 #player-info .player-name-big {
   font-size: 200%;
@@ -51,12 +52,37 @@ button:hover {
 }
 @media (orientation: portrait) {
   #player-info {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
   #player-info .player-name-big {
-    grid-column: span 3;
+    grid-column: span 2;
   }
 }
+
+#pets-dropdown-wrap {
+  text-align: left;
+}
+#pets-dropdown {
+  position: absolute;
+  padding: .5em;
+}
+.tooltip {
+  visibility: hidden;
+  background-color: var(--background);
+  border-radius: .25rem;
+  padding: .1em;
+  box-shadow:
+    inset 0 0 .25rem .1rem var(--primary-color),
+          0 0  .5rem .1rem var(--primary-color);
+  z-index: 5;
+}
+.has-tooltip {
+  position: relative;
+}
+.has-tooltip:hover > .tooltip {
+  visibility: visible;
+}
+
 
 #chart-wrap {
   height: 20vh;
@@ -72,7 +98,7 @@ button:hover {
 }
 
 #dmg-done-main > table > tbody > tr > td:hover {
-  background-color: hsl(285, 100%, 15%);
+  background-color: var(--hover-row);
 }
 #dmg-done-main > table > tfoot > tr > td {
   border-top: 3px solid dimgray;
@@ -81,29 +107,18 @@ button:hover {
   text-align: right;
 }
 
-.count,
-.total-cell,
-.count-small {
-  position: relative;
-}
 .count {
   min-width: 4rem;
 }
 .count-small {
   min-width: 3.2rem;
 }
-td:hover > table {
-  display: table;
-}
-.tooltip {
-  display: none;
+.table-details {
   position: absolute;
   top: 100%;
   left: 95%;
-  z-index: 2;
-  box-shadow: 0 0 .2rem .2rem hsl(285, 100%, 20%);
 }
-.tooltip td {
+.table-details td {
   min-width: 5em;
 }
 .avgs tr:nth-child(1) > td {
@@ -155,6 +170,19 @@ td:hover > table {
 <section>
   <ul id="player-info">
     <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }} player-name-big">{{ SOURCE_NAME }}</li>
+    <li id="pets-dropdown-wrap" class="has-tooltip">
+      {% if PETS %}
+      Pets ▼
+      <div id="pets-dropdown" class="tooltip">
+        {% for pet_guid, pet_name in PETS.items() %}
+        <p>
+          <a href="/reports/{{ REPORT_ID }}/player/{{ pet_guid }}/{{ QUERY }}">{{ pet_name }}</a>
+        </p>
+        {% endfor %}
+      </div>
+      {% else %}No pets
+      {% endif %}
+    </li>
     <li><a id="warmane-armory-link" href="https://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
     <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
     <li class="sliced-control">
@@ -214,9 +242,9 @@ td:hover > table {
           <td class="count">{{ ACTUAL_PERCENT[spell_id] }}</td>
           <td class="total-cell border">{{ ACTUAL[spell_id] }}</td>
           <td class="count">{{ REDUCED_PERCENT[spell_id] }}</td>
-          <td class="total-cell border">{{ REDUCED[spell_id] }}
+          <td class="total-cell border has-tooltip">{{ REDUCED[spell_id] }}
             {% if REDUCED_DETAILED[spell_id] %}
-            <table class="tooltip">
+            <table class="tooltip table-details">
               {% for t, a in REDUCED_DETAILED[spell_id].items() %}
               <tr><td>{{ t }}</td><td>{{ a }}</td></tr>
               {% endfor %}
@@ -224,9 +252,9 @@ td:hover > table {
             {% endif %}
           </td>
           <td class="count-small">{{ CASTS[spell_id] }}</td>
-          <td class="count-small border">{{ MISSES[spell_id] }}
+          <td class="count-small border has-tooltip">{{ MISSES[spell_id] }}
             {% if MISS_DETAILED[spell_id] %}
-            <table class="tooltip">
+            <table class="tooltip table-details">
               {% for t, a in MISS_DETAILED[spell_id].items() %}
               <tr>
                 <td>{{ t }}</td>
@@ -239,9 +267,9 @@ td:hover > table {
           {% for _type, _data in HITS.get(spell_id, {}).items() %} 
           <td class="count-small border-thin">{{ _data['total'] }}</td>
           <td class="count-small">{{ _data['hits'] }}</td>
-          <td class="count border-thin">{{ _data['hit_avg'] }}
+          <td class="count border-thin has-tooltip">{{ _data['hit_avg'] }}
             {% if _data['hits_avg'] %}
-            <table class="tooltip avgs"><tbody>
+            <table class="tooltip table-details avgs"><tbody>
               {% for x in _data['hits_avg'] %}
               <tr><td>{{ x }}</td></tr>
               {% endfor %}
@@ -249,9 +277,9 @@ td:hover > table {
             {% endif %}
           </td>
           <td class="count-small">{{ _data['crits'] }}</td>
-          <td class="count">{{ _data['crit_avg'] }}
+          <td class="count has-tooltip">{{ _data['crit_avg'] }}
             {% if _data['crits_avg'] %}
-            <table class="tooltip avgs">
+            <table class="tooltip table-details avgs">
               <tbody>
                 {% for x in _data['crits_avg'] %}
                 <tr><td>{{ x }}</td></tr>
@@ -314,123 +342,19 @@ td:hover > table {
 
 {% block the_scripts %}
 <script>
+(function() {
 const TARGET_RESET = document.getElementById("target-select-reset");
 const TARGET_SELECT = document.getElementById("target-select");
-const CHART_ELEMENT_WRAP = document.getElementById('chart-wrap');
-const TOGGLE_GRAPH = document.getElementById('toggle-graph');
-const SELECT_SLICE_SECONDS = document.getElementById("sliced-sec");
-const main = document.querySelector("main");
-const REPORT_ID = main.getAttribute("data-report-id");
-const SOURCE_NAME = main.getAttribute("data-source-name");
-
-const GET_DPS_REQUEST = new XMLHttpRequest();
-const QUERY_PARAMS = new URLSearchParams(location.search);
-const CACHED_GRAPHS = {};
-
-const CHART_OPTIONS = {
-  maintainAspectRatio: false,
-  responsive: true,
-  animation: false,
-  scales: {
-    x: {
-      grid: {
-        color: '#141414',
-        tickLength: 1,
-      },
-    },
-    y: {
-      grid: {
-        color: '#141414',
-        tickLength: 1,
-      },
-      title: {
-        display: true,
-        text: 'DPS',
-      },
-      ticks: {
-        padding: 0,
-      },
-    },
-  },
-  plugins: {
-    tooltip: {
-      intersect: false,
-    },
-    legend: {
-      display: false,
-    },
-  },
-  interaction: {
-    mode: 'index',
-  }
-};
-const CHART = new Chart(document.getElementById('chart'), {
-  type: 'line',
-  options: CHART_OPTIONS,
-});
-
-function make_new_dataset(datapoints) {
-  return {
-    data: datapoints,
-    cubicInterpolationMode: 'monotone',
-    borderColor: '#6900cc',
-    pointBorderWidth: 0,
-  }
-}
-
-function chartSetData(datapoints) {
-  if (Object.keys(datapoints).length === 0 && CHART.data.datasets.length === 0) {
-    return
-  }
-  const datapoints_values = Object.values(datapoints);
-  const datapoints_min = Math.min(...datapoints_values);
-  const datapoints_max = Math.max(...datapoints_values);
-  CHART.options.scales.y.min = Math.floor(datapoints_min);
-  CHART.options.scales.y.max = Math.ceil(datapoints_max);
-  CHART.data.datasets[0] = make_new_dataset(datapoints);
-  CHART.update();
-}
-
-GET_DPS_REQUEST.onreadystatechange = () => {
-  if (GET_DPS_REQUEST.readyState != 4 || GET_DPS_REQUEST.status != 200) return;
-  
-  const datapoints = JSON.parse(GET_DPS_REQUEST.response);
-  CACHED_GRAPHS[SELECT_SLICE_SECONDS.value] = datapoints;
-  chartSetData(datapoints);
-}
-
-function send_post() {
-  if (!TOGGLE_GRAPH.checked) return;
-
-  const params_obj = Object.fromEntries(QUERY_PARAMS);
-  params_obj["player_name"] = SOURCE_NAME;
-  params_obj["sec"] = SELECT_SLICE_SECONDS.value;
-  const END_POINT = `/reports/${REPORT_ID}/get_dps`;
-  GET_DPS_REQUEST.open("POST", END_POINT);
-  GET_DPS_REQUEST.send(JSON.stringify(params_obj));
-}
-
-function toggle_graph() {
-  CHART_ELEMENT_WRAP.style.display = TOGGLE_GRAPH.checked ? "" : "none";
-  const data = CACHED_GRAPHS[SELECT_SLICE_SECONDS.value];
-  data ? chartSetData(data) : send_post();
-}
-
+const QUERY_PARAMS = new URLSearchParams(window.location.search);
+const TARGET = QUERY_PARAMS.get('target');
+TARGET ? TARGET_SELECT.value = TARGET : TARGET_SELECT.selectedIndex = 0;
 function redirect(event) {
   const isReset = (TARGET_SELECT.selectedIndex == 0 || event.target == TARGET_RESET);
   isReset ? QUERY_PARAMS.delete('target') : QUERY_PARAMS.set('target', TARGET_SELECT.value);
   location.replace(`${location.origin}${location.pathname}?${QUERY_PARAMS}`);
 };
-
-
-const TARGET = QUERY_PARAMS.get('target');
-TARGET ? TARGET_SELECT.value = TARGET : TARGET_SELECT.selectedIndex = 0;
-
 TARGET_RESET.addEventListener("click", redirect);
 TARGET_SELECT.addEventListener("change", redirect);
-
-toggle_graph();
-TOGGLE_GRAPH.addEventListener("change", toggle_graph);
-SELECT_SLICE_SECONDS.addEventListener("change", toggle_graph);
+})();
 </script>
 {% endblock the_scripts %}
