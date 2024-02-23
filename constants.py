@@ -803,6 +803,7 @@ SPELL_BOOK_SPEC = {
         "59578": 3, # The Art of War
         "35395": 3, # Crusader Strike
         "53385": 3, # Divine Storm
+        "54203": 3, # Sheath of Light
     },
     "priest": {
         "47755": 1, # Rapture
