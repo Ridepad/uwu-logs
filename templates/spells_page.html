@@ -2,20 +2,24 @@
 
 {% block add_style %}
 <style>
-h2 {
+header {
   font-size: 200%;
-  padding-block: .5em;
+  padding-left: 1rem;
 }
-h2 img {
+header img {
   min-width: 1em;
   max-width: 1em;
   min-height: 1em;
   max-height: 1em;
 }
-h2 a {
+header h2 {
+  font-size: 1em;
+  display: inline-block;
+}
+header a {
 	text-shadow: .1em .1em .5em #5d5d5d;
 }
-h2 a:hover {
+header a:hover {
 	text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
 }
 .table-wrap-wrap {
@@ -38,14 +42,14 @@ th > a {
 {% block the_main %}
 <main id="spells">
 <header>
+  {% if SPELLS %}
+  <img src="/static/icons/{{ SPELL_ICON }}.jpg">
   <h2>
-    {% if SPELLS %}
-    <img src="/static/icons/{{ SPELL_ICON }}.jpg">
     <a class="{{ SPELL_COLOR }}" href="https://wotlk.evowow.com/?spell={{ SPELL_ID }}" target="_blank">{{ SPELL_ID }} {{ SPELL_NAME }}</a>
-    {% else %}
-    <a>Spell not found</a>
-    {% endif %}
   </h2>
+  {% else %}
+  <h2>Spell not found</h2>
+  {% endif %}
 </header>
 <section>
   {% for flag, sources in SPELLS.items() %}
