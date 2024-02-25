@@ -10,7 +10,6 @@ from flask import (
     render_template,
     send_from_directory,
 )
-import psutil
 
 from werkzeug.exceptions import NotFound, TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -19,6 +18,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import logs_item_parser
 import logs_ench_parser
 
+import h_cleaner
 import logs_top_statistics
 import file_functions
 import logs_calendar
@@ -30,7 +30,6 @@ from constants import (
     FLAG_ORDER,
     GEAR,
     LOGGER_CONNECTIONS,
-    LOGGER_MEMORY,
     LOGS_DIR,
     LOGS_RAW_DIR,
     MONTHS,
@@ -66,8 +65,9 @@ CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 
-LOGGER_CONNECTIONS.debug("Starting server...")
+cleaner = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
+LOGGER_CONNECTIONS.debug("Starting server...")
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
@@ -86,10 +86,10 @@ def load_report(report_id: str):
             add_log_entry(ip, "SPAM", report_id)
             raise TooManyRequests(retry_after=_limit)
     
+    cleaner.run()
     report = logs_main.THE_LOGS(report_id)
     OPENED_LOGS[report_id] = report
     add_log_entry(ip, "OPENNED", report_id)
-    LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | OPEN    | {report_id:50} | {ip:>15}")
 
     report.last_access = now
     return report
@@ -147,42 +147,6 @@ def method500(e):
     if request.method == 'GET':
         response = render_template("500.html")
     return response, 500
-
-
-def __cleaner():
-    cleaner_thread: threading.Thread = None
-
-    def cleaner2():
-        LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | CLEANER")
-        now = datetime.now()
-        for report_id, report in dict(OPENED_LOGS).items():
-            if now - report.last_access > MAX_SURVIVE_LOGS:
-                del OPENED_LOGS[report_id]
-                LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED O | {report_id}")
-        
-        a = sorted((report.last_access, report_id) for report_id, report in OPENED_LOGS.items())
-        while a and psutil.virtual_memory().available < 800*1024*1024:
-            _, report_id = a.pop(0)
-            del OPENED_LOGS[report_id]
-            LOGGER_MEMORY.info(f"{psutil.virtual_memory().available:>12} | NUKED M | {report_id}")
-
-    def cleaner():
-        nonlocal cleaner_thread
-        if cleaner_thread is None:
-            cleaner_thread = threading.Thread(target=cleaner2)
-            cleaner_thread.start()
-        elif not cleaner_thread.is_alive():
-            cleaner_thread = None
-    
-    return cleaner
-
-cleaner = __cleaner()
-
-@SERVER.after_request
-def after_request_callback(response):
-    cleaner()
-
-    return response
 
 @SERVER.route("/pw_validate", methods=["POST"])
 def pw_validate():
@@ -773,7 +737,7 @@ def missing(type, id):
 # def guilds(server):
 #     return render_template_wrap(
 #         'guilds.html',
-#         CALEND=test_prev_kills.main(server),
+#         CALEND=test_prev_kills.main(),
 #         len=len,
 #     )
 
