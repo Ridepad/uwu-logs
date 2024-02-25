@@ -119,7 +119,7 @@ table {
   right: 0;
   bottom: 0;
   top: 0;
-  box-shadow: inset -.05em 0 black;
+  box-shadow: inset -.05em 0 black, -.05em 0 currentColor;
 }
 .stats-cell-data .top10 {
   height: .5em;
