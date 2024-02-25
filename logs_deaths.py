@@ -1,4 +1,5 @@
 from constants import running_time
+import logs_base
 
 
 DEATH_FLAGS = {"UNIT_DIED", "SPELL_INSTAKILL"}
@@ -269,17 +270,35 @@ def sfjsiojfasiojfiod(deaths: dict[str, list[str]]):
 
         for x in death:
             normalize_line(x)
-        
+
+
+class Deaths(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def death_info(self, s, f, guid):
+        logs_slice = self.LOGS[s:f]
+        deaths = get_deaths(logs_slice, guid)
+        sfjsiojfasiojfiod(deaths)
+        return deaths
+    
+    def get_deaths(self, segments, guid):
+        deaths = {}
+        if guid:
+            for s, f in segments:
+                deaths |= self.death_info(s, f, guid)
+        return {
+            "DEATHS": deaths,
+            "CLASSES": self.get_classes(),
+            "PLAYERS": self.get_players_guids(),
+            "GUIDS": self.get_all_guids(),
+            "SPELLS": self.get_spells(),
+        }
+
+
 def main_test():
-    import logs_main
-    report = logs_main.THE_LOGS("22-08-25--20-21--Meownya--Lordaeron")
+    report = Deaths("24-02-09--20-49--Meownya--Lordaeron")
     enc_data = report.get_enc_data()
-    players = report.get_players_guids()
-    players = {v:k for k,v in players.items()}
-    # print(players)
-    # guid = "0x06000000004B3846"
-    guid = players["Hulina"]
-    s, f = enc_data["The Lich King"][-3]
+    guid = report.name_to_guid("Arcanestorm")
+    s, f = enc_data["Lady Deathwhisper"][-1]
     logs_slice = report.get_logs(s, f)
     d = get_deaths(logs_slice, guid)
     sfjsiojfasiojfiod(d)

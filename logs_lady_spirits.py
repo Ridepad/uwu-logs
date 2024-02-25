@@ -1,4 +1,6 @@
 from collections import defaultdict
+import logs_base
+from constants import separate_thousands
 
 # 1/19 19:45:07.755,SPELL_DAMAGE,0xF13000954E00020A,Vengeful Shade,0x06000000005D571D,Sana,72012,Vengeful Blast,0x30,14156,11970,48,6066,0,0,nil,nil,nil
 # 1/19 19:44:53.770,SWING_MISSED,0xF13000954E000205,Vengeful Shade,0x060000000048D30F,Tayoka,1,Melee,0x1,PARRY
@@ -79,9 +81,28 @@ def filter_spirits(logs_slice: list[str]):
     ]
 
 
+class LadySpirits(logs_base.THE_LOGS):
+    def lady_spirits(self, s, f):
+        logs_slice = self.LOGS[s:f]
+        data = filter_spirits(logs_slice)
+        players = self.get_players_guids()
+        for x in data:
+            guid = x[KEY_LADY_POPED_BY]
+            x[KEY_LADY_POPED_BY] = players.get(guid, guid)
+            x["targets_n"] = len(x[KEY_LADY_TARGETS])
+            x[KEY_LADY_DAMAGE] = separate_thousands(x[KEY_LADY_DAMAGE])
+            x[KEY_LADY_PREVENTED] = separate_thousands(x[KEY_LADY_PREVENTED])
+        return data
+    
+    def lady_spirits_wrap(self, segments):
+        pulls = []
+        for s, f in segments:
+            pulls.append(self.lady_spirits(s, f))
+        return pulls
+
+
 def test1():
-    import logs_main
-    report = logs_main.THE_LOGS("23-10-14--00-23--Kikusumo--Lordaeron")
+    report = LadySpirits("23-10-14--00-23--Kikusumo--Lordaeron")
     encdata = report.get_enc_data()
     report.LOGS
     players = report.get_players_guids()

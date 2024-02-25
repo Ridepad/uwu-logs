@@ -1,5 +1,6 @@
-import logs_main
 from collections import defaultdict
+
+import logs_base
 from constants import get_delta_simple_precise, running_time
 
 # THIS IS A FUCKING DISASTER
@@ -649,8 +650,88 @@ def proccess_absorb(lines, discos, is_bdk=False):
             # prettyprint("....... NEW MAX", CURRENT_MAX_SHIELD[_LAST_SHIELD_ID], CURR_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
     return ABSORBS, ABSORBS_DETAILS
 
+
+class Absorbs(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def _get_absorbs(self, s, f):
+        if not s or not f:
+            return {}, {}
+
+        logs_slice = self.LOGS[s:f]
+        specs = self.get_players_specs_in_segments(s, f)
+        discos = {guid for guid, spec in specs.items() if spec == 21}
+        events = parse_absorb_related(logs_slice, discos=discos)
+        ABSORBS: dict[str, dict[str, dict[str, int]]] = {}
+        DETAILS = {}
+        
+        for target, lines in events.items():
+            _absorbs, _details = proccess_absorb(lines, discos, specs.get(target) == 1)
+            ABSORBS[target] = _absorbs
+            DETAILS[target] = _details
+
+        return ABSORBS, DETAILS
+    
+    def get_absorbs(self, s, f):
+        return self._get_absorbs(s, f)[0]
+    
+    def get_absorbs_details(self, s, f):
+        return self._get_absorbs(s, f)[1]
+    
+    def get_absorbs_details_wrap(self, segments: list, target: str):
+        if not target.startswith("0x0"):
+            target = self.name_to_guid(target)
+
+        if not target:
+            return []
+        
+        DETAILS = []
+        for s, f in segments:
+            _a = self.get_absorbs_details(s, f)
+            if target in _a:
+                DETAILS.extend(self.get_absorbs_details(s, f)[target])
+        return DETAILS
+
+    def get_absorbs_by_source(self, s, f):
+        _abs = defaultdict(int)
+        _data = self.get_absorbs(s, f)
+        for target, sources in _data.items():
+            for source, spells in sources.items():
+                for spell_id, value in spells.items():
+                    _abs[source] += value
+        return _abs
+    
+    def get_absorbs_by_source_spells_wrap(self, segments: list, source_filter: str, target_filter: str=None):
+        ABSORBS = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        for s, f in segments:
+            _data = self.get_absorbs(s, f)
+            for _target, sources in _data.items():
+                for _source, spells in sources.items():
+                    for spell_id, value in spells.items():
+                        ABSORBS[_source]["Total"][spell_id] += value
+                        ABSORBS[_source][_target][spell_id] += value
+        
+        if not target_filter:
+            target_filter = "Total"
+        return ABSORBS[source_filter][target_filter]
+    
+    def get_absorbs_by_target_wrap(self, segments, target_filter, source_filter=None):
+        _abs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        for s, f in segments:
+            _data = self.get_absorbs(s, f)
+            for _target, sources in _data.items():
+                for _source, spells in sources.items():
+                    # print(_source, spells)
+                    for spell_id, value in spells.items():
+                        # _abs[source][spell_id] += value
+                        _abs[_target]["Total"][spell_id] += value
+                        _abs[_target][_source][spell_id] += value
+        if not source_filter:
+            source_filter = "Total"
+        return _abs[target_filter][source_filter]
+
+
 def _test():
-    report = logs_main.THE_LOGS("23-07-10--16-00--Praystation--Lordaeron")
+    report = Absorbs("23-07-10--16-00--Praystation--Lordaeron")
     encdata = report.get_enc_data()
     players = report.get_players_guids()
     # s, f = encdata["Deathbringer Saurfang"][-1]

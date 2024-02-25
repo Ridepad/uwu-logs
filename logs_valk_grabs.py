@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from constants import sort_dict_by_value, running_time
+import logs_base
 
 mobs = {"008EF5", "009342", "008F5D"}
 REMORSELESS_WINTER_TRANSITION_1 = {"68981", "74271", "74270", "74272"}
@@ -241,7 +242,35 @@ def main(logs_slice: list[str], players: dict[str, str]):
         get_grabs(GRABS, x)
         for x in range(waves_len)
     ]
-    
+
+
+class ValkGrabs(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def grabs_info(self, s, f):
+        logs_slice = self.LOGS[s:f]
+        players = self.get_players_guids()
+        return main(logs_slice, players)
+
+    def valk_info_all(self, segments):
+        grabs_total = defaultdict(int)
+        all_grabs = []
+        for s, f in segments:
+            grabs = self.grabs_info(s, f)
+            if grabs is None:
+                continue
+            all_grabs.extend(grabs)
+            for g in grabs:
+                for p in g:
+                    grabs_total[p] += 1
+        waves = list(range(1, len(all_grabs)+1))
+        grabs_total = dict(sorted(grabs_total.items()))
+        grabs_total = sort_dict_by_value(grabs_total)
+        return {
+            "ALL_GRABS": all_grabs,
+            "GRABS_TOTAL": grabs_total,
+            "WAVES": waves,
+        }
+
 
 GRABS = {
     "22-08-27--20-19--Deydraenna--Icecrown": [

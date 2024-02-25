@@ -1,18 +1,9 @@
 from collections import defaultdict
+import json
 
-import file_functions
-from constants import COMBINE_SPELLS, SPELL_ICONS_DB, running_time
+import logs_base
+from constants import COMBINE_SPELLS, running_time
 
-@running_time
-def get_spells_int():
-    spells_json = file_functions.json_read(SPELL_ICONS_DB)
-    return {
-        int(spell_id): icon_name
-        for icon_name, _spells in spells_json.items()
-        for spell_id in _spells
-    }
-
-get_spells = file_functions.cache_file_until_new(SPELL_ICONS_DB, get_spells_int)
 
 IGNORED_FLAGS = {
     "SPELL_HEAL",
@@ -109,3 +100,33 @@ def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str]
         "DATA": history,
         "FLAGS": flags,
     }
+
+
+class Timeline(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def get_spell_history(self, s: int, f: int, guid: str) -> dict[str, defaultdict[str, int]]:
+        ts = self.get_timestamp()
+        s_shifted = ts[self.find_index(s, 180)]
+        logs_slice = self.LOGS[s_shifted:f]
+
+        players_and_pets = self.get_players_and_pets_guids()
+        data = get_history(logs_slice, guid, players_and_pets, s-s_shifted)
+
+        _spells = self.SPELLS_WITH_ICONS
+        data["SPELLS"] = {
+            x: _spells[int(x)]
+            for x in data["DATA"]
+        }
+        data["RDURATION"] = self.get_slice_duration(s, f)
+        data["NAME"] = self.guid_to_name(guid)
+        data["CLASS"] = self.get_classes().get(guid, "npc")
+
+        return data
+    
+    def get_spell_history_wrap(self, segments: dict, player_name: str):
+        s, f = segments[0]
+        player = self.name_to_guid(player_name)
+        return self.get_spell_history(s, f, player)
+    
+    def get_spell_history_wrap_json(self, segments: dict, player_name: str):
+        return json.dumps((self.get_spell_history_wrap(segments, player_name)), default=list)

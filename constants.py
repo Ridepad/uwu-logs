@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from collections import defaultdict
 from datetime import datetime, timedelta
 from time import perf_counter
 
@@ -13,6 +14,8 @@ LOGS_CUT_NAME_OLD = "LOGS_CUT.zlib"
 TOP_FILE_NAME = "top.json"
 PANDAS_COMPRESSION = "zstd"
 NIL_GUID = '0x0000000000000000'
+UNKNOWN_ICON = "inv_misc_questionmark"
+
 
 REPORT_NAME_STRUCTURE = ("date", "time", "author", "server")
 
@@ -1072,6 +1075,10 @@ def separate_thousands(num, precision=None):
         precision = 1 if isinstance(num, float) else 0
     
     return f"{num:,.{precision}f}".replace(',', ' ')
+
+def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
+    for source, amount in data_new.items():
+        data_total[source] += amount
 
 
 def get_now():

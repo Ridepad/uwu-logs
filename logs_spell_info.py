@@ -1,5 +1,14 @@
 from collections import defaultdict
-from constants import to_dt_simple, running_time
+from constants import (
+    to_dt_simple,
+    running_time,
+    add_new_numeric_data,
+    sort_dict_by_value,
+    LOGGER_REPORTS,
+    FLAG_ORDER,
+    is_player,
+)
+import logs_base
 
 def get_other_count(logs_slice: list[str], _filter: str):
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -536,3 +545,133 @@ def get_filtered_info(data):
         for spell_id, spell_info in AURAS.items()
         if spell_id in data
     }
+
+class Consumables(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def potions_info(self, s, f) -> dict[str, dict[str, int]]:
+        logs_slice = self.LOGS[s:f]
+        return get_potions_count(logs_slice)
+    
+    def potions_all(self, segments):
+        potions = defaultdict(lambda: defaultdict(int))
+        players: set[str] = set()
+
+        for s, f in segments:
+            _potions = self.potions_info(s, f)
+            for spell_id, sources in _potions.items():
+                add_new_numeric_data(potions[spell_id], sources)
+                
+            _specs = self.get_players_specs_in_segments(s, f)
+            players.update(_specs)
+        
+        p_value = count_valuable(potions)
+        for guid in players:
+            if guid not in p_value:
+                p_value[guid] = 0
+        p_value = self.sort_data_guids_by_name(p_value)
+
+        p_total = count_total(potions)
+        p_total = self.sort_data_guids_by_name(p_total)
+
+        p_total |= p_value
+        p_total = sort_dict_by_value(p_total)
+        p_total = self.convert_dict_guids_to_names(p_total)
+        
+        for spell_id, sources in potions.items():
+            potions[spell_id] = self.convert_dict_guids_to_names(sources)
+
+        return {
+            "ITEM_INFO": ITEM_INFO,
+            "ITEMS_TOTAL": p_total,
+            "ITEMS": potions,
+        }
+
+class SpellCount(logs_base.THE_LOGS):
+    @running_time
+    def get_spell_count(self, s, f, spell_id_str):
+        logs_slice = self.LOGS[s:f]
+        return get_spell_count(logs_slice, spell_id_str)
+    
+    def spell_count_all(self, segments, spell_id: str):
+        def sort_by_total(data: dict):
+            return dict(sorted(data.items(), key=lambda x: x[1]["Total"], reverse=True))
+        
+        spell_id = spell_id.replace("-", "")
+        all_spells = self.get_spells()
+        if int(spell_id) not in all_spells:
+            LOGGER_REPORTS.error(f"{spell_id} not in spells")
+            return {
+                "SPELLS": {},
+            }
+        
+        spells_data: dict[str, dict[str, dict[str, int]]] = {}
+        spells_data = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        all_targets: list[str] = ["Total", ]
+        for s, f in segments:
+            _segment_data = self.get_spell_count(s, f, spell_id)
+            for flag, sources in _segment_data.items():
+                for source_name, targets in sources.items():
+                    for target_name, value in targets.items():
+                        spells_data[flag][source_name]["Total"] += value
+                        spells_data[flag][source_name][target_name] += value
+                        if target_name not in all_targets:
+                            all_targets.append(target_name)
+
+        for flag in FLAG_ORDER:
+            if flag in spells_data:
+                spells_data[flag] = sort_by_total(spells_data.pop(flag))
+
+        s_id = abs(int(spell_id))
+        SPELL_DATA = self.SPELLS_WITH_ICONS[s_id]
+
+        return {
+            "SPELLS": spells_data,
+            "TARGETS": all_targets,
+            "SPELL_ID": spell_id,
+            "SPELL_NAME": SPELL_DATA["name"],
+            "SPELL_ICON": SPELL_DATA["icon"],
+            "SPELL_COLOR": SPELL_DATA["color"],
+        }
+
+class AuraUptime(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def auras_info(self, s, f) -> defaultdict[str, dict[str, tuple[int, float]]]:
+        logs_slice = self.LOGS[s:f]
+        data = get_raid_buff_count(logs_slice)
+        return get_auras_uptime(logs_slice, data)
+
+    def auras_info_all(self, segments, trim_non_players=True):
+        auras_uptime = defaultdict(lambda: defaultdict(list))
+        auras_count = defaultdict(lambda: defaultdict(int))
+
+        for s, f in segments:
+            _auras = self.auras_info(s, f)
+            for guid, aura_data in _auras.items():
+                if trim_non_players and not is_player(guid):
+                    continue
+                for spell_id, (count, uptime) in aura_data.items():
+                    auras_count[guid][spell_id] += count
+                    auras_uptime[guid][spell_id].append(uptime)
+
+        aura_info_set = set()
+        auras_uptime_formatted = defaultdict(lambda: defaultdict(float))
+        for guid, aura_data in auras_uptime.items():
+            for spell_id, uptimes in aura_data.items():
+                aura_info_set.add(spell_id)
+                v = sum(uptimes) / len(uptimes) * 100
+                auras_uptime_formatted[guid][spell_id] = f"{v:.2f}"
+        
+        self.add_missing_players(auras_count, {})
+        self.add_missing_players(auras_uptime, {})
+
+        auras_count_with_names = self.convert_dict_guids_to_names(auras_count)
+        auras_uptime_with_names = self.convert_dict_guids_to_names(auras_uptime_formatted)
+
+        filtered_aura_info = get_filtered_info(aura_info_set)
+
+        return {
+            "AURA_UPTIME": auras_uptime_with_names,
+            "AURA_COUNT": auras_count_with_names,
+            "AURA_INFO": filtered_aura_info,
+        }
+

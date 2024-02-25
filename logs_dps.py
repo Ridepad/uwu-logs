@@ -1,5 +1,10 @@
 from collections import defaultdict
 
+import logs_base
+from constants import (
+    BOSSES_FROM_HTML,
+)
+
 FLAGS = {'SWING_DAMAGE', 'RANGE_DAMAGE', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'DAMAGE_SHIELD'}
 
 def get_raw_data(logs: list[str], guids: set[str]):
@@ -126,8 +131,45 @@ def convert_keys_to_str(data: dict[int, int]):
         minutes = k // 60
         data[f"{minutes:0>2}:{seconds:0>2}"] = data.pop(k)
 
+
+class Dps(logs_base.THE_LOGS):
+    @logs_base.cache_wrap
+    def get_dps(self, s, f, player: str):
+        logs_slice = self.LOGS[s:f]
+        if player:
+            guids = self.get_units_controlled_by(player)
+        else:
+            guids = self.get_players_and_pets_guids()
+        data = get_raw_data(logs_slice, guids)
+        convert_keys(data)
+        return data
+
+    def get_dps_wrap(self, data: dict):
+        if not data:
+            return {}
+
+        enc_name = data.get("boss")
+        attempt = data.get("attempt")
+        if not enc_name or not attempt:
+            return {}
+        
+        enc_data = self.get_enc_data()
+        enc_name = BOSSES_FROM_HTML[enc_name]
+        s, f = enc_data[enc_name][int(attempt)]
+        player = data.get("player_name")
+        _data = self.get_dps(s, f, player)
+        if not _data:
+            return {}
+        refresh_window = data.get("sec")
+        new_data = convert_to_dps(_data, refresh_window)
+        convert_keys_to_str(new_data)
+        return new_data
+
+
+
+
 def test():
-    report = logs_main.THE_LOGS("22-12-30--20-10--Nomadra--Lordaeron")
+    report = Dps("22-12-30--20-10--Nomadra--Lordaeron")
     encdata = report.get_enc_data()
     s, f = encdata["Saviana Ragefire"][-1]
     s, f = encdata["The Lich King"][-2]
