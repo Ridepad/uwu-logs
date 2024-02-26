@@ -265,9 +265,9 @@ def _return_dict():
     }
 
 class SourceNumbers(logs_base.THE_LOGS):
-    __SPELL_DATA = {}
 
     def conv_spell_id(self, spell_id: str, source_guid=None):
+        self.SPELL_DATA = {}
         spell_id = self.convert_to_main_spell_id(spell_id)
         if source_guid:
             source_id = source_guid[6:-6]
@@ -276,8 +276,8 @@ class SourceNumbers(logs_base.THE_LOGS):
         return spell_id
 
     def get_spell_data(self, spell_id_full: str):
-        if spell_id_full in self.__SPELL_DATA:
-            return self.__SPELL_DATA[spell_id_full]
+        if spell_id_full in self.SPELL_DATA:
+            return self.SPELL_DATA[spell_id_full]
 
         if '--' in spell_id_full:
             spell_id, source_guid = spell_id_full.split('--')
@@ -292,7 +292,7 @@ class SourceNumbers(logs_base.THE_LOGS):
             pet_name = self.guid_to_name(source_guid)
             spell_data['name'] = f"{spell_data['name']} ({pet_name})"
         
-        self.__SPELL_DATA[spell_id_full] = spell_data
+        self.SPELL_DATA[spell_id_full] = spell_data
         return spell_data
     
     @logs_base.cache_wrap
