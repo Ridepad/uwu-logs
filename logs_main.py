@@ -63,6 +63,8 @@ def format_report_page_data(value: int, duration: float, max_value: int):
     }
 
 def calc_percent(value: int, max_value: int):
+    if max_value == 0:
+        return 0
     return value * 100 // max_value
 
 def calc_per_sec(value: int, duration: float, precision: int=1):
