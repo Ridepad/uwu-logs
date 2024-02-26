@@ -68,8 +68,7 @@
   padding-top: 5rem;
 }
 
-spells-hide spell-row spell-name-data,
-spells-hide spell-row .spell-history {
+spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
   box-shadow: inset 0 .2rem var(--secondary-color);
 }
 
