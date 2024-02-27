@@ -120,11 +120,13 @@ class Top(logs_main.THE_LOGS):
             _data = self.get_vali_heal_wrap(s, f)
         else:
             _damage = self.target_damage(s, f)
+            _total = _damage["total"]
+            _no_overkill = _damage["no_overkill"]
             _specific = self.target_damage_specific(s, f, boss_name)
-            _data = self.target_damage_combine(_damage, _specific)
+            _data = self.target_damage_combine(_total, _no_overkill, _specific)
         
-        _total = _data["damage_total"]
-        _useful = _data["useful_total"]
+        all_total = _data["damage_total"]
+        all_useful = _data["useful_total"]
 
         return [
             {
@@ -133,11 +135,11 @@ class Top(logs_main.THE_LOGS):
                 'i': guid[-7:],
                 'n': PLAYERS[guid],
                 'u': useful,
-                'd': _total[guid],
+                'd': all_total[guid],
                 's': SPECS[guid],
                 'a': f_auras(AURAS[guid], SPECS[guid])
             }
-            for guid, useful in _useful.items()
+            for guid, useful in all_useful.items()
             if is_player(guid)
         ]
 
@@ -150,8 +152,7 @@ def make_report_top_wrap(report_name, rewrite=False):
 
 
 def _test1():
-    make_report_top_wrap("24-02-02--20-56--Meownya--Lordaeron", rewrite=True)
-
+    make_report_top_wrap("24-02-09--20-49--Meownya--Lordaeron", rewrite=True)
 
 if __name__ == "__main__":
     _test1()

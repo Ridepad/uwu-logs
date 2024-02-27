@@ -405,15 +405,23 @@ def target_order(boss_name):
 
 @running_time
 def get_dmg(logs_slice: list[str]):
-    all_dmg = defaultdict(lambda: defaultdict(int))
+    total = defaultdict(lambda: defaultdict(int))
+    no_overkill = defaultdict(lambda: defaultdict(int))
     for line in logs_slice:
         if "DAMAGE" not in line:
             continue
         _line = line.split(',', 11)
         if _line[1] in NOT_DMG:
             continue
-        all_dmg[_line[4][6:-6]][_line[2]] += int(_line[9]) - int(_line[10])
-    return all_dmg
+        _dmg = int(_line[9])
+        tGUID_ID = _line[4][6:-6]
+        source_guid = _line[2]
+        total[tGUID_ID][source_guid] += _dmg
+        no_overkill[tGUID_ID][source_guid] += _dmg - int(_line[10])
+    return {
+        "total": total,
+        "no_overkill": no_overkill,
+    }
 
 def dmg_gen_valk(logs: list[str]):
     for line in logs:
@@ -569,17 +577,20 @@ class UsefulDamage(logs_base.THE_LOGS):
 
     def target_damage_wrap(self, segments: list, boss_name: str):
         damage = defaultdict(lambda: defaultdict(int))
+        no_overkill = defaultdict(lambda: defaultdict(int))
         useful_specific = defaultdict(lambda: defaultdict(int))
 
         for s, f in segments:
             _damage = self.target_damage(s, f)
-            add_new_numeric_data_wrap(damage, _damage)
+            add_new_numeric_data_wrap(damage, _damage["total"])
+            add_new_numeric_data_wrap(no_overkill, _damage["no_overkill"])
 
             _specific = self.target_damage_specific(s, f, boss_name)
             add_new_numeric_data_wrap(useful_specific, _specific)
         
         return {
             "damage": damage,
+            "no_overkill": no_overkill,
             "useful_specific": useful_specific,
         }
 
@@ -605,12 +616,13 @@ class UsefulDamage(logs_base.THE_LOGS):
         }
 
     @running_time
-    def target_damage_combine(self, damage, useful_specific) -> TargetDamageAllType:
-        damage_combined = self.combine_pets_all(damage, trim_non_players=True, ignore_abom=True)
+    def target_damage_combine(self, damage, no_overkill, useful_specific) -> TargetDamageAllType:
+        damage_combined = self.combine_pets_all(damage, trim_non_players=True)
         damage_total = get_total_damage(damage_combined, ignore_targets=self.FRIENDLY_IDS)
 
         specific_combined = self.combine_pets_all(useful_specific, trim_non_players=True, ignore_abom=True)
-        _useful = damage_combined | specific_combined
+        no_overkill_combined = self.combine_pets_all(no_overkill, trim_non_players=True, ignore_abom=True)
+        _useful = no_overkill_combined | specific_combined
         useful_total = get_total_damage(_useful, filter_targets=ALL_USEFUL_TARGETS)
 
         return {
@@ -623,7 +635,7 @@ class UsefulDamage(logs_base.THE_LOGS):
     @running_time
     def target_damage_all(self, segments: list, boss_name: str):
         _w = self.target_damage_wrap(segments, boss_name)
-        return self.target_damage_combine(_w["damage"], _w["useful_specific"])
+        return self.target_damage_combine(_w["damage"], _w["no_overkill"], _w["useful_specific"])
 
     def target_damage_all_formatted(self, segments, boss_name):
         _filtered = self.target_damage_all(segments, boss_name)
