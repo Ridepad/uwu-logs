@@ -59,10 +59,24 @@ th {
   box-shadow: .1em .1em 1em forestgreen;
 }
 
+#chart-wrap111 {
+  font-size: 1.5rem;
+}
+#toggle-graph:checked + label + * {
+  display: inline;
+}
+#toggle-graph + label + * {
+  display: none;
+}
+/* #chart-wrap,
+.sliced-control,
+.min-max-slider {
+  display: none;
+} */
 #chart-controls {
   display: flex;
   flex-direction: row;
-  font-size: 150%;
+  /* font-size: 150%; */
   gap: 5rem;
 }
 #chart-wrap {
@@ -73,8 +87,10 @@ th {
   margin-right: 1rem;
 }
 .min-max-slider {
-  height: 5em;
-  width: 20rem;
+  height: 5rem;
+  /* width: 95vw; */
+  width: 100%;
+  padding-left: 2.5rem;
 }
 .min-max-slider > .min-max-slider-values {
   /* display: inline; */
@@ -86,12 +102,16 @@ th {
 
 .min-max-slider-values,
 .min-max-slider-submit {
-  font-size: 150%;
+  /* font-size: 150%; */
 }
 
 .min-max-slider-inputs {
+  margin-top: -10rem;
   padding-top: 1rem;
-  width: 100%;
+  width: 80vw;
+  margin-inline: 4rem;
+  position: absolute;
+  z-index: 10;
 }
 
 .min-max-slider-half {

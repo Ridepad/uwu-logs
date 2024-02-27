@@ -3,14 +3,21 @@
 {% block add_style %}
 <style>
 #calendar-table {
-  font-size: clamp(10pt, calc(100vw / 17), 40pt);
+  font-size: 275%;
+}
+@media (orientation: portrait) {
+  #calendar-table {
+    font-size: 6vw;
+  }
 }
 #calendar-table label {
   padding: 0;
-  min-width: 3ch;
+  min-width: 4ch;
+  text-align: right;
 }
 #calendar-table td {
   text-align: right;
+  min-width: 4ch;
 }
 #calendar-table aside {
   display: none;
@@ -64,8 +71,7 @@
   min-width: 10ch;
 }
 #toggle-more {
-  min-width: 2ch;
-  color: var(--unfocused);
+  padding: 0;
 }
 </style>
 {% endblock add_style %}

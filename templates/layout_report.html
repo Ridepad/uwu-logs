@@ -23,59 +23,68 @@
 
 {% block fight_aside %}
 {% if SEGMENTS_LINKS %}
-<aside id="fights-container">
-  <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
-  <ul class="bosses">
-    {% for boss_data in SEGMENTS_LINKS %}
-    <li>
-      <a href="{{ boss_data['href'] }}" class="{{ boss_data['class_name'] }}">{{ boss_data['text'] }}</a>
-      <ul class="diffs">
-        {% for diff_data in boss_data['children'] %}
+<div id="top-row-wrap">
+  <h2 id="report-slice" data-duration="{{ DURATION }}">
+    <a href="/reports/{{ REPORT_ID }}/{{ QUERY }}"><span id="slice-dur">{{ DURATION_STR }}</span><span id="slice-name">{{ SLICE_NAME }}</span><span id="slice-tries">{{ SLICE_TRIES }}</span></a>
+  </h2>
+  <div id="fights-container-wrap">
+    <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
+    <aside id="fights-container">
+      <span id="fights-hover-dropdown">Ξ</span>
+      <ul class="bosses">
+        {% for boss_data in SEGMENTS_LINKS %}
         <li>
-          <a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a>
-          <ul class="segments">
-            {% for segment in diff_data['children'] %}
+          <a href="{{ boss_data['href'] }}" class="{{ boss_data['class_name'] }}">{{ boss_data['text'] }}</a>
+          <ul class="diffs">
+            {% for diff_data in boss_data['children'] %}
             <li>
-              <a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a>
+              <a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a>
+              <ul class="segments">
+                {% for segment in diff_data['children'] %}
+                <li>
+                  <a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a>
+                </li>
+                {% endfor %}
+              </ul>
             </li>
             {% endfor %}
           </ul>
         </li>
         {% endfor %}
       </ul>
-    </li>
-    {% endfor %}
-  </ul>
-</aside>
+    </aside>
+  </div>
+</div>
+
 {% endif %}
 {% endblock fight_aside %}
 {% block main_foot %}
 <footer>
-  <div id="report-slice" data-duration="{{ DURATION }}">
-    <a href="/reports/{{ REPORT_ID }}/{{ QUERY }}"><span id="slice-name">{{ SLICE_NAME }}</span><span id="slice-dur">{{ DURATION_STR }}</span><span id="slice-tries">{{ SLICE_TRIES }}</span></a>
-  </div>
   <input id="open-bot" type="checkbox"></button>
   <label id="bot-chkbox" for="open-bot">≣</label>
   <div id="bot-nav">
-    {% if SLICE_NAME == "The Lich King" %}
-    <a class="special-tab" href="/reports/{{ REPORT_ID }}/valks/{{ QUERY }}">VALKS</a>
-    {% endif %}
-    {% if SLICE_NAME == "Lady Deathwhisper" %}
-    <a class="special-tab" href="/reports/{{ REPORT_ID }}/lady_spirits/{{ QUERY }}">SPIRITS</a>
-    {% endif %}
-    <a {% if 'boss' in QUERY %}href="/reports/{{ REPORT_ID }}/damage/{{ QUERY }}"{% endif %}>DAMAGE</a>
+    <a {% if 'boss' in QUERY %}href="/reports/{{ REPORT_ID }}/damage/{{ QUERY }}"{% endif %}>TARGETS</a>
     <a href="/reports/{{ REPORT_ID }}/consumables/{{ QUERY }}">CONSUMABLES</a>
     <a href="/reports/{{ REPORT_ID }}/all_auras/{{ QUERY }}">AURAS</a>
     <a href="/reports/{{ REPORT_ID }}/deaths/{{ QUERY }}">DEATHS</a>
     <a href="/reports/{{ REPORT_ID }}/powers/{{ QUERY }}">POWERS</a>
     <a href="/reports/{{ REPORT_ID }}/compare/{{ QUERY }}">COMPARE</a>
+    {% if SLICE_NAME == "The Lich King" %}
+    <a class="special-tab" href="/reports/{{ REPORT_ID }}/valks/{{ QUERY }}">GRABS</a>
+    {% endif %}
+    {% if SLICE_NAME == "Lady Deathwhisper" %}
+    <a class="special-tab" href="/reports/{{ REPORT_ID }}/lady_spirits/{{ QUERY }}">SPIRITS</a>
+    {% endif %}
+    {% if SLICE_NAME == "Sindragosa" %}
+    <a class="special-tab" href="/reports/{{ REPORT_ID }}/ucm/{{ QUERY }}">UCM</a>
+    {% endif %}
     <!-- <li>
       <a href="/reports/{{ REPORT_ID }}/custom_search/{{ QUERY }}">SEARCH</a>
     </li> -->
     <div id="filtered-spells-container">
       <input id="spells-search" type="text" maxlength="10" size="10" placeholder="Search for spells">
       <div id="filtered-spells-wrap">
-      <div id="filtered-spells"></div>
+        <div id="filtered-spells"></div>
       </div>
     </div>
   </div>

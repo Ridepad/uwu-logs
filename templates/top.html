@@ -1,148 +1,122 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3K322W7YVS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-    
-      gtag('config', 'G-3K322W7YVS');
-    </script>
+{% extends "layout.html" %}
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no" />
-    <title>UwU Logs - Top</title>
+{% block head_meta %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no" />
+<title>UwU Logs - Top</title>
 
-    <meta name="title" content="UwU Logs - Top">
-    <meta name="description" content="Players Top for UwU Logs.">
-    <link rel="shortcut icon" href="/favicon.ico">
+<meta name="title" content="UwU Logs - Top">
+<meta name="description" content="Players Top for UwU Logs.">
+<link rel="shortcut icon" href="/favicon.ico">
 
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://uwu-logs.xyz/top">
-    <meta property="og:title" content="UwU Logs - Top">
-    <meta property="og:description" content="Players Top for UwU Logs.">
-    <meta property="og:image" content="https://uwu-logs.xyz/static/thumb.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://uwu-logs.xyz/top">
+<meta property="og:title" content="UwU Logs - Top">
+<meta property="og:description" content="Players Top for UwU Logs.">
+<meta property="og:image" content="https://uwu-logs.xyz/static/thumb.png">
 
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://uwu-logs.xyz/top">
-    <meta property="twitter:title" content="UwU Logs - Top">
-    <meta property="twitter:description" content="Players Top for UwU Logs.">
-    <meta property="twitter:image" content="https://uwu-logs.xyz/static/thumb.png">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://uwu-logs.xyz/top">
+<meta property="twitter:title" content="UwU Logs - Top">
+<meta property="twitter:description" content="Players Top for UwU Logs.">
+<meta property="twitter:image" content="https://uwu-logs.xyz/static/thumb.png">
+{% endblock head_meta %}
 
-    <link rel="stylesheet" type="text/css" href="/static/ubuntu.css">
-    <link rel="stylesheet" type="text/css" href="/static/style_top.css">
-    
-    <script type="module" src="static/top.js"></script>
-    <style>
-      * {
-        color: gainsboro;
-        font-family: Ubuntu;
-        font-size: 1.5vh;
-        text-decoration: none;
-        font-weight: 500;
-        margin: 0;
-      }
-      
-      @media (orientation: landscape) {
-        * {
-          font-size: 2vh;
-        }
-      }
-      
-      /* Hide scrollbar */
-      html {
-        background-color: black;
-        overflow: none;
-        -ms-overflow-style: none; /*IE Edge*/
-        scrollbar-width: none;  /*Firefox*/
-      }
-      html::-webkit-scrollbar {
-        display: none; /*Chrome Safari Opera*/
-      }
-    </style>
-  </head>
-  <body>
-    <main id="ladder">
-      <section id="controls">
-        <select id="select-server">
-          {% for server_name in SERVERS %}
-          <option value="{{ server_name }}">{{ server_name }}</option>
-          {% endfor %}
-        </select>
-        <select id="select-instance"></select>
-        <select id="select-boss"></select>
-        <input id="checkbox-combine" type="checkbox">
-        <label id="combine-label" for="checkbox-combine">Best</label>
-        <select id="select-size"><option value="25">25</option><option value="10">10</option></select>
-        <input id="checkbox-difficulty" type="checkbox">
-        <label id="difficulty-label" for="checkbox-difficulty">Heroic</label>
-        <select id="select-class"><option value="-1">All classes</option></select>
-        <select id="select-spec"></select>
-      </section>
-      <section id="table-container">
-        <table id="table-top">
-          <thead>
-            <tr>
-              <th id="head-name" class="table-n sortable">Name</th>
-              <th id="head-useful-dps" class="table-u sortable">uDPS</th>
-              <th id="head-useful-amount" class="table-u sortable">Useful</th>
-              <th id="head-total-dps" class="table-d sortable">tDPS</th>
-              <th id="head-total-amount" class="table-d sortable">Total</th>
-              <th id="head-duration" class="table-t sortable">Dur</th>
-              <th id="head-external" class="table-ext">E</th>
-              <th id="head-self" class="table-self">S</th>
-              <th id="head-rekt" class="table-rekt">R</th>
-              <th id="head-date" class="table-r sortable">Date</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <table id="table-points">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>%</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-      <section id="loading-info-panel" style="display: none;">
-        <p id="loading-info"></p>
-        <div id="upload-progress-bar-wrapper" class="progress-bar-wrapper">
-          <div id="upload-progress-bar" class="progress-bar"></div>
-          <div id="upload-progress-bar-percentage"></div>
-        </div>
-        <p>You can select any other filter to cancel</p>
-        <p>Some filters will make your browser beg for mercy</p>
-      </section>
-      <aside id="the-tooltip" style="display: none;">
-        <table>
-          <tbody id="tooltip-body">
-            {% for _ in range(10) %}
-            <tr class="hidden">
-              <td><img></td>
-              <td class="count"></td>
-              <td class="uptime"></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </aside>
-    </main>
-    <footer>
-      <section>
-        <a id="home-button" href="/">UwU LOGS</a>
-        <input id="toggle-total-damage" type="checkbox">
-        <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
-        <input id="toggle-useful-damage" type="checkbox">
-        <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
-        <input id="toggle-limit" type="checkbox">
-        <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
-      </section>
-    </footer>
-  </body>
-</html>
+{% block add_css_file %}
+<link rel="stylesheet" type="text/css" href="/static/style_top.css">
+{% endblock add_css_file %}
+
+{% block scripts_head %}
+<script type="module" src="static/top.js"></script>
+{% endblock scripts_head %}
+
+{% block the_main %}
+<main>
+<div id="controls-wrap">
+  <section id="controls">
+    <select id="select-server">
+      {% for server_name in SERVERS %}
+      <option value="{{ server_name }}">{{ server_name }}</option>
+      {% endfor %}
+    </select>
+    <select id="select-instance"></select>
+    <select id="select-boss"></select>
+    <input id="checkbox-combine" type="checkbox">
+    <label id="combine-label" for="checkbox-combine">Best</label>
+    <select id="select-size"><option value="25">25</option><option value="10">10</option></select>
+    <input id="checkbox-difficulty" type="checkbox">
+    <label id="difficulty-label" for="checkbox-difficulty">Heroic</label>
+    <select id="select-class"><option value="-1">All classes</option></select>
+    <select id="select-spec"></select>
+  </section>
+  <section id="controls-limits">
+    <input id="toggle-useful-damage" type="checkbox">
+    <label id="toggle-useful-damage-label" for="toggle-useful-damage">Show useful</label>
+    <input id="toggle-total-damage" type="checkbox">
+    <label id="toggle-total-damage-label" for="toggle-total-damage">Show total</label>
+    <input id="toggle-limit" type="checkbox">
+    <label id="toggle-limit-label" for="toggle-limit">Limit to 1000</label>
+  </section>
+</div>
+<section id="table-container">
+  <table id="table-top">
+    <thead>
+      <tr>
+        <th id="head-name" class="table-n sortable">Name</th>
+        <th id="head-useful-dps" class="table-u sortable">uDPS</th>
+        <th id="head-useful-amount" class="table-u sortable">Useful</th>
+        <th id="head-total-dps" class="table-d sortable">tDPS</th>
+        <th id="head-total-amount" class="table-d sortable">Total</th>
+        <th id="head-duration" class="table-t sortable">Dur</th>
+        <th id="head-external" class="table-ext">E</th>
+        <th id="head-self" class="table-self">S</th>
+        <th id="head-rekt" class="table-rekt">R</th>
+        <th id="head-date" class="table-r sortable">Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <table id="table-points">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>%</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <table id="table-time">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section id="loading-info-panel" style="display: none;">
+  <p id="loading-info"></p>
+  <div id="upload-progress-bar-wrapper" class="progress-bar-wrapper">
+    <div id="upload-progress-bar" class="progress-bar"></div>
+    <div id="upload-progress-bar-percentage"></div>
+  </div>
+  <p>You can select any other filter to cancel</p>
+  <p>Some filters will make your browser beg for mercy</p>
+</section>
+<aside id="the-tooltip" style="display: none;">
+  <table>
+    <tbody id="tooltip-body">
+      {% for _ in range(10) %}
+      <tr class="hidden">
+        <td><img></td>
+        <td class="count"></td>
+        <td class="uptime"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</aside>
+</main>
+{% endblock the_main %}
