@@ -1,4 +1,6 @@
 from collections import defaultdict
+from typing import TypedDict
+
 from constants import (
     running_time,
     separate_thousands,
@@ -11,6 +13,10 @@ import logs_base
 # 1/19 21:49:03.234,SPELL_AURA_APPLIED_DOSE,0x0600000000526D6E,Keppori,0x0600000000526D6E,Keppori,69766,Instability,0x40,DEBUFF,8
 # 1/19 21:49:08.266,SPELL_AURA_REMOVED,0x0600000000526D6E,Keppori,0x0600000000526D6E,Keppori,69766,Instability,0x40,DEBUFF
 # 1/19 21:49:08.269,SPELL_DAMAGE,0x0600000000526D6E,Keppori,0x0600000000526D6E,Keppori,71046,Backlash,0x40,22349,0,64,5587,0,0,nil,nil,nil
+
+class ParsedUCM(TypedDict):
+    dmg: defaultdict[str, list[str, str, list]]
+    stacks: defaultdict[str, list[str, str, str]]
 
 
 def sec_to_str(s: float):
@@ -29,14 +35,14 @@ def parse_ucm_damage(logs_slice: list[str], spell_id="71046"):
     return dmg
 
 @running_time
-def parse_ucm(logs_slice: list[str]):
+def parse_ucm(logs_slice: list[str]) -> ParsedUCM:
     stacks = defaultdict(list)
     for line in logs_slice:
         if "69766" not in line:
             continue
         try:
-            t, flag, source_guid, _, _, _, *spell = line.split(',')
-            stacks[source_guid].append((t, flag, spell[-1]))
+            t, flag, _, _, target_guid, _, *spell = line.split(',')
+            stacks[target_guid].append((t, flag, spell[-1]))
         except:
             pass
     
@@ -49,14 +55,14 @@ def parse_ucm(logs_slice: list[str]):
         "stacks": stacks,
     }
 
-def count_dmg(a:list):
+def count_dmg(dmg_events: list):
     line: list[str]
     pets = defaultdict(int)
     full = defaultdict(int)
     prevented = defaultdict(int)
     actual = defaultdict(int)
     overkill = defaultdict(int)
-    for _, target, line in a:
+    for _, target, line in dmg_events:
         is_pet = target[:3] != "0x0"
         if is_pet:
             try:
@@ -108,26 +114,50 @@ def stacks_to_int(s):
     except:
         return 1
 
-def get_stacks(a: list):
-    stacks = {}
-    for q, w in zip(a, a[1:]):
-        if w[1] != "SPELL_AURA_REMOVED":
+def stacks_events_to_dict(stacks_events: list[list[str]]):
+    stacks: dict[str, int] = {}
+    for event_now, event_next in zip(stacks_events, stacks_events[1:]):
+        if event_next[1] != "SPELL_AURA_REMOVED":
             continue
-        if q[1] == "SPELL_AURA_REMOVED":
+        if event_now[1] == "SPELL_AURA_REMOVED":
             continue
-        stacks[w[0]] = stacks_to_int(q[-1])
+        stacks[event_next[0]] = stacks_to_int(event_now[-1])
     return stacks
+
+def get_sindra_guid(guids):
+    for guid in guids:
+        if guid[6:12] == "008FF5":
+            return guid
+    return None
+
+def format_damage(dmg_events):
+    damage = count_dmg(dmg_events)
+    explosion = {}
+    for damage_type, damage_done in damage.items():
+        explosion[f"{damage_type}_total"] = separate_thousands(sum(damage_done.values()))
+        explosion[damage_type] = separate_thousands_dict(sort_dict_by_value(damage_done))
+    
+    explosion["players_hit"] = len(damage["actual"])
+    return explosion
 
 
 class UCM(logs_base.THE_LOGS):
-    def find_same_time_stacks_drop(self, t1, stacks):
-        for t2, _stacks in list(stacks.items()):
+    def stacks_before_explosion(self, t1, stacks):
+        for t2, _stacks in stacks.items():
             dt = abs(self.get_timedelta(t2, t1)).total_seconds()
             if dt < 4:
                 return _stacks
         return 0
+    
+    def explostions_after_removed(self, t1, dmg):
+        for t2, dmg_events in dmg.items():
+            
+            dt = self.get_timedelta(t1, t2).total_seconds()
+            if dt >= 0 and dt < 0.2:
+                return dmg_events
+        return {}
 
-    def group_explosions(self, x: list[tuple[str]]):
+    def group_explosions(self, x: list[tuple[str]], window_sec=1):
         groupped = []
         t_prev = x[0][0]
         qqq = []
@@ -135,7 +165,7 @@ class UCM(logs_base.THE_LOGS):
         for q in x:
             t_now = q[0]
             d = self.get_timedelta(t_prev, t_now).total_seconds()
-            if d > 1:
+            if d > window_sec:
                 qqq = []
                 groupped.append(qqq)
             t_prev = t_now
@@ -146,6 +176,28 @@ class UCM(logs_base.THE_LOGS):
             for group in groupped
         }
 
+    def parse_slice_sindra_source(self, _ucm: ParsedUCM, _start):
+        sindra_guid = get_sindra_guid(_ucm["dmg"])
+        if not sindra_guid:
+            return []
+
+        all_dmg = self.group_explosions(_ucm["dmg"][sindra_guid], 0.05)
+
+        explosions = []
+        for source, _stacks_events in _ucm["stacks"].items():
+            stacks_groupped = stacks_events_to_dict(_stacks_events)
+            for timestamp, _stacks in stacks_groupped.items():
+                dmg_events = self.explostions_after_removed(timestamp, all_dmg)
+                if not dmg_events:
+                    continue
+                explosion = format_damage(dmg_events)
+                explosion["stacks"] = _stacks
+                t = self.get_timedelta(_start, timestamp).total_seconds()
+                explosion["timestamp"] = sec_to_str(t)
+                explosion["source"] = source
+                explosions.append(explosion)
+        return explosions
+
     @logs_base.cache_wrap
     def parse_slice(self, s, f):
         logs_slice = self.LOGS[s:f]
@@ -153,28 +205,30 @@ class UCM(logs_base.THE_LOGS):
         
         _ucm = parse_ucm(logs_slice)
         
-        times = []
+        if any(guid[6:12] == "008FF5" for guid in _ucm["dmg"]):
+            return self.parse_slice_sindra_source(_ucm, _start)
+        
+        explosions = []
         sources = sorted(set(_ucm["stacks"]) | set(_ucm["dmg"]))
         for source in sources:
-            dmg = _ucm["dmg"].get(source, [])
-            if not dmg:
+            damage_events = _ucm["dmg"].get(source)
+            stacks_events = _ucm["stacks"].get(source)
+            if not damage_events or not stacks_events:
                 continue
-            dmg = self.group_explosions(dmg)
-            stacks = _ucm["stacks"].get(source, {})
-            stacks = get_stacks(stacks)
-            for t1, _dmg_dict in dmg.items():
-                explosion = {}
-                _dmg = count_dmg(_dmg_dict)
-                for q, w in _dmg.items():
-                    explosion[f"{q}_total"] = separate_thousands(sum(w.values()))
-                    explosion[q] = separate_thousands_dict(sort_dict_by_value(w))
-                explosion["players_hit"] = len(explosion["actual"])
-                explosion["stacks"] = self.find_same_time_stacks_drop(t1, stacks)
-                t = self.get_timedelta(_start, t1).total_seconds()
-                explosion['timestamp'] = sec_to_str(t)
-                explosion['source'] = source
-                times.append(explosion)
-        return times
+            
+            stacks = stacks_events_to_dict(stacks_events)
+            dmg = self.group_explosions(damage_events)
+            for timestamp, dmg_events in dmg.items():
+                if not dmg_events:
+                    continue
+                
+                explosion = format_damage(dmg_events)
+                explosion["stacks"] = self.stacks_before_explosion(timestamp, stacks)
+                t = self.get_timedelta(_start, timestamp).total_seconds()
+                explosion["timestamp"] = sec_to_str(t)
+                explosion["source"] = source
+                explosions.append(explosion)
+        return explosions
 
     def parse_ucm_wrap(self, segments):
         z = []
@@ -190,7 +244,7 @@ class UCM(logs_base.THE_LOGS):
         }
 
 def test1():
-    report = UCM("24-02-09--20-49--Meownya--Lordaeron")
+    report = UCM("24-02-18--12-44--Qxt--Rising Gods")
     encdata = report.get_enc_data()
     report.LOGS
     for s, f in encdata["Sindragosa"][-1:]:
