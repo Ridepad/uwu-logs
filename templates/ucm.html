@@ -102,14 +102,16 @@ img {
           </td>
           <td class="total-cell has-tooltip">{{ v["pets_total"] }}
             {% if v["pets"] %}
-            <table class="tooltip">
-              {% for _guid, _value in v["pets"].items() %}
-              <tr>
-                <td>{{ guid_to_name(_guid) }}</td>
-                <td class="count">{{ _value }}</td>
-              </tr>
-              {% endfor %}
-            </table>
+            <div class="tooltip">
+              <table>
+                {% for _guid, _value in v["pets"].items() %}
+                <tr>
+                  <td>{{ guid_to_name(_guid) }}</td>
+                  <td class="count">{{ _value }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
             {% endif %}
           </td>
         </tr>
