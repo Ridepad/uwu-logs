@@ -88,8 +88,7 @@ def convert_to_continuous_dps_custom(data: dict[int, int], refresh_window=10):
     return DPS
 
 def convert_to_slice_dps_custom(data: dict[int, int], refresh_window=None):
-    # DPS = {0: 0}
-    DPS = {}
+    DPS = {0: 0}
     LAST_KEY = list(data)[-1]
     if not refresh_window:
         refresh_window = 1
