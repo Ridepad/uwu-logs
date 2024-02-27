@@ -3,6 +3,7 @@ from collections import defaultdict
 import logs_base
 from constants import (
     BOSSES_FROM_HTML,
+    running_time,
 )
 
 FLAGS = {'SWING_DAMAGE', 'RANGE_DAMAGE', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'DAMAGE_SHIELD'}
@@ -23,17 +24,19 @@ def get_raw_data(logs: list[str], guids: set[str]):
     return data
 
 # 5% faster idk why
-def get_raw_data(logs: list[str], guids: set[str]):
+def get_raw_data(logs: list[str], source_guids: set[str], filter_guids: set[str]):
     data: defaultdict[str, int] = defaultdict(int)
 
     for line in logs:
         if "DAMAGE" not in line:
             continue
         try:
-            timestamp, flag, sGUID, _, _, _, _, _, _, damage, _ = line.split(',', 10)
+            timestamp, flag, sGUID, _, tGUID, _, _, _, _, damage, _ = line.split(',', 10)
         except ValueError:
             continue
-        if sGUID not in guids:
+        if sGUID not in source_guids:
+            continue
+        if tGUID in filter_guids:
             continue
         if flag not in FLAGS:
             continue
@@ -136,14 +139,16 @@ class Dps(logs_base.THE_LOGS):
     @logs_base.cache_wrap
     def get_dps(self, s, f, player: str):
         logs_slice = self.LOGS[s:f]
+        all_guids = self.get_players_and_pets_guids()
         if player:
-            guids = self.get_units_controlled_by(player)
+            source_guids = self.get_units_controlled_by(player)
         else:
-            guids = self.get_players_and_pets_guids()
-        data = get_raw_data(logs_slice, guids)
+            source_guids = all_guids
+        data = get_raw_data(logs_slice, source_guids, all_guids)
         convert_keys(data)
         return data
 
+    @running_time
     def get_dps_wrap(self, data: dict):
         if not data:
             return {}
@@ -182,5 +187,4 @@ def test():
     print(dps)
 
 if __name__ == "__main__":
-    import logs_main
     test()
