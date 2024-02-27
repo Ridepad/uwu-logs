@@ -19,27 +19,6 @@ img {
 #server-select input {
   font-size: inherit;
 }
-#upload-progress-bar-wrapper {
-  --radius: .5em;
-  position: relative;
-  height: 1.25em;
-  margin-top: .25em;
-  margin-bottom: .25em;
-  box-shadow: inset 0 0 var(--radius) var(--unfocused), 0 0 var(--radius) var(--unfocused);
-  border-radius: var(--radius);
-}
-#upload-progress-bar {
-  border-radius: var(--radius);
-  background-color: var(--secondary-color);
-  width: 0%;
-  height: 100%;
-}
-#upload-progress-bar-percentage {
-  text-align: right;
-  position: absolute;
-  right: var(--radius);
-  bottom: 5%;
-}
 .upload {
   display: grid;
   justify-content: center;
@@ -66,7 +45,7 @@ img {
   padding-inline: 1em;
 }
 .upload span {
-  text-shadow: .1em .1em .1em var(--secondary-color);
+  text-shadow: .1em .1em 1em var(--secondary-color);
 }
 #server-input {
   width: 100%;
@@ -76,6 +55,12 @@ img {
 }
 .col-status {
   width: 10em;
+}
+.important {
+  color: crimson;
+}
+.warning {
+  color: goldenrod;
 }
 </style>
 {% endblock add_style %}
@@ -119,16 +104,18 @@ img {
     <li>- You can even <span>/reload</span> mid pull with this wa and it'll continue logging</li>
     <li>2. Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
     <li>3. Archive it (supports every archive format now)</li>
-    <li style="color: crimson;">- Don't rename text files to .zip/.7z/etc., create archives from 0.</li>
-    <li style="color: goldenrod;">- Preferably archive only <span>.txt</span> file without any folders to prevent bugs.</li>
+    <li class="warning">- Don't upload your mom's onlyfans photos.</li>
+    <li class="warning">- Don't put archive into archive.</li>
+    <li class="warning">- Preferably archive only <span>.txt</span> file without any folders to prevent bugs.</li>
+    <li class="important">- Don't rename text files to .zip/.7z/etc., create archives from 0.</li>
     <li>4. Upload the archive above</li>
   </ul>
   <h2>Additional info</h2>
   <ul>
+    <li>3.3.5 Combatlog is logged into the same file always</li>
+    <li class="warning">After upload, delete/move/rename <span>WoWCombatLog.txt</span> to keep it fresh</li>
+    <li class="important">Don't let log file exceed 4GB, it will be rewritten in a weird way</li>
     <li>Top is updated every minute for perfomance reasons</li>
-    <li>Combatlog is logged into the same file always</li>
-    <li>After upload, delete/move/rename <span>WoWCombatLog.txt</span> to keep it fresh</li>
-    <li>Don't let log file exceed 4GB, it will be rewritten in a weird way</li>
     <li>Use <a href="https://www.7-zip.org/" target="_blank">7zip</a> with <a href="https://i.imgur.com/0xznLXP.png" target="_blank">PPMd</a> compression for lower archiving time and file size</li>
     <li>
       <table>
