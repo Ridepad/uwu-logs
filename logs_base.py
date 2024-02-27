@@ -312,8 +312,10 @@ class THE_LOGS:
         return None
     
     def guid_to_name(self, guid: str):
-        # print(guid, self.unit_id_to_name.get(guid, "Unknown"))
-        return self.unit_id_to_name.get(guid, guid)
+        name = self.unit_id_to_name.get(guid)
+        if not name:
+            name = self.get_all_guids().get(guid, {}).get("name", "Unknown")
+        return name
     
     def sort_data_guids_by_name(self, data: dict):
         return dict(sorted(data.items(), key=lambda x: self.guid_to_name(x[0])))
