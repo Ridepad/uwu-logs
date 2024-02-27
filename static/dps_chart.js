@@ -24,7 +24,6 @@ const start = QUERY_PARAMS.get("s");
 const end = QUERY_PARAMS.get("f");
 const start_custom = QUERY_PARAMS.get("sc") ?? 0;
 const end_custom = QUERY_PARAMS.get("fc") ?? 0;
-const DURATION = parseFloat(document.getElementById("report-main").getAttribute("data-duration"));
 const selection = {
   w: 0,
   startX: 0,
@@ -212,4 +211,3 @@ set_text_range();
 toggle_graph();
 TOGGLE_GRAPH.addEventListener("change", toggle_graph);
 SELECT_SLICE_SECONDS.addEventListener("change", toggle_graph);
-// document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);
