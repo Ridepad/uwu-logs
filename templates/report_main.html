@@ -1,22 +1,21 @@
 {% extends "layout_report.html" %}
 
 {% block scripts_head %}
-<script src="/static/chart-4.1.2.min.js"></script>
-<script src="/static/report_main.js" async defer></script>
-<script src="/static/range.js" async defer></script>
-<script src="/static/dps_chart.js" async defer></script>
+<script src="/static/chart-4.1.2.min.js" defer></script>
+<script src="/static/report_main.js" defer></script>
+<script src="/static/dps_chart.js?240227-1" defer></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/report.css">
+<link rel="stylesheet" type="text/css" href="/static/report.css?240227-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
-<main id="report-main">
-  <section>
-    <ul id="chart-controls">
-      <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
-      <li class="sliced-control">
+<main id="report-main" data-duration="{{ DURATION }}">
+  <section id="chart-wrap-wrap">
+    <input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label>
+    <section id="controls-wrap">
+      <div class="sliced-control">
         <span>Sliced</span>
         <select id="sliced-sec">
           <option value=0 selected>0</option>
@@ -30,22 +29,19 @@
           <option value=30>30</option>
         </select>
         <span>sec</span>
-      </li>
-    </ul>
-    <div class="min-max-slider" data-legendnum="2">
-      <div class="min-max-slider-inputs">
-        <input class="min min-max-slider-half" name="min" type="range" step="1"/>
-        <input class="max min-max-slider-half" name="max" type="range" step="1"/>
       </div>
-      <div class="min-max-slider-values">
+      <div class="range-values">
         <span class="min-value"></span>
         <span> - </span>
         <span class="max-value"></span>
         <span class="total-value"></span>
       </div>
-      <button class="min-max-slider-submit" type="submit">Slice</button>
-    </div>
-    <section id="chart-wrap" style="display: none;">
+      <div>
+        <button class="min-max-slider-submit" type="submit">Slice</button>
+      </div>
+    </section>
+    <section id="chart-wrap">
+      <canvas id="overlay" width="600" height="400" style="position:absolute;pointer-events:none;"></canvas>
       <canvas id="chart"></canvas>
     </section>
   </section>

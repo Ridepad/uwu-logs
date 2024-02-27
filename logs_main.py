@@ -209,10 +209,15 @@ class THE_LOGS(
         ts = self.get_timestamp()
         sc = get_dict_int(args, "sc")
         fc = get_dict_int(args, "fc")
-        if sc and fc and sc > 0 and fc < len(ts):
+        if sc and fc:
             slice_name = "Custom Slice"
             slice_tries = ""
-            segments = [[ts[sc], ts[fc]]]
+            s = get_dict_int(args, "s", 0)
+            f = get_dict_int(args, "f", 0)
+            nf = s+fc
+            if nf > f:
+                nf = f
+            segments = [[ts[s+sc], ts[nf]]]
         
         elif boss_name == "all":
             enc_data = self.get_enc_data()
@@ -427,7 +432,9 @@ class THE_LOGS(
         SPECS = self.report_add_spec_info(specs, PLAYERS)
 
         points = {}
-        if mode and _useful and boss_name not in BOSSES_SKIP_POINTS:
+        if request.args.get("sc") and request.args.get("fc"):
+            pass
+        elif mode and _useful and boss_name not in BOSSES_SKIP_POINTS:
             _useful_dps = {
                 guid: dmg / DURATION
                 for guid, dmg in _useful.items()
