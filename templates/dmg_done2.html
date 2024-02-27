@@ -83,16 +83,6 @@ button:hover {
   visibility: visible;
 }
 
-
-#chart-wrap {
-  height: 20vh;
-  width: 100%;
-}
-#chart {
-  height: 100;
-  width: 100%;
-}
-
 .table-wrap {
   padding-bottom: 7rem;
 }
@@ -145,6 +135,32 @@ button:hover {
 .border-thin {
   border-right: .4rem solid var(--table-border);
 }
+#toggle-graph:checked + label + section + section {
+  display: block;
+}
+#toggle-graph:checked + label + section {
+  display: inline-flex;
+}
+#chart-wrap-wrap {
+  font-size: 1.5rem;
+}
+#chart-wrap-wrap section {
+  display: none;
+}
+#controls-wrap {
+  gap: 2rem;
+  align-items: center;
+}
+.range-values {
+  min-width: 14rem;
+}
+#chart-wrap {
+  height: 10rem;
+  width: 100%;
+}
+#chart {
+  margin-right: 1rem;
+}
 </style>
 {% endblock add_style %}
 
@@ -184,8 +200,11 @@ button:hover {
       {% endif %}
     </li>
     <li><a id="warmane-armory-link" href="https://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
-    <li><input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label></li>
-    <li class="sliced-control">
+</section>
+<section id="chart-wrap-wrap">
+  <input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label>
+  <section id="controls-wrap">
+    <div class="sliced-control">
       <span>Sliced</span>
       <select id="sliced-sec">
         <option value=0 selected>0</option>
@@ -199,11 +218,21 @@ button:hover {
         <option value=30>30</option>
       </select>
       <span>sec</span>
-    </li>
-  </ul>
-  <div id="chart-wrap">
+    </div>
+    <div class="range-values">
+      <span class="min-value"></span>
+      <span> - </span>
+      <span class="max-value"></span>
+      <span class="total-value"></span>
+    </div>
+    <div>
+      <button class="min-max-slider-submit" type="submit">Slice</button>
+    </div>
+  </section>
+  <section id="chart-wrap">
+    <canvas id="overlay" width="600" height="400" style="position:absolute;pointer-events:none;"></canvas>
     <canvas id="chart"></canvas>
-  </div>
+  </section>
 </section>
 <section id="dmg-done-main" class="table-wrap wrap-spell">
   {% if SPELLS_DATA %}
