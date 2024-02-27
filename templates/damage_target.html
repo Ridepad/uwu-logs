@@ -5,6 +5,11 @@
 th {
   height: 4rem;
 }
+img {
+  min-width: 1rem;
+  min-height: 1rem;
+  max-height: 1rem;
+}
 #class-filter {
 	min-width: max-content;
 	padding-inline: 1rem;
@@ -44,13 +49,18 @@ th {
           </tr>
         </thead>
         <tbody class="table-has-total">
-          {% for player_name in PLAYERS %}
+          {% for player_guid in PLAYERS_SORTED %}
           <tr>
-            <td class="player-cell">
-              <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            <td class="player-cell" title="{{ SPECS[player_guid]['spec'] }}">
+              <img src="/static/icons/{{ SPECS[player_guid]['icon'] }}.jpg">
+              {% if player_guid == "Total" %}
+              Total
+              {% else %}
+              <a class="{{ SPECS[player_guid]['class'] }}" href="/reports/{{ REPORT_ID }}/player/{{ SPECS[player_guid]['name'] }}/{{ QUERY }}">{{ SPECS[player_guid]['name'] }}</a>
+              {% endif %}
             </td>
             {% for tguid, players_damage in TARGETS.items() %}
-            <td class="total-cell">{{ players_damage[player_name] }}</td>
+            <td class="total-cell">{{ players_damage[player_guid] }}</td>
             {% endfor %}
           </tr>
           {% endfor %}
