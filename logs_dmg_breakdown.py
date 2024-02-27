@@ -1,7 +1,12 @@
 from collections import defaultdict
 import json
 from typing import TypedDict
-from constants import running_time, sort_dict_by_value
+from constants import (
+    running_time,
+    sort_dict_by_value,
+    separate_thousands,
+    separate_thousands_dict,
+)
 
 import logs_base
 
@@ -29,26 +34,6 @@ class BreakdownTypeExtended(BreakdownType):
     SPELLS: dict[str, dict[str, str]]
     TARGETS: set[str]
 
-
-def separate_thousands(num, precision=None):
-    try:
-        num + 0
-    except TypeError:
-        return ""
-    
-    if not num:
-        return ""
-    
-    if precision is None:
-        precision = 1 if isinstance(num, float) else 0
-    
-    return f"{num:,.{precision}f}".replace(',', ' ')
-
-def separate_thousands_dict(data: dict):
-    return {
-        k: separate_thousands(v)
-        for k, v in data.items()
-    }
 
 def total_detailed(d: dict[str, dict[str, int]]):
     total = defaultdict(int)

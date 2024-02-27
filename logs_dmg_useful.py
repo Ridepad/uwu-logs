@@ -2,8 +2,11 @@ from collections import defaultdict
 from typing import TypedDict
 
 from constants import (
-    TOC_CHAMPIONS, is_player, running_time, sort_dict_by_value,
-    separate_thousands,
+    TOC_CHAMPIONS,
+    is_player,
+    running_time,
+    sort_dict_by_value,
+    separate_thousands_dict,
     add_new_numeric_data,
     BOSSES_GUIDS,
 )
@@ -548,12 +551,6 @@ def add_new_numeric_data_wrap(d1, d2):
 def sort_by_key(data: dict):
     return dict(sorted(data.items()))
 
-def separate_thousands_dict(data: dict):
-    return {
-        k: separate_thousands(v)
-        for k, v in data.items()
-    }
-
 def add_total_sort(data: dict):
     data["Total"] = sum(data.values())
     return sort_dict_by_value(data)
@@ -630,23 +627,30 @@ class UsefulDamage(logs_base.THE_LOGS):
 
     def target_damage_all_formatted(self, segments, boss_name):
         _filtered = self.target_damage_all(segments, boss_name)
-
-        damage_combined = _filtered["damage_combined"]
-        useful_specific_names = guid_to_custom_name(_filtered["specific_combined"])
-        custom_groups = add_custom_units(damage_combined, boss_name)
-
-        _order = target_order(boss_name)
-        damage_combined_sorted = dict(sorted(damage_combined.items(), key=lambda x: x[0] not in _order))
         
         data_all = {
             "Useful": _filtered["useful_total"],
             "Total": _filtered["damage_total"],
-        } | useful_specific_names | custom_groups | damage_combined_sorted
-        data_all["Friendly Fire"] = data_all.pop("000000", {})
+        }
+
+        damage_combined = _filtered["damage_combined"]
+        useful_specific_names = guid_to_custom_name(_filtered["specific_combined"])
+        data_all.update(useful_specific_names)
+        
+        custom_groups = add_custom_units(damage_combined, boss_name)
+        data_all.update(custom_groups)
+
+        _friendly_fire = damage_combined.pop("000000", {})
+        _order = target_order(boss_name)
+        damage_combined_sorted = dict(sorted(damage_combined.items(), key=lambda x: x[0] not in _order))
+        damage_combined_sorted = self.convert_dict_guids_to_names(damage_combined_sorted)
+        data_all.update(damage_combined_sorted)
+        
+        data_all["Friendly Fire"] = _friendly_fire
 
         dmg_to_target = {
-            self.guid_to_name(guid_id): separate_thousands_dict(add_total_sort(_data))
-            for guid_id, _data in data_all.items()
+            name: separate_thousands_dict(add_total_sort(_data))
+            for name, _data in data_all.items()
             if _data
         }
 

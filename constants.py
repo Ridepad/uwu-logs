@@ -1076,6 +1076,12 @@ def separate_thousands(num, precision=None):
     
     return f"{num:,.{precision}f}".replace(',', ' ')
 
+def separate_thousands_dict(data: dict):
+    return {
+        k: separate_thousands(v)
+        for k, v in data.items()
+    }
+
 def add_new_numeric_data(data_total: defaultdict, data_new: dict[str, int]):
     for source, amount in data_new.items():
         data_total[source] += amount

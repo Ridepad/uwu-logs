@@ -16,6 +16,7 @@ import logs_spell_info
 import logs_top_db
 import logs_lady_spirits
 import logs_valk_grabs
+import logs_ucm
 
 from constants import (
     BOSSES_FROM_HTML,
@@ -96,6 +97,7 @@ class THE_LOGS(
     logs_deaths.Deaths,
     logs_lady_spirits.LadySpirits,
     logs_valk_grabs.ValkGrabs,
+    logs_ucm.UCM,
 ):
     def attempt_time(self, boss_name, attempt, shift=0):
         enc_data = self.get_enc_data()

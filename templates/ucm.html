@@ -1,0 +1,123 @@
+{% extends "layout_report.html" %}
+
+{% block add_style %}
+<style>
+img {
+  min-width: 1em;
+  min-height: 1em;
+  max-width: 1em;
+  max-height: 1em;
+}
+.ucm-table-wrap {
+  --tooltip-height: 10rem;
+  padding-bottom: var(--tooltip-height);
+}
+.has-tooltip {
+  position: relative;
+}
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+}
+.tooltip {
+	visibility: hidden;
+  position: absolute;
+  top: 75%;
+  left: 95%;
+  max-height: var(--tooltip-height);
+	padding: .1em;
+	border-radius: .25rem;
+	background-color: var(--background);
+	box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+	z-index: 5;
+}
+.tooltip td:first-of-type {
+  min-width: 7rem;
+  text-align: left;
+}
+.count {
+  min-width: 4rem;
+  text-align: right;
+}
+</style>
+{% endblock add_style %}
+{% block the_main %}
+<main id="auras">
+<section class="table-wrap wrap-damage">
+  {% for try in UCM %}
+  <div class="ucm-table-wrap">
+    <table>
+      <thead>
+        <th class="player-cell">Source</th>
+        <th>Timestamp</th>
+        <th>Stacks</th>
+        <th>Hit</th>
+        <th>Actual</th>
+        <th>Full</th>
+        <th>Prevented</th>
+        <th>Overkill</th>
+        <th>Pets</th>
+      </thead>
+      <tbody>
+        {% for v in try %}
+        <tr>
+          <td class="player-cell" title="{{ SPECS[v['source']]['spec'] }}">
+            <img src="/static/icons/{{ SPECS[v['source']]['icon'] }}.jpg">
+            <a class="{{ SPECS[v['source']]['class'] }}" href="/reports/{{ REPORT_ID }}/player/{{ SPECS[v['source']]['name'] }}/{{ QUERY }}">{{ SPECS[v['source']]['name'] }}</a>
+          </td>
+          <td class="count">{{ v["timestamp"] }}</td>
+          <td class="count">{{ v["stacks"] }}</td>
+          <td class="count">{{ v["players_hit"] }}</td>
+          <td class="total-cell has-tooltip">{{ v["actual_total"] }}
+            {% if v["actual"] %}
+            <div class="tooltip">
+              <table>
+                {% for _guid, _value in v["actual"].items() %}
+                <tr>
+                  <td class="{{ SPECS[_guid]['class'] }}" >{{ SPECS[_guid]['name'] }}</td>
+                  <td class="count">{{ _value }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+            {% endif %}
+          </td>
+          <td class="total-cell">{{ v["full_total"] }}</td>
+          <td class="total-cell">{{ v["prevented_total"] }}</td>
+          <td class="total-cell has-tooltip">{{ v["overkill_total"] }}
+            {% if v["overkill"] %}
+            <div class="tooltip">
+              <table>
+                {% for _guid, _value in v["overkill"].items() %}
+                <tr>
+                  <td class="{{ SPECS[_guid]['class'] }}" >{{ SPECS[_guid]['name'] }}</td>
+                  <td class="count">{{ _value }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+            {% endif %}
+          </td>
+          <td class="total-cell has-tooltip">{{ v["pets_total"] }}
+            {% if v["pets"] %}
+            <table class="tooltip">
+              {% for _guid, _value in v["pets"].items() %}
+              <tr>
+                <td>{{ guid_to_name(_guid) }}</td>
+                <td class="count">{{ _value }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+</section>
+</main>
+{% endblock the_main %}

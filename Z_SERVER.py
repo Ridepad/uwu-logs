@@ -509,7 +509,7 @@ def damage_targets(report_id):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    data = report.useful_damage_all(segments, default_params["BOSS_NAME"])
+    data = report.target_damage_all_formatted(segments, default_params["BOSS_NAME"])
 
     return render_template_cache(
         'damage_target.html', **default_params, **data,
@@ -561,6 +561,18 @@ def lady_spirits(report_id):
     return render_template_cache(
         'lady_spirits.html', **default_params,
         PULLS=data,
+    )
+
+@SERVER.route("/reports/<report_id>/ucm/")
+def ucm(report_id):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+    
+    data = report.parse_ucm_wrap(segments)
+    return render_template_cache(
+        'ucm.html', **default_params,
+        **data,
     )
 
 @SERVER.route("/reports/<report_id>/deaths/")
