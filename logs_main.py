@@ -401,7 +401,7 @@ class THE_LOGS(
         DURATION = self.get_fight_duration_total(segments)
 
         if boss_name and boss_name != "all":
-            _useful = self.useful_damage_all(segments, boss_name)["USEFUL"]
+            _useful = self.target_damage_all(segments, boss_name)["useful_total"]
             _useful = sort_dict_by_value(_useful)
         else:
             _useful = {}    

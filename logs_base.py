@@ -44,6 +44,13 @@ PASSIVE_SPELLS = {
     },
 }
 
+TOTAL_DUMMY_SPEC = {
+    "spec": "Total",
+    "icon": "ability_hunter_readiness",
+    "name": "Total",
+    "class": "total",
+}
+
 @running_time
 def get_spells_int():
     spells_json = file_functions.json_read(SPELL_ICONS_DB)
@@ -250,6 +257,20 @@ class THE_LOGS:
         players = self.get_players_guids()
         classes = self.get_classes()
         return logs_player_spec.get_specs(logs_slice, players, classes)
+    
+    def get_slice_spec_info(self, s, f):
+        new_specs: dict[str, tuple(str, str)] = {}
+        specs = self.get_players_specs_in_segments(s, f)
+        for unit_guid, spec_index in specs.items():
+            spec, icon = logs_player_spec.get_spec_info(spec_index)
+            new_specs[unit_guid] = {
+                "spec": spec,
+                "icon": icon,
+                "name": self.guid_to_name(unit_guid),
+                "class": self.CLASSES[unit_guid],
+            }
+        new_specs["Total"] = TOTAL_DUMMY_SPEC
+        return new_specs
         
     @property
     def PLAYERS_NAMES(self):
@@ -345,7 +366,18 @@ class THE_LOGS:
                 if p.get("master_guid", "").startswith(PLAYER)
             }
             return self.__PLAYERS_PETS
-
+    
+    @property
+    def FRIENDLY_IDS(self):
+        try:
+            return self.__PLAYERS_PETS_IDS
+        except AttributeError:
+            self.__PLAYERS_PETS_IDS = {
+                guid[6:12]
+                for guid in self.PLAYERS_PETS
+            }
+            self.__PLAYERS_PETS_IDS.add("000000")
+            return self.__PLAYERS_PETS_IDS
 
     def get_players_and_pets_guids(self):
         try:

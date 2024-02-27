@@ -5,6 +5,7 @@ from constants import (
     TOC_CHAMPIONS, is_player, running_time, sort_dict_by_value,
     separate_thousands,
     add_new_numeric_data,
+    BOSSES_GUIDS,
 )
 
 import logs_base
@@ -378,25 +379,26 @@ USEFUL_NAMES = {
     "00808A": "Freya Useful",
 }
 
-def get_all_targets(boss_name: str, boss_guid_id: str=None):
-    if not boss_name:
-        return {
-            "useful": {},
-            "all": {},
-        }
-    
-    if boss_name in USEFUL:
-        targets_useful = USEFUL[boss_name]
-    elif boss_guid_id:
-        targets_useful = {boss_guid_id[:-6]: boss_name}
-    else:
-        targets_useful = {}
+ALL_USEFUL_TARGETS = {
+    x
+    for v in USEFUL.values()
+    for x in v
+} | set(USEFUL_NAMES) | set(BOSSES_GUIDS)
 
-    targets_all = ALL_GUIDS.get(boss_name, targets_useful)
-    return {
-        "useful": dict(targets_useful),
-        "all": dict(targets_all),
-    }
+
+class ValksDamage(TypedDict):
+    overkill: defaultdict[str, int]
+    useful: defaultdict[str, int]
+
+class TargetDamageAllType(TypedDict):
+    specific_combined: dict[str, defaultdict[str, int]]
+    useful_total: defaultdict[str, int]
+    damage_combined: dict[str, defaultdict[str, int]]
+    damage_total: defaultdict[str, int]
+
+
+def target_order(boss_name):
+    return list(USEFUL.get(boss_name, {})) + list(ALL_GUIDS.get(boss_name, {}))
 
 @running_time
 def get_dmg(logs_slice: list[str]):
@@ -419,12 +421,6 @@ def dmg_gen_valk(logs: list[str]):
         _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
         if tGUID[6:-6] == '008F01':
             yield sGUID, tGUID, int(dmg)
-
-
-class ValksDamage(TypedDict):
-    overkill: defaultdict[str, int]
-    useful: defaultdict[str, int]
-
 
 @running_time
 def get_valks_dmg(logs: list[str], half_hp=2992500 // 2) -> ValksDamage:
@@ -454,34 +450,17 @@ def get_valks_dmg(logs: list[str], half_hp=2992500 // 2) -> ValksDamage:
         'useful': valks_useful,
     }
 
-def combine_pets(data: dict[str, int], guids: dict[str, dict], trim_non_players=False, ignore_abom=False):
-    combined: dict[str, int] = defaultdict(int)
-    for sGUID, value in data.items():
-        if sGUID not in guids:
-            continue
-        if ignore_abom and sGUID[6:-6] == "00958D":
-            continue
-        sGUID = guids[sGUID].get('master_guid', sGUID)
-        if trim_non_players and not is_player(sGUID):
-            continue
-        combined[sGUID] += value
-
-    return combined
-
-def combine_pets_all(data: dict[str, int], guids, trim_non_players=False, ignore_abom=False):
-    return {
-        tGUID: combine_pets(d, guids, trim_non_players, ignore_abom)
-        for tGUID, d in data.items()
-    }
-
-def get_total_damage(data: dict[str, dict[str, int]], filter_targets=None):
+def get_total_damage(data: dict[str, dict[str, int]], filter_targets=None, ignore_targets=None):
     total = defaultdict(int)
 
+    if not ignore_targets:
+        ignore_targets = set()
+    
     for target_guid_id, sources in data.items():
         if filter_targets and target_guid_id not in filter_targets:
             for sGUID in sources:
                 total[sGUID] += 0
-        else:
+        elif target_guid_id not in ignore_targets:
             for sGUID, value in sources.items():
                 total[sGUID] += value
 
@@ -514,7 +493,7 @@ def freya_useful(logs_slice: list[str]):
 # 8/31 20:12:36.834  SPELL_PERIODIC_HEAL,00808A000A6D,"Freya",0x10a48,00808A000A6D,"Freya",0x10a48,62528,"Touch of Eonar",0x1,42000,14075,0,nil
 # 9/ 1 20:26:43.762  SPELL_PERIODIC_HEAL,00808A000CC3,"Freya",0x10a48,00808A000CC3,"Freya",0x10a48,62892,"Touch of Eonar",0x1,218400,143919,0,nil
 
-def guid_to_useful_name(data):
+def guid_to_custom_name(data):
     return {
         USEFUL_NAMES[q]: w
         for q,w in data.items()
@@ -562,29 +541,51 @@ def add_custom_units(data: dict[str, defaultdict[str, int]], encounter_name: str
 
     return custom_data
 
+def add_new_numeric_data_wrap(d1, d2):
+    for k, v in d2.items():
+        add_new_numeric_data(d1[k], v)
+
+def sort_by_key(data: dict):
+    return dict(sorted(data.items()))
+
+def separate_thousands_dict(data: dict):
+    return {
+        k: separate_thousands(v)
+        for k, v in data.items()
+    }
+
+def add_total_sort(data: dict):
+    data["Total"] = sum(data.values())
+    return sort_dict_by_value(data)
+
+
 class UsefulDamage(logs_base.THE_LOGS):
     @logs_base.cache_wrap
-    def useful_damage(self, s, f, targets: dict[str, str], boss_name: str):
+    def target_damage(self, s, f):
         logs_slice = self.LOGS[s:f]
+        return get_dmg(logs_slice)
+    
+    @logs_base.cache_wrap
+    def target_damage_specific(self, s, f, boss_name: str):
+        logs_slice = self.LOGS[s:f]
+        return specific_useful(logs_slice, boss_name)
 
-        damage = get_dmg(logs_slice)
-        useful = specific_useful(logs_slice, boss_name)
+    def target_damage_wrap(self, segments: list, boss_name: str):
+        damage = defaultdict(lambda: defaultdict(int))
+        useful_specific = defaultdict(lambda: defaultdict(int))
+
+        for s, f in segments:
+            _damage = self.target_damage(s, f)
+            add_new_numeric_data_wrap(damage, _damage)
+
+            _specific = self.target_damage_specific(s, f, boss_name)
+            add_new_numeric_data_wrap(useful_specific, _specific)
+        
         return {
             "damage": damage,
-            "useful": useful,
+            "useful_specific": useful_specific,
         }
 
-    def add_total_and_names(self, data: dict):
-        data_names = self.convert_dict_guids_to_names(data)
-        data_names["Total"] = sum(data.values())
-        return sort_dict_by_value(data_names)
-    
-    def data_visual_format(self, data):
-        data_names = self.add_total_and_names(data)
-        return {
-            name: separate_thousands(v)
-            for name, v in data_names.items()
-        }
     def combine_pets(self, data: dict[str, int], trim_non_players=False, ignore_abom=False):
         guids = self.get_all_guids()
         combined: dict[str, int] = defaultdict(int)
@@ -607,49 +608,52 @@ class UsefulDamage(logs_base.THE_LOGS):
         }
 
     @running_time
-    def useful_damage_all(self, segments: list, boss_name: str):
-        DAMAGE = defaultdict(lambda: defaultdict(int))
-        USEFUL = defaultdict(lambda: defaultdict(int))
+    def target_damage_combine(self, damage, useful_specific) -> TargetDamageAllType:
+        damage_combined = self.combine_pets_all(damage, trim_non_players=True, ignore_abom=True)
+        damage_total = get_total_damage(damage_combined, ignore_targets=self.FRIENDLY_IDS)
 
-        boss_guid_id = self.name_to_guid(boss_name)
-        targets = get_all_targets(boss_name, boss_guid_id)
-        targets_useful = targets["useful"]
-        targets_all = targets["all"]
+        specific_combined = self.combine_pets_all(useful_specific, trim_non_players=True, ignore_abom=True)
+        _useful = damage_combined | specific_combined
+        useful_total = get_total_damage(_useful, filter_targets=ALL_USEFUL_TARGETS)
 
-        for s, f in segments:
-            data = self.useful_damage(s, f, targets_all, boss_name)
-            for guid_id, _dmg_new in data["damage"].items():
-                add_new_numeric_data(DAMAGE[guid_id], _dmg_new)
-            
-            for guid_id, _dmg_new in data["useful"].items():
-                targets_useful[guid_id] = guid_id
-                add_new_numeric_data(USEFUL[guid_id], _dmg_new)
+        return {
+            "specific_combined": specific_combined,
+            "useful_total": useful_total,
+            "damage_combined": damage_combined,
+            "damage_total": damage_total,
+        }
 
-        damage_with_pets = self.combine_pets_all(DAMAGE, trim_non_players=True, ignore_abom=True)
-        useful_with_pets = self.combine_pets_all(USEFUL, trim_non_players=True, ignore_abom=True)
+    @running_time
+    def target_damage_all(self, segments: list, boss_name: str):
+        _w = self.target_damage_wrap(segments, boss_name)
+        return self.target_damage_combine(_w["damage"], _w["useful_specific"])
 
-        _combined = damage_with_pets | useful_with_pets
-        damage_total = get_total_damage(damage_with_pets)
-        useful_total = get_total_damage(_combined, targets_useful)
+    def target_damage_all_formatted(self, segments, boss_name):
+        _filtered = self.target_damage_all(segments, boss_name)
 
-        custom_units = guid_to_useful_name(useful_with_pets)
-        custom_groups = add_custom_units(damage_with_pets, boss_name)
+        damage_combined = _filtered["damage_combined"]
+        useful_specific_names = guid_to_custom_name(_filtered["specific_combined"])
+        custom_groups = add_custom_units(damage_combined, boss_name)
 
+        _order = target_order(boss_name)
+        damage_combined_sorted = dict(sorted(damage_combined.items(), key=lambda x: x[0] not in _order))
+        
         data_all = {
-            "Useful": useful_total,
-            "Total": damage_total,
-        } | custom_units | custom_groups | damage_with_pets
+            "Useful": _filtered["useful_total"],
+            "Total": _filtered["damage_total"],
+        } | useful_specific_names | custom_groups | damage_combined_sorted
+        data_all["Friendly Fire"] = data_all.pop("000000", {})
 
         dmg_to_target = {
-            self.guid_to_name(guid_id): self.data_visual_format(_data)
+            self.guid_to_name(guid_id): separate_thousands_dict(add_total_sort(_data))
             for guid_id, _data in data_all.items()
             if _data
         }
 
-        players = self.add_total_and_names(useful_total)
-
+        specs = self.get_slice_spec_info(*segments[0])
+        sorted_players = list(add_total_sort(sort_by_key(_filtered["useful_total"])))
         return {
             "TARGETS": dmg_to_target,
-            "PLAYERS": players,
-            "USEFUL": useful_total,
+            "PLAYERS_SORTED": sorted_players,
+            "SPECS": specs,
         }
