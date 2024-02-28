@@ -184,3 +184,6 @@ input:disabled + label {
 #the-tooltip td:nth-child(3) {
   min-width: 3em;
 }
+.hidden {
+  display: none;
+}
