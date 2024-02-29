@@ -38,7 +38,7 @@ function add_points_color() {
     }
   }
 }
-(() => {
+function init() {
   add_style("heal", "heal_total");
   if (!document.querySelector(".useful.total-cell").textContent.length) {
     add_style(TOTAL["useful"], "useful");
@@ -50,4 +50,5 @@ function add_points_color() {
   document.querySelectorAll(".swap-damage").forEach(button => button.addEventListener("click", swap_click_wrap("useful")));
   document.querySelectorAll(".swap-heal").forEach(button => button.addEventListener("click", swap_click_wrap("heal")));
   document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", e => table_sort_by_th(e.target)));
-})();
+}
+document.readyState !== 'loading' ? init() : document.addEventListener('DOMContentLoaded', init);
