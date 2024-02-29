@@ -31,7 +31,6 @@ const selection = {
   lastIndex: end_custom,
   drag: false,
 };
-console.log(selection);
 const CHART_OPTIONS = {
   maintainAspectRatio: false,
   responsive: true,
@@ -98,8 +97,10 @@ function chartSetData(datapoints) {
     CHART_OVERLAY.height = MAIN_CANVAS.height;
     selectionContext.fillStyle = SELECTION_COLOR;
     selectionContext.globalAlpha = SELECTION_ALPHA;
-    selection.w = (end_custom - start_custom) / (end - start) * (MAIN_CANVAS.width - 50);
-    selection.startX = start_custom / (end - start) * MAIN_CANVAS.width + 50;
+    
+    const w = CHART.chartArea.right - CHART.chartArea.left;
+    selection.w = (end_custom - start_custom) / (end - start - 1) * w;
+    selection.startX = CHART.chartArea.left + start_custom / (end - start) * w;
     console.log(selection);
     selectionContext.fillRect(
       selection.startX,
@@ -161,6 +162,7 @@ function get_index(e) {
 }
 
 MAIN_CANVAS.addEventListener('pointerdown', e => {
+  console.log(e);
   const rect = MAIN_CANVAS.getBoundingClientRect();
   selection.startX = e.clientX - rect.left;
   selection.startIndex = get_index(e);
@@ -170,7 +172,7 @@ MAIN_CANVAS.addEventListener('pointerdown', e => {
 
 function redraw(e) {
   const _left = MAIN_CANVAS.getBoundingClientRect().left;
-  const x = e.clientX - _left;
+  const x = Math.max(e.clientX - _left, CHART.chartArea.left);
   selection.w = x - selection.startX;
   selectionContext.clearRect(0, 0, MAIN_CANVAS.width, MAIN_CANVAS.height);
   selectionContext.fillRect(
@@ -204,8 +206,9 @@ MAIN_CANVAS.addEventListener('pointerup', draw_stop);
 SUMBIT.addEventListener("click", () => {
   const _min = Math.min(selection.startIndex, selection.lastIndex);
   const _max = Math.max(selection.startIndex, selection.lastIndex);
-  QUERY_PARAMS.set("sc", _min);
-  QUERY_PARAMS.set("fc", _max);
+  const mult = Math.max(SELECT_SLICE_SECONDS.value, 1);
+  QUERY_PARAMS.set("sc", _min * mult);
+  QUERY_PARAMS.set("fc", _max * mult);
   window.location.replace(`?${QUERY_PARAMS.toString()}`);
 });
 
