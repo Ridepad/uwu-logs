@@ -280,7 +280,7 @@ class THE_LOGS(
 
         report_name_info = get_report_name_info(self.NAME)
         _server = report_name_info.get("server", "")
-        if _server[-1].isdigit():
+        if _server and _server[-1].isdigit():
             _server = _server[:-1]
         parsed = self.parse_request(PATH, request.args)
         duration = self.get_fight_duration_total(parsed["SEGMENTS"])
