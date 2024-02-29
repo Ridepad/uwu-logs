@@ -23,7 +23,7 @@ const QUERY_PARAMS = new URLSearchParams(window.location.search);
 const start = QUERY_PARAMS.get("s");
 const end = QUERY_PARAMS.get("f");
 const start_custom = QUERY_PARAMS.get("sc") ?? 0;
-const end_custom = QUERY_PARAMS.get("fc") ?? 0;
+const end_custom = QUERY_PARAMS.get("fc") ?? (end - start);
 const selection = {
   w: 0,
   startX: 0,
@@ -202,8 +202,10 @@ MAIN_CANVAS.addEventListener('pointermove', e => {
 MAIN_CANVAS.addEventListener('pointerup', draw_stop);
 
 SUMBIT.addEventListener("click", () => {
-  QUERY_PARAMS.set("sc", selection.startIndex);
-  QUERY_PARAMS.set("fc", selection.lastIndex);
+  const _min = Math.min(selection.startIndex, selection.lastIndex);
+  const _max = Math.max(selection.startIndex, selection.lastIndex);
+  QUERY_PARAMS.set("sc", _min);
+  QUERY_PARAMS.set("fc", _max);
   window.location.replace(`?${QUERY_PARAMS.toString()}`);
 });
 
