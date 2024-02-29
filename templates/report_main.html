@@ -7,7 +7,7 @@
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/report.css?240227-1">
+<link rel="stylesheet" type="text/css" href="/static/report.css?240229-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -40,8 +40,10 @@
         <button class="min-max-slider-submit" type="submit">Slice</button>
       </div>
     </section>
-    <section id="chart-wrap">
+    <section id="chart-additional-info">
       <p style="font-size: 75%;">Select range with mouse. Points shown only if sliced from the start.</p>
+    </section>
+    <section id="chart-wrap">
       <canvas id="overlay" width="600" height="400" style="position:absolute;pointer-events:none;"></canvas>
       <canvas id="chart"></canvas>
     </section>

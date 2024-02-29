@@ -59,7 +59,7 @@ th {
   box-shadow: .1em .1em 1em forestgreen;
 }
 
-#toggle-graph:checked + label + section + section {
+#toggle-graph:checked + label ~ section {
   display: block;
 }
 #toggle-graph:checked + label + section {
