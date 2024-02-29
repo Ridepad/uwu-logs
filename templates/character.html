@@ -36,8 +36,10 @@
       {% endfor %}
     </div>
     <div id="gear-info">
+      <div id="loading-info">Loading gear data...</div>
+      <div id="no-gear-info" style="display: none;">No gear snapshots found for this character.</div>
       <aside id="tooltip-stats" class="hidden"></aside>
-      <table id="table-info">
+      <table id="table-info" class="hidden">
         <tbody id="table-info-body">
           <tr>
             <td id="gear-info-gs"></td>
@@ -62,12 +64,12 @@
         </tbody>
       </table>
       
-      <div id="table-stats-wrap">
+      <div id="table-stats-wrap" class="hidden">
         <table id="table-stats">
           <tbody id="table-stats-body"></tbody>
         </table>
       </div>
-      <div id="set-wrap">
+      <div id="set-wrap" class="hidden">
         <button id="set-prev">&lt</button>
         <span id="set-name"></span>
         <button id="set-next">&gt</button>

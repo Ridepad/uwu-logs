@@ -18,8 +18,12 @@ const SPAN_GS = document.getElementById("gear-info-gs");
 const CHAR_LEVEL = document.getElementById("char-level");
 const CHAR_CLASS = document.getElementById("char-class");
 const CHAR_RACE = document.getElementById("char-race");
-const TABLE_INFO_BODY = document.getElementById("table-info-body");
+const TABLE_INFO = document.getElementById("table-info");
+const LOADING_INFO = document.getElementById("loading-info");
+const NO_GEAR_INFO = document.getElementById("no-gear-info");
+const TABLE_STATS_WRAP = document.getElementById("table-stats-wrap");
 const TABLE_STATS_BODY = document.getElementById("table-stats-body");
+const SET_WRAP = document.getElementById("set-wrap");
 const GEAR_WRAP = document.getElementById("gear-wrap");
 
 const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
@@ -270,11 +274,18 @@ class Gear {
       this.SET_NAMES = Object.keys(data);
       this.SET_AMOUNT = this.SET_NAMES.length;
       this.CURRENT_SET_INDEX = this.SET_NAMES.length;
-  
+      
       this.apply_new_set();
-  
+      TABLE_INFO.classList.remove("hidden");
+      TABLE_STATS_WRAP.classList.remove("hidden");
+      SET_WRAP.classList.remove("hidden");
+      
       BUTTON_SET_PREV.addEventListener("click", this); // this.handleEvent
       BUTTON_SET_NEXT.addEventListener("click", this); // this.handleEvent
+    }).catch(() => {
+      NO_GEAR_INFO.style.removeProperty("display");
+    }).finally(() => {
+      LOADING_INFO.style.display = "none";
     }))
   }
   handleEvent(event) {

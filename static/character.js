@@ -200,6 +200,18 @@ function row(boss_name, data) {
     return tr;
 }
 
+function set_new_player_name(name, server) {
+    player_server.textContent = server;
+    player_name.textContent = name;
+    if (ARMORY_SERVERS.includes(server)) {
+        player_name.href = `https://armory.warmane.com/character/${name}/${server}`
+        player_name.target = "_blank";
+    } else {
+        player_name.removeAttribute("href");
+        player_name.removeAttribute("target");
+    }
+}
+
 function table_add_new_data(data) {
     main_body.innerHTML = "";
     const boss_data = data.bosses;
@@ -207,15 +219,7 @@ function table_add_new_data(data) {
         const tr = row(boss_name, boss_data[boss_name])
         main_body.appendChild(tr);
     }
-    player_name.textContent = data.name;
-    if (ARMORY_SERVERS.includes(data.server)) {
-        player_name.href = `https://armory.warmane.com/character/${data.name}/${data.server}`
-        player_name.target = "_blank";
-    } else {
-        player_name.removeAttribute("href");
-        player_name.removeAttribute("target");
-    }
-    player_server.textContent = data.server;
+    set_new_player_name(data.name, data.server);
     const _overall = add_point(data.overall_points);
     player_overall_points.textContent = _overall;
     player_overall_points.className = points_rank_class(_overall);
@@ -273,6 +277,11 @@ function init() {
     }
     window.addEventListener("popstate", fetch_data);
     fetch_data();
+
+    const searchParams = new URLSearchParams(location.search);
+    const server = searchParams.get("server") ?? "Lordaeron";
+    const character_name = searchParams.get("name") ?? "Safiyah";
+    set_new_player_name(character_name, server);
     
     toggle_more_bosses();
     BUTTON_TOGGLE_MORE_BOSSES.addEventListener("click", toggle_more_bosses);
