@@ -83,6 +83,24 @@ def get_dict_int(d: dict, key, default=None):
     except KeyError:
         return default
 
+def str_slice_from_to(s: str, start, end):
+    try:
+        i_s = s.index(start)
+        try:
+            s2 = s[i_s+1:]
+            i_f = s2.index(end)
+            return s[:i_s] + s2[i_f:]
+        except ValueError:
+            return s[:i_s]
+    except ValueError:
+        return s
+
+def query_no_custom(query: str):
+    query = str_slice_from_to(query, "&target=", "&")
+    query = str_slice_from_to(query, "&fc=", "&")
+    query = str_slice_from_to(query, "&sc=", "&")
+    return query
+
 
 class THE_LOGS(
     logs_dmg_breakdown.SourceNumbers,
@@ -202,28 +220,24 @@ class THE_LOGS(
                 seg_f = ts[seg_f_shifted]
             segments[i] = [seg_s, seg_f]
     
+    def _attempt_name(self, boss_name, attempt):
+        for diff, segm_data in self.SEGMENTS_SEPARATED[boss_name].items():
+            for segm in segm_data:
+                if segm.get("attempt") == attempt:
+                    segment_type = segm.get("segment_type", "")
+                    return f"{diff} {segment_type}"
+        return f"Try {attempt+1}"
+
     def parse_request(self, path: str, args: dict) -> dict:
         segment_difficulty = args.get("mode")
         attempt = get_dict_int(args, "attempt")
         boss_name = args.get("boss")
         ts = self.get_timestamp()
-        sc = get_dict_int(args, "sc")
-        fc = get_dict_int(args, "fc")
-        if sc and fc:
-            slice_name = "Custom Slice"
-            slice_tries = ""
-            s = get_dict_int(args, "s", 0)
-            f = get_dict_int(args, "f", 0)
-            nf = s+fc
-            if nf > f:
-                nf = f
-            segments = [[ts[s+sc], ts[nf]]]
-        
-        elif boss_name == "all":
-            enc_data = self.get_enc_data()
+        enc_data = self.get_enc_data()
+        if boss_name == "all":
             slice_name = "Bosses"
-            segments = [x for y in enc_data.values() for x in y]
             slice_tries = "All"
+            segments = [x for y in enc_data.values() for x in y]
         
         elif boss_name not in BOSSES_FROM_HTML:
             slice_name = "Custom Slice"
@@ -236,18 +250,18 @@ class THE_LOGS(
                 segments =  [[None, None]]
         
         else:
-            enc_data = self.get_enc_data()
             boss_name = BOSSES_FROM_HTML[boss_name]
             slice_name = boss_name
             if attempt is not None:
-                segments = [enc_data[boss_name][attempt], ]
-                slice_tries = f"Try {attempt+1}"
-                for diff, segm_data in self.SEGMENTS_SEPARATED[boss_name].items():
-                    for segm in segm_data:
-                        if segm.get("attempt") == attempt:
-                            segment_type = segm.get("segment_type", "")
-                            slice_tries = f"{diff} {segment_type}"
-                            break
+                slice_tries = self._attempt_name(boss_name, attempt)
+                s, f = enc_data[boss_name][attempt]
+                sc = get_dict_int(args, "sc", 0)
+                fc = get_dict_int(args, "fc", 0)
+                s_shifted = self.precise_shift(s, sc)
+                f_shifted = f
+                if fc and fc < self.get_slice_duration(s, f):
+                    f_shifted = self.precise_shift(s, fc)
+                segments = [[s_shifted, f_shifted], ]
             elif segment_difficulty:
                 slice_tries = f"{segment_difficulty} All"
                 segments = [
@@ -287,6 +301,7 @@ class THE_LOGS(
         return_data = parsed | {
             "PATH": PATH,
             "QUERY": QUERY,
+            "QUERY_NO_CUSTOM": query_no_custom(QUERY),
             "REPORT_ID": self.NAME,
             "REPORT_NAME": self.FORMATTED_NAME,
             "SEGMENTS_LINKS": self.SEGMENTS_QUERIES,
@@ -432,7 +447,9 @@ class THE_LOGS(
         SPECS = self.report_add_spec_info(specs, PLAYERS)
 
         points = {}
-        if request.args.get("sc") and request.args.get("fc"):
+        sc = get_dict_int(request.args, "sc")
+        fc = get_dict_int(request.args, "fc")
+        if sc and sc != 0 or fc and fc == 0:
             pass
         elif mode and _useful and boss_name not in BOSSES_SKIP_POINTS:
             _useful_dps = {

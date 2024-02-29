@@ -160,6 +160,9 @@ class THE_LOGS:
     def get_timedelta(self, last, now):
         return to_dt_year_precise(now, self.year) - to_dt_year_precise(last, self.year)
     
+    def get_timedelta_seconds(self, last, now):
+        return self.get_timedelta(last, now).total_seconds()
+
     @cache_wrap
     def get_slice_duration(self, s: int=None, f: int=None):
         if s is None:
@@ -432,6 +435,25 @@ class THE_LOGS:
         for i, line_n in enumerate(ts, -shift):
             if n <= line_n:
                 return max(i, 0)
+    
+    def find_sec_from_start(self, s):
+        return self.get_timedelta_seconds(self.LOGS[0], self.LOGS[s])
+    
+    @running_time
+    def precise_shift(self, from_index: int, shift_seconds: int):
+        if not shift_seconds:
+            return from_index
+        ts = self.get_timestamp()
+        first_line = self.LOGS[from_index]
+        shifted_index = shift_seconds + int(self.find_sec_from_start(from_index))
+        s = ts[shifted_index-1]
+        f = ts[shifted_index+1]
+        for i, current_line in enumerate(self.LOGS[s:f]):
+            td = self.get_timedelta(first_line, current_line).total_seconds()
+            if td > shift_seconds:
+                return s+i
+        return ts[shifted_index]
+
 
     def get_spells(self, rewrite=False):
         try:
