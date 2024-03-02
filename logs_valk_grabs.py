@@ -47,8 +47,8 @@ def get_valk_phase(logs_slice: list[str]):
     start = None
     end = None
     for line in logs_slice:
-        if line[-5:] != ",BUFF":
-            continue
+        # if line[-5:] != ",BUFF":
+        #     continue
         if '0008EF5' not in line:
             continue
         try:
