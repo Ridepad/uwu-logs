@@ -292,15 +292,20 @@ function mouseleave() {
   }, 300);
 }
 
-function cell_auras(auras) {
+function new_aura_columns() {
   const cells = [];
   const all_count = [];
-  for (let i = 0; i < AURAS_COLUMNS.length; i++) {
+  for (const column_name of AURAS_COLUMNS) {
     const td = document.createElement('td');
-    td.className = `table-${AURAS_COLUMNS[i]}`;
+    td.className = `table-${column_name}`;
     cells.push(td);
     all_count.push(0);
   }
+  return [cells, all_count];
+}
+
+function cell_auras(auras) {
+  const [cells, all_count] = new_aura_columns();
   if (auras instanceof Array) {
     for (const [spell_id, count, uptime, type] of auras) {
       const td = cells[type];
@@ -317,8 +322,8 @@ function cell_auras(auras) {
   }
 
   for (let i = 0; i < all_count.length; i++) {
-    const td = cells[i];
     if (all_count[i] == 0) continue;
+    const td = cells[i];
     td.append(all_count[i]);
     td.addEventListener("mouseleave", mouseleave);
     td.addEventListener("mouseenter", mouseenter);
