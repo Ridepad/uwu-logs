@@ -229,7 +229,7 @@ def format_percentage(v, total):
     return f"{(v / total * 100):.1f}%"
 
 def sort_by_name_type(targets: set[str]):
-    _targets = sorted(targets)
+    _targets = list(targets)
     _targets.sort(key=lambda x: x[:3] == "0x0")
     _targets.sort(key=lambda x: x[:5] == "0xF14")
     return _targets
@@ -366,14 +366,16 @@ class SourceNumbers(logs_base.THE_LOGS):
         }
 
     def _order_targets(self, all_targets: set[str]):
-        targets = sort_by_name_type(all_targets)
-        __targets = {}
-        for target in targets:
-            target_id = target[6:-6]
-            if target_id in __targets:
-                continue
-            __targets[target_id] = self.guid_to_name(target_id)
-        return __targets
+        t = {
+            guid: self.guid_to_name(guid)
+            for guid in all_targets
+        }
+        t = dict(sorted(t.items(), key=lambda x: x[1]))
+        t2 = {}
+        for guid in sort_by_name_type(t):
+            target_id = guid if guid.startswith("0x0") else guid[6:-6]
+            t2[target_id] = t[guid]
+        return t2
     
     def _filter_sources(self, data: dict[str, dict], guids):
         if type(guids) == set:
