@@ -395,7 +395,7 @@ MULTIBOSSES = {
     "Bug Trio": ["003CB7", "003CB8", "003C97"],
 
     "Majordomo Executus": ["002EF2", "002D90", "002D8F"],
-    "Gehennas": ["002FE3", "002D8D"],
+    # "Gehennas": ["002FE3", "002D8D"],
     "Sulfuron Harbringer": ["002F42", "002D8E"],
 }
 
