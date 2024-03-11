@@ -18,13 +18,10 @@ const SPAN_GS = document.getElementById("gear-info-gs");
 const CHAR_LEVEL = document.getElementById("char-level");
 const CHAR_CLASS = document.getElementById("char-class");
 const CHAR_RACE = document.getElementById("char-race");
-const TABLE_INFO = document.getElementById("table-info");
-const LOADING_INFO = document.getElementById("loading-info");
-const NO_GEAR_INFO = document.getElementById("no-gear-info");
-const TABLE_STATS_WRAP = document.getElementById("table-stats-wrap");
-const TABLE_STATS_BODY = document.getElementById("table-stats-body");
-const SET_WRAP = document.getElementById("set-wrap");
 const GEAR_WRAP = document.getElementById("gear-wrap");
+const LOADING_INFO = document.getElementById("loading-gear");
+const NO_GEAR_INFO = document.getElementById("missing-gear");
+const TABLE_STATS_BODY = document.getElementById("table-stats-body");
 
 const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
 
@@ -260,33 +257,57 @@ function calc_gs() {
   })
 }
 
+let loading_timeout;
 
-class Gear {
+export class Gear {
   calc_gs = throttle(calc_gs);
   add_stat_rows = throttle(add_stat_rows);
 
   constructor(server, name) {
-    this.SERVER = to_title(server);
+    this.SERVER = server;
     this.NAME = to_title(name);
+  }
+  init() {
     const url = get_char_data_url(this.SERVER, this.NAME);
-    fetch(url).then(j => j.json().then(data => {
+    loading_timeout = setTimeout(() => {
+      GEAR_WRAP.style.display = "none";
+      NO_GEAR_INFO.style.display = "none";
+      LOADING_INFO.style.removeProperty("display");
+    }, 100);
+
+    fetch(url).then(response => {
+      clearTimeout(loading_timeout);
+      if (response.ok) {
+        this.parse_json(response)
+        return;
+      }
+      console.log('not found');
+      LOADING_INFO.style.display = "none";
+      GEAR_WRAP.style.display = "none";
+      NO_GEAR_INFO.style.removeProperty("display");
+    });
+  }
+  parse_json(response) {
+    response.json().then(data => {
+      console.log(data);
       this.CHAR_DATA = data;
       this.SET_NAMES = Object.keys(data);
       this.SET_AMOUNT = this.SET_NAMES.length;
       this.CURRENT_SET_INDEX = this.SET_NAMES.length;
       
       this.apply_new_set();
-      TABLE_INFO.classList.remove("hidden");
-      TABLE_STATS_WRAP.classList.remove("hidden");
-      SET_WRAP.classList.remove("hidden");
-      
+      NO_GEAR_INFO.style.display = "none";
+      GEAR_WRAP.style.removeProperty("display");
+
       BUTTON_SET_PREV.addEventListener("click", this); // this.handleEvent
       BUTTON_SET_NEXT.addEventListener("click", this); // this.handleEvent
     }).catch(() => {
+      console.log('error in parsing json');
+      GEAR_WRAP.style.display = "none";
       NO_GEAR_INFO.style.removeProperty("display");
     }).finally(() => {
       LOADING_INFO.style.display = "none";
-    }))
+    });
   }
   handleEvent(event) {
     if (event.type == "click") this.apply_new_set(event.target);
@@ -339,7 +360,8 @@ class Gear {
     const data = cnv_legacy(SET["specs"]);
     const talents = SET.talents ?? [];
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
-      set_new_spec_profs_values(e, data[i], "specs", talents[i]);
+      const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
+      set_new_spec_profs_values(e, data[i], "specs", talents_string);
     })
   }
   add_profs() {
@@ -601,19 +623,14 @@ function refresh_image(img) {
   });
 }
 
-function init() {
-  const searchParams = new URLSearchParams(location.search);
-  const server = searchParams.get("server") ?? "Lordaeron";
-  const character_name = searchParams.get("name") ?? "Safiyah";
-  const gear = new Gear(server, character_name);
-
-  for (const slot of GEAR_SLOTS) {
-    slot.addEventListener("mouseenter", tooltip);
-    slot.addEventListener("mouseleave", () => TOOLTIP.classList.add("hidden"));
-  }
-  for (const img of document.querySelectorAll(".slot img")) {
-    img.addEventListener("error", e => refresh_image(e.target), {once: true});
-  }
+for (const slot of GEAR_SLOTS) {
+  slot.addEventListener("mouseenter", tooltip);
+  slot.addEventListener("mouseleave", () => TOOLTIP.classList.add("hidden"));
 }
+for (const img of document.querySelectorAll(".slot img")) {
+  img.addEventListener("error", e => refresh_image(e.target), {once: true});
+}
+// function init() {
+// }
 
-document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);
+// document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);

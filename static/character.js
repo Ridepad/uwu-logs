@@ -1,3 +1,7 @@
+import { Gear } from "./char_parser.js";
+
+const LOADING_POINTS = document.getElementById("loading-points");
+const MISSING_POINTS = document.getElementById("missing-points");
 const player_points_wrap = document.getElementById("player-points-wrap");
 const main_body = document.getElementById("points-body");
 const tooltip = document.getElementById("tooltip-points");
@@ -6,6 +10,9 @@ const player_server = document.getElementById("player-server");
 const player_overall_points = document.getElementById("player-overall-points");
 const player_overall_rank = document.getElementById("player-overall-rank");
 const BUTTON_TOGGLE_MORE_BOSSES = document.getElementById("toggle-more-bosses");
+const INPUT_CHAR = document.getElementById("charname-seach");
+const SELECT_SERVER = document.getElementById("server-select");
+const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const ARMORY_SERVERS = [
   "Lordaeron",
@@ -28,20 +35,6 @@ const KEY_TO_SELECTOR = {
   "data-points-raids": ".row-raids .td-points",
   "data-points-players": ".row-players .td-points",
 };
-
-const CACHE = {};
-
-const char_request = new XMLHttpRequest();
-char_request.onreadystatechange = () => {
-  if (char_request.status != 200 || char_request.readyState != 4) return;
-
-  const j = JSON.parse(char_request.response);
-  CACHE[window.location.search] = j;
-  table_add_new_data(j);
-  player_points_wrap.style.removeProperty("display");
-}
-
-
 const SPECS = [
   ["Death Knight", "class_deathknight", "death-knight"],
   ["Blood", "spell_deathknight_bloodpresence", "death-knight"],
@@ -84,8 +77,34 @@ const SPECS = [
   ["Fury", "ability_warrior_innerrage", "warrior"],
   ["Protection", "ability_warrior_defensivestance", "warrior"]
 ]
-let last_class;
 
+const SEARCH_PARAMS = new URLSearchParams(window.location.search);
+const CURRENT_CHARACTER = {
+  name: undefined,
+  server: undefined,
+  spec: undefined,
+  class: undefined,
+  popped: false,
+}
+
+let loading_timeout;
+const CACHE = {};
+const char_request = new XMLHttpRequest();
+char_request.onreadystatechange = () => {
+  if (char_request.readyState != 4) return;
+  clearTimeout(loading_timeout);
+  if (char_request.status != 200) {
+    player_points_wrap.style.display = "none";
+    LOADING_POINTS.style.display = "none";
+    MISSING_POINTS.style.removeProperty("display");
+    CURRENT_CHARACTER.class = undefined;
+    return;
+  }
+
+  const j = JSON.parse(char_request.response);
+  CACHE[SEARCH_PARAMS] = j;
+  table_add_new_data(j);
+}
 function add_point(v) {
   return (v / 100).toFixed(2);
 }
@@ -146,8 +165,7 @@ function cell_date(report_ID) {
   const [year, month, day, ] = report_date.split('-');
   const date_text = `${day}-${month}-${year}`;
 
-  const search = new URLSearchParams(window.location.search);
-  const server = search.get("server");
+  const server = SEARCH_PARAMS.get("server");
   const _a = document.createElement('a');
   _a.href = `/reports/${report_ID}--${server}`;
   _a.target = "_blank";
@@ -200,7 +218,9 @@ function row(boss_name, data) {
   return tr;
 }
 
-function set_new_player_name(name, server) {
+function set_new_player_name() {
+  const name = CURRENT_CHARACTER.name;
+  const server = CURRENT_CHARACTER.server;
   player_server.textContent = server;
   player_name.textContent = name;
   if (ARMORY_SERVERS.includes(server)) {
@@ -213,6 +233,17 @@ function set_new_player_name(name, server) {
 }
 
 function table_add_new_data(data) {
+  if (!CURRENT_CHARACTER.spec) {
+    const spec = DEFAULT_SPEC[data["class"]];
+    CURRENT_CHARACTER.spec = spec;
+    SEARCH_PARAMS.set("spec", spec);
+    console.log(SEARCH_PARAMS);
+  }
+  if (!CURRENT_CHARACTER.popped) {
+    history.pushState(null, "", `?${SEARCH_PARAMS}`);
+  }
+  SPEC_BUTTONS[CURRENT_CHARACTER.spec - 1].input.checked = true;
+
   main_body.innerHTML = "";
   const boss_data = data.bosses;
   for (const boss_name in boss_data) {
@@ -225,36 +256,42 @@ function table_add_new_data(data) {
   player_overall_points.className = points_rank_class(_overall);
   player_overall_rank.textContent = `(${data.overall_rank ?? 0})`;
   
-  if (last_class == data.class) return;
+  if (data.class == CURRENT_CHARACTER.class) return;
   
-  last_class = data.class;
+  CURRENT_CHARACTER.class = data.class;
   const _class = data.class * 4;
   player_name.className = SPECS[_class][2];
   for (const spec_button of SPEC_BUTTONS) {
     const icon_name = SPECS[_class + spec_button.index][1];
     spec_button.label.querySelector("img").src = `static/icons/${icon_name}.jpg`;
   }
+  
+  MISSING_POINTS.style.display = "none";
+  LOADING_POINTS.style.display = "none";
+  player_points_wrap.style.removeProperty("display");
 }
 
 function query_server() {
-  char_request.open("POST", window.location.search);
+  char_request.open("POST", `?${SEARCH_PARAMS}`);
   char_request.send();
+  loading_timeout = setTimeout(() => {
+    player_points_wrap.style.display = "none";
+    MISSING_POINTS.style.display = "none";
+    LOADING_POINTS.style.removeProperty("display");
+    console.log('set points loading');
+  }, 100);
 }
 function fetch_data() {
-  const search = new URLSearchParams(window.location.search);
-  const spec = search.get("spec");
-  for (const spec_button of SPEC_BUTTONS) {
-    if (spec == spec_button.index) spec_button.input.checked = true;
-  }
-
-  const data = CACHE[window.location.search];
+  const data = CACHE[SEARCH_PARAMS];
   data ? table_add_new_data(data) : query_server();
 }
 
 function new_spec(spec) {
-  const search = new URLSearchParams(window.location.search);
-  search.set("spec", spec);
-  history.pushState(null, "", `?${search}`);
+  CURRENT_CHARACTER.spec = spec;
+  CURRENT_CHARACTER.popped = false;
+  SEARCH_PARAMS.set("name", CURRENT_CHARACTER.name);
+  SEARCH_PARAMS.set("server", CURRENT_CHARACTER.server);
+  SEARCH_PARAMS.set("spec", spec);
   fetch_data();
 }
 function toggle_more_bosses(e) {
@@ -271,20 +308,99 @@ function toggle_more_bosses(e) {
   BUTTON_TOGGLE_MORE_BOSSES.textContent = show ? "Hide other bosses" : "Show other bosses";
 }
 
-function init() {
-  fetch_data();
+function find_value_index(select, option_name) {
+  for (let i = 0; i < select.childElementCount; i++) {
+      if (select[i].textContent == option_name) return i;
+  }
+}
+function set_current_server() {
+  SELECT_SERVER.selectedIndex = find_value_index(SELECT_SERVER, CURRENT_CHARACTER.server);
+}
+function to_title(string) {
+  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
+}
+function new_character() {
+  set_new_player_name();
+  set_current_server();
 
-  const searchParams = new URLSearchParams(location.search);
-  const server = searchParams.get("server") ?? "Lordaeron";
-  const character_name = searchParams.get("name") ?? "Safiyah";
-  set_new_player_name(character_name, server);
+  const gear = new Gear(CURRENT_CHARACTER.server, CURRENT_CHARACTER.name);
+  gear.init();
+  
+  fetch_data();
+}
+function new_character_search() {
+  const character_name = to_title(INPUT_CHAR.value);
+  const character_server = SELECT_SERVER.value;
+  
+  CURRENT_CHARACTER.name = character_name;
+  CURRENT_CHARACTER.server = character_server;
+  CURRENT_CHARACTER.spec = undefined;
+  CURRENT_CHARACTER.popped = false;
+  
+  SEARCH_PARAMS.set("name", character_name);
+  SEARCH_PARAMS.set("server", character_server);
+  SEARCH_PARAMS.delete("spec");
+
+  window.localStorage.setItem("character_name", character_name);
+  window.localStorage.setItem("character_server", character_server);
+
+  new_character();
+}
+
+function init_character() {
+  const search = new URLSearchParams(window.location.search);
+  let character_name = search.get("name");
+  let character_server = search.get("server");
+  if (!character_name || !character_server) {
+    character_name = window.localStorage.getItem("character_name");
+    character_server = window.localStorage.getItem("character_server");
+  }
+  if (!character_name || !character_server) {
+    character_name = "Safiyah";
+    character_server = "Lordaeron";
+  }
+
+  const spec = search.get("spec");
+
+  SEARCH_PARAMS.set("name", character_name);
+  SEARCH_PARAMS.set("server", character_server);
+  SEARCH_PARAMS.set("spec", spec);
+
+  CURRENT_CHARACTER.name = character_name;
+  CURRENT_CHARACTER.server = character_server;
+  CURRENT_CHARACTER.spec = spec;
+
+  new_character();
+}
+
+function popstate() {
+  const search = new URLSearchParams(window.location.search);
+  if (!search.get("name")) return;
+  console.log(search);
+  
+  ["name", "server", "spec"].forEach(k => {
+    const value = search.get(k);
+    CURRENT_CHARACTER[k] = value;
+    SEARCH_PARAMS.set(k, value);
+  })
+
+  CURRENT_CHARACTER.popped = true;
+  INPUT_CHAR.value = CURRENT_CHARACTER.name;
+
+  new_character();
+}
+
+function init() {
+  init_character();
   toggle_more_bosses();
   
-  window.addEventListener("popstate", fetch_data);
+  window.addEventListener("popstate", popstate);
   BUTTON_TOGGLE_MORE_BOSSES.addEventListener("click", toggle_more_bosses);
   for (const spec_button of SPEC_BUTTONS) {
     spec_button.input.addEventListener("click", () => new_spec(spec_button.index));
   }
+  INPUT_CHAR.addEventListener("keypress", event => event.key == "Enter" && new_character_search());
+  SELECT_SERVER.addEventListener("change", () => new_character_search());
 }
 
 document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);

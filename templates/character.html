@@ -1,8 +1,7 @@
 {% extends "layout.html" %}
 
 {% block scripts_head %}
-<script src="/static/character.js" async  ></script>
-<script src="/static/char_parser.js" type="module" async></script>
+<script src="/static/character.js" type="module" async></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
@@ -12,8 +11,23 @@
 {% block the_main %}
 <main>
 <section id="top-player-info">
-  <a id="player-name">.</a>
-  <div id="player-server">.</div>
+  <input id="player-search" type="checkbox">
+  <label id="player-search-label" for="player-search">🔍</label>
+  
+  <div class="search-input">
+    <input id="charname-seach" class="player-name" type="text" maxlength="12" placeholder="Press enter when done">
+  </div>
+  <select id="server-select" class="search-input player-server">
+    {% for server in SERVERS %}
+    <option value="{{ server }}">{{ server }}</option>
+    {% endfor %}
+  </select>
+  
+  <div class="static-info player-name">
+    <a id="player-name">.</a>
+  </div>
+  <div id="player-server" class="static-info player-server">.</div>
+  
   <div id="player-overall">
     <span id="player-overall-points">.</span>
     <span id="player-overall-rank">.</span>
@@ -26,7 +40,9 @@
   </div>
 </section>
 <div id="wraprwprperweproe">
-  <section id="gear-wrap">
+  <div id="loading-gear">Loading gear data...</div>
+  <div id="missing-gear" style="display: none;">No gear snapshots found for this character.</div>
+  <section id="gear-wrap" style="display: none;">
     <div id="gear-left">
       {% for slotname in LEFT %}
       <div class="slot {{ slotname }} hidden">
@@ -36,10 +52,8 @@
       {% endfor %}
     </div>
     <div id="gear-info">
-      <div id="loading-info">Loading gear data...</div>
-      <div id="no-gear-info" style="display: none;">No gear snapshots found for this character.</div>
       <aside id="tooltip-stats" class="hidden"></aside>
-      <table id="table-info" class="hidden">
+      <table id="table-info">
         <tbody id="table-info-body">
           <tr>
             <td id="gear-info-gs"></td>
@@ -63,13 +77,12 @@
           {% endfor %}
         </tbody>
       </table>
-      
-      <div id="table-stats-wrap" class="hidden">
+      <div id="table-stats-wrap">
         <table id="table-stats">
           <tbody id="table-stats-body"></tbody>
         </table>
       </div>
-      <div id="set-wrap" class="hidden">
+      <div id="set-wrap">
         <button id="set-prev">&lt</button>
         <span id="set-name"></span>
         <button id="set-next">&gt</button>
@@ -92,6 +105,8 @@
       {% endfor %}
     </div>
   </section>
+  <div id="loading-points">Loading raid data...</div>
+  <div id="missing-points" style="display: none;">No raid data found for this character.</div>
   <section id="player-points-wrap" style="display: none;">
     <div class="table-wrap-wrap">
       <div class="table-wrap">

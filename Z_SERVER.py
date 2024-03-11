@@ -678,9 +678,11 @@ def character():
         spec = None
     
     if request.method == "GET":
+        servers = logs_top_db.server_list()
         return render_template_wrap(
             'character.html',
             NAME=name,
+            SERVERS=servers,
             **GEAR,
         )
 
