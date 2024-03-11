@@ -12,6 +12,7 @@ const player_overall_rank = document.getElementById("player-overall-rank");
 const BUTTON_TOGGLE_MORE_BOSSES = document.getElementById("toggle-more-bosses");
 const INPUT_CHAR = document.getElementById("charname-seach");
 const SELECT_SERVER = document.getElementById("server-select");
+const SPEC_WRAP = document.getElementById("spec-wrap");
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const ARMORY_SERVERS = [
@@ -96,6 +97,7 @@ char_request.onreadystatechange = () => {
   if (char_request.status != 200) {
     player_points_wrap.style.display = "none";
     LOADING_POINTS.style.display = "none";
+    SPEC_WRAP.style.visibility = "hidden";
     MISSING_POINTS.style.removeProperty("display");
     CURRENT_CHARACTER.class = undefined;
     return;
@@ -256,6 +258,11 @@ function table_add_new_data(data) {
   player_overall_points.className = points_rank_class(_overall);
   player_overall_rank.textContent = `(${data.overall_rank ?? 0})`;
   
+  MISSING_POINTS.style.display = "none";
+  LOADING_POINTS.style.display = "none";
+  SPEC_WRAP.style.removeProperty("visibility");
+  player_points_wrap.style.removeProperty("display");
+  
   if (data.class == CURRENT_CHARACTER.class) return;
   
   CURRENT_CHARACTER.class = data.class;
@@ -265,10 +272,6 @@ function table_add_new_data(data) {
     const icon_name = SPECS[_class + spec_button.index][1];
     spec_button.label.querySelector("img").src = `static/icons/${icon_name}.jpg`;
   }
-  
-  MISSING_POINTS.style.display = "none";
-  LOADING_POINTS.style.display = "none";
-  player_points_wrap.style.removeProperty("display");
 }
 
 function query_server() {
