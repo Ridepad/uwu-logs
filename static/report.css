@@ -7,12 +7,9 @@ img {
   min-width: 1.1em;
 }
 
-.rectangle-cell {
-  width: 12rem;
-}
+th,
 .points,
-.rectangle-cell,
-th {
+.rectangle-cell {
   border-left: 10px solid var(--table-border);
 }
 
@@ -21,13 +18,6 @@ th {
   width: 3rem;
   text-align: right;
 }
-.top100 {color: #e5cc80;}
-.top99 {color: #e268a8;}
-.top95 {color: #ff8000;}
-.top75 {color: #a335ee;}
-.top50 {color: #0070ff;}
-.top25 {color: #1eff00;}
-.top0 {color: #666666;}
 
 .heal_total,
 .damage {
@@ -43,6 +33,9 @@ th {
   position: relative;
 }
 
+.rectangle-cell {
+  width: 12rem;
+}
 .percent-bar {
   width: var(--width);
   height: 1em;
