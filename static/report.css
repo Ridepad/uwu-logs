@@ -29,6 +29,7 @@ th {
 .top25 {color: #1eff00;}
 .top0 {color: #666666;}
 
+.heal_total,
 .damage {
   display: none;
 }
