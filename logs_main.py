@@ -457,21 +457,8 @@ class THE_LOGS(
                 for guid, dmg in _useful.items()
             }
             _useful_dps = self.convert_dict_guids_to_names(_useful_dps)
-
             server = get_report_name_info(self.NAME)["server"]
-            top1 = logs_top_db.SpecTop1(server, boss_name, mode)
-            try:
-                spec_top1 = {
-                    spec: top1.get(spec)
-                    for spec in set(specs.values())
-                }
-                points = {
-                    name: f"{udps * 100 / spec_top1[specs[name]]:.1f}"
-                    for name, udps in _useful_dps.items()
-                    if name in specs
-                }
-            except (FileNotFoundError, AttributeError):
-                pass
+            points = logs_top_db.RaidRank(server, boss_name, mode).get_rank_wrap(_useful_dps, specs)
 
         return default_params | DD | {
             "DATA": TABLE,

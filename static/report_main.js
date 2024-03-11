@@ -1,11 +1,14 @@
 const getCellValue = (tr, className) => tr.querySelector(className).textContent.replace(/ /g, "");
 const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
 function table_sort_by_th(th) {
+  const class_name = `.total-cell.${th.classList[0]}`;
   const tbody = document.querySelector("tbody");
-  Array.from(tbody.querySelectorAll("tr"))
-       .splice(1)
-       .sort(comparer(`.total-cell.${th.classList[0]}`))
-       .forEach(tr => tbody.appendChild(tr));
+  let rows = Array.from(tbody.querySelectorAll("tr")).splice(1).sort(comparer(class_name));
+  if (th.classList.contains("points-rank")) {
+    rows.reverse();
+  }
+  rows.forEach(tr => tbody.appendChild(tr));
+  rows.forEach(tr => !getCellValue(tr, class_name) && tbody.appendChild(tr));
 }
 
 const POINTS = [100, 99, 95, 75, 50, 25, 0];
@@ -31,7 +34,8 @@ function swap_click_wrap(useful_class_name) {
 function add_points_color() {
   for (const td of document.querySelectorAll(".points")) {
     for (const i of POINTS) {
-      if (td.textContent - i >= 0) {
+      const percentile = parseFloat(td.getAttribute("data-percentile") || 0);
+      if (percentile >= i) {
         td.classList.add(`top${i}`);
         break;
       }

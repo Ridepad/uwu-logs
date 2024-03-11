@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from itertools import groupby, islice
 from pathlib import Path
 from typing import TypedDict
+from bisect import bisect
 
 import numpy
 
@@ -165,6 +166,12 @@ def query_top1_spec(table_name, spec):
     FROM [{table_name}]
     WHERE {COLUMN_SPEC}={spec}
     """
+def query_dps_spec(table_name, spec):
+    return f"""
+    SELECT {COLUMN_USEFUL_DPS}
+    FROM [{table_name}]
+    WHERE {COLUMN_SPEC}={spec}
+    """
 
 def to_int(v):
     try:
@@ -272,6 +279,64 @@ class SpecTop1(Cache):
         except sqlite3.OperationalError:
             _data[spec_index] = 1
         return _data[spec_index]
+
+
+class RaidRank(Cache):
+    m_time = defaultdict(float)
+    access = defaultdict(datetime.now)
+    cache: defaultdict[str, dict] = defaultdict(dict)
+    cooldown = timedelta(minutes=15)
+
+    def __init__(self, server, boss, mode) -> None:
+        self.server = server
+        self.table_name = get_table_name(boss, mode)
+
+    def _get_data(self):
+        _cache = self.cache[self.server]
+        if self.table_name in _cache and self.db_is_old():
+            return _cache[self.table_name]
+                
+        _cache[self.table_name] = {}
+        return _cache[self.table_name]
+
+    def _get_spec_data(self, spec_index: int) -> list[float]:
+        q = query_dps_spec(self.table_name, spec_index)
+        return sorted(x for x, in self.cursor.execute(q))
+    
+    def get_spec_data(self, spec_index: int) -> list[float]:
+        _data = self._get_data()
+        if spec_index in _data:
+            return _data[spec_index]
+        try:
+            _data[spec_index] = self._get_spec_data(spec_index)
+        except sqlite3.OperationalError:
+            _data[spec_index] = []
+        return _data[spec_index]
+
+    @running_time
+    def get_rank_wrap(self, players_dps: dict[str, float], players_spec: dict[str, int]):
+        ranks: dict[str, int] = {}
+        for guid, dps in players_dps.items():
+            if guid not in players_spec:
+                continue
+            spec = players_spec[guid]
+            spec_data = self.get_spec_data(spec)
+            dps = dps + 0.01
+            rank_reversed = bisect(spec_data, dps)
+            total_raids = len(spec_data)
+            rank = total_raids - rank_reversed + 1
+            percentile = rank_reversed / total_raids * 100
+            percentile = round(percentile, 2)
+            perc_from_top1 = dps / spec_data[-1] * 100
+            perc_from_top1 = round(perc_from_top1, 1)
+            ranks[guid] = {
+                "rank": rank,
+                "percentile": percentile,
+                "from_top1": perc_from_top1,
+                "total_raids": total_raids,
+            }
+        return ranks
+
 
 @running_time
 def gzip_compress(data: bytes):

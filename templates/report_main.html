@@ -2,7 +2,7 @@
 
 {% block scripts_head %}
 <script src="/static/chart-4.1.2.min.js"></script>
-<script src="/static/report_main.js" async></script>
+<script src="/static/report_main.js?240312-1" async></script>
 <script src="/static/dps_chart.js?240227-1" defer></script>
 {% endblock scripts_head %}
 
@@ -54,7 +54,8 @@
         <thead>
           <tr>
             <th class="player-cell">Name</th>
-            <th class="points sortable"></th>
+            <th class="points-rank sortable">Rank</th>
+            <th class="points-dps sortable">Dps%</th>
             <th class="useful sortable" colspan="3">Useful Damage<button class="swap swap-damage">⇄</button></th>
             <th class="damage sortable" colspan="3">Total Damage<button class="swap swap-damage">⇄</button></th>
             <th class="heal sortable" colspan="3">Heal<button class="swap swap-heal">⇄</button></th>
@@ -72,7 +73,13 @@
               <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
               {% endif %}
             </td>
-            <td class="points total-cell">{{ POINTS[player_name] }}</td>
+            {% if player_name in POINTS %}
+            <td class="points points-rank total-cell" title="Out of {{ POINTS[player_name]['total_raids'] }}" data-percentile="{{ POINTS[player_name]['percentile'] }}">{{ POINTS[player_name]['rank'] }}</td>
+            <td class="points points-dps total-cell" data-percentile="{{ POINTS[player_name]['from_top1'] }}">{{ POINTS[player_name]['from_top1'] }}</td>
+            {% else %}
+            <td class="points points-rank total-cell"></td>
+            <td class="points points-dps total-cell"></td>
+            {% endif %}
             {% for _type, players in DATA.items() %}
             <td class="{{ _type }} rectangle-cell">
               {% if players.get(player_name) %}
