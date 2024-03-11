@@ -1,4 +1,4 @@
-import { Gear } from "./char_parser.js";
+import { Gear } from "./char_parser.js?240311-2";
 
 const LOADING_POINTS = document.getElementById("loading-points");
 const MISSING_POINTS = document.getElementById("missing-points");
