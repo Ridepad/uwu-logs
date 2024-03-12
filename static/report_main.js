@@ -1,11 +1,15 @@
 const getCellValue = (tr, className) => tr.querySelector(className).textContent.replace(/ /g, "");
 const comparer = className => (a, b) => getCellValue(b, className) - getCellValue(a, className);
+const getCellValueRank = (tr, className) => tr.querySelector(className).getAttribute("data-percentile");
+const comparerRank = className => (a, b) => getCellValueRank(b, className) - getCellValueRank(a, className);
 function table_sort_by_th(th) {
   const class_name = `.total-cell.${th.classList[0]}`;
   const tbody = document.querySelector("tbody");
-  let rows = Array.from(tbody.querySelectorAll("tr")).splice(1).sort(comparer(class_name));
+  let rows = Array.from(tbody.querySelectorAll("tr")).splice(1)
   if (th.classList.contains("points-rank")) {
-    rows.reverse();
+    rows.sort(comparerRank(class_name));
+  } else {
+    rows.sort(comparer(class_name));
   }
   rows.forEach(tr => tbody.appendChild(tr));
   rows.forEach(tr => !getCellValue(tr, class_name) && tbody.appendChild(tr));

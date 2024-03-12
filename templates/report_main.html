@@ -2,7 +2,7 @@
 
 {% block scripts_head %}
 <script src="/static/chart-4.1.2.min.js"></script>
-<script src="/static/report_main.js?240312-1" async></script>
+<script src="/static/report_main.js?240312-2" async></script>
 <script src="/static/dps_chart.js?240227-1" defer></script>
 {% endblock scripts_head %}
 
@@ -74,7 +74,7 @@
               {% endif %}
             </td>
             {% if player_name in POINTS %}
-            <td class="points points-rank total-cell" title="Out of {{ POINTS[player_name]['total_raids'] }}" data-percentile="{{ POINTS[player_name]['percentile'] }}">{{ POINTS[player_name]['rank'] }}</td>
+            <td class="points points-rank total-cell" title="Better than {{ POINTS[player_name]['percentile'] }}% out of {{ POINTS[player_name]['total_raids'] }}" data-percentile="{{ POINTS[player_name]['percentile'] }}">{{ POINTS[player_name]['rank'] }}</td>
             <td class="points points-dps total-cell" data-percentile="{{ POINTS[player_name]['from_top1'] }}">{{ POINTS[player_name]['from_top1'] }}</td>
             {% else %}
             <td class="points points-rank total-cell"></td>
