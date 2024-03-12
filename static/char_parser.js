@@ -465,7 +465,7 @@ function find_gem_data_by_name(gem_name) {
 }
 
 function item_enchantable(item_data) {
-  return ENCHANTABLE.includes(item_data.slot) || item_data.slot == "Finger" && GEAR_WRAP.getAttribute("data-enchanter");
+  return ENCHANTABLE.includes(item_data.slot) || item_data.slot == "Finger" && GEAR_WRAP.getAttribute("data-enchanting");
 }
 
 function get_gem_color(gem_data) {
