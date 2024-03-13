@@ -179,6 +179,12 @@ def to_int(v):
     except (TypeError, ValueError):
         return None
 
+def _to_int(v):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return -1
+
 def get_table_name(server: str, boss: str, mode: str):
     return f"{server}.{boss}.{mode}"
 
