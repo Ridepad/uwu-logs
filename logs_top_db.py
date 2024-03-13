@@ -280,6 +280,29 @@ class SpecTop1(Cache):
             _data[spec_index] = 1
         return _data[spec_index]
 
+def format_rank(spec_data, dps):
+    total_raids = len(spec_data)
+    if not total_raids or not spec_data[-1]:
+        return {
+            "rank": 1,
+            "percentile": 100.0,
+            "from_top1": 100.0,
+            "total_raids": 1,
+        }
+    
+    dps = dps + 0.01
+    rank_reversed = bisect(spec_data, dps)
+    rank = total_raids - rank_reversed + 1
+    percentile = rank_reversed / total_raids * 100
+    percentile = round(percentile, 2)
+    perc_from_top1 = dps / spec_data[-1] * 100
+    perc_from_top1 = round(perc_from_top1, 1)
+    return {
+        "rank": rank,
+        "percentile": percentile,
+        "from_top1": perc_from_top1,
+        "total_raids": total_raids,
+    }
 
 class RaidRank(Cache):
     m_time = defaultdict(float)
@@ -313,30 +336,16 @@ class RaidRank(Cache):
             _data[spec_index] = []
         return _data[spec_index]
 
+    def format_rank_wrap(self, spec, dps):
+        return format_rank(self.get_spec_data(spec), dps)
+
     @running_time
     def get_rank_wrap(self, players_dps: dict[str, float], players_spec: dict[str, int]):
-        ranks: dict[str, int] = {}
-        for guid, dps in players_dps.items():
-            if guid not in players_spec:
-                continue
-            spec = players_spec[guid]
-            spec_data = self.get_spec_data(spec)
-            dps = dps + 0.01
-            rank_reversed = bisect(spec_data, dps)
-            total_raids = len(spec_data)
-            rank = total_raids - rank_reversed + 1
-            percentile = rank_reversed / total_raids * 100
-            percentile = round(percentile, 2)
-            perc_from_top1 = dps / spec_data[-1] * 100
-            perc_from_top1 = round(perc_from_top1, 1)
-            ranks[guid] = {
-                "rank": rank,
-                "percentile": percentile,
-                "from_top1": perc_from_top1,
-                "total_raids": total_raids,
-            }
-        return ranks
-
+        return {
+            guid: self.format_rank_wrap(players_spec[guid], dps)
+            for guid, dps in players_dps.items()
+            if guid in players_spec
+        }
 
 @running_time
 def gzip_compress(data: bytes):
