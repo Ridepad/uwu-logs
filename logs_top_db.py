@@ -202,12 +202,13 @@ def points_relative_calc(points, points_top1):
 
 
 class Cache:
-    m_time: defaultdict[str, float]
-    access: defaultdict[str, datetime]
     cache: defaultdict[str, dict]
     server: str
 
     cooldown = timedelta(seconds=15)
+
+    m_time: defaultdict[str, float] = defaultdict(float)
+    access: defaultdict[str, datetime] = defaultdict(datetime.now)
 
     def db_is_old(self):
         if self.access_cd():
@@ -245,41 +246,6 @@ class Cache:
         return self.__cursor
 
 
-class SpecTop1(Cache):
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
-    cache: defaultdict[str, dict] = defaultdict(dict)
-    cooldown = timedelta(minutes=15)
-
-    def __init__(self, server: str, boss: str, mode: str) -> None:
-        self.server = server
-        self.table_name = get_table_name(boss, mode)
-
-    def renew_spec(self, spec_index):
-        if spec_index % 4 == 0:
-            return 10**6
-        query = query_top1_spec(self.table_name, spec_index)
-        r = self.cursor.execute(query).fetchone()[0]
-        return r or 10**6
-
-    def _get_data(self):
-        _cache = self.cache[self.server]
-        if self.table_name in _cache and self.db_is_old():
-            return _cache[self.table_name]
-                
-        _cache[self.table_name] = {}
-        return _cache[self.table_name]
-
-    def get(self, spec_index):
-        _data = self._get_data()
-        if spec_index in _data:
-            return _data[spec_index]
-        try:
-            _data[spec_index] = self.renew_spec(spec_index)
-        except sqlite3.OperationalError:
-            _data[spec_index] = 1
-        return _data[spec_index]
-
 def format_rank(spec_data, dps):
     total_raids = len(spec_data)
     if not total_raids or not spec_data[-1]:
@@ -305,8 +271,6 @@ def format_rank(spec_data, dps):
     }
 
 class RaidRank(Cache):
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
     cache: defaultdict[str, dict] = defaultdict(dict)
     cooldown = timedelta(minutes=15)
 
@@ -443,15 +407,7 @@ class TopReturn(TypedDict):
     length: int
     length_compressed: int
 
-def _to_int(v):
-    try:
-        return int(v)
-    except ValueError:
-        return -1
-
 class Top(Cache):
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
     cache: defaultdict[str, dict] = defaultdict(dict)
 
     def __init__(self, **kwargs) -> None:
@@ -623,8 +579,6 @@ def convert_dps_wrap(db, boss: str, mode: str="25H"):
 
 
 class PlayerData(Cache):
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
     cache: defaultdict[str, dict] = defaultdict(dict)
     cooldown = timedelta(minutes=15)
     
@@ -674,8 +628,6 @@ class PlayerData(Cache):
         }
 
 class PlayerPoints(Cache):
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
     cache: defaultdict[str, dict] = defaultdict(dict)
 
     def __init__(self, server: str, guid: str, spec: int) -> None:
@@ -776,9 +728,6 @@ def parse_player(server, name, spec=None):
 
 class PveStats(Cache):
     cache = defaultdict(dict)
-    m_time = defaultdict(float)
-    access = defaultdict(datetime.now)
-
     cooldown = timedelta(hours=1)
 
     def __init__(self, server: str) -> None:
