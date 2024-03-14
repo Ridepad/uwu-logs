@@ -30,7 +30,8 @@
   <div id="fights-container-wrap">
     <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
     <aside id="fights-container">
-      <span id="fights-hover-dropdown">Ξ</span>
+      <input type="checkbox" id="fights-hover-dropdown-cb">
+      <label for="fights-hover-dropdown-cb" id="fights-hover-dropdown">Ξ</label>
       <ul class="bosses">
         {% for boss_data in SEGMENTS_LINKS %}
         <li>

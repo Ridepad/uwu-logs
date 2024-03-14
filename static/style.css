@@ -496,7 +496,6 @@ footer::before {
   align-self: end;
 }
 #fights-container-wrap h1 {
-  padding-right: .5em;
   max-width: 90vw;
 }
 #fights-container-wrap > h1 > a {
@@ -531,16 +530,15 @@ footer::before {
 }
 
 #fights-hover-dropdown {
-  border: .1em solid var(--primary-color);
-  border-radius: .2em;
+  border: 0;
+  padding-block: 0;
+  padding-inline: 1em;
   background-color: var(--background);
-  padding-inline: .5em;
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
   z-index: 2;
 }
 #fights-container {
   position: relative;
-  padding-inline: 1em;
 }
 #fights-container .bosses {
   position: absolute;
@@ -564,6 +562,7 @@ footer::before {
 #fights-container li:hover {
   background-color: var(--highlight-color); 
 }
+#fights-hover-dropdown-cb:checked ~ .bosses,
 #fights-container:hover .bosses, 
 #fights-container .bosses li:hover > .diffs,
 #fights-container .diffs li:hover > .segments {
