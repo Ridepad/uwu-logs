@@ -654,7 +654,8 @@ class UsefulDamage(logs_base.THE_LOGS):
 
         _friendly_fire = damage_combined.pop("000000", {})
         for guid, name in target_order(boss_name).items():
-            data_all[name] = damage_combined.pop(guid)
+            if guid in damage_combined:
+                data_all[name] = damage_combined.pop(guid)
         for guid, value in damage_combined.items():
             name = self.guid_to_name(guid)
             data_all[name] = value
