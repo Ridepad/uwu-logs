@@ -401,7 +401,7 @@ class TargetDamageAllType(TypedDict):
 
 
 def target_order(boss_name):
-    return list(USEFUL.get(boss_name, {})) + list(ALL_GUIDS.get(boss_name, {}))
+    return USEFUL.get(boss_name, {}) | ALL_GUIDS.get(boss_name, {})
 
 @running_time
 def get_dmg(logs_slice: list[str]):
@@ -615,7 +615,7 @@ class UsefulDamage(logs_base.THE_LOGS):
             for tGUID, d in data.items()
         }
 
-    @running_time
+    # @running_time
     def target_damage_combine(self, damage, no_overkill, useful_specific) -> TargetDamageAllType:
         damage_combined = self.combine_pets_all(damage, trim_non_players=True)
         damage_total = get_total_damage(damage_combined, ignore_targets=self.FRIENDLY_IDS)
@@ -653,10 +653,11 @@ class UsefulDamage(logs_base.THE_LOGS):
         data_all.update(custom_groups)
 
         _friendly_fire = damage_combined.pop("000000", {})
-        _order = target_order(boss_name)
-        damage_combined_sorted = dict(sorted(damage_combined.items(), key=lambda x: x[0] not in _order))
-        damage_combined_sorted = self.convert_dict_guids_to_names(damage_combined_sorted)
-        data_all.update(damage_combined_sorted)
+        for guid, name in target_order(boss_name).items():
+            data_all[name] = damage_combined.pop(guid)
+        for guid, value in damage_combined.items():
+            name = self.guid_to_name(guid)
+            data_all[name] = value
         
         data_all["Friendly Fire"] = _friendly_fire
 
