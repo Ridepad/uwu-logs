@@ -215,7 +215,6 @@ class Cache:
     cooldown = timedelta(seconds=15)
 
     m_time: defaultdict[str, float] = defaultdict(float)
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
 
     def db_is_old(self):
         if self.on_cooldown():
@@ -740,6 +739,7 @@ def parse_player(server, name, spec=None):
 
 class PveStats(Cache):
     cache = defaultdict(dict)
+    access: defaultdict[str, datetime] = defaultdict(datetime.now)
     cooldown = timedelta(hours=1)
 
     def __init__(self, server: str) -> None:
