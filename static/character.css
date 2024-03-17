@@ -114,12 +114,23 @@ main {
   z-index: 5;
 }
 #tooltip-points td {
-  min-width: fit-content;
   text-align: right;
   padding-inline: .25em;
 }
 #tooltip-points tr.no-decimal td.value {
-  padding-right: 1.15em;
+  padding-right: 1.05em;
+}
+#tooltip-points tr td:first-child {
+  width: 5.5rem;
+  min-width: 5.5rem;
+}
+.td-max,
+.td-player {
+  width: 3.5rem;
+  min-width: 3.5rem;
+}
+.td-points {
+  min-width: 2rem;
 }
 
 #wraprwprperweproe {
@@ -137,6 +148,7 @@ main {
   padding-inline: .25em; 
 }
 #player-points-wrap {
+  position: relative;
   font-size: 200%;
 }
 .hide-other-bosses tr:nth-child(n+11) {
@@ -174,6 +186,32 @@ main {
   #missing-points {
     max-width: calc(100% - 29rem);
   }
+}
+
+#rank-info {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: .25em;
+  box-shadow:
+    inset 0 0 .25rem .1rem var(--primary-color),
+          0 0  .5rem .1rem var(--primary-color);
+}
+#rank-info:hover #rank-info-tt {
+  display: block;
+}
+#rank-info-tt {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  min-width: 60vw;
+  background-color: var(--background);
+  z-index: 5;
+  padding: .5em;
+  box-shadow:
+    inset 0 0 .25rem .1rem var(--primary-color),
+          0 0  .5rem .1rem var(--primary-color);
 }
 
 

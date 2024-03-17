@@ -158,7 +158,11 @@ function row_onenter(event) {
   }
   const trRect = row.getBoundingClientRect();
   tooltip.style.top = trRect.bottom + 'px';
-  tooltip.style.left = trRect.left + 'px';
+  if (window.matchMedia("(orientation: landscape)").matches) {
+    tooltip.style.left = trRect.left + 'px';
+  } else {
+    tooltip.style.left = 0;
+  }
   tooltip.style.removeProperty("display");
 }
 

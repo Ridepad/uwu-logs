@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block scripts_head %}
-<script src="/static/character.js?240311-2" type="module" async></script>
+<script src="/static/character.js?240317-1" type="module" async></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/character.css?240311-2">
+<link rel="stylesheet" type="text/css" href="/static/character.css?240317-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -106,7 +106,15 @@
     </div>
   </section>
   <div id="loading-points">Loading raid data...</div>
-  <div id="missing-points" style="display: none;">No raid data found for this character.</div>
+  <div id="missing-points" style="display: none;">
+    <p>
+      No raid data found for this character.
+    </p>
+    <p>
+      Points are calculated based on ICC 25 Heroic.
+      <!-- Points are calculated based on 25 man heroic mode of the latest expansion phase. -->
+    </p>
+  </div>
   <section id="player-points-wrap" style="display: none;">
     <div class="table-wrap-wrap">
       <div class="table-wrap">
@@ -131,6 +139,16 @@
     </div>
     <div id="toggle-more-bosses-wrap">
       <button id="toggle-more-bosses">Show more</button>
+    </div>
+    <div id="rank-info">Rank info
+      <div id="rank-info-tt">
+        <p>DPS rank is based on % dps from top 1.</p> 
+        <p>-</p>
+        <p>Player rank is based on best results from each player.</p>
+        <p>-</p>
+        <p>Raid rank is based on position relative to all logged raids.</p>
+        <p>Can be decreased by other players, if they consistently have better dps than you.</p>
+      </div>
     </div>
   </section>
 </div>
