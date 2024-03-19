@@ -401,6 +401,8 @@ class THE_LOGS(
 
         GUIDS = self.get_all_guids()
         _data = logs_dmg_heals.add_pets(_data, GUIDS)
+        if not _data:
+            return {}
         MAX_VALUE = max(_data.values())
 
         d = {}
