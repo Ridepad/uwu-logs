@@ -210,11 +210,10 @@ def points_relative_calc(points, points_top1):
 class Cache:
     cache: defaultdict[str, dict]
     access: defaultdict[str, datetime]
+    m_time: defaultdict[str, float]
     server: str
 
     cooldown = timedelta(seconds=15)
-
-    m_time: defaultdict[str, float] = defaultdict(float)
 
     def db_is_old(self):
         if self.on_cooldown():
@@ -279,6 +278,7 @@ def format_rank(spec_data, dps):
 class RaidRank(Cache):
     cache: defaultdict[str, dict] = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
+    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=15)
 
     def __init__(self, server, boss, mode) -> None:
@@ -417,6 +417,7 @@ class TopReturn(TypedDict):
 class Top(Cache):
     cache: defaultdict[str, dict] = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
+    m_time: defaultdict[str, float] = defaultdict(float)
 
     def __init__(self, **kwargs) -> None:
         self.server = kwargs.get("server")
@@ -589,6 +590,7 @@ def convert_dps_wrap(db, boss: str, mode: str="25H"):
 class PlayerData(Cache):
     cache: defaultdict[str, dict] = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
+    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=15)
     
     def __init__(self, server: str) -> None:
@@ -639,6 +641,7 @@ class PlayerData(Cache):
 class PlayerPoints(Cache):
     cache: defaultdict[str, dict] = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
+    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=5)
 
     def __init__(self, server: str, guid: str, spec: int) -> None:
@@ -740,6 +743,7 @@ def parse_player(server, name, spec=None):
 class PveStats(Cache):
     cache = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
+    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(hours=1)
 
     def __init__(self, server: str) -> None:
