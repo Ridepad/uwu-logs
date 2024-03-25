@@ -309,8 +309,8 @@ function init() {
     set_finish_time();
   }, 10000);
   
-  // const ws_host = `wss://${window.location.hostname}:8765`
-  const ws_host = `ws://127.0.0.1:8765`
+  const ws_host = `wss://${window.location.hostname}:8765`
+  // const ws_host = `ws://127.0.0.1:8765`
   const socket = new WebSocket(ws_host);
   socket.onmessage = event => {
     CONFIG.timeout = 0;
