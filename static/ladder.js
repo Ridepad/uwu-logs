@@ -1,50 +1,14 @@
-const SPECS = [
-  ["Death Knight", "class_deathknight", "death-knight"],
-  ["Blood", "spell_deathknight_bloodpresence", "death-knight"],
-  ["Frost", "spell_deathknight_frostpresence", "death-knight"],
-  ["Unholy", "spell_deathknight_unholypresence", "death-knight"],
-  ["Druid", "class_druid", "druid"],
-  ["Balance", "spell_nature_starfall", "druid"],
-  ["Feral Combat", "ability_racial_bearform", "druid"],
-  ["Restoration", "spell_nature_healingtouch", "druid"],
-  ["Hunter", "class_hunter", "hunter"],
-  ["Beast Mastery", "ability_hunter_beasttaming", "hunter"],
-  ["Marksmanship", "ability_marksmanship", "hunter"],
-  ["Survival", "ability_hunter_swiftstrike", "hunter"],
-  ["Mage", "class_mage", "mage"],
-  ["Arcane", "spell_holy_magicalsentry", "mage"],
-  ["Fire", "spell_fire_firebolt02", "mage"],
-  ["Frost", "spell_frost_frostbolt02", "mage"],
-  ["Paladin", "class_paladin", "paladin"],
-  ["Holy", "spell_holy_holybolt", "paladin"],
-  ["Protection", "spell_holy_devotionaura", "paladin"],
-  ["Retribution", "spell_holy_auraoflight", "paladin"],
-  ["Priest", "class_priest", "priest"],
-  ["Discipline", "spell_holy_wordfortitude", "priest"],
-  ["Holy", "spell_holy_guardianspirit", "priest"],
-  ["Shadow", "spell_shadow_shadowwordpain", "priest"],
-  ["Rogue", "class_rogue", "rogue"],
-  ["Assassination", "ability_rogue_eviscerate", "rogue"],
-  ["Combat", "ability_backstab", "rogue"],
-  ["Subtlety", "ability_stealth", "rogue"],
-  ["Shaman", "class_shaman", "shaman"],
-  ["Elemental", "spell_nature_lightning", "shaman"],
-  ["Enhancement", "spell_nature_lightningshield", "shaman"],
-  ["Restoration", "spell_nature_magicimmunity", "shaman"],
-  ["Warlock", "class_warlock", "warlock"],
-  ["Affliction", "spell_shadow_deathcoil", "warlock"],
-  ["Demonology", "spell_shadow_metamorphosis", "warlock"],
-  ["Destruction", "spell_shadow_rainoffire", "warlock"],
-  ["Warrior", "class_warrior", "warrior"],
-  ["Arms", "ability_rogue_eviscerate", "warrior"],
-  ["Fury", "ability_warrior_innerrage", "warrior"],
-  ["Protection", "ability_warrior_defensivestance", "warrior"]
-]
+import {
+  SPECS,
+} from "./constants.js"
+
 const MAIN_TABLE_WRAP = document.getElementById("main-table-wrap");
 const MAIN_TABLE_BODY = document.getElementById("main-table-body");
 const MAIN_TABLE_FOOT = document.getElementById("main-table-foot");
 const PLAYERS_TABLE_WRAP = document.getElementById("players-table-wrap");
 const PLAYERS_TABLE = document.getElementById("players-table-table");
+const PLAYERS_TABLE_LABEL = document.getElementById("players-table-label");
+const PLAYERS_TABLE_TIME = document.getElementById("players-table-time");
 
 const SELECT_SERVER = document.getElementById("select-server");
 const SELECT_SIZE = document.getElementById("select-size");
@@ -55,11 +19,28 @@ const CHECKBOX_SHOW_DONE = document.getElementById("show-done");
 const CHECKBOX_SHOW_LIVE = document.getElementById("show-live");
 const CHECKBOX_PLAYERS = document.getElementById("show-players");
 
+const KEYS = {
+  type: "type",
+  server: "server",
+  timestamp: "timestamp",
+  id: "id",
+  fight_name: "b",
+  size: "s",
+  difficulty: "m",
+  wipes: "w",
+  duration: "t",
+  player_names: "pn",
+  guild_names: "g",
+  player_guilds: "pg",
+  player_specs: "ps",
+  player_factions: "pf",
+}
+
 const CONFIG = {
   timeout: 30000,
 }
 
-const MOD_TIMES = {};
+const IN_PROGRESS = {};
 const FRAGMENTS = {};
 
 function toogle_display(element, show) {
@@ -100,12 +81,6 @@ function time_to_text(t) {
   return `${minutes}:${seconds}`
 }
 
-function add_stopwatch_cell(row, d) {
-  const td = document.createElement("td");
-  td.classList.add("cell-time");
-  MOD_TIMES[row.id] = d;
-  row.appendChild(td);
-}
 function add_cell(row, value, type, inner) {
   const td = document.createElement("td");
   td.classList.add(`cell-${type}`);
@@ -116,22 +91,26 @@ function add_cell(row, value, type, inner) {
   row.appendChild(td);
 }
 
-function get_guild_index(dataset, guild_names) {
+function get_guild_index(data) {
+  const _guilds_list = data[KEYS.player_guilds];
+  const _player_guilds = data[KEYS.guild_names];
+  
   let majority;
   const counts = {};
-  const half = dataset.length / 2 + .1;
-  const third = dataset.length / 3 + .1;
-  const no_guild_index = guild_names.indexOf("");
-  for (const value of dataset) {
+  const half = _guilds_list.length / 2 + .1;
+  const third = _guilds_list.length / 3 + .1;
+  const no_guild_index = _player_guilds.indexOf("");
+  for (const value of _guilds_list) {
     if (value == no_guild_index) continue;
     counts[value] = (counts[value] || 0) + 1;
-    if (counts[value] > half) return guild_names[value];
+    if (counts[value] > half) return _player_guilds[value];
     if (counts[value] > third) majority = value;
   }
-  return majority == undefined ? "Pug" : `Pug (${guild_names[majority]})`;
+  return majority == undefined ? "Pug" : `Pug (${_player_guilds[majority]})`;
 }
 
 function to_title(s) {
+  s = s.toLowerCase();
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
@@ -144,13 +123,12 @@ function link(name, server, is_guild) {
   return a;
 }
 
-function players_span(data, server) {
-  server = to_title(server);
-  const players = data["pn"];
-  const guilds = data["g"];
-  const pguilds = data["pg"];
-  const pspecs = data["ps"];
-  const mtime = (new Date(data["mtime"] * 1000)).valueOf();
+function make_players_table(data) {
+  const server = to_title(data[KEYS.server]);
+  const players = data[KEYS.player_names];
+  const guilds = data[KEYS.guild_names];
+  const pguilds = data[KEYS.player_guilds];
+  const pspecs = data[KEYS.player_specs];
   const body = document.createElement("tbody");
 
   for (const i in players) {
@@ -176,29 +154,36 @@ function players_span(data, server) {
     body.appendChild(row);
   }
   
-  const time_row = document.createElement("tr");
-  time_row.setAttribute("data-start", mtime);
-  const td_name = document.createElement("td");
-  td_name.append("Started");
-  time_row.appendChild(td_name);
-  time_row.appendChild(document.createElement("td"));
-  body.appendChild(time_row);
-  
   return body;
 }
 
 function auto_hide(row) {
-  delete MOD_TIMES[row.id];
+  delete IN_PROGRESS[row.id];
   setTimeout(() => {
     MAIN_TABLE_FOOT.appendChild(row);
   }, CONFIG.timeout);
 }
-
+function row_on_enter(event) {
+  const row = event.target;
+  PLAYERS_TABLE_LABEL.textContent = row.classList.contains("live") ? "Started" : "Ended";
+  
+  const _started = row.getAttribute("data-timestamp");
+  PLAYERS_TABLE.setAttribute("data-timestamp", _started);
+  
+  if (FRAGMENTS[row.id].tagName != "TBODY") {
+    FRAGMENTS[row.id] = make_players_table(FRAGMENTS[row.id]);
+  }
+  const _tbody = PLAYERS_TABLE.querySelector("tbody");
+  PLAYERS_TABLE.replaceChild(FRAGMENTS[row.id], _tbody);
+  
+  set_finish_time();
+}
 function add_row(data) {
-  const _id = data["id"];
-  const time = data["t"];
-  const _type = data["parent"];
-  const attempts = _type == "kill" ? data["w"] + 1 : data["w"];
+  const _id = data[KEYS.id];
+  const duration = data[KEYS.duration];
+  const _type = data[KEYS.type];
+  const _wipes = data[KEYS.wipes];
+  const attempts = _type == "kill" ? _wipes + 1 : _wipes;
   
   const prev_row = document.getElementById(_id);
 
@@ -209,7 +194,7 @@ function add_row(data) {
 
     prev_row.className = _type;
 
-    prev_row.querySelector(".cell-time").textContent = time_to_text(time);
+    prev_row.querySelector(".cell-time").textContent = time_to_text(duration);
     prev_row.querySelector(".cell-attempts").textContent = attempts;
 
     return;
@@ -221,61 +206,62 @@ function add_row(data) {
 
   add_cell(row, _id, "id");
   
-  const server = data["server"].toLowerCase();
+  const server = data[KEYS.server].toLowerCase();
   const img_server = document.createElement("img");
   img_server.src = `/static/${server}.png`;
   add_cell(row, img_server, "server");
-  row.setAttribute("data-server", server);
 
-  if (time == 0 && _type == "live") {
-    const mtime = new Date(data["mtime"] * 1000);
-    add_stopwatch_cell(row, mtime);
+  const timestamp = new Date(data[KEYS.timestamp] * 1000);
+  let time_text = "";
+  if (duration == 0 && _type == "live") {
+    IN_PROGRESS[row.id] = timestamp;
   } else {
-    add_cell(row, time_to_text(time), "time");
+    time_text = time_to_text(duration);
     auto_hide(row);
   }
+  add_cell(row, time_text, "time");
 
   add_cell(row, attempts, "attempts");
   
-  const boss_name = data["b"] != "" ? data["b"] : "Sister Svalna";
-  add_cell(row, boss_name, "boss");
+  const _fight_name = data[KEYS.fight_name];
+  const fight_name = _fight_name != "" ? _fight_name : "Sister Svalna";
+  add_cell(row, fight_name, "boss");
   
-  add_cell(row, data["s"], "size");
-  row.setAttribute("data-size", data["s"]);
+  add_cell(row, data[KEYS.size], "size");
   
-  const mode = data["m"] == 1 ? "Heroic" : "Normal"
+  const mode = data[KEYS.difficulty] == 1 ? "Heroic" : "Normal";
   add_cell(row, mode, "mode");
-  row.setAttribute("data-mode", mode);
 
-  const faction = data["pf"][0] == 1 ? "horde" : "alliance"
+  const faction = data[KEYS.player_factions][0] == 1 ? "horde" : "alliance";
   const img = document.createElement("img");
   img.src = `/static/${faction}.png`;
-  const guild = get_guild_index(data["pg"], data["g"]);
-  add_cell(row, guild, "guild", img)
+  const guild = get_guild_index(data);
+  add_cell(row, guild, "guild", img);
+
+  row.setAttribute("data-server", server);
+  row.setAttribute("data-size", data[KEYS.size]);
+  row.setAttribute("data-mode", mode);
   row.setAttribute("data-faction", faction);
+  row.setAttribute("data-timestamp", timestamp.valueOf());
 
   const show_row = show_row_wrap();
   toogle_display(row, show_row(row))
-  if (prev_row) {
-    MAIN_TABLE_BODY.replaceChild(row, prev_row);
-  } else {
-    MAIN_TABLE_BODY.appendChild(row);
-  }
+  MAIN_TABLE_BODY.appendChild(row);
 
-  FRAGMENTS[_id] = players_span(data, server);
-
-  row.addEventListener("mouseenter", () => {
-    PLAYERS_TABLE.replaceChild(FRAGMENTS[row.id], PLAYERS_TABLE.firstElementChild);
-    set_finish_time();
-  });
+  FRAGMENTS[_id] = data;
+  row.addEventListener("mouseenter", row_on_enter);
 }
 
+const plular = (v, n) => v == 0 ? "" : v == 1 ? `${v} ${n} ` : `${v} ${n}s `;
 function set_finish_time() {
-  const tr = PLAYERS_TABLE.querySelector("tbody").lastElementChild;
-  if (!tr) return;
-  const diff = Date.now() - tr.getAttribute("data-start");
-  const t = Math.floor(diff / 1000 / 60);
-  tr.lastElementChild.textContent = `${t} minutes ago`;
+  const _started = PLAYERS_TABLE.getAttribute("data-timestamp");
+  const diff = Date.now() - _started;
+  const t = diff / 1000 + 60;
+  const minutes = Math.floor(t / 60);
+  const minutes_str = plular(minutes % 60, "minute");
+  const hours = Math.floor(minutes / 60);
+  const hours_str = plular(hours, "hour");
+  PLAYERS_TABLE_TIME.textContent = `${hours_str}${minutes_str} ago`;
 }
 
 function onmsg(event) {
@@ -303,7 +289,6 @@ function init() {
   });
   SELECT_TIMEOUT.addEventListener("change", () => {
     CONFIG.timeout = SELECT_TIMEOUT.value * 1000;
-    console.log(CONFIG.timeout);
   });
   
   for (const select of [SELECT_SERVER, SELECT_SIZE, SELECT_MODE, SELECT_FACTION]) {
@@ -312,9 +297,9 @@ function init() {
   
   setInterval(() => {
     const now = Date.now();
-    for (const _id in MOD_TIMES) {
+    for (const _id in IN_PROGRESS) {
       const td = document.getElementById(_id).querySelector(".cell-time");
-      const diff = now - MOD_TIMES[_id]
+      const diff = now - IN_PROGRESS[_id]
       const v = Math.max(diff/1000, 0);
       td.textContent = time_to_text(v);
     }
@@ -324,7 +309,8 @@ function init() {
     set_finish_time();
   }, 10000);
   
-  const ws_host = `wss://${window.location.hostname}:8765`
+  // const ws_host = `wss://${window.location.hostname}:8765`
+  const ws_host = `ws://127.0.0.1:8765`
   const socket = new WebSocket(ws_host);
   socket.onmessage = event => {
     CONFIG.timeout = 0;

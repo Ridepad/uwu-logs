@@ -5,7 +5,7 @@
 <link rel="shortcut icon" href="/favicon.ico">
 {% endblock head_meta %}
 {% block scripts_head %}
-<script type="module" src="/static/ladder.js"></script>
+<script type="module" src="/static/ladder.js?240325-1" async></script>
 {% endblock scripts_head %}
 {% block add_style %}
 <style>
@@ -79,6 +79,9 @@ td.cell-id {
   bottom: var(--bottom-row-one);
   right: 0;
 }
+#players-table-label {
+  text-align: right;
+}
 .cell-name {
   min-width: 9em;
 }
@@ -117,8 +120,12 @@ td.cell-id {
       <tbody></tbody>
       <tfoot>
         <tr>
-          <th>PLAYER</th>
-          <th>GUILD</th>
+          <td>PLAYER</td>
+          <td>GUILD</td>
+        </tr>
+        <tr>
+          <td id="players-table-label">Started</td>
+          <td id="players-table-time"></td>
         </tr>
       </tfoot>
     </table>
