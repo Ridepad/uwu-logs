@@ -53,6 +53,10 @@ HEAL_BOSSES = {
 FINISH_SPELLS = {
     "72350",
 }
+CAN_BE_SMALL = {
+    "Heroic Training Dummy",
+    "Highlord's Nemesis Trainer",
+}
 
 def to_int(timestamp: str):
     i = timestamp.index('.')
@@ -224,7 +228,7 @@ class Fights:
             for segment in time_pairs(boss_id, dumped_lines):
                 # print("\n////////////// NEW SEGMENT", len(segment))
 
-                if len(segment) < 100:
+                if len(segment) < 100 and fight_name not in CAN_BE_SMALL:
                     continue
                 
                 segment = get_more_precise_wrap(segment)
