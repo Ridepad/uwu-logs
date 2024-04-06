@@ -25,6 +25,7 @@ import logs_calendar
 import logs_main
 import logs_top_db
 import test_group_bosses
+import logs_upload
 from constants import (
     ALL_FIGHT_NAMES,
     FLAG_ORDER,
