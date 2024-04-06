@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block add_style %}
+<style>
+td {
+  min-width: 5rem;
+  text-align: center;
+}
+th {
+  text-align: left;
+}
+.raid-table td.guild {
+  background-color: hsl(var(--hue), 80%, 20%);
+}
+.guild::before {
+  content: var(--hue);
+}
+.day-split-row td {
+  border-top: 10px solid var(--unfocused-color);
+}
+th {
+  position: sticky;
+  top: var(--margin-top);
+}
+.day {
+  position: sticky;
+  left: 0;
+}
+th.day {
+  z-index: 1;
+}
+</style>
+{% endblock add_style %}
+
+{% block the_main %}
+<main>
+<section class="mainwrap">
+  <table class="raid-table">
+    <thead>
+    <th class="day">Day/Hour</th>
+    {% for h_str in HEAD %}
+    <th>{{h_str}}</th>
+    {% endfor %}
+    </thead>
+    <tbody>
+      {% for day_data_rows in CALEND_DAYS %}
+      {% for day_x, day_data_cells in day_data_rows %}
+      {% if day_x %}
+      <tr class="day-split-row">
+        <td class="day" rowspan="{{ len(day_data_rows) }}">{{day_x}}</td>
+        {% else %}
+      <tr>
+        {% endif %}
+        <td></td>
+        {% for cell in day_data_cells[1:] %}
+        {% if cell %}
+        <td class="guild" colspan="{{ cell.len_30_min }}">{{cell.to_string()}}</td>
+        {% else %}
+        <td></td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+</main>
+{% endblock the_main %}
+
+{% block the_scripts %}
+<script>
+  //Array.from(document.querySelectorAll(".guild")).forEach((e, i) => console.log(e.style["--hue"]));
+  Array.from(document.querySelectorAll(".guild")).forEach((e, i) => e.style.setProperty("--hue", i*280));
+  // e.style.setPropertyValue("--hue", i*300));
+</script>
+{% endblock the_scripts %}

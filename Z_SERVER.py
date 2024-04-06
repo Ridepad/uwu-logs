@@ -24,7 +24,7 @@ import file_functions
 import logs_calendar
 import logs_main
 import logs_top_db
-import logs_upload
+import test_group_bosses
 from constants import (
     ALL_FIGHT_NAMES,
     FLAG_ORDER,
@@ -720,6 +720,16 @@ def missing(type, id):
 
     return "", return_code
 
+@SERVER.route("/raid_calendar")
+def raid_calendar():
+    _calend = test_group_bosses.RaidCalendar()
+    return render_template_wrap(
+        'raid_calendar.html',
+        REPORT_NAME="Raid Calendar",
+        CALEND_DAYS=_calend.get(),
+        HEAD=_calend.heads,
+        len=len,
+    )
 
 # def connections():
 #     return
