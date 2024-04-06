@@ -15,7 +15,7 @@ function table_sort_by_th(th) {
   rows.forEach(tr => !getCellValue(tr, class_name) && tbody.appendChild(tr));
 }
 
-const POINTS = [100, 99, 95, 75, 50, 25, 0];
+const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const TOTAL = {
   "useful": "damage",
   "heal": "heal_total",
