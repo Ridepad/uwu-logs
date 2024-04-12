@@ -25,6 +25,7 @@ const TABLE_STATS_BODY = document.getElementById("table-stats-body");
 
 const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
 
+const URL_PREFIX_TALENTS = "https://aowow.trinitycore.info/?talent#"
 const URL_PREFIX_ICON = "/cache/icon";
 const URL_PREFIX_CHARACTER = "/cache/character";
 const RELEVANT_PROFS = ["Enchanting", "Blacksmithing"];
@@ -198,7 +199,7 @@ function set_new_spec_profs_values(e, data, type, talents) {
   element_name.textContent = name;
   element_value.textContent = value;
   if (talents) {
-    element_value.href = `https://wotlk.evowow.com/?talent#${talents}`;
+    element_value.href = `${URL_PREFIX_TALENTS}${talents}`;
   } else {
     element_value.removeAttribute("href");
   }
