@@ -471,6 +471,6 @@ class SourceNumbers(logs_base.THE_LOGS):
         return json.dumps({
             "PLAYERS": players,
             "SPELLS": spells,
-            "TARGETS": sort_by_name_type(targets.items()),
+            "TARGETS": targets,
         }, default=list)
     
