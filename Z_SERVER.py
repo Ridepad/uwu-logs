@@ -492,6 +492,18 @@ def consumables(report_id):
         'consumables.html', **default_params, **data,
     )
 
+@SERVER.route("/reports/<report_id>/entities/")
+def entities(report_id):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+
+    data = report.entities(*segments[0])
+
+    return render_template_cache(
+        'entities.html', **default_params, **data,
+    )
+
 @SERVER.route("/reports/<report_id>/all_auras/")
 def all_auras(report_id):
     report = load_report(report_id)

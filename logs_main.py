@@ -19,6 +19,7 @@ import logs_valk_grabs
 import logs_ucm
 
 from constants import (
+    BOSSES_GUIDS,
     BOSSES_FROM_HTML,
     UNKNOWN_ICON,
     convert_to_html_name,
@@ -41,6 +42,13 @@ BOSSES_SKIP_POINTS = {
     "Heroic Training Dummy",
     "Highlord's Nemesis Trainer",
 }
+ENTITIES_KEYS = (
+    "BOSSES",
+    "PLAYER PERMANENT PETS",
+    "PLAYER TEMPORARY PETS",
+    "PLAYERS",
+    "OTHER",
+)
 
 def is_guid(s: str):
     try:
@@ -497,6 +505,37 @@ class THE_LOGS(
 
         _formatted = self._format(_filtered)
         return _formatted
+
+    @logs_base.cache_wrap
+    def entities(self, s, f):
+        guids = self.numbers_damage(s, f)['ACTUAL'].keys()
+        _data = {
+            k: []
+            for k in ENTITIES_KEYS
+        }
+        for guid in sorted(guids):
+            name = self.guid_to_name(guid)
+            if guid[:3] == "0x0":
+                key = "PLAYERS"
+            elif guid[:5] == "0xF14":
+                owner_name = self.guid_to_name(self.get_master_guid(guid))
+                name = f"{name} ({owner_name})"
+                key = "PLAYER PERMANENT PETS"
+            elif guid[6:12] in BOSSES_GUIDS:
+                key = "BOSSES"
+            else:
+                key = "OTHER"
+                owner_guid = self.get_master_guid(guid)
+                if owner_guid != guid:
+                    if owner_guid[:3] == "0x0":
+                        key = "PLAYER TEMPORARY PETS"
+                    owner_name = self.guid_to_name(owner_guid)
+                    name = f"{name} ({owner_name})"
+            _data[key].append((name, guid))
+
+        return {
+            "ENTITIES": _data,
+        }
 
     def logs_custom_search(self, query: dict[str, str]):
         logs = self.get_logs()

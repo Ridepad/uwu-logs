@@ -1,0 +1,33 @@
+{% extends "layout_report.html" %}
+
+{% block add_style %}
+<style>
+td {
+  width: 21em;
+}
+</style>
+{% endblock add_style %}
+{% block the_main %}
+<main id="auras">
+<section class="table-wrap wrap-damage">
+  {% for category, guids in ENTITIES.items() %}
+  <table>
+    <thead>
+      <tr>
+        <th colspan="2">{{ category }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, guid in guids %}
+      <tr>
+        <td>
+          <a href="/reports/{{ REPORT_ID }}/player/{{ guid }}/{{ QUERY }}">{{ name }}</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</section>
+</main>
+{% endblock the_main %}
