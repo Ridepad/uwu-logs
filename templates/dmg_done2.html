@@ -181,14 +181,15 @@ button:hover {
 </section>
 <section id="player-nav-wrap">
   <ul id="player-nav">
-    <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/healed/{{ SOURCE_NAME }}/{{ QUERY }}">HEALED</a></li>
-    <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">TIMELINE</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE }}/{{ QUERY }}">DAMAGE</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE }}/{{ QUERY }}">HEAL</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE }}/{{ QUERY }}">TAKEN</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/healed/{{ SOURCE }}/{{ QUERY }}">HEALED</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE }}/{{ QUERY }}">TIMELINE</a></li>
 </section>
 <section>
   <ul id="player-info">
+    {% if IS_PLAYER %}
     <li class="{{ PLAYER_CLASSES[SOURCE_NAME] }} player-name-big">{{ SOURCE_NAME }}</li>
     <li id="pets-dropdown-wrap" class="has-tooltip">
       {% if PETS %}
@@ -205,6 +206,17 @@ button:hover {
     </li>
     <li><a id="warmane-armory-link" href="https://armory.warmane.com/character/{{ SOURCE_NAME }}/{{ SERVER }}" target="_blank">Armory⇗</a></li>
     <li><a id="points-gear-link" href="/character?name={{ SOURCE_NAME }}&server={{ SERVER }}" target="_blank">Points/Gear⇗</a></li>
+    {% else %}
+    {% if OWNER_NAME %}
+    <li class="player-name-big">{{ SOURCE_NAME }} (<a class="{{ PLAYER_CLASSES[OWNER_NAME] }}" href="/reports/{{ REPORT_ID }}/player/{{ OWNER_NAME }}/{{ QUERY }}">{{ OWNER_NAME }}</a>)</li>
+    {% else %}
+    <li class="player-name-big">{{ SOURCE_NAME }}</li>
+    {% endif %}
+    <li></li>
+    <li></li>
+    <li></li>
+    {% endif %}
+  </ul>
 </section>
 <section id="chart-wrap-wrap">
   <input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label>

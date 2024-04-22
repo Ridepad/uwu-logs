@@ -358,18 +358,17 @@ def download_logs(report_id):
         return send_from_directory(LOGS_RAW_DIR, fname)
     return send_from_directory(file_functions.get_backup_folder(LOGS_RAW_DIR), fname)
 
-@SERVER.route("/reports/<report_id>/player/<source_name>/")
-def player(report_id, source_name):
+@SERVER.route("/reports/<report_id>/player/<source>/")
+def player(report_id, source: str):
     report = load_report(report_id)
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
     tGUID = request.args.get('target')
-    data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID)
+    data = report.get_numbers_breakdown_wrap(segments, source, filter_guid=tGUID)
 
     return render_template_cache(
         'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=source_name,
     )
 
 @SERVER.route("/reports/<report_id>/heal/<source_name>/")
@@ -383,7 +382,6 @@ def heal(report_id, source_name):
 
     return render_template_cache(
         'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=source_name,
     )
 
 @SERVER.route("/reports/<report_id>/taken/<target_name>/")
@@ -397,7 +395,6 @@ def taken(report_id, target_name):
 
     return render_template_cache(
         'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=target_name,
     )
 
 @SERVER.route("/reports/<report_id>/healed/<target_name>/")
@@ -413,7 +410,6 @@ def healed(report_id, target_name):
     
     return render_template_cache(
         'dmg_done2.html', **default_params, **data,
-        SOURCE_NAME=target_name,
         ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
     )
 

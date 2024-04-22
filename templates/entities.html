@@ -21,7 +21,11 @@ td {
       {% for name, guid in guids %}
       <tr>
         <td>
+          {% if category == "PLAYERS" %}
+          <a href="/reports/{{ REPORT_ID }}/player/{{ name }}/{{ QUERY }}">{{ name }}</a>
+          {% else %}
           <a href="/reports/{{ REPORT_ID }}/player/{{ guid }}/{{ QUERY }}">{{ name }}</a>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}

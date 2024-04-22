@@ -478,32 +478,42 @@ class THE_LOGS(
     
     @running_time
     def get_numbers_breakdown_wrap(self, segments: list, source: str, filter_guid=None, heal=False, taken=False):
-        if not is_guid(source):
-            source = self.name_to_guid(source)
-        if not source or not source.startswith("0x"):
+        if is_guid(source):
+            source_guid = source
+        else:
+            source_guid = self.name_to_guid(source)
+        
+        if not source_guid or not source_guid.startswith("0x"):
             return {
                 "TARGETS": {},
             }
         
         a = self.numbers_combined(segments, heal)
         if not taken:
-            sources = self.get_units_controlled_by(source)
+            sources = self.get_units_controlled_by(source_guid)
             _filtered = self._filter(a, sources, filter_guid)
         else:
-            _filtered = self._filter(a, filter_guid, source)
+            _filtered = self._filter(a, filter_guid, source_guid)
             _filtered["PETS"] = {}
         
         if heal:
             if taken:
-                _absorbs = self.get_absorbs_by_target_wrap(segments, source, filter_guid)
+                _absorbs = self.get_absorbs_by_target_wrap(segments, source_guid, filter_guid)
             else:
-                _absorbs = self.get_absorbs_by_source_spells_wrap(segments, source, filter_guid)
+                _absorbs = self.get_absorbs_by_source_spells_wrap(segments, source_guid, filter_guid)
             
             _actual = _filtered["ACTUAL"]
             for spell_id, v in _absorbs.items():
                 _actual[spell_id] = v
 
         _formatted = self._format(_filtered)
+        
+        owner_guid = self.get_master_guid(source_guid)
+        if owner_guid != source_guid:
+            _formatted["OWNER_NAME"] = self.guid_to_name(owner_guid)
+        _formatted["SOURCE_NAME"] = self.guid_to_name(source_guid)
+        _formatted["IS_PLAYER"] = source in self.CLASSES_NAMES
+        _formatted["SOURCE"] = source
         return _formatted
 
     @logs_base.cache_wrap
