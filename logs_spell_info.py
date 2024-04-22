@@ -581,22 +581,17 @@ class SpellCount(logs_base.THE_LOGS):
             "SPELL_COLOR": SPELL_DATA["color"],
         }
 
-class _TargetBuffCount(defaultdict[str, list[tuple[str, str]]]):
-    pass
-
-class _RaidBuffCount(defaultdict[str, _TargetBuffCount]):
+class _TargetBuffCount(list[tuple[str, str]]):
     pass
 
 def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
-    auras = _RaidBuffCount()
+    auras = defaultdict(lambda: defaultdict(_TargetBuffCount))
     for line in logs_slice:
         if flag_filter not in line:
             continue
         timestamp, flag, _, _, target_guid, _, spell_id, _ = line.split(',', 7)
         if spell_id in AURAS:
             spell_id = MULTISPELLS_D.get(spell_id, spell_id)
-            q = auras[target_guid]
-            [spell_id]
             auras[target_guid][spell_id].append((flag, timestamp))
 
     return auras
@@ -609,9 +604,6 @@ def get_filtered_info(data):
     }
 
 class _TargetAuraUptime(dict[str, tuple[int, float]]):
-    pass
-
-class _AuraUptime(defaultdict[str, _TargetAuraUptime]):
     pass
 
 class AuraUptime(logs_base.THE_LOGS):
@@ -630,12 +622,12 @@ class AuraUptime(logs_base.THE_LOGS):
         
         return count, uptime
 
-    def get_auras_uptime(self, logs_slice, data: _RaidBuffCount):
+    def get_auras_uptime(self, logs_slice, data: dict[str, dict[str, _TargetBuffCount]]):
         first_line = logs_slice[0]
         last_line = logs_slice[-1]
         DUR = self.get_timedelta_seconds(first_line, last_line)
 
-        new_auras = _AuraUptime()
+        new_auras = defaultdict(_TargetAuraUptime)
 
         for target_guid, spells in data.items():
             for spell_id, spell_data in spells.items():
