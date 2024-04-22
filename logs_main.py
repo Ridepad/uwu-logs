@@ -44,8 +44,8 @@ BOSSES_SKIP_POINTS = {
 }
 ENTITIES_KEYS = (
     "BOSSES",
-    "PLAYER PERMANENT PETS",
-    "PLAYER TEMPORARY PETS",
+    "PLAYERS' PERMANENT PETS",
+    "PLAYERS' TEMPORARY PETS",
     "PLAYERS",
     "OTHER",
 )
@@ -520,7 +520,7 @@ class THE_LOGS(
             elif guid[:5] == "0xF14":
                 owner_name = self.guid_to_name(self.get_master_guid(guid))
                 name = f"{name} ({owner_name})"
-                key = "PLAYER PERMANENT PETS"
+                key = "PLAYERS' PERMANENT PETS"
             elif guid[6:12] in BOSSES_GUIDS:
                 key = "BOSSES"
             else:
@@ -528,7 +528,7 @@ class THE_LOGS(
                 owner_guid = self.get_master_guid(guid)
                 if owner_guid != guid:
                     if owner_guid[:3] == "0x0":
-                        key = "PLAYER TEMPORARY PETS"
+                        key = "PLAYERS' TEMPORARY PETS"
                     owner_name = self.guid_to_name(owner_guid)
                     name = f"{name} ({owner_name})"
             _data[key].append((name, guid))
