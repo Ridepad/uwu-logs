@@ -1,6 +1,7 @@
 from collections import defaultdict
+
+import logs_base
 from constants import (
-    to_dt_simple,
     running_time,
     add_new_numeric_data,
     sort_dict_by_value,
@@ -8,7 +9,6 @@ from constants import (
     FLAG_ORDER,
     is_player,
 )
-import logs_base
 
 def get_other_count(logs_slice: list[str], _filter: str):
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -494,58 +494,6 @@ def get_potions_count(logs_slice: list[str]):
     return potions
 
 
-def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
-    auras: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
-    for line in logs_slice:
-        if flag_filter not in line:
-            continue
-        timestamp, flag, _, _, target_guid, _, spell_id, _ = line.split(',', 7)
-        if spell_id in AURAS:
-            spell_id = MULTISPELLS_D.get(spell_id, spell_id)
-            auras[target_guid][spell_id].append((flag, timestamp))
-
-    return auras
-
-def iter_spell(data: list[str, str]):
-    count = 0
-    uptime = 0.0
-    start = None
-    for flag, timestamp in data:
-        if start is None:
-            if flag == "SPELL_AURA_APPLIED":
-                start = to_dt_simple(timestamp)
-                count += 1
-        elif flag == "SPELL_AURA_REMOVED":
-            uptime += (to_dt_simple(timestamp) - start).total_seconds()
-            start = None
-    
-    return count, uptime
-
-def get_auras_uptime(logs_slice, data: dict[str, dict[str, list]]):
-    START = to_dt_simple(logs_slice[0])
-    END = to_dt_simple(logs_slice[-1])
-    DUR = (END-START).total_seconds()
-
-    new_auras: defaultdict[str, dict[str, float]] = defaultdict(dict)
-
-    for target_guid, spells in data.items():
-        for spell_id, spell_data in spells.items():
-            if spell_data[0][0] != "SPELL_AURA_APPLIED":
-                spell_data.insert(0, ("SPELL_AURA_APPLIED", logs_slice[0]))
-            if spell_data[-1][0] != "SPELL_AURA_REMOVED":
-                spell_data.append(("SPELL_AURA_REMOVED", logs_slice[-1]))
-            count, uptime = iter_spell(spell_data)
-            new_auras[target_guid][spell_id] = (count, uptime/DUR)
-    
-    return new_auras
-
-def get_filtered_info(data):
-    return {
-        spell_id: spell_info
-        for spell_id, spell_info in AURAS.items()
-        if spell_id in data
-    }
-
 class Consumables(logs_base.THE_LOGS):
     @logs_base.cache_wrap
     def potions_info(self, s, f) -> dict[str, dict[str, int]]:
@@ -633,12 +581,78 @@ class SpellCount(logs_base.THE_LOGS):
             "SPELL_COLOR": SPELL_DATA["color"],
         }
 
+class _TargetBuffCount(defaultdict[str, list[tuple[str, str]]]):
+    pass
+
+class _RaidBuffCount(defaultdict[str, _TargetBuffCount]):
+    pass
+
+def get_raid_buff_count(logs_slice: list[str], flag_filter='SPELL_AURA'):
+    auras = _RaidBuffCount()
+    for line in logs_slice:
+        if flag_filter not in line:
+            continue
+        timestamp, flag, _, _, target_guid, _, spell_id, _ = line.split(',', 7)
+        if spell_id in AURAS:
+            spell_id = MULTISPELLS_D.get(spell_id, spell_id)
+            q = auras[target_guid]
+            [spell_id]
+            auras[target_guid][spell_id].append((flag, timestamp))
+
+    return auras
+
+def get_filtered_info(data):
+    return {
+        spell_id: spell_info
+        for spell_id, spell_info in AURAS.items()
+        if spell_id in data
+    }
+
+class _TargetAuraUptime(dict[str, tuple[int, float]]):
+    pass
+
+class _AuraUptime(defaultdict[str, _TargetAuraUptime]):
+    pass
+
 class AuraUptime(logs_base.THE_LOGS):
+    def iter_spell(self, data: list[str, str]):
+        count = 0
+        uptime = 0.0
+        start = None
+        for flag, timestamp in data:
+            if start is None:
+                if flag == "SPELL_AURA_APPLIED":
+                    start = timestamp
+                    count += 1
+            elif flag == "SPELL_AURA_REMOVED":
+                uptime += self.get_timedelta_seconds(start, timestamp)
+                start = None
+        
+        return count, uptime
+
+    def get_auras_uptime(self, logs_slice, data: _RaidBuffCount):
+        first_line = logs_slice[0]
+        last_line = logs_slice[-1]
+        DUR = self.get_timedelta_seconds(first_line, last_line)
+
+        new_auras = _AuraUptime()
+
+        for target_guid, spells in data.items():
+            for spell_id, spell_data in spells.items():
+                if spell_data[0][0] != "SPELL_AURA_APPLIED":
+                    spell_data.insert(0, ("SPELL_AURA_APPLIED", first_line))
+                if spell_data[-1][0] != "SPELL_AURA_REMOVED":
+                    spell_data.append(("SPELL_AURA_REMOVED", last_line))
+                count, uptime = self.iter_spell(spell_data)
+                new_auras[target_guid][spell_id] = (count, uptime/DUR)
+        
+        return new_auras
+
     @logs_base.cache_wrap
-    def auras_info(self, s, f) -> defaultdict[str, dict[str, tuple[int, float]]]:
+    def auras_info(self, s, f):
         logs_slice = self.LOGS[s:f]
         data = get_raid_buff_count(logs_slice)
-        return get_auras_uptime(logs_slice, data)
+        return self.get_auras_uptime(logs_slice, data)
 
     def auras_info_all(self, segments, trim_non_players=True):
         auras_uptime = defaultdict(lambda: defaultdict(list))
