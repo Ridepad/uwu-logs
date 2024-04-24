@@ -619,6 +619,8 @@ class AuraUptime(logs_base.THE_LOGS):
             elif flag == "SPELL_AURA_REMOVED":
                 uptime += self.get_timedelta_seconds(start, timestamp)
                 start = None
+            else:
+                count += 1
         
         return count, uptime
 
