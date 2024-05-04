@@ -2,6 +2,10 @@
 
 {% block add_style %}
 <style>
+main {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
 img {
   max-width: 100%;
 }
@@ -20,8 +24,12 @@ img {
   font-size: inherit;
 }
 .upload {
-  display: grid;
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#upload-progress-bar-wrapper {
+  min-width: 35em;
 }
 #upload-error {
   font-size: 200%;
@@ -29,6 +37,7 @@ img {
   color: crimson;
 }
 #upload-status {
+  min-height: 5em;
   font-size: 200%;
   min-width: 30ch;
   width: fit-content;
@@ -45,22 +54,39 @@ img {
   padding-inline: 1em;
 }
 .upload span {
-  text-shadow: .1em .1em 1em var(--secondary-color);
+  background-color: hsl(272, 30%, 30%);
+}
+.wa-link {
+  color: hsl(272, 100%, 80%);
 }
 #server-input {
   width: 100%;
 }
 .col-report {
-  width: 20em;
+  min-width: 25em;
 }
 .col-status {
-  width: 10em;
+  min-width: 7em;
 }
 .important {
   color: crimson;
 }
 .warning {
   color: goldenrod;
+}
+.error {
+  background-color: red;
+}
+#show-guide-label {
+  max-width: fit-content;
+  font-size: 400%;
+}
+video {
+  display: none;
+  max-width: 70%;
+}
+#show-guide:checked + label + video {
+  display: block;
 }
 </style>
 {% endblock add_style %}
@@ -100,7 +126,7 @@ img {
     <li>0. Make sure WoW folder isn't read-only</li>
     <li>1. Type <span>/combatlog</span> in game (before anything happens, not after)</li>
     <li>- You have to do this every time after relog/reload/crash</li>
-    <li>- Use <a href="https://wago.io/9Okfx9zrS" target="_blank">weakauras</a> instead to never forget to start logging</li>
+    <li>- Use <a href="https://wago.io/9Okfx9zrS" target="_blank" class="wa-link">weakauras</a> instead to never forget to start logging</li>
     <li>- You can even <span>/reload</span> mid pull with this wa and it'll continue logging</li>
     <li>2. Find logs file in game's folder: <span>WoW/Logs/WoWCombatLog.txt</span></li>
     <li>3. Archive it (supports every archive format now)</li>
@@ -110,6 +136,11 @@ img {
     <li class="important">- Don't rename text files to .zip/.7z/etc., create archives from 0.</li>
     <li>4. Upload the archive above</li>
   </ul>
+  <input type="checkbox" id="show-guide">
+  <label id="show-guide-label" for="show-guide">Video Guide</label>
+  <video controls muted preload="metadata">
+    <source src="/static/upload.mp4" type="video/mp4">
+  </video>
   <h2>Additional info</h2>
   <ul>
     <li>3.3.5 Combatlog is logged into the same file always</li>
@@ -137,7 +168,6 @@ img {
       </table>
     </li>
   </ul>
-  <img src="/static/upload_guide.png">
 </section>
 <section id="upload-progress-section" class="upload" style="display: none;">
   <h2>Upload progress:</h2>
