@@ -354,7 +354,7 @@ main {
   text-overflow: ellipsis;
 }
 #set-wrap {
-  font-size: 90%;
+  font-size: 125%;
   margin-top: auto;
   display: grid;
   grid-auto-flow: column;
