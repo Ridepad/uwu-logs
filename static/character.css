@@ -299,6 +299,8 @@ main {
   max-height: 21rem;
   overflow-y: auto;
   overflow-x: clip;
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary-color) var(--background);
 }
 #table-stats {
   width: 100%;
