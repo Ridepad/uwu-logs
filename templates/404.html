@@ -1,14 +1,40 @@
-{% extends "layout.html" %}
-
-{% block the_main %}
-<main id="no-page">
+<!DOCTYPE html>
+<html style="background-color: black;">
+<head>
+  <title>UwU Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <link rel="stylesheet" type="text/css" href="/static/ubuntu.css">
+  <style>
+  :root {
+    color: gainsboro;
+    font-size: 1.6vh;
+    background: black;
+  }
+  @media (orientation: landscape) {
+    :root {
+      font-size: 2vh;
+    }
+  }
+  body {
+    font-family: Ubuntu;
+  }
+  #error-page {
+    font-size: 200%;
+  }
+  </style>
+</head>
+<body>
+  <nav>
+    <a id="home-button" href="/">UwU LOGS</a>
+  </nav>
+  <main id="error-page">
     <img id="no-page-img" src="/static/AYAYA.png">
     <p>WRONG LINK DUDE, BUDDY, PAL, BRO</p>
     <p>GO BACK IMMEDIATELY OR ELSE</p>
-</main>
-{% endblock the_main %}
-{% block the_scripts %}
-<script>
-  setTimeout(() => document.getElementById("no-page-img").src = "/static/AYAYA.gif", 10000)
-</script>
-{% endblock the_scripts %}
+  </main>
+  <script>
+    setTimeout(() => document.getElementById("no-page-img").src = "/static/AYAYA.gif", 10000)
+  </script>
+</body>
+</html>
