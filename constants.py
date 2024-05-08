@@ -790,10 +790,12 @@ SPELL_BOOK_SPEC = {
         "44572": 3, # Deep Freeze
     },
     "paladin": {
+        "53652": 1, # Beacon of Light
         "53654": 1, # Beacon of Light
         "25903": 1, # Holy Shock
         "48825": 1, # Holy Shock
         "54149": 1, # Infusion of Light
+        "31834": 1, # Light's Grace
         "31842": 1, # Divine Illumination
 
         "53595": 2, # Hammer of the Righteous
