@@ -488,7 +488,8 @@ def convert_dps_spec(b_dps: dict, n_raids: int):
     if dps_r1 == 0:
         return {}
     
-    n_players = len(b_dps)
+    n_players = min(10000, len(b_dps))
+    n_raids = min(10000, n_raids)
     
     pos_players_t = numpy.arange(n_players)
 
