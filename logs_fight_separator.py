@@ -45,7 +45,7 @@ BOSS_MAX_SEP = {
     "008FF5": T_DELTA["30SEC"],
     "009BB7": T_DELTA["2MIN"],
     "008704": T_DELTA["2MIN"],
-    "008EF5": T_DELTA["3MIN"],
+    "008EF5": T_DELTA["2MIN"],
 }
 HEAL_BOSSES = {
     "008FB5",
