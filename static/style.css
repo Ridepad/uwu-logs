@@ -687,8 +687,8 @@ td.player-cell {
   min-width: 20ch;
 }
 .total-cell {
-  width: 12ch;
-  min-width: 12ch;
+  width: 7em;
+  min-width: 7em;
   text-align: right;
 }
 .rectangle-cell {
@@ -698,8 +698,8 @@ td.player-cell {
   min-width: 15ch;
 }
 .per-sec-cell {
-  width: 9ch;
-  min-width: 9ch;
+  width: 6em;
+  min-width: 6em;
   text-align: right;
 }
 
