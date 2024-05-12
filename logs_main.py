@@ -518,7 +518,11 @@ class THE_LOGS(
 
     @logs_base.cache_wrap
     def entities(self, s, f):
-        guids = self.numbers_damage(s, f)['ACTUAL'].keys()
+        _damage = self.numbers_damage(s, f)['ACTUAL']
+        guids = set()
+        for source_guid, targets_data in _damage.items():
+            guids.add(source_guid)
+            guids.update(targets_data)
         _data = {
             k: []
             for k in ENTITIES_KEYS
