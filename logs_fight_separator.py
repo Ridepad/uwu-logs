@@ -73,10 +73,11 @@ def time_pairs(boss_id, lines):
         new_timestamp = line[1]
         
         now = to_int(new_timestamp)
-        if (now - last_time > 60
-        and get_delta(new_timestamp, last_timestamp) > MAX_SEP):
-            SEGMENTS.append(CURRENT_LINES)
-            CURRENT_LINES = []
+        if now - last_time > 60 or last_time > now:
+            td = get_delta(new_timestamp, last_timestamp)
+            if td > MAX_SEP:
+                SEGMENTS.append(CURRENT_LINES)
+                CURRENT_LINES = []
         
         last_time = now
         last_timestamp = new_timestamp
