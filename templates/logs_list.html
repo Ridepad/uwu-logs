@@ -78,6 +78,11 @@
 
 {% block the_main %}
 <main id="calendar">
+<datalist id="fight-list">
+  {% for fight_name in ALL_FIGHT_NAMES %}
+  <option value="{{ fight_name }}"></option>
+  {% endfor %}
+</datalist>
 <section id="calendar-table">
   <table>
     <caption>
@@ -107,11 +112,6 @@
           <input id="input-fight" type="text" placeholder="Fight name" list="fight-list">
           <input id="input-player" type="text" placeholder="Player in raid" maxlength="12" autocomplete="on">
           <input id="input-author" type="text" placeholder="Author name" maxlength="12" autocomplete="on">
-          <datalist id="fight-list">
-            {% for fight_name in ALL_FIGHT_NAMES %}
-            <option value="{{ fight_name }}"></option>
-            {% endfor %}
-          </datalist>
         </div>
       </section>
     </caption>
@@ -130,8 +130,10 @@
       {% for week in CALEND %}
       <tr>
         {% for day_id, day_n in week %}
+        {% if not MONTH.get(day_id) %}
+        <td>{{ day_n }}</td>
+        {% else %}
         <td>
-          {% if MONTH.get(day_id) %}
           <input id="calendar-{{ day_id }}" class="radio" name="calendar-days" type="radio">
           <label for="calendar-{{ day_id }}" class="show-reports">{{ day_n }}</label>
           <aside>
@@ -139,10 +141,8 @@
             <a href="/reports/{{ report_id }}/">{{ formatted_report_info }}</a>
             {% endfor %}
           </aside>
-          {% else %}
-          {{ day_n }}
-          {% endif %}
-          </td>
+        </td>
+        {% endif %}
         {% endfor %}
       </tr>
       {% endfor %}
