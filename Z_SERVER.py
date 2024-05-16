@@ -800,7 +800,10 @@ if __name__ == "__main__":
         p = CACHE_DIR / Path(path)
         if not p.parent.is_dir():
             return {}, 404
-        response = send_from_directory(p.parent, p.name, mimetype='application/json')
+        if p.name.endswith(".json"):
+            response = send_from_directory(p.parent, p.name, mimetype='application/json')
+        else:
+            response = send_from_directory(p.parent, p.name)
         return response
     
     SERVER.run(host="0.0.0.0", port=5000, debug=True, reloader_type="stat")
