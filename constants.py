@@ -286,7 +286,7 @@ BOSSES_GUIDS = {
     "005C19": "Halazzi",
     "005EAF": "Hex Lord Malacrass",
     "005D37": "Zul'jin",
-    #Sunwell Plateau
+    # Sunwell Plateau
     "006112": "Kalecgos",
     "00613C": "Sathrovarr the Corruptor",
     "006132": "Brutallus",
@@ -327,28 +327,6 @@ BOSSES_GUIDS = {
     "002C76": "Bloodlord Mandokir",
     "003B0A": "Gahz'Rankha",
     "002C74": "Jin'do the Hexxer",
-
-    # Naxx (Vanilla):
-    "003E54": "Anub'Rekhan",
-    "003E51": "Grand Widow Faerlina",
-    "003E50": "Maexxna",
-    "003E52": "Noth the Plaguebringer",
-    "003E40": "Heigan the Unclean",
-    "003E8B": "Loatheb",
-    "003EBD": "Instructor Razuvious",
-    "003EBC": "Gothik the Harvester",
-    # Four Horsemen:
-    "003EC0": "Thane Korth'azz",
-    "003EC1": "Lady Blaumeux",
-    "003EBE": "Highlord Mograine",
-    "003EBF": "Sir Zeliek",
-    # ---
-    "003E9C": "Patchwerk",
-    "003E3B": "Grobbulus",
-    "003E3C": "Gluth",
-    "003E38": "Thaddius",
-    "003E75": "Sapphiron",
-    "003E76": "Kel'Thuzad",
 
     # Molten Core:
     "002F56": "Lucifron",
