@@ -297,7 +297,7 @@ BOSSES_GUIDS = {
     "0064F0": "Entropius",
     "0062E3": "Kil'jaeden",
 
-    # AhnQiraj:
+    # Temple of AhnQiraj:
     "003B9F": "The Prophet Skeram",
     "003C9C": "Battleguard Sartura",
     "003C96": "Fankriss the Unyielding",
@@ -310,6 +310,46 @@ BOSSES_GUIDS = {
     "003C97": "Lord Kri",
     "003BC3": "Viscidus",
     "003C9D": "Ouro",
+    # Ruins of AhnQiraj:
+    "003BF4": "Kurinnaxx",
+    "003BED": "General Rajaxx",
+    "003BEC": "Moam",
+    "003C0A": "Buru the Gorger",
+    "003C09": "Ayamiss the Hunter",
+    "003BEB": "Ossirian the Unscarred",
+    # Zul'Gurub:
+    "0038AB": "High Priest Venoxis",
+    "0038B5": "High Priestess Jeklik",
+    "0038AE": "High Priestess Marli",
+    "0038AD": "High Priest Thekal",
+    "0038B3": "Hight Priestess Arlokk",
+    "0039F2": "Hakkar",
+    "002C76": "Bloodlord Mandokir",
+    "003B0A": "Gahz'Rankha",
+    "002C74": "Jin'do the Hexxer",
+
+    # Naxx (Vanilla):
+    "003E54": "Anub'Rekhan",
+    "003E51": "Grand Widow Faerlina",
+    "003E50": "Maexxna",
+    "003E52": "Noth the Plaguebringer",
+    "003E40": "Heigan the Unclean",
+    "003E8B": "Loatheb",
+    "003EBD": "Instructor Razuvious",
+    "003EBC": "Gothik the Harvester",
+    # Four Horsemen:
+    "003EC0": "Thane Korth'azz",
+    "003EC1": "Lady Blaumeux",
+    "003EBE": "Highlord Mograine",
+    "003EBF": "Sir Zeliek",
+    # ---
+    "003E9C": "Patchwerk",
+    "003E3B": "Grobbulus",
+    "003E3C": "Gluth",
+    "003E38": "Thaddius",
+    "003E75": "Sapphiron",
+    "003E76": "Kel'Thuzad",
+
     # Molten Core:
     "002F56": "Lucifron",
     "002ECE": "Magmadar",
