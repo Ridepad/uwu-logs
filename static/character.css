@@ -101,6 +101,9 @@ main {
 .cell-date {
   min-width: 4.1em;
 }
+.cell-raids {
+  min-width: 1.75em;
+}
 
 #tooltip-points {
   position: fixed;
