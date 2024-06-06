@@ -25,6 +25,7 @@ SPELL_AURA = {
 }
 IGNORED_SPELL_IDS = {
     "2096", "10909", "45468", # Mind Vision
+    "26995", # Soothe Animal
     "56190", "56191", "55346", # Lens
     "60122", # Baby Spice
     "53338", "1130", "14323", "14324", "14325", "19421", "19422", "19423", # Hunter"s Mark
