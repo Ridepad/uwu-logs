@@ -406,7 +406,18 @@ function init() {
   for (const spec_button of SPEC_BUTTONS) {
     spec_button.input.addEventListener("click", () => new_spec(spec_button.index));
   }
-  INPUT_CHAR.addEventListener("keypress", event => event.key == "Enter" && new_character_search());
+  INPUT_CHAR.addEventListener("keydown", event => {
+    if (event.code === "Space") {
+      event.preventDefault();
+    } else if (event.code === "Enter") {
+      new_character_search();
+    }
+  });
+  INPUT_CHAR.addEventListener("input", event => {
+    if (event.inputType !== "insertFromPaste") return;
+    event.preventDefault();
+    INPUT_CHAR.value = event.data.replaceAll(" ", "").slice(0, 12);
+  });
   SELECT_SERVER.addEventListener("change", () => new_character_search());
 }
 
