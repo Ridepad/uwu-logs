@@ -647,7 +647,10 @@ SPELL_BOOK = {
     "35395": [4, "Crusader Strike"],
     "9474": [5, "Flash Heal"],
     "14751": [5, "Inner Focus"],
-    "10929": [5, "Renew"],
+    "10929": [5, "Renew"], # Rank 9
+    "25315": [5, "Renew"], # Rank 10
+    "25222": [5, "Renew"], # Rank 12
+    "48068": [5, "Renew"], # Rank 14
     "10965": [5, "Greater Heal"],
     "48089": [5, "Circle of Healing"],
     "47753": [5, "Divine Aegis"],
@@ -658,7 +661,6 @@ SPELL_BOOK = {
     "25392": [5, "Prayer of Fortitude"],
     "48170": [5, "Prayer of Shadow Protection"],
     "32999": [5, "Prayer of Spirit"],
-    "48068": [5, "Renew"],
     "48125": [5, "Shadow Word: Pain"],
     "15473": [5, "Shadowform"],
     "64085": [5, "Vampiric Touch"],
@@ -680,10 +682,16 @@ SPELL_BOOK = {
     "51886": [7, "Cleanse Spirit"],
     "16246": [7, "Clearcasting"],
     "379": [7, "Earth Shield"],
-    "547": [7, "Healing Wave"],
-    "8005": [7, "Healing Wave"],
-    "1064": [7, "Chain Heal"],
-    "10623": [7, "Chain Heal"],
+    "547": [7, "Healing Wave"],   # Rank 3
+    "8005": [7, "Healing Wave"],  # Rank 7
+    "10396": [7, "Healing Wave"], # Rank 9
+    "25357": [7, "Healing Wave"], # Rank 10
+    "25396": [7, "Healing Wave"], # Rank 12
+    "49273": [7, "Healing Wave"], # Rank 14
+    "1064": [7, "Chain Heal"],  # Rank 1
+    "10623": [7, "Chain Heal"], # Rank 3
+    "25423": [7, "Chain Heal"], # Rank 5
+    "55459": [7, "Chain Heal"], # Rank 7
     "10468": [7, "Lesser Healing Wave"],
     "16166": [7, "Elemental Mastery"],
     "16188": [7, "Nature's Swiftness"],
@@ -701,13 +709,19 @@ SPELL_BOOK = {
     "11722": [8, "Curse of the Elements"],
     "47865": [8, "Curse of the Elements"],
     "11672": [8, "Corruption"],
-    "47813": [8, "Corruption"],
+    "25311": [8, "Corruption"], # Rank 7
+    "27216": [8, "Corruption"], # Rank 8
+    "47813": [8, "Corruption"], # Rank 10
     "47893": [8, "Fel Armor"],
-    "11689": [8, "Life Tap"],
-    "63321": [8, "Life Tap"],
+    "31818": [8, "Life Tap"], # SPELL_ENERGIZE
+    "32553": [8, "Life Tap"], # SPELL_ENERGIZE Mana Feed
+    "63321": [8, "Life Tap"], # Glyph
     "47241": [8, "Metamorphosis"],
-    "686": [8, "Shadow Bolt"],
-    "11661": [8, "Shadow Bolt"],
+    "686": [8, "Shadow Bolt"],   # Rank 1
+    "11661": [8, "Shadow Bolt"], # Rank 9
+    "25307": [8, "Shadow Bolt"], # Rank 10
+    "27209": [8, "Shadow Bolt"], # Rank 11
+    "47809": [8, "Shadow Bolt"], # Rank 13
     "25228": [8, "Soul Link"],
     "47843": [8, "Unstable Affliction"],
     "2457": [9, "Battle Stance"],
