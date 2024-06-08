@@ -588,6 +588,7 @@ SPELL_BOOK = {
     "48422": [1, "Master Shapeshifter"],
     "48463": [1, "Moonfire"],
     "48574": [1, "Rake"],
+    "17116": [1, "Nature's Swiftness"],
     "9858": [1, "Regrowth"],
     "48443": [1, "Regrowth"],
     "8910": [1, "Rejuvenation"],
@@ -787,6 +788,7 @@ SPELL_BOOK_SPEC = {
         "16857": 2, # Faerie Fire (Feral)
         "47468": 2, # Claw
 
+        "17116": 3, # Nature's Swiftness
         "53251": 3, # Wild Growth
         "48542": 3, # Revitalize
         "34123": 3, # Tree of Life
@@ -800,6 +802,8 @@ SPELL_BOOK_SPEC = {
         "53257": 1, # Cobra Strikes
         "57475": 1, # Kindred Spirits
         "75447": 1, # Ferocious Inspiration
+        "20904": 2, # Aimed Shot
+        "20906": 2, # Trueshot Aura
         "53220": 2, # Improved Steady Shot
         "53209": 2, # Chimera Shot
         "53353": 2, # Chimera Shot - Serpent
@@ -903,6 +907,7 @@ SPELL_BOOK_SPEC = {
         "16190": 3, # Mana Tide Totem
         "51886": 3, # Cleanse Spirit
         "16188": 3, # Nature's Swiftness
+        "16237": 3, # Ancestral Fortitude 
     },
     "warlock": {
         "59161": 1, # Haunt (Rank 2)
