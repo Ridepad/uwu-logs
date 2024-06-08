@@ -824,6 +824,7 @@ SPELL_BOOK_SPEC = {
         "12579": 3, # Winter's Chill
         "31687": 3, # Summon Water Elemental
         "44572": 3, # Deep Freeze
+        "12654": 3, # Ignite
     },
     "paladin": {
         "53652": 1, # Beacon of Light
@@ -833,6 +834,7 @@ SPELL_BOOK_SPEC = {
         "54149": 1, # Infusion of Light
         "31834": 1, # Light's Grace
         "31842": 1, # Divine Illumination
+        "20216": 1, # Divine Favor
 
         "53595": 2, # Hammer of the Righteous
         "66233": 2, # Ardent Defender
