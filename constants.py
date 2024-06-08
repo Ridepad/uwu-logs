@@ -567,7 +567,9 @@ ENV_DAMAGE = {
     "SLIME":    "90006",
 }
 
+# for detection of players' classes
 SPELL_BOOK = {
+    # Death Knight
     "49222": [0, "Bone Shield"],
     "49560": [0, "Death Grip"],
     "51735": [0, "Ebon Plague"],
@@ -578,6 +580,7 @@ SPELL_BOOK = {
     "51124": [0, "Killing Machine"],
     "66992": [0, "Plague Strike"],
     "50526": [0, "Wandering Plague"],
+    # Druid
     "2782": [1, "Remove Curse"],
     "29166": [1, "Innervate"],
     "5570": [1, "Insect Swarm"],
@@ -605,6 +608,7 @@ SPELL_BOOK = {
     "33831": [1, "Force of Nature"],
     "48391": [1, "Owlkin Frenzy"],
     "22812": [1, "Barkskin"],
+    # Hunter
     "14325": [2, "Hunter's Mark"],
     "53338": [2, "Hunter's Mark"],
     "14290": [2, "Multi-Shot"],
@@ -614,6 +618,7 @@ SPELL_BOOK = {
     "35079": [2, "Misdirection"],
     "49001": [2, "Serpent Sting"],
     "58433": [2, "Volley"],
+    # Mage
     "10181": [3, "Frostbolt"],
     "10216": [3, "Flamestrike"],
     "36032": [3, "Arcane Blast"],
@@ -627,6 +632,7 @@ SPELL_BOOK = {
     "42842": [3, "Frostbolt"],
     "47610": [3, "Frostfire Bolt"],
     "42873": [3, "Fire Blast"],
+    # Paladin
     "48827": [4, "Avenger's Shield"],
     "53654": [4, "Beacon of Light"],
     "48819": [4, "Consecration"],
@@ -646,6 +652,7 @@ SPELL_BOOK = {
     "54172": [4, "Divine Storm"],
     "59578": [4, "The Art of War"],
     "35395": [4, "Crusader Strike"],
+    # Priest
     "9474": [5, "Flash Heal"],
     "14751": [5, "Inner Focus"],
     "10929": [5, "Renew"], # Rank 9
@@ -665,6 +672,7 @@ SPELL_BOOK = {
     "48125": [5, "Shadow Word: Pain"],
     "15473": [5, "Shadowform"],
     "64085": [5, "Vampiric Touch"],
+    # Rogue
     "22482": [6, "Blade Flurry"],
     "35548": [6, "Combat Potency"],
     "57993": [6, "Envenom"],
@@ -679,6 +687,7 @@ SPELL_BOOK = {
     "48638": [6, "Sinister Strike"],
     "1784": [6, "Stealth"],
     "57933": [6, "Tricks of the Trade"],
+    # Shaman
     "52759": [7, "Ancestral Awakening"],
     "51886": [7, "Cleanse Spirit"],
     "16246": [7, "Clearcasting"],
@@ -707,6 +716,7 @@ SPELL_BOOK = {
     "53390": [7, "Tidal Waves"],
     "57961": [7, "Water Shield"],
     "25504": [7, "Windfury Attack"],
+    # Warlock
     "11722": [8, "Curse of the Elements"],
     "47865": [8, "Curse of the Elements"],
     "11672": [8, "Corruption"],
@@ -725,6 +735,7 @@ SPELL_BOOK = {
     "47809": [8, "Shadow Bolt"], # Rank 13
     "25228": [8, "Soul Link"],
     "47843": [8, "Unstable Affliction"],
+    # Warrior
     "2457": [9, "Battle Stance"],
     "2458": [9, "Berserker Stance"],
     "29131": [9, "Bloodrage"],
@@ -740,6 +751,7 @@ SPELL_BOOK = {
     "44949": [9, "Whirlwind"]
 }
 
+# for detection of players' specs after
 SPELL_BOOK_SPEC = {
     "death-knight": {
         "49016": 1, # Hysteria
