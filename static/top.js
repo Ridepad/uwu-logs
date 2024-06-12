@@ -587,7 +587,12 @@ function on_change_spec() {
     selectSpec.selectedIndex = DEFAULT_SPEC[selectClass.value];
   }
 }
-function add_on_change_events(elm) {
+
+function on_server_change() {
+  localStorage.setItem('server', selectServer.value);
+}
+
+function add_extra_function(elm) {
   switch (elm) {
     case selectInstance:
       on_change_instance();
@@ -601,21 +606,18 @@ function add_on_change_events(elm) {
       elm.addEventListener('change', on_change_spec);
       break;
     case selectServer:
-      elm.addEventListener('change', (event) => {
-        if (event.target.value) {
-          localStorage.setItem('server', event.target.value);
-          return;
-        }
-      });
+      elm.addEventListener('change', on_server_change);
       break;
   }
+}
+function add_on_change_events(elm) {
+  add_extra_function(elm);
   elm.addEventListener('change', search_changed);
 }
 
 function init() {
   Object.keys(BOSSES).forEach(name => selectInstance.appendChild(new_option(name)));
   CLASSES.forEach((name, i) => selectClass.appendChild(new_option(name, i)));
-  ['Icecrown', 'Lordaeron'].forEach((name, i) => selectServer.appendChild(new_option(name)));
   const currentParams = new URLSearchParams(window.location.search);
   for (let key in INTERACTABLES) {
     const par = currentParams.get(key);
