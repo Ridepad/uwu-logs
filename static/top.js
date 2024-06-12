@@ -183,7 +183,7 @@ function cell_name(name, spec) {
 
   const a = document.createElement('a');
   a.classList.add(spec_class_id);
-  a.href = `/character?name=${name}&server=${selectServer.value}&spec=${spec%4}`;
+  a.href = `/character?name=${name}&server=${selectServer.value}&spec=${spec % 4}`;
   a.target = "_blank";
   a.append(name);
   cell.appendChild(a);
@@ -260,7 +260,7 @@ function show_tooltip(td) {
     const img = tr.querySelector("img");
     img.src = get_icon_link(AURAS_ICONS[spell_id]);
     img.alt = spell_id;
-    
+
     tr.querySelector(".count").textContent = count;
     tr.querySelector(".uptime").textContent = `${parseFloat(uptime).toFixed(1)}%`;
   }
@@ -359,7 +359,7 @@ function new_row(_data) {
 }
 
 function points_rank_class(v) {
-    for (const i of POINTS) if (v - i >= 0) return `top${i}`;
+  for (const i of POINTS) if (v - i >= 0) return `top${i}`;
 }
 function cell_points(v, is_total) {
   const cell = document.createElement('td');
@@ -369,7 +369,7 @@ function cell_points(v, is_total) {
     cell.classList.add((points_rank_class(v)));
   }
   cell.append(v);
-  return cell;  
+  return cell;
 }
 function new_row_points(data, spec) {
   const row = document.createElement('tr');
@@ -409,7 +409,7 @@ function table_add_new_data(table, data) {
   const fragment = new DocumentFragment();
   let i = 0;
 
-  const spec = parseInt(selectClass.value)*4+parseInt(selectSpec.value);
+  const spec = parseInt(selectClass.value) * 4 + parseInt(selectSpec.value);
   const points = i => new_row_points(data[i], spec);
   const top = i => new_row(data[i]);
   const _new_row = is_points() ? points : top;
@@ -530,7 +530,7 @@ function find_value_index(select, option_name) {
 
 function get_default_index(select) {
   if (select == selectServer) {
-    return find_value_index(select, "Lordaeron");
+    return find_value_index(select, 'Lordaeron');
   } else if (select == selectClass) {
     return find_value_index(select, "Priest");
   } else if (select == selectSpec) {
@@ -555,10 +555,10 @@ function new_option(value, index) {
 function on_change_instance() {
   selectBoss.innerHTML = "";
   BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(new_option(boss_name)));
-  
+
   const points_selected = is_points();
   IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = points_selected);
-  
+
   on_change_class();
 };
 
@@ -576,7 +576,7 @@ function on_change_class(_new) {
     selectClass.selectedIndex = 1;
     _new = true;
   }
-  
+
   if (_new != undefined) add_specs();
 
   on_change_spec();
@@ -588,22 +588,35 @@ function on_change_spec() {
   }
 }
 function add_on_change_events(elm) {
-  if (elm == selectInstance) {
-    on_change_instance();
-    elm.addEventListener('change', on_change_instance);
-  } else if (elm == selectClass) {
-    on_change_class(true);
-    elm.addEventListener('change', on_change_class);
-  } else if (elm == selectSpec) {
-    elm.addEventListener('change', on_change_spec);
+  switch (elm) {
+    case selectInstance:
+      on_change_instance();
+      elm.addEventListener('change', on_change_instance);
+      break;
+    case selectClass:
+      on_change_class(true);
+      elm.addEventListener('change', on_change_class);
+      break;
+    case selectSpec:
+      elm.addEventListener('change', on_change_spec);
+      break;
+    case selectServer:
+      elm.addEventListener('change', (event) => {
+        if (event.target.value) {
+          localStorage.setItem('server', event.target.value);
+          return;
+        }
+      });
+      break;
+      default:
+        elm.addEventListener('change', search_changed);
   }
-  elm.addEventListener('change', search_changed);
 }
 
 function init() {
   Object.keys(BOSSES).forEach(name => selectInstance.appendChild(new_option(name)));
   CLASSES.forEach((name, i) => selectClass.appendChild(new_option(name, i)));
-
+  ['Icecrown', 'Lordaeron'].forEach((name, i) => selectServer.appendChild(new_option(name)));
   const currentParams = new URLSearchParams(window.location.search);
   for (let key in INTERACTABLES) {
     const par = currentParams.get(key);
@@ -627,6 +640,7 @@ function init() {
   toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : is_landscape.matches;
   toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
   toggleLimit.checked = localStorage.getItem("showlimit") == "false" ? false : true;
+  selectServer.value = localStorage.getItem('server') || 'Lordaeron';
 
   toggleTotalDamage.addEventListener('change', () => {
     localStorage.setItem("showtotal", toggleTotalDamage.checked);
