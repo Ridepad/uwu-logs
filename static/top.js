@@ -589,7 +589,7 @@ function on_change_spec() {
 }
 
 function on_server_change() {
-  localStorage.setItem('server', selectServer.value);
+  localStorage.setItem('top_server', selectServer.value);
 }
 
 function add_extra_function(elm) {
@@ -638,21 +638,21 @@ function init() {
     document.getElementById("head-rekt").textContent = "Rkt";
   }
 
-  toggleTotalDamage.checked = localStorage.getItem("showtotal") == "false" ? false : is_landscape.matches;
-  toggleUsefulDamage.checked = localStorage.getItem("showuseful") == "false" ? false : true;
-  toggleLimit.checked = localStorage.getItem("showlimit") == "false" ? false : true;
-  selectServer.value = localStorage.getItem('server') || 'Lordaeron';
+  toggleTotalDamage.checked = localStorage.getItem("top_total") == "false" ? false : is_landscape.matches;
+  toggleUsefulDamage.checked = localStorage.getItem("top_useful") == "false" ? false : true;
+  toggleLimit.checked = localStorage.getItem("top_limit") == "false" ? false : true;
+  selectServer.value = localStorage.getItem("top_server") || 'Lordaeron';
 
   toggleTotalDamage.addEventListener('change', () => {
-    localStorage.setItem("showtotal", toggleTotalDamage.checked);
+    localStorage.setItem("top_total", toggleTotalDamage.checked);
     toggle_total_columns();
   });
   toggleUsefulDamage.addEventListener('change', () => {
-    localStorage.setItem("showuseful", toggleUsefulDamage.checked);
+    localStorage.setItem("top_useful", toggleUsefulDamage.checked);
     toggle_useful_columns();
   });
   toggleLimit.addEventListener('change', () => {
-    localStorage.setItem("showlimit", toggleLimit.checked);
+    localStorage.setItem("top_limit", toggleLimit.checked);
     fetch_data();
   });
 
