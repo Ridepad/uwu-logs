@@ -608,9 +608,8 @@ function add_on_change_events(elm) {
         }
       });
       break;
-      default:
-        elm.addEventListener('change', search_changed);
   }
+  elm.addEventListener('change', search_changed);
 }
 
 function init() {
