@@ -460,8 +460,10 @@ footer::before {
 #filtered-spells > a > span:first-child {
   min-width: 6ch;
   text-align: right;
+  }
+#filtered-spells > a > span:last-child {
+  width: 9em;
 }
-
 
 #top-row-wrap {
   display: flex;
