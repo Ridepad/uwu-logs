@@ -515,8 +515,8 @@ footer::before {
 }
 #report-slice a span {
   text-align: left;
-  padding: .5em;
-  margin: -.5em;
+  padding: .25em;
+  margin: -.25em;
 }
 #report-slice a:hover span {
   color: var(--link-hover);
