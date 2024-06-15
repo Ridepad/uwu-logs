@@ -27,7 +27,7 @@ class ServerID:
          
 
 SERVERS_OTHER = [
-    ServerID("Raging Gods", "(ragin.*?god)"),
+    ServerID("Rising Gods", "(risin.*?god)"),
     ServerID("WoW Circle", "(circle)"),
     ServerID("Whitemane-PTR", "(whitemane.*?ptr)"),
     ServerID("Whitemane-Frostmourne", "(frostmo)"),
@@ -55,9 +55,9 @@ def server_cnv(server: str) -> None:
 def test1():
     z = server_cnv("Wow Circle 3.3.5a x5")
     print(z)
-    z = server_cnv("rAGINg godSs")
+    z = server_cnv("rIsing godSs")
     print(z)
-    z = server_cnv("rAGing godds")
+    z = server_cnv("risINGg godds")
     print(z)
     z = server_cnv("Way-of-Elendil")
     print(z)
