@@ -176,9 +176,9 @@ class NewUpload(Thread):
         self.extracted_path = os.path.join(self.upload_dir, self.extracted_name)
 
         self.server: str = upload_data.get("server")
+        self.server = h_server_fix.server_cnv(self.server)
         if not self.server or self.server in SERVERS.values():
             self.server = DEFAULT_SERVER_NAME
-        self.server = h_server_fix.server_cnv(self.server)
         self.forced = forced
         self.only_slices = only_slices
         self.keep_temp_folder = keep_temp_folder
