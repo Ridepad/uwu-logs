@@ -11,6 +11,7 @@ from pathlib import Path
 
 import constants
 import file_functions
+import h_server_fix
 import logs_archive
 import logs_fix
 from constants import (
@@ -177,6 +178,7 @@ class NewUpload(Thread):
         self.server: str = upload_data.get("server")
         if not self.server or self.server in SERVERS.values():
             self.server = DEFAULT_SERVER_NAME
+        self.server = h_server_fix.server_cnv(self.server)
         self.forced = forced
         self.only_slices = only_slices
         self.keep_temp_folder = keep_temp_folder
