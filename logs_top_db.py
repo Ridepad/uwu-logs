@@ -13,7 +13,8 @@ import numpy
 from constants import get_report_name_info, running_time, sort_dict_by_value
 from logs_top_statistics import convert_boss_data
 
-TOP_DIR_PATH = Path(r"F:\Python\uwulogs\top")
+PATH = Path(__file__).parent
+TOP_DIR_PATH = PATH.joinpath("top")
 
 PAGE_LIMIT = 1000
 QUERY_LIMIT = 10000
