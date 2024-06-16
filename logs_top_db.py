@@ -220,7 +220,11 @@ class Cache:
             return True
 
         db_mtime = self.m_time[self.server]
-        _mtime = int(get_top_db_path(self.server).stat().st_mtime)
+        try:
+            _mtime = int(get_top_db_path(self.server).stat().st_mtime)
+        except FileNotFoundError:
+            server = self.server.replace(" ", "-")
+            _mtime = int(get_top_db_path(server).stat().st_mtime)
         if not db_mtime:
             self.m_time[self.server] = _mtime
             return True
