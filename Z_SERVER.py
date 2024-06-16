@@ -189,10 +189,10 @@ def log_incoming_connection():
     add_log_entry(request.remote_addr, request.method, msg)
 
 def log_exists(report_id: str):
-    report_folder = Directories.logs / report_id
-    if not report_folder.is_dir():
-        backup_folder = report_folder.backup_path()
-        if not backup_folder.is_dir():
+    report_folder = os.path.join(LOGS_DIR, report_id)
+    if not os.path.isdir(report_folder):
+        backup_folder = file_functions.get_backup_folder(report_folder)
+        if not os.path.isdir(backup_folder):
             return False
     return True
 
