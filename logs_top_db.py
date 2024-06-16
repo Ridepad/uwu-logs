@@ -13,8 +13,7 @@ import numpy
 from constants import get_report_name_info, running_time, sort_dict_by_value
 from logs_top_statistics import convert_boss_data
 
-PATH = Path(__file__).parent
-TOP_DIR_PATH = PATH.joinpath("top")
+TOP_DIR_PATH = Path(r"F:\Python\uwulogs\top")
 
 PAGE_LIMIT = 1000
 QUERY_LIMIT = 10000
@@ -220,11 +219,7 @@ class Cache:
             return True
 
         db_mtime = self.m_time[self.server]
-        try:
-            _mtime = int(get_top_db_path(self.server).stat().st_mtime)
-        except FileNotFoundError:
-            server = self.server.replace(" ", "-")
-            _mtime = int(get_top_db_path(server).stat().st_mtime)
+        _mtime = int(get_top_db_path(self.server).stat().st_mtime)
         if not db_mtime:
             self.m_time[self.server] = _mtime
             return True
@@ -286,7 +281,7 @@ class RaidRank(Cache):
     cooldown = timedelta(minutes=15)
 
     def __init__(self, server, boss, mode) -> None:
-        self.server = server
+        self.server = server.replace(" ", "-")
         self.table_name = get_table_name(boss, mode)
 
     def _get_data(self):
@@ -424,7 +419,8 @@ class Top(Cache):
     m_time: defaultdict[str, float] = defaultdict(float)
 
     def __init__(self, **kwargs) -> None:
-        self.server = kwargs.get("server")
+        self.server = kwargs.get("server", "")
+        self.server = self.server.replace(" ", "-")
         self.limit = bool(kwargs.get("limit"))
         self.query = query_from_kwargs(**kwargs)
         self.class_ = _to_int(kwargs.get("class_i"))
@@ -599,7 +595,7 @@ class PlayerData(Cache):
     cooldown = timedelta(minutes=15)
     
     def __init__(self, server: str) -> None:
-        self.server = server
+        self.server = server.replace(" ", "-")
 
     def get_guid_class(self, name):
         return self._get_data().get("names", {}).get(name)
@@ -650,7 +646,7 @@ class PlayerPoints(Cache):
     cooldown = timedelta(minutes=5)
 
     def __init__(self, server: str, guid: str, spec: int) -> None:
-        self.server = server
+        self.server = server.replace(" ", "-")
         self.guid = guid
         self.spec = spec
 
@@ -752,7 +748,7 @@ class PveStats(Cache):
     cooldown = timedelta(hours=1)
 
     def __init__(self, server: str) -> None:
-        self.server = server
+        self.server = server.replace(" ", "-")
 
     def get_data(self, boss, mode):
         _stats = self.cache[self.server]
