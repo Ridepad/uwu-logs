@@ -188,6 +188,14 @@ def log_incoming_connection():
     msg = get_incoming_connection_info()
     add_log_entry(request.remote_addr, request.method, msg)
 
+def log_exists(report_id: str):
+    report_folder = Directories.logs / report_id
+    if not report_folder.is_dir():
+        backup_folder = report_folder.backup_path()
+        if not backup_folder.is_dir():
+            return False
+    return True
+
 @SERVER.before_request
 def before_request():
     log_incoming_connection()
@@ -200,11 +208,13 @@ def before_request():
     if not report_id:
         return redirect("/logs_list")
 
-    report_folder = os.path.join(LOGS_DIR, report_id)
-    if not os.path.isdir(report_folder):
-        backup_folder = file_functions.get_backup_folder(report_folder)
-        if not os.path.isdir(backup_folder):
-            raise NotFound()
+    if not log_exists(report_id):
+        server = report_id.rsplit("--", 1)[-1]
+        server_old = server.replace("-", " ")
+        report_id = report_id.replace(server, server_old)
+        if log_exists(report_id):
+            return redirect(f"/reports/{report_id}")
+        raise NotFound()
     
     if not USE_FILTER:
         pass
