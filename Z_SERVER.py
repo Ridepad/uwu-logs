@@ -548,7 +548,7 @@ def compare(report_id):
         report = load_report(report_id)
         default_params = report.get_default_params(request)
         segments = default_params["SEGMENTS"]
-        return report.get_comp_data(segments, class_name, tGUID=target)
+        return report.get_comparison_data(segments, class_name, tGUID=target)
 
 @SERVER.route("/reports/<report_id>/valks/")
 def valks(report_id):

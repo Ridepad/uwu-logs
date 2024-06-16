@@ -516,6 +516,27 @@ class THE_LOGS(
         _formatted["SOURCE"] = source
         return _formatted
 
+    @running_time
+    def get_comparison_data(self, segments, class_filter: str, tGUID=None):
+        class_filter = class_filter.lower()
+        players = []
+        targets = {}
+        spells = {}
+        for guid, class_name in self.get_classes().items():
+            if class_name != class_filter:
+                continue
+            data = self.get_numbers_breakdown_wrap(segments, guid, filter_guid=tGUID)
+            data["NAME"] = self.guid_to_name(guid)
+            targets |= data["TARGETS"]
+            spells |= data["SPELLS_DATA"]
+            players.append(data)
+
+        return json.dumps({
+            "PLAYERS": players,
+            "SPELLS": spells,
+            "TARGETS": targets,
+        }, default=list)
+
     @logs_base.cache_wrap
     def entities(self, s, f):
         _damage = self.numbers_damage(s, f)['ACTUAL']

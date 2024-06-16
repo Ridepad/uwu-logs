@@ -437,7 +437,7 @@ class SourceNumbers(logs_base.THE_LOGS):
         return d
 
     @running_time
-    def numbers_combined(self, segments: list[str, str], heal=None):
+    def numbers_combined(self, segments: list[str, str], heal=False):
         combined = default_dict()
         casts_combined = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         combined["CASTS"] = casts_combined
@@ -452,25 +452,3 @@ class SourceNumbers(logs_base.THE_LOGS):
             casts = self.numbers_cast(s, f)
             self.add_actual(casts_combined, casts)
         return combined
-
-    @running_time
-    def get_comp_data(self, segments, class_filter: str, tGUID=None):
-        class_filter = class_filter.lower()
-        players = []
-        targets = {}
-        spells = {}
-        for guid, class_name in self.get_classes().items():
-            if class_name != class_filter:
-                continue
-            data = self.get_numbers_breakdown_wrap(segments, guid, filter_guid=tGUID)
-            data["NAME"] = self.guid_to_name(guid)
-            targets |= data["TARGETS"]
-            spells |= data["SPELLS_DATA"]
-            players.append(data)
-
-        return json.dumps({
-            "PLAYERS": players,
-            "SPELLS": spells,
-            "TARGETS": targets,
-        }, default=list)
-    
