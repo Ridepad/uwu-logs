@@ -81,6 +81,8 @@ SPELLS: dict[str, tuple[str]] = {
         ("66670", "", "67329", ""), # Burning Breath
     "Archavon the Stone Watcher":
         ("58696", "", "60884", ""), # Rock Shards
+    "Archavon the Stone Watcher2":
+        ("58695", "", "60883", ""), # Rock Shards
     "Emalon the Storm Watcher":
         ("64213", "", "64215", ""), # Chain Lightning
 }
