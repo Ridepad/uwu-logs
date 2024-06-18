@@ -97,13 +97,25 @@ COWARDS_NAMES = set(COWARDS.values())
 
 def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
+    
+    def more_than_10_players():
+        max_players = 10
+        if "0x0000000000000000" in players:
+            max_players = 11
+        
+        return len(players) > max_players
+
     for line in logs_slice[:2000]:
-        guid = line.split(',', 3)[2]
+        _, flag, guid, _ = line.split(',', 3)
         if guid[:3] != '0x0':
             continue
-        
+        if guid in players:
+            continue
+        if flag == 'SPELL_AURA_REMOVED':
+            continue
+
         players.add(guid)
-        if len(players) > 11:
+        if more_than_10_players():
             return DIFFICULTY[2]
     
     return DIFFICULTY[0]
