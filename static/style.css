@@ -231,23 +231,6 @@ ul {
 }
 
 
-/* NO PAGE */
-#no-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-#no-page > img {
-  width: clamp(112px, 95vw, 60vh);
-  height: clamp(112px, 95vw, 60vh);
-}
-#no-page p {
-  margin: 1rem;
-}
-
-
-
 main {
   position: relative;
   margin-bottom: var(--bottom-row-one);
