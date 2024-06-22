@@ -217,6 +217,18 @@ USEFUL = {
         "0083B7": "Emerald Consort",
         "008299": "Suit of Armor",
     },
+    
+    "Maexxna": {
+        "004066": "Web Wrap",
+    },
+    "Grobbulus": {
+        "003FA2": "Fallout Slime",
+    },
+    "Noth the Plaguebringer": {
+        "004257": "Plagued Champion",
+        "004255": "Plagued Guardian",
+        "004258": "Plagued Warrior",
+    },
 
     "Majordomo Executus": {
         # "002EF2": "Majordomo Executus",
