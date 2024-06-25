@@ -435,15 +435,22 @@ def get_dmg(logs_slice: list[str]):
         "no_overkill": no_overkill,
     }
 
+def _is_valk(guid: str):
+    return guid[6:-6] == '008F01'
 def dmg_gen_valk(logs: list[str]):
+    casted_life_siphon = {}
     for line in logs:
         if '8F01' not in line:
             continue
         if "_DAMAGE" not in line:
             continue
-        _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
-        if tGUID[6:-6] == '008F01':
-            yield sGUID, tGUID, int(dmg)
+        _, _, source_guid, _, target_guid, _, _, _, _, damage, _ = line.split(',', 10)
+        if target_guid in casted_life_siphon:
+            pass
+        elif _is_valk(target_guid):
+            yield source_guid, target_guid, int(damage)
+        elif _is_valk(source_guid):
+            casted_life_siphon[source_guid] = True
 
 @running_time
 def get_valks_dmg(logs: list[str], half_hp=2992500 // 2) -> ValksDamage:
