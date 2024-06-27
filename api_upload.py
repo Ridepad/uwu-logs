@@ -1,4 +1,3 @@
-import traceback
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -78,12 +77,13 @@ async def upload_post(request: Request, response: Response):
         current_upload.add_chunk(chunk)
         return None
     
-    file_data = await request.json()
-    print(file_data)
+    try:
+        file_data = await request.json()
+    except Exception:
+        file_data = {}
     try:
         archive = current_upload.save_uploaded_file(file_data)
     except ValueError:
-        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="file was corrupted during upload",
