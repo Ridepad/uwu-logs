@@ -251,7 +251,7 @@ class SevenZipArchive(SevenZipArchiveInfo):
     def create(self, file_path: Path, custom_mode: list[str]=None):
         if self.archive_path.is_file():
             self.archive_path.unlink()
-        self.append(file_path, custom_mode)
+        return self.append(file_path, custom_mode)
 
 
 
