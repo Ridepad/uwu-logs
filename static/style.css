@@ -557,8 +557,6 @@ footer::before {
 #fights-container .segments {
   position: absolute;
   top: 0;
-  right: 30vw;
-  left: auto;
 }
 #fights-container .diffs {
   z-index: 15;
@@ -580,8 +578,15 @@ footer::before {
     padding-inline: 2rem;
     font-size: 125%;
   }
+  #fights-container .diffs {
+    transform: translateY(-.5rem);
+  }
   #fights-container .diffs li {
     padding-block: .5rem;
+  }
+  #fights-container .diffs,
+  #fights-container .segments {
+    left: 4.5rem;
   }
 }
 @media (orientation: landscape) {
