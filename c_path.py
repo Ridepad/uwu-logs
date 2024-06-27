@@ -187,7 +187,7 @@ class PathExt(_PathExtDirs, _PathExtFiles):
 class Directories(dict[str, PathExt]):
     __getattr__ = dict.__getitem__
 
-    main = PathExt(__file__).parent
+    main = PathExt(__file__).resolve().parent
     logs = main / DirNames.logs
     archives = main / DirNames.archives
     top = main / DirNames.top
