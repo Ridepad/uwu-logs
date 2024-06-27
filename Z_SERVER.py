@@ -25,7 +25,7 @@ import logs_calendar
 import logs_main
 import logs_top_db
 import test_group_bosses
-import logs_upload
+# import logs_upload
 from constants import (
     ALL_FIGHT_NAMES,
     FLAG_ORDER,
@@ -66,7 +66,7 @@ YEARS = list(range(2018, SERVER_STARTED.year+2))
 
 CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
-NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
+# NEW_UPLOADS: dict[str, logs_upload.FileSave] = {}
 
 cleaner = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
@@ -297,62 +297,62 @@ def show_logs_list():
         ALL_FIGHT_NAMES=ALL_FIGHT_NAMES,
     )
 
-def file_is_proccessing(ip):
-    if ip not in NEW_UPLOADS:
-        return False
+# def file_is_proccessing(ip):
+#     if ip not in NEW_UPLOADS:
+#         return False
     
-    new_upload = NEW_UPLOADS[ip]
-    if new_upload.upload_thread is None:
-        return False
-    if new_upload.upload_thread.is_alive():
-        return True
+#     new_upload = NEW_UPLOADS[ip]
+#     if new_upload.upload_thread is None:
+#         return False
+#     if new_upload.upload_thread.is_alive():
+#         return True
     
-    del NEW_UPLOADS[ip]
-    return False
+#     del NEW_UPLOADS[ip]
+#     return False
 
-@SERVER.route("/upload_progress")
-def upload_progress():
-    ip = request.remote_addr
-    if ip not in NEW_UPLOADS:
-        return '', 204
+# @SERVER.route("/upload_progress")
+# def upload_progress():
+#     ip = request.remote_addr
+#     if ip not in NEW_UPLOADS:
+#         return '', 204
     
-    new_upload = NEW_UPLOADS[ip]
-    if new_upload.upload_thread is None:
-        return '', 204
+#     new_upload = NEW_UPLOADS[ip]
+#     if new_upload.upload_thread is None:
+#         return '', 204
 
-    status_dict = new_upload.upload_thread.status_dict
-    if status_dict.get('done') == 1:
-        del NEW_UPLOADS[ip]
-    elif not new_upload.upload_thread.is_alive():
-        del NEW_UPLOADS[ip]
-        return '', 500
+#     status_dict = new_upload.upload_thread.status_dict
+#     if status_dict.get('done') == 1:
+#         del NEW_UPLOADS[ip]
+#     elif not new_upload.upload_thread.is_alive():
+#         del NEW_UPLOADS[ip]
+#         return '', 500
     
-    return new_upload.upload_thread.status_to_json(), 200
+#     return new_upload.upload_thread.status_to_json(), 200
 
-@SERVER.route("/upload", methods=['GET', 'POST'])
-def upload():
-    IP = request.remote_addr
+# @SERVER.route("/upload", methods=['GET', 'POST'])
+# def upload():
+#     IP = request.remote_addr
 
-    if request.method == 'GET':
-        servers = file_functions.get_folders(TOP_DIR)
-        return render_template_wrap('upload.html', SERVERS=servers)
+#     if request.method == 'GET':
+#         servers = file_functions.get_folders(TOP_DIR)
+#         return render_template_wrap('upload.html', SERVERS=servers)
 
-    new_upload = NEW_UPLOADS.get(IP)
-    if new_upload is None:
-        new_upload = NEW_UPLOADS[IP] = logs_upload.FileSave()
+#     new_upload = NEW_UPLOADS.get(IP)
+#     if new_upload is None:
+#         new_upload = NEW_UPLOADS[IP] = logs_upload.FileSave()
     
-    if request.headers.get("Content-Type") == "application/json":
-        new_upload.done(IP, request.data)
-        return '', 201
+#     if request.headers.get("Content-Type") == "application/json":
+#         new_upload.done(IP, request.data)
+#         return '', 201
 
-    chunkN = request.headers.get("X-Chunk", type=int)
-    date = request.headers.get("X-Date", type=int)
-    success = new_upload.add_chunk(request.data, chunkN, date)
+#     chunkN = request.headers.get("X-Chunk", type=int)
+#     date = request.headers.get("X-Date", type=int)
+#     success = new_upload.add_chunk(request.data, chunkN, date)
     
-    if success:
-        return '', 200
+#     if success:
+#         return '', 200
     
-    return '', 304
+#     return '', 304
 
 @SERVER.route("/reports/<report_id>/")
 def report_page(report_id):
