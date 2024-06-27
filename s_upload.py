@@ -1,3 +1,5 @@
+# python s_upload.py file_name --server server_name --chunk-size 200000 --threads 1
+
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
