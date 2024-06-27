@@ -7,3 +7,4 @@ psutil==5.*,>=5.9
 requests==2.*,>=2.31
 zstd==1.5.5.1
 pytz==2023.3
+fastapi>=0.111
