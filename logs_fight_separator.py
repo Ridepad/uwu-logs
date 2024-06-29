@@ -43,7 +43,8 @@ IGNORED_SPELL_IDS = {
     # Surge of Light
 }
 BOSS_MAX_SEP = {
-    "008FF5": T_DELTA["30SEC"],
+    # "008FF5": T_DELTA["30SEC"],
+    "008EF5": T_DELTA["1MIN"],
     "009BB7": T_DELTA["2MIN"],
     "008704": T_DELTA["2MIN"],
     "008EF5": T_DELTA["2MIN"],
@@ -64,8 +65,8 @@ def to_int(timestamp: str):
     return int(timestamp[i-8:i].replace(':', ''))
 
 def time_pairs(boss_id, lines):
-    MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
-    SEGMENTS = []
+    # MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
+    MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["30SEC"])
     CURRENT_LINES = []
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
