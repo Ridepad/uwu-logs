@@ -67,6 +67,7 @@ def to_int(timestamp: str):
 def time_pairs(boss_id, lines):
     # MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
     MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["30SEC"])
+    SEGMENTS = []
     CURRENT_LINES = []
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
