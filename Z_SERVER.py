@@ -730,31 +730,21 @@ def raid_calendar():
 
 
 if __name__ == "__main__":
+    from h_other import Ports
+
     SERVER.config["ENV"] = "development"
     SERVER.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
     @SERVER.route('/favicon.ico')
     def favicon():
-        response = send_from_directory(STATIC_DIR, 'favicon.ico', mimetype='image/x-icon')
+        file = Directories.static / "favicon.ico"
+        response = send_file(file, mimetype='image/x-icon')
         response.cache_control.max_age = 30 * 24 * 60 * 60
         return response
 
-    @SERVER.route('/class_icons.jpg')
-    def class_icons():
-        response = send_from_directory(STATIC_DIR, 'class_icons.jpg', mimetype='image/jpeg')
-        response.cache_control.max_age = 30 * 24 * 60 * 60
-        return response
-
-    @SERVER.route('/', defaults={'path': ''})
-    @SERVER.route('/cache/<path:path>')
-    def cache(path):
-        p = CACHE_DIR / Path(path)
-        if not p.parent.is_dir():
-            return {}, 404
-        if p.name.endswith(".json"):
-            response = send_from_directory(p.parent, p.name, mimetype='application/json')
-        else:
-            response = send_from_directory(p.parent, p.name)
-        return response
+    @SERVER.route('/upload')
+    def upload():
+        _url = str(request.url).replace(f":{Ports.main}/", f":{Ports.upload}/")
+        return redirect(_url)
     
-    SERVER.run(host="0.0.0.0", port=5000, debug=True, reloader_type="stat")
+    SERVER.run(host="0.0.0.0", port=Ports.main, debug=True, reloader_type="stat")
