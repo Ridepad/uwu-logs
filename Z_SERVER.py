@@ -24,19 +24,11 @@ import file_functions
 import logs_calendar
 import logs_main
 import logs_top_db
-import test_group_bosses
-from constants import (
-    ALL_FIGHT_NAMES,
-    FLAG_ORDER,
-    GEAR,
-    LOGGER_CONNECTIONS,
-    LOGS_DIR,
-    LOGS_RAW_DIR,
-    MONTHS,
-    STATIC_DIR,
-    T_DELTA,
-    TOP_DIR,
-)
+from constants import FLAG_ORDER
+from c_bosses import ALL_FIGHT_NAMES
+from c_path import Directories, Files
+from h_datetime import MONTHS, T_DELTA
+from h_debug import Loggers
 
 try:
     import _validate
@@ -66,8 +58,9 @@ YEARS = list(range(2018, SERVER_STARTED.year+2))
 CACHED_PAGES = {}
 OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 
-cleaner = h_cleaner.MemoryCleaner(OPENED_LOGS)
+CLEANER = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
+LOGGER_CONNECTIONS = Loggers.connections
 LOGGER_CONNECTIONS.debug("Starting server...")
 
 def add_log_entry(ip, method, msg):
@@ -87,7 +80,7 @@ def load_report(report_id: str):
             add_log_entry(ip, "SPAM", report_id)
             raise TooManyRequests(retry_after=_limit)
     
-    cleaner.run()
+    CLEANER.run()
     report = logs_main.THE_LOGS(report_id)
     OPENED_LOGS[report_id] = report
     add_log_entry(ip, "OPENNED", report_id)
@@ -187,10 +180,10 @@ def log_incoming_connection():
     add_log_entry(request.remote_addr, request.method, msg)
 
 def log_exists(report_id: str):
-    report_folder = os.path.join(LOGS_DIR, report_id)
-    if not os.path.isdir(report_folder):
-        backup_folder = file_functions.get_backup_folder(report_folder)
-        if not os.path.isdir(backup_folder):
+    report_folder = Directories.logs / report_id
+    if not report_folder.is_dir():
+        backup_folder = report_folder.backup_path()
+        if not backup_folder.is_dir():
             return False
     return True
 
@@ -306,10 +299,17 @@ def report_page(report_id):
 
 @SERVER.route("/reports/<report_id>/download")
 def download_logs(report_id):
-    fname = f"{report_id}.7z"
-    if os.path.isfile(os.path.join(LOGS_RAW_DIR, fname)):
-        return send_from_directory(LOGS_RAW_DIR, fname)
-    return send_from_directory(file_functions.get_backup_folder(LOGS_RAW_DIR), fname)
+    FILE_NAME = f"{report_id}.7z"
+    DIRECTORIES = [
+        Directories.archives,
+        Directories.archives.backup_path(),
+    ]
+    for _dir in DIRECTORIES:
+        file_path = _dir / FILE_NAME
+        if file_path.is_file():
+            return send_file(file_path)
+
+    return "", 404
 
 @SERVER.route("/reports/<report_id>/player/<source>/")
 def player(report_id, source: str):

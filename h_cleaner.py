@@ -1,9 +1,11 @@
-
-
 import threading
 from datetime import datetime, timedelta
+
 import psutil
-from constants import LOGGER_MEMORY
+
+from h_debug import Loggers
+
+LOGGER_MEMORY = Loggers.memory
 
 MAX_SURVIVE_LOGS = timedelta(minutes=30)
 
@@ -26,7 +28,10 @@ class MemoryCleaner:
                 del self.OPENED_LOGS[report_id]
                 add_log_entry_memory(f"NUKED OLD | {report_id}")
         
-        a = sorted((report.last_access, report_id) for report_id, report in self.OPENED_LOGS.items())
+        a = sorted(
+            (report.last_access, report_id)
+            for report_id, report in self.OPENED_LOGS.items()
+        )
         while a and psutil.virtual_memory().percent > 75:
             _, report_id = a.pop(0)
             del self.OPENED_LOGS[report_id]
@@ -37,23 +42,3 @@ class MemoryCleaner:
             return
         self.cleaner_thread = threading.Thread(target=self.cleaner)
         self.cleaner_thread.start()
-    
-
-# cleaner = Cleaner()
-def main():
-    # z = psutil.net_io_counters(pernic=True)
-    # for q,w in z.items():
-    #     print()
-    #     print(q)
-    #     print(w)
-    q = psutil.pids()
-    print(q)
-    # print(psutil.cpu_times())
-    # for _ in range(5):
-    #     q = psutil.cpu_percent(interval=1, percpu=True)
-    #     print(q)
-    #     sleep(1)
-
-
-if __name__ == "__main__":
-    main()
