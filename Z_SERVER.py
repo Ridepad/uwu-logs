@@ -43,11 +43,11 @@ try:
 except ImportError:
     _validate = None
 
+try:
+    import test_group_bosses
+except ImportError:
+    test_group_bosses = None
 
-PATH = Path(__file__).parent
-CACHE_DIR = PATH.joinpath("cache")
-
-DB_LOCK = threading.RLock()
 
 SERVER = Flask(__name__)
 # SERVER = Flask(__name__, static_url_path='')
