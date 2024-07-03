@@ -24,7 +24,7 @@ import file_functions
 import logs_calendar
 import logs_main
 import logs_top_db
-from constants import FLAG_ORDER
+from constants import FLAG_ORDER, GEAR
 from c_bosses import ALL_FIGHT_NAMES
 from c_path import Directories, Files
 from h_datetime import MONTHS, T_DELTA
@@ -62,6 +62,8 @@ CLEANER = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
 LOGGER_CONNECTIONS = Loggers.connections
 LOGGER_CONNECTIONS.debug("Starting server...")
+
+DB_LOCK = threading.RLock()
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
