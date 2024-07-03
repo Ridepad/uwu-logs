@@ -219,7 +219,7 @@ def before_request():
         return "", 403
     elif not _validate.cookie(request):
         if request.method == "GET":
-            return render_template_wrap('protected.html')
+            return render_template('protected.html')
         return "", 403
 
     if not SERVER.debug and request.method == "GET" and request.path in CACHED_PAGES:
@@ -231,11 +231,11 @@ def before_request():
 
 @SERVER.route("/")
 def home():
-    return render_template_wrap('home.html')
+    return render_template('home.html')
 
 @SERVER.route("/about")
 def about():
-    return render_template_wrap('about.html')
+    return render_template('about.html')
 
 @SERVER.route("/logs_list", methods=['GET', 'POST'])
 def show_logs_list():
@@ -275,7 +275,7 @@ def show_logs_list():
         calend_prev_last_week = calend_prev[-2]
     calend.insert(0, calend_prev_last_week)
 
-    return render_template_wrap(
+    return render_template(
         'logs_list.html',
         MONTH=new_month,
         CALEND=calend,
@@ -293,7 +293,7 @@ def report_page(report_id):
     report = load_report(report_id)
     data = report.get_report_page_all_wrap(request)
 
-    return render_template_cache(
+    return render_template(
         'report_main.html', **data,
     )
 
@@ -320,7 +320,7 @@ def player(report_id, source: str):
     tGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, source, filter_guid=tGUID)
 
-    return render_template_cache(
+    return render_template(
         'dmg_done2.html', **default_params, **data,
     )
 
@@ -333,7 +333,7 @@ def heal(report_id, source_name):
     tGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, source_name, filter_guid=tGUID, heal=True)
 
-    return render_template_cache(
+    return render_template(
         'dmg_done2.html', **default_params, **data,
     )
 
@@ -346,7 +346,7 @@ def taken(report_id, target_name):
     sGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, taken=True)
 
-    return render_template_cache(
+    return render_template(
         'dmg_done2.html', **default_params, **data,
     )
 
@@ -361,7 +361,7 @@ def healed(report_id, target_name):
     sGUID = request.args.get('target')
     data = report.get_numbers_breakdown_wrap(segments, target_name, filter_guid=sGUID, heal=True, taken=True)
     
-    return render_template_cache(
+    return render_template(
         'dmg_done2.html', **default_params, **data,
         ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
     )
@@ -373,7 +373,7 @@ def casts(report_id, source_name):
     # segments = default_params["SEGMENTS"]
 
     # data = report.get_spell_history_wrap(segments, source_name)
-    return render_template_cache(
+    return render_template(
         'casts.html', **default_params,
         # **data,
         FLAG_ORDER=FLAG_ORDER,
@@ -425,7 +425,7 @@ def spells(report_id, spell_id: str):
 
     data = report.spell_count_all(segments, spell_id)
 
-    return render_template_cache(
+    return render_template(
         'spells_page.html', **default_params, **data,
     )
 
@@ -437,7 +437,7 @@ def consumables(report_id):
 
     data = report.potions_all(segments)
 
-    return render_template_cache(
+    return render_template(
         'consumables.html', **default_params, **data,
     )
 
@@ -449,7 +449,7 @@ def entities(report_id):
 
     data = report.entities(*segments[0])
 
-    return render_template_cache(
+    return render_template(
         'entities.html', **default_params, **data,
     )
 
@@ -461,7 +461,7 @@ def all_auras(report_id):
 
     data = report.auras_info_all(segments)
 
-    return render_template_cache(
+    return render_template(
         'all_auras.html', **default_params, **data,
     )
 
@@ -473,7 +473,7 @@ def damage_targets(report_id):
 
     data = report.target_damage_all_formatted(segments, default_params["BOSS_NAME"])
 
-    return render_template_cache(
+    return render_template(
         'damage_target.html', **default_params, **data,
     )
 
@@ -483,7 +483,7 @@ def compare(report_id):
         report = load_report(report_id)
         default_params = report.get_default_params(request)
 
-        return render_template_cache(
+        return render_template(
             'compare.html', **default_params,
         )
     elif request.method == 'POST':
@@ -509,7 +509,7 @@ def valks(report_id):
     
     data = report.valk_info_all(segments)
 
-    return render_template_cache(
+    return render_template(
         'valks.html', **default_params, **data,
     )
 
@@ -520,7 +520,7 @@ def lady_spirits(report_id):
     segments = default_params["SEGMENTS"]
     
     data = report.lady_spirits_wrap(segments)
-    return render_template_cache(
+    return render_template(
         'lady_spirits.html', **default_params,
         PULLS=data,
     )
@@ -532,7 +532,7 @@ def ucm(report_id):
     segments = default_params["SEGMENTS"]
     
     data = report.parse_ucm_wrap(segments)
-    return render_template_cache(
+    return render_template(
         'ucm.html', **default_params,
         **data,
     )
@@ -546,7 +546,7 @@ def deaths(report_id):
     guid = request.args.get("target")
     data = report.get_deaths(segments, guid)
 
-    return render_template_cache(
+    return render_template(
         'deaths.html', **default_params, **data,
     )
 
@@ -558,7 +558,7 @@ def powers(report_id):
 
     data = report.get_powers_all(segments)
 
-    return render_template_cache(
+    return render_template(
         'powers.html', **default_params, **data
     )
 
@@ -567,7 +567,7 @@ def powers(report_id):
 def top():
     if request.method == "GET":
         servers = logs_top_db.server_list()
-        return render_template_wrap(
+        return render_template(
             'top.html',
             SERVERS=servers,
             REPORT_NAME="Top",
@@ -600,7 +600,7 @@ def top():
 def pve_stats():
     if request.method == "GET":
         servers = logs_top_db.server_list()
-        return render_template_wrap(
+        return render_template(
             'pve_stats.html',
             SPECS_BASE=logs_top_statistics.SPECS_DATA_NOT_IGNORED,
             SERVERS=servers,
@@ -641,7 +641,7 @@ def character():
     
     if request.method == "GET":
         servers = logs_top_db.server_list()
-        return render_template_wrap(
+        return render_template(
             'character.html',
             NAME=name,
             SERVERS=servers,
@@ -657,7 +657,7 @@ def character():
 
 @SERVER.route("/ladder")
 def ladder():
-    return render_template_wrap(
+    return render_template(
         'ladder.html',
         REPORT_NAME="PvE Ladder",
     )
@@ -685,7 +685,7 @@ def missing(type, id):
 @SERVER.route("/raid_calendar")
 def raid_calendar():
     _calend = test_group_bosses.RaidCalendar()
-    return render_template_wrap(
+    return render_template(
         'raid_calendar.html',
         REPORT_NAME="Raid Calendar",
         CALEND_DAYS=_calend.get(),
@@ -721,7 +721,7 @@ def raid_calendar():
 
 # @SERVER.route("/guilds/<server>")
 # def guilds(server):
-#     return render_template_wrap(
+#     return render_template(
 #         'guilds.html',
 #         CALEND=test_prev_kills.main(),
 #         len=len,
