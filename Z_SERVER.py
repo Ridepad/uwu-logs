@@ -1,7 +1,5 @@
-import os
 import threading
 from datetime import datetime
-from pathlib import Path
 
 from flask import (
     Flask, request,
@@ -42,7 +40,6 @@ except ImportError:
 
 
 SERVER = Flask(__name__)
-# SERVER = Flask(__name__, static_url_path='')
 SERVER.wsgi_app = ProxyFix(SERVER.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 SERVER.jinja_env.trim_blocks = True
 SERVER.jinja_env.lstrip_blocks = True
