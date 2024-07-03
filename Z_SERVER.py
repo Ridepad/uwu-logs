@@ -8,7 +8,7 @@ from flask import (
     make_response,
     redirect,
     render_template,
-    send_from_directory,
+    send_file,
 )
 
 from werkzeug.exceptions import NotFound, TooManyRequests
