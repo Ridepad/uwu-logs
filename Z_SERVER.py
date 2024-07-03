@@ -247,7 +247,6 @@ def show_logs_list():
         resp.headers.add("Content-Type", "application/json")
         return resp
     
-    servers = logs_top_db.server_list()
     server = request.args.get("server")
     YEAR_REQUEST = request.args.get("year", type=int)
     MONTH_REQUEST = request.args.get("month", type=int)
@@ -275,6 +274,7 @@ def show_logs_list():
         calend_prev_last_week = calend_prev[-2]
     calend.insert(0, calend_prev_last_week)
 
+    servers = Directories.top.files_stems()
     return render_template(
         'logs_list.html',
         MONTH=new_month,
@@ -566,7 +566,7 @@ def powers(report_id):
 @SERVER.route('/top', methods=["GET", "POST"])
 def top():
     if request.method == "GET":
-        servers = logs_top_db.server_list()
+        servers = Directories.top.files_stems()
         return render_template(
             'top.html',
             SERVERS=servers,
@@ -599,7 +599,7 @@ def top():
 @SERVER.route('/top_stats', methods=["GET", "POST"])
 def pve_stats():
     if request.method == "GET":
-        servers = logs_top_db.server_list()
+        servers = Directories.top.files_stems()
         return render_template(
             'pve_stats.html',
             SPECS_BASE=logs_top_statistics.SPECS_DATA_NOT_IGNORED,
@@ -640,7 +640,7 @@ def character():
         spec = None
     
     if request.method == "GET":
-        servers = logs_top_db.server_list()
+        servers = Directories.top.files_stems()
         return render_template(
             'character.html',
             NAME=name,
