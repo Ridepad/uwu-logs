@@ -7,11 +7,9 @@ For testing, run it when needed manually.
 '''
 
 import itertools
-import json
 import os
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
 from time import perf_counter
 
 import logs_calendar
@@ -20,19 +18,13 @@ import logs_top_db
 import api_7z
 from constants import (
     DEFAULT_SERVER_NAME,
-    LOGGER_UPLOADS,
     TOP_FILE_NAME,
-    get_ms_str,
-    get_report_name_info,
 )
 from c_path import Directories
+from h_debug import Loggers, get_ms_str
+from h_other import get_report_name_info
 
-
-PATH = Path(__file__).parent
-PATH_LOGS_DIR = PATH.joinpath("LogsDir")
-PATH_LOGS_RAW_DIR = PATH.joinpath("LogsRaw")
-PATH_TOP_DIR = PATH.joinpath("top")
-UPLOADS_PENDING = PATH.joinpath("uploads", "0archive_pending")
+LOGGER_UPLOADS = Loggers.uploads
 
 
 def remove_old_dublicate(report_id: str):
@@ -41,7 +33,7 @@ def remove_old_dublicate(report_id: str):
     
     _server = get_report_name_info(report_id)["server"]
     report_id_old = report_id.replace(_server, DEFAULT_SERVER_NAME)
-    archive_path_old = PATH_LOGS_RAW_DIR.joinpath(f"{report_id_old}.7z")
+    archive_path_old = Directories.archives.joinpath(f"{report_id_old}.7z")
     if archive_path_old.is_file():
         archive_path_old.unlink()
 
@@ -63,12 +55,6 @@ def save_raw_logs(report_id: str):
     
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | ERROR {return_code}')
 
-def _json_read(path: Path) -> dict:
-    try:
-        return json.loads(path.read_bytes())
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return {}
-
 def _report_server(report_id: str):
     return get_report_name_info(report_id)["server"]
 
@@ -79,8 +65,8 @@ def add_new_top_data(server, reports):
 
     _data = defaultdict(list)
     for report_id in reports:
-        top_file = PATH_LOGS_DIR.joinpath(report_id, TOP_FILE_NAME)
-        top_data = _json_read(top_file)
+        top_file = Directories.logs.joinpath(report_id, TOP_FILE_NAME)
+        top_data = top_file._json()
         for boss_name, modes in top_data.items():
             for mode, data in modes.items():
                 table_name = logs_top_db.get_table_name(boss_name, mode)
@@ -125,12 +111,12 @@ def main_proccess_pool(new_logs):
         executor.map(save_raw_logs, new_logs)
 
 def main():
-    if not UPLOADS_PENDING.is_dir():
+    if not Directories.pending_archive.is_dir():
         return
     
     NEW_LOGS = [
         file_path.stem
-        for file_path in UPLOADS_PENDING.iterdir()
+        for file_path in Directories.pending_archive.iterdir()
         if file_path.suffix == ".txt"
     ]
     if not NEW_LOGS:
@@ -140,7 +126,7 @@ def main():
     # main_sequential(NEW_LOGS)
 
     for report_id in NEW_LOGS:
-        tz_path = UPLOADS_PENDING.joinpath(f"{report_id}.timezone")
+        tz_path = Directories.pending_archive / f"{report_id}.timezone"
         if tz_path.is_file():
             tz_path.unlink()
 
