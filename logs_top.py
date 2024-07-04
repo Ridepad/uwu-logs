@@ -1,17 +1,23 @@
-import os
 from collections import defaultdict
 from time import perf_counter
 
-import file_functions
 import logs_main
-from constants import LOGGER_REPORTS, TOP_FILE_NAME, get_ms_str, running_time
-from logs_spell_info import AURAS_BOSS_MECHANICS, AURAS_CONSUME, AURAS_EXTERNAL, MULTISPELLS_D
+from c_path import Directories
+from h_debug import Loggers, get_ms_str, running_time
+from constants import TOP_FILE_NAME
+from logs_spell_info import (
+    AURAS_BOSS_MECHANICS,
+    AURAS_CONSUME,
+    AURAS_EXTERNAL,
+    MULTISPELLS_D,
+)
 
 try:
     import _validate
 except ImportError:
     _validate = None
 
+LOGGER_REPORTS = Loggers.reports
 
 Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
 
@@ -53,17 +59,7 @@ def find_kill(segments):
 
 
 class Top(logs_main.THE_LOGS):
-    def make_report_top(self, rewrite=False):
-        top_path = self.relative_path(TOP_FILE_NAME)
-        if not rewrite and os.path.isfile(top_path):
-            return
-        
-        pc = perf_counter()
-        q = _validate and _validate.pure_dog_water(self)
-        if q:
-            LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Dog water | {q}')
-            return
-
+    def _make_report_top(self):
         report_top = defaultdict(dict)
         for boss_name, boss_segments in self.SEGMENTS.items():
             for kill_segment in find_kill(boss_segments):
@@ -71,9 +67,24 @@ class Top(logs_main.THE_LOGS):
                 s = kill_segment["start"]
                 f = kill_segment["end"]
                 report_top[boss_name][diff] = self.make_boss_top(s, f, boss_name)
+        return report_top
+    
+    def make_report_top(self, rewrite=False):
+        # top_path = self.relative_path(TOP_FILE_NAME)
+        top_path = Directories.logs / self.NAME / TOP_FILE_NAME
+        if not rewrite and top_path.is_file():
+            return
+        
+        pc = perf_counter()
+        q = _validate and _validate.pure_dog_water(self)
+        if q:
+            report_top = {}
+            LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Dog water | {q}')
+        else:
+            report_top = self._make_report_top()
+            LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Done top')
 
-        file_functions.json_write(top_path, report_top, indent=None)
-        LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Done top')
+        top_path.json_write(report_top)
         return report_top
 
     def get_vali_heal(self, s, f):
