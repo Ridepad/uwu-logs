@@ -1,7 +1,8 @@
 from collections import defaultdict
 
-from constants import sort_dict_by_value, running_time
 import logs_base
+from h_debug import running_time
+from h_other import sort_dict_by_value
 
 mobs = {"008EF5", "009342", "008F5D"}
 REMORSELESS_WINTER_TRANSITION_1 = {"68981", "74271", "74270", "74272"}

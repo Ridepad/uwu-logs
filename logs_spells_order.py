@@ -2,7 +2,8 @@ from collections import defaultdict
 import json
 
 import logs_base
-from constants import COMBINE_SPELLS, running_time
+from c_spells import COMBINE_SPELLS
+from h_debug import running_time
 
 
 IGNORED_FLAGS = {

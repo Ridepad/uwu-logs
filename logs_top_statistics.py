@@ -1,11 +1,8 @@
 import numpy
 
-from constants import (
-    SPECS_LIST,
-    CLASSES, 
-    running_time,
-    convert_to_html_name,
-)
+from c_player_classes import CLASSES, SPECS_LIST
+from h_other import convert_to_html_name
+from h_debug import running_time
 
 CLASSES_LIST = list(CLASSES)
 IGNORED_SPECS = set([*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39])

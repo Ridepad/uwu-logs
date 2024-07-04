@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 import logs_base
-from constants import get_delta_simple_precise, running_time
+from h_datetime import get_delta_simple_precise
+from h_debug import running_time
 
 # THIS IS A FUCKING DISASTER
 

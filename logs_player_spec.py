@@ -1,4 +1,5 @@
-from constants import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC, running_time
+from c_player_classes import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC
+from h_debug import running_time
 
 CLASSES = list(CLASS_FROM_HTML)
 

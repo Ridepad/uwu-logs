@@ -1,6 +1,6 @@
 from collections import defaultdict
 import logs_base
-from constants import separate_thousands
+from h_other import separate_thousands
 
 # 1/19 19:45:07.755,SPELL_DAMAGE,0xF13000954E00020A,Vengeful Shade,0x06000000005D571D,Sana,72012,Vengeful Blast,0x30,14156,11970,48,6066,0,0,nil,nil,nil
 # 1/19 19:44:53.770,SWING_MISSED,0xF13000954E000205,Vengeful Shade,0x060000000048D30F,Tayoka,1,Melee,0x1,PARRY

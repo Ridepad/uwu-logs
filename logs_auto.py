@@ -14,10 +14,10 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from time import perf_counter
 
-import logs_archive
 import logs_calendar
 import logs_top
 import logs_top_db
+import api_7z
 from constants import (
     DEFAULT_SERVER_NAME,
     LOGGER_UPLOADS,
@@ -25,6 +25,7 @@ from constants import (
     get_ms_str,
     get_report_name_info,
 )
+from c_path import Directories
 
 
 PATH = Path(__file__).parent
@@ -45,18 +46,22 @@ def remove_old_dublicate(report_id: str):
         archive_path_old.unlink()
 
 def save_raw_logs(report_id: str):
-    logs_txt_path = UPLOADS_PENDING.joinpath(f"{report_id}.txt")
-    if not logs_txt_path.is_file():
+    pending_text = Directories.pending_archive / f"{report_id}.txt"
+    if not pending_text.is_file():
         return
     
     pc = perf_counter()
-    PATH_LOGS_RAW_DIR.mkdir(exist_ok=True)
-    archive_path = PATH_LOGS_RAW_DIR.joinpath(f"{report_id}.7z")
-    return_code = logs_archive.archive_file(archive_path, logs_txt_path)
+    Directories.archives.mkdir(exist_ok=True)
+    archive_path = Directories.archives / f"{report_id}.7z"
+    archive = api_7z.SevenZipArchive(archive_path)
+    return_code = archive.create(pending_text)
     if return_code == 0:
-        logs_txt_path.unlink()
+        pending_text.unlink()
         remove_old_dublicate(report_id)
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
+        LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
+        return
+    
+    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | ERROR {return_code}')
 
 def _json_read(path: Path) -> dict:
     try:

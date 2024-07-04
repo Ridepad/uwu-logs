@@ -1,17 +1,19 @@
 from collections import defaultdict
 from typing import TypedDict
 
-from constants import (
+import logs_base
+from c_bosses import (
     TOC_CHAMPIONS,
+    BOSSES_GUIDS,
+)
+from h_debug import running_time
+from h_other import (
     is_player,
-    running_time,
     sort_dict_by_value,
     separate_thousands_dict,
     add_new_numeric_data,
-    BOSSES_GUIDS,
 )
 
-import logs_base
 
 NOT_DMG = {
     "DAMAGE_SHIELD_MISSED",
@@ -23,6 +25,7 @@ TOC_PETS = {
     "008CE6": "Treants",
 }
 USEFUL = {
+    # Icecrown Citadel
     "Lord Marrowgar": {
         "008F04": "Lord Marrowgar",
         "008F0B": "Bone Spike",
@@ -80,6 +83,7 @@ USEFUL = {
         "008F5D": "Raging Spirit",
         "009916": "Wicked Spirit",
     },
+    # The Ruby Sanctum
     "Baltharus the Warborn": {
         "009B47": "Baltharus the Warborn",
     },
@@ -93,6 +97,7 @@ USEFUL = {
         "009BB7": "Halion",
         "009CCE": "Halion",
         "009EE9": "Living Inferno",
+    # Trial of the Crusader 
     },
     "Northrend Beasts": {
         "0087EC": "Gormok the Impaler",
@@ -131,6 +136,7 @@ USEFUL = {
         "0076F3": "Shadron",
         "0076F1": "Vesperon",
     },
+    # Ulduar 
     "Razorscale": {
         "0081A2": "Razorscale",
         "00826C": "Dark Rune Guardian",
@@ -217,7 +223,7 @@ USEFUL = {
         "0083B7": "Emerald Consort",
         "008299": "Suit of Armor",
     },
-    
+    # Naxxramas 
     "Maexxna": {
         "004066": "Web Wrap",
     },
@@ -229,7 +235,7 @@ USEFUL = {
         "004255": "Plagued Guardian",
         "004258": "Plagued Warrior",
     },
-
+    # Molten Core
     "Majordomo Executus": {
         # "002EF2": "Majordomo Executus",
         "002D90": "Flamewaker Elite",
@@ -634,7 +640,6 @@ class UsefulDamage(logs_base.THE_LOGS):
             for tGUID, d in data.items()
         }
 
-    # @running_time
     def target_damage_combine(self, damage, no_overkill, useful_specific) -> TargetDamageAllType:
         damage_combined = self.combine_pets_all(damage, trim_non_players=True)
         damage_total = get_total_damage(damage_combined, ignore_targets=self.FRIENDLY_IDS)

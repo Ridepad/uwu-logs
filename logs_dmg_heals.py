@@ -1,7 +1,9 @@
 from collections import defaultdict
 
-from constants import LOGGER_REPORTS, is_player, running_time, sort_dict_by_value
+from h_other import is_player, sort_dict_by_value
+from h_debug import Loggers, running_time
 
+LOGGER_REPORTS = Loggers.reports
 FLAG_DAMAGE = {
     "SPELL_DAMAGE",
     "SPELL_PERIODIC_DAMAGE",

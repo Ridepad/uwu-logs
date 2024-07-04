@@ -1,5 +1,5 @@
 from collections import defaultdict
-from constants import convert_to_fight_name
+from c_bosses import convert_to_fight_name
 
 SPELLS = {
     "Felhunter": {

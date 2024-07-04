@@ -1,10 +1,8 @@
 from collections import defaultdict
 
 import logs_base
-from constants import (
-    BOSSES_FROM_HTML,
-    running_time,
-)
+from c_bosses import BOSSES_FROM_HTML
+from h_debug import running_time
 
 FLAGS = {'SWING_DAMAGE', 'RANGE_DAMAGE', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'DAMAGE_SHIELD'}
 
@@ -177,7 +175,7 @@ def test():
     encdata = report.get_enc_data()
     s, f = encdata["Saviana Ragefire"][-1]
     s, f = encdata["The Lich King"][-2]
-    logs = report.get_logs(s, f)
+    logs = report.LOGS[s, f]
 
     guids = report.get_players_and_pets_guids()
     guids = report.get_units_controlled_by("Nomadra")

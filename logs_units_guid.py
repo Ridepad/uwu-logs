@@ -1,7 +1,11 @@
 from collections import defaultdict
 
 import logs_pet_bullshit
-from constants import CLASS_FROM_HTML, LOGGER_REPORTS, SPELL_BOOK, running_time, sort_dict_by_value
+from c_player_classes import CLASS_FROM_HTML, SPELL_BOOK
+from h_debug import Loggers, running_time
+from h_other import sort_dict_by_value
+
+LOGGER_REPORTS = Loggers.reports
 
 CLASSES = list(CLASS_FROM_HTML)
 _prefix = [

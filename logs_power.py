@@ -1,12 +1,12 @@
 from collections import defaultdict
 
 import logs_base
-from constants import (
-    UNKNOWN_ICON,
-    LOGGER_UNUSUAL_SPELLS,
-    running_time,
-    separate_thousands,
-)
+from c_spells import UNKNOWN_ICON
+
+from h_debug import Loggers, running_time
+from h_other import separate_thousands
+
+LOGGER_UNUSUAL_SPELLS = Loggers.unusual_spells
 
 POWER_TYPES = {
     '0': 'mana',

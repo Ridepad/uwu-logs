@@ -1,14 +1,15 @@
 from collections import defaultdict
 
 import logs_base
-from constants import (
-    running_time,
+from constants import FLAG_ORDER
+from h_debug import Loggers, running_time
+from h_other import (
     add_new_numeric_data,
     sort_dict_by_value,
-    LOGGER_REPORTS,
-    FLAG_ORDER,
     is_player,
 )
+
+LOGGER_REPORTS = Loggers.reports
 
 def get_other_count(logs_slice: list[str], _filter: str):
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -28,11 +29,12 @@ def get_spell_count(logs_slice: list[str], spell_id_str: str) -> defaultdict[str
     if spell_id_str == "75":
         return get_other_count(logs_slice, "RANGE")
 
+    spell_id_str_commas_wrap = f",{spell_id_str},"
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
     for line in logs_slice:
-        if spell_id_str not in line:
+        if spell_id_str_commas_wrap not in line:
             continue
-
+        
         _, flag, _, source_name, _, target_name, s_id, etc = line.split(',', 7)
         
         if s_id != spell_id_str:
