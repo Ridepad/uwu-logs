@@ -209,6 +209,10 @@ AURAS_EXTERNAL = {
         "name": "Hunger For Blood",
         "icon": "ability_rogue_hungerforblood",
     },
+    "58427": {
+        "name": "Overkill",
+        "icon": "ability_hunter_rapidkilling",
+    },
     "51800": {
         "name": "Might of Malygos",
         "icon": "inv_misc_head_dragon_blue"
