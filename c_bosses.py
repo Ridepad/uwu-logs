@@ -7,7 +7,7 @@ BOSSES_GUIDS = {
     "0088C5": "Koralon the Flame Watcher",
     "009621": "Toravon the Ice Watcher",
 
-    "0070BB": "Malygos",
+    # "0070BB": "Malygos",
     "0070BC": "Sartharion",
     "0027C8": "Onyxia",
 
