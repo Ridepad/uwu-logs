@@ -98,7 +98,11 @@ def normalize(logs_slice: list[bytes]):
         if _line_s[1] in SKIP_FLAGS:
             continue
         
-        del _line_s[7], _line_s[4]
+        try:
+            del _line_s[7], _line_s[4]
+        except IndexError:
+            continue
+        
         if _line_s[1] in SWING_FLAGS:
             _line_s[6:6] = LOST_SWING
         elif _line_s[1] in ENCHANTS_FLAGS:
