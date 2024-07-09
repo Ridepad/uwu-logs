@@ -1,6 +1,15 @@
 from collections import defaultdict
 
-from constants import BOSSES_GUIDS, MULTIBOSSES, T_DELTA, convert_to_fight_name, running_time, get_delta
+from c_bosses import (
+    BOSSES_GUIDS,
+    MULTIBOSSES,
+    convert_to_fight_name,
+)
+from h_debug import running_time
+from h_datetime import (
+    T_DELTA,
+    get_delta,
+)
 
 MAX_LINES = 1000
 MULTIBOSSES_MAIN = {
