@@ -202,6 +202,7 @@ class Directories(dict[str, PathExt]):
     pending_archive = uploads / "0archive_pending"
     info_uploads = uploads / "0file_info"
     todo = uploads / "0todo"
+    errors = uploads / "0errors"
 
     @classmethod
     def mkdirs(cls):
