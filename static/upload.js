@@ -126,7 +126,7 @@ class UploadProgress extends XMLHttpRequest {
 class Upload extends XMLHttpRequest {
   constructor(callback_on_finish) {
     super();
-    this.timeout = 2500;
+    this.timeout = 5000;
     this.ontimeout = this.retry;
     this.onload = this.on_upload_reponse;
     
