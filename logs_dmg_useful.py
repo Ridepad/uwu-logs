@@ -13,6 +13,7 @@ from h_other import (
     separate_thousands_dict,
     add_new_numeric_data,
 )
+from logs_damage_specific import specific_useful
 
 
 NOT_DMG = {
@@ -97,8 +98,8 @@ USEFUL = {
         "009BB7": "Halion",
         "009CCE": "Halion",
         "009EE9": "Living Inferno",
-    # Trial of the Crusader 
     },
+    # Trial of the Crusader 
     "Northrend Beasts": {
         "0087EC": "Gormok the Impaler",
         "0087EF": "Dreadscale",
@@ -407,10 +408,6 @@ ALL_USEFUL_TARGETS = {
 } | set(USEFUL_NAMES) | set(BOSSES_GUIDS)
 
 
-class ValksDamage(TypedDict):
-    overkill: defaultdict[str, int]
-    useful: defaultdict[str, int]
-
 class TargetDamageAllType(TypedDict):
     specific_combined: dict[str, defaultdict[str, int]]
     useful_total: defaultdict[str, int]
@@ -441,50 +438,6 @@ def get_dmg(logs_slice: list[str]):
         "no_overkill": no_overkill,
     }
 
-def _is_valk(guid: str):
-    return guid[6:-6] == '008F01'
-def dmg_gen_valk(logs: list[str]):
-    casted_life_siphon = {}
-    for line in logs:
-        if '8F01' not in line:
-            continue
-        if "_DAMAGE" not in line:
-            continue
-        _, _, source_guid, _, target_guid, _, _, _, _, damage, _ = line.split(',', 10)
-        if target_guid in casted_life_siphon:
-            pass
-        elif _is_valk(target_guid):
-            yield source_guid, target_guid, int(damage)
-        elif _is_valk(source_guid):
-            casted_life_siphon[source_guid] = True
-
-@running_time
-def get_valks_dmg(logs: list[str], half_hp=2992500 // 2) -> ValksDamage:
-    valks_useful = defaultdict(int)
-    valks_overkill = defaultdict(int)
-
-    valks_dmg_taken = defaultdict(int)
-
-    for sGUID, tGUID, amount in dmg_gen_valk(logs):
-        _dmg_taken = valks_dmg_taken[tGUID]
-        if _dmg_taken == -1:
-            valks_overkill[sGUID] += amount
-            continue
-
-        current_dmg_taken = _dmg_taken + amount
-        if current_dmg_taken < half_hp:
-            valks_dmg_taken[tGUID] = current_dmg_taken
-        else:
-            valks_dmg_taken[tGUID] = -1
-            overkill = current_dmg_taken - half_hp
-            amount -= overkill
-            valks_overkill[sGUID] += overkill
-        valks_useful[sGUID] += amount
-
-    return {
-        'overkill': valks_overkill,
-        'useful': valks_useful,
-    }
 
 def get_total_damage(data: dict[str, dict[str, int]], filter_targets=None, ignore_targets=None):
     total = defaultdict(int)
@@ -501,59 +454,6 @@ def get_total_damage(data: dict[str, dict[str, int]], filter_targets=None, ignor
                 total[sGUID] += value
 
     return total
-
-def freya_useful(logs_slice: list[str]):
-    FREYA = "00808A"
-    DAMAGE: defaultdict[str, int] = defaultdict(int)
-    healing = True
-    for line in logs_slice:
-        if FREYA not in line:
-            continue
-
-        if healing:
-            if "SPELL_PERIODIC_HEAL" in line and line.split(',', 11)[10] == '0':
-                healing = False
-            continue
-        
-        if "DAMAGE" not in line:
-            continue
-        try:
-            _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
-            if tGUID[6:-6] == FREYA:
-                DAMAGE[sGUID] += int(dmg)
-        except ValueError:
-            pass
-    
-    return DAMAGE
-
-# 8/31 20:12:36.834  SPELL_PERIODIC_HEAL,00808A000A6D,"Freya",0x10a48,00808A000A6D,"Freya",0x10a48,62528,"Touch of Eonar",0x1,42000,14075,0,nil
-# 9/ 1 20:26:43.762  SPELL_PERIODIC_HEAL,00808A000CC3,"Freya",0x10a48,00808A000CC3,"Freya",0x10a48,62892,"Touch of Eonar",0x1,218400,143919,0,nil
-
-def guid_to_custom_name(data):
-    return {
-        USEFUL_NAMES[q]: w
-        for q,w in data.items()
-        if q in USEFUL_NAMES
-    }
-
-def specific_useful(logs_slice, boss_name):
-    data: dict[str, defaultdict[str, int]] = {}
-    if boss_name == "The Lich King":
-        valks_dmg = get_valks_dmg(logs_slice)
-        # data['Valks Useful'] = valks_dmg['useful']
-        data['008F01'] = valks_dmg['useful']
-    elif boss_name == "Freya":
-        data['00808A'] = freya_useful(logs_slice)
-        
-    return data
-
-def specific_useful_combined(logs_slice, boss_name):
-    new_data = defaultdict(int)
-    data = specific_useful(logs_slice, boss_name)
-    for _data in data.values():
-        for guid, d in _data.items():
-            new_data[guid] += d
-    return new_data
 
 def no_units_from_custom_group(guids, all_units):
     return not set(guids) & all_units
@@ -588,6 +488,12 @@ def add_total_sort(data: dict):
     data["Total"] = sum(data.values())
     return sort_dict_by_value(data)
 
+def guid_to_custom_name(data: dict[str, dict]):
+    return {
+        USEFUL_NAMES[q]: w
+        for q, w in data.items()
+        if q in USEFUL_NAMES
+    }
 
 class UsefulDamage(logs_base.THE_LOGS):
     @logs_base.cache_wrap
