@@ -167,8 +167,8 @@ class Upload extends XMLHttpRequest {
     this.send_new_chunk_wrap();
   }
   async new_file_chunk() {
-    const start = (this.current_chunk - 1) * CHUNK_SIZE;
-    const end = this.current_chunk * CHUNK_SIZE;
+    const start = this.current_chunk * CHUNK_SIZE;
+    const end = start + CHUNK_SIZE;
     const chunk = this.FILE.slice(start, end);
     const arrayBuffer = await chunk.arrayBuffer();
     return new Uint8Array(arrayBuffer);
@@ -181,17 +181,17 @@ class Upload extends XMLHttpRequest {
     this.setRequestHeader("X-Upload-ID", this.STARTED_TIMESTAMP);
     this.send(bytes);
   }
-  async send_new_chunk_wrap(is_retry) {
+  send_new_chunk_wrap(is_retry) {
     if (!is_retry) {
       this.retries = 0;
       this.current_chunk = this.current_chunk + 1;
     }
     
-    if (this.current_chunk > this.TOTAL_CHUNKS) {
-      return this.send_file_data_to_finish();
+    if (this.current_chunk < this.TOTAL_CHUNKS) {
+      this.send_new_chunk();
+    } else {
+      this.send_file_data_to_finish();
     }
-
-    this.send_new_chunk();
   }
   send_file_data_to_finish() {
     console.log(`Done. Total uploaded chunks: ${this.current_chunk}`);
