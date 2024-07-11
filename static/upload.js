@@ -162,6 +162,9 @@ class Upload extends XMLHttpRequest {
     if (SERVER_ERRORS.includes(this.status)) return this.upload_error();
     if (this.status === 201) return this.callback_on_finish();
     if (this.status !== 200) return this.retry();
+
+    this.retries = 0;
+    this.current_chunk = this.current_chunk + 1;
     
     this.update_upload_bar();
     this.send_new_chunk_wrap();
@@ -181,12 +184,7 @@ class Upload extends XMLHttpRequest {
     this.setRequestHeader("X-Upload-ID", this.STARTED_TIMESTAMP);
     this.send(bytes);
   }
-  send_new_chunk_wrap(is_retry) {
-    if (!is_retry) {
-      this.retries = 0;
-      this.current_chunk = this.current_chunk + 1;
-    }
-    
+  send_new_chunk_wrap() {
     if (this.current_chunk < this.TOTAL_CHUNKS) {
       this.send_new_chunk();
     } else {
@@ -206,13 +204,13 @@ class Upload extends XMLHttpRequest {
       PROGRESS_BAR_PERCENTAGE.textContent = "Server error!";
       return;
     }
+    
     this.retries = this.retries + 1;
     const t = e ? "timeout" : "error";
     PROGRESS_BAR_PERCENTAGE.textContent = `Server ${t} ${this.retries} / 5`;
     console.log(`retry: ${this.retries}`);
-    setTimeout(() => {
-      this.send_new_chunk_wrap(true);
-    }, 1000);
+    
+    setTimeout(() => this.send_new_chunk_wrap(), 1000);
   }
   upload_error() {
     console.log('upload_error');
@@ -230,8 +228,6 @@ class Upload extends XMLHttpRequest {
     const time_passed_ms = Date.now() - this.sent_timestamp;
     const time_passed = time_passed_ms / 1000;
     return CHUNK_SIZE / 1024 / time_passed;
-    // const timepassed = (Date.now() - this.STARTED_TIMESTAMP) / 1000;
-    // return this.uploaded_bytes() / 1024 / timepassed;
   }
   update_upload_bar() {
     const uploaded_bytes = this.uploaded_bytes();
