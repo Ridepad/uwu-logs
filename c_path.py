@@ -49,7 +49,10 @@ class CachePath:
         self.cached_data = None
 
     def __call__(self):
-        current_mtime = self.path.mtime
+        try:
+            current_mtime = self.path.mtime
+        except FileNotFoundError:
+            current_mtime = 0.1
         if current_mtime > self.mtime:
             self.cached_data = self.renew_callback()
             self.mtime = current_mtime + self.cache_for
