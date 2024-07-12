@@ -504,7 +504,8 @@ class UsefulDamage(logs_base.THE_LOGS):
     @logs_base.cache_wrap
     def target_damage_specific(self, s, f, boss_name: str):
         logs_slice = self.LOGS[s:f]
-        return specific_useful(logs_slice, boss_name)
+        specs = self.get_players_specs_in_segments(s, f)
+        return specific_useful(logs_slice, boss_name, specs)
 
     def target_damage_wrap(self, segments: list, boss_name: str):
         damage = defaultdict(lambda: defaultdict(int))

@@ -18,12 +18,14 @@ FESTER_SPAMMERS = {
     15, # Frost
     16, # Paladin
     17, # Holy
+    # 18, # Protection
     19, # Retribution
     22, # Holy
     31, # Restoration
     36, # Warrior
     37, # Arms
     38, # Fury
+    # 39, # Protection
 }
 
 class ValksDamage(TypedDict):
@@ -31,11 +33,12 @@ class ValksDamage(TypedDict):
     useful: defaultdict[str, int]
 
 class FesterPlayerDamage:
-    __slots__ = "stacks", "increased_by", "useful"
+    __slots__ = "stacks", "increased_by", "useful", "total"
     def __init__(self) -> None:
         self.stacks = 0
         self.increased_by = 1.0
         self.useful = 0
+        self.total = 0
 
     def change_stacks(self, flag: str):
         if flag == "SPELL_AURA_REMOVED":
@@ -46,10 +49,11 @@ class FesterPlayerDamage:
         self.increased_by = 1 + self.stacks / 10
 
     def add_damage(self, damage: int, overkill: int):
+        self.total += damage
         self.useful += int(damage / self.increased_by) - overkill
 
 @running_time
-def fester_useful(logs_slice: list[str]):
+def _fester_useful(logs_slice: list[str]):
     players: defaultdict[str, FesterPlayerDamage] = defaultdict(FesterPlayerDamage)
     
     for line in logs_slice:
@@ -72,10 +76,21 @@ def fester_useful(logs_slice: list[str]):
         except ValueError:
             pass
 
-    return {
-        guid: player.useful
-        for guid, player in players.items()
-    }
+    return players
+
+@running_time
+def fester_useful(logs_slice: list[str], specs: dict[str, int]):
+    players_damage = _fester_useful(logs_slice)
+    d = {}
+    for guid, player in players_damage.items():
+        spec = specs.get(guid)
+        if spec == 1 and player.useful < 2_000_000:
+            d[guid] = player.total
+        elif spec in FESTER_SPAMMERS:
+            d[guid] = player.useful
+        else:
+            d[guid] = player.total
+    return d
 
 
 def _is_valk(guid: str):
@@ -149,7 +164,7 @@ def freya_useful(logs_slice: list[str]):
     
     return DAMAGE
 
-def specific_useful(logs_slice, boss_name):
+def specific_useful(logs_slice, boss_name, specs):
     data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
         valks_dmg = get_valks_dmg(logs_slice)
@@ -157,7 +172,7 @@ def specific_useful(logs_slice, boss_name):
     elif boss_name == "Freya":
         data['00808A'] = freya_useful(logs_slice)
     elif boss_name == "Festergut":
-        data['008F12'] = fester_useful(logs_slice)
+        data['008F12'] = fester_useful(logs_slice, specs)
         
     return data
 
