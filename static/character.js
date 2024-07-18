@@ -407,9 +407,9 @@ function init() {
     spec_button.input.addEventListener("click", () => new_spec(spec_button.index));
   }
   INPUT_CHAR.addEventListener("keydown", event => {
-    if (event.code === "Space") {
+    if (event.key === "Space") {
       event.preventDefault();
-    } else if (event.code === "Enter") {
+    } else if (event.key === "Enter") {
       new_character_search();
     }
   });
