@@ -13,6 +13,7 @@ Supports any Wrath of the Lich King (3.3.5) server.
 - Install packages from `requirements.txt`
 
 - Run Z_SERVER.py
+- Run api_upload.py
 
 - Visit <http://localhost:5000/>
 
