@@ -26,3 +26,4 @@ static/icons/
 venv/
 !7z.exe
 !7z2301-x64.exe
+!7zr.exe
