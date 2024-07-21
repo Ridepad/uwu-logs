@@ -356,10 +356,10 @@ spells-hide #button-hide {
 <section id="tabs-wrap" style="display: none;">
   <button id="add-character">+</button>
 </section>
-<section class="table-wrap wrap-spell" style="display: none;">
-  <div id="casts-section-wrap">
+<section class="table-wrap wrap-spell" style="display: none; padding-bottom: 0px; transform: rotateX(180deg);">
+  <div id="casts-section-wrap" style="direction: rtl;overflow-x: hidden;overflow-y: auto;scrollbar-width: thin;transform: rotateX(180deg);">
     <div id="fight-start"></div>
-    <div class="spell-name">
+    <div class="spell-name" style="direction: ltr;">
       <select id="before-pull">
         <option value="0">Before pull</option>
         <option value="5">5</option>
@@ -371,8 +371,8 @@ spells-hide #button-hide {
         <option value="180">180</option>
       </select>
     </div>
-    <div id="timeline-ruler"></div>
-    <div id="spells-fav">
+    <div id="timeline-ruler" style="direction: ltr;"></div>
+    <div id="spells-fav" style="direction: ltr;">
       <aside id="spells-fav-reminder">
         <p>
           To add spells to compare - hover spell names below and click ▲
@@ -382,7 +382,7 @@ spells-hide #button-hide {
         </p>
       </aside>
     </div>
-    <div id="click-reminder">
+    <div id="click-reminder" style="direction: ltr;">
       <p>
         Tip: you can click on timeline to see auras/damage/etc per target and uptime
       </p>
