@@ -306,6 +306,7 @@ nav::after {
   nav,
   #top-nav {
     display: inline-block;
+    font-size: 2vw;
   }
   #top-chkbox {
     display: none;
