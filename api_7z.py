@@ -3,8 +3,10 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from sys import platform
+from threading import Thread, RLock
 
-PATH = Path.cwd()
+THREAD_LOCK = RLock()
+PATH = Path(__file__).parent
 LINK_7Z_DL_PREFIX = "https://www.7-zip.org/a"
 TABLE_BORDER = '-------------------'
 
@@ -35,10 +37,21 @@ class _SevenZipWindows:
 class SevenZip:
     @property
     def path(self):
-        if not self._exists():
-            self._download()
+        self.download()
         return self.executable_path
     
+    def download(self):
+        if self._exists():
+            return
+        
+        with THREAD_LOCK:
+            try:
+                dl_thread = self._dl_thread
+            except AttributeError:
+                dl_thread = self._dl_thread = Thread(target=self._download())
+                dl_thread.start()
+            dl_thread.join()
+
     @property
     def _7z_type(self):
         try:
