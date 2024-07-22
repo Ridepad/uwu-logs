@@ -125,6 +125,9 @@ def main():
     main_proccess_pool(NEW_LOGS)
     # main_sequential(NEW_LOGS)
 
+    api_7z.SevenZip().download()
+
+
     for report_id in NEW_LOGS:
         tz_path = Directories.pending_archive / f"{report_id}.timezone"
         if tz_path.is_file():
