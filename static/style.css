@@ -525,24 +525,49 @@ footer::before {
 #fights-container {
   position: relative;
 }
+
+#fights-container .bosses .expand, #fights-container .diffs {position: relative}
+#fights-container .bosses .expand span {
+  box-shadow: inset 2px -2px 0px -1px var(--primary-color);
+  position: absolute;
+  left: 0.75rem;
+  width: .5rem;
+  height: 1.3rem;
+  top: -0.5rem;
+}
+#fights-container .segments li:first-child span {
+  height: 1rem;
+  top: 0
+}
+#fights-container .bosses a {
+  z-index: 1;
+  position: relative;
+}
+#fights-container .bosses
+, #fights-container .bosses a
+, #fights-container .diffs
+, #fights-container .segments {
+  padding-left: 1.5rem
+}
 #fights-container .bosses {
   position: absolute;
   right: 5%;
   z-index: 10;
+  height: 80vh;
+  box-shadow: 0 0 0 .15rem var(--primary-color);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary-color) var(--background);
 }
 #fights-container ul {
   display: none;
   padding: 0;
   min-width: max-content;
   background-color: var(--background);
-  box-shadow: 0 0 0 .15rem var(--primary-color);
 }
 #fights-container a:hover {
   color: var(--link-hover);
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
-}
-#fights-container li {
-  position: relative;
 }
 #fights-container li:hover {
   background-color: var(--highlight-color); 
@@ -553,59 +578,22 @@ footer::before {
 #fights-container .diffs li:hover > .segments {
   display: block;
 }
-#fights-container .diffs,
-#fights-container .segments {
-  position: absolute;
-  top: 0;
-}
 #fights-container .diffs {
-  z-index: 15;
-}
-#fights-container .segments {
-  z-index: 20;
-}
-#fights-container .diffs {
-  transform: translateY(-1rem);
+  z-index: 0;
 }
 
 @media (orientation: portrait) {
-  #fights-container > h1 > a {
-    overflow: clip;
-  }
+  #fights-container span {display:none}
   #fights-container ul:not(.segments) > li::before {
     content: '▶';
-    box-shadow: inset -.2rem 0 var(--primary-color);
-    padding-inline: 2rem;
-    font-size: 125%;
-  }
-  #fights-container .diffs {
-    transform: translateY(-.5rem);
-  }
-  #fights-container .diffs li {
-    padding-block: .5rem;
-  }
-  #fights-container .diffs,
-  #fights-container .segments {
-    left: 4.5rem;
+    float: left;
   }
 }
 @media (orientation: landscape) {
-  #fights-container .diffs,
-  #fights-container .segments {
-    right: 100%;
-  }
-  #fights-container .diffs li:first-of-type {
-    padding-top: 1rem;
-  }
-  #fights-container li:last-of-type {
-    padding-bottom: 1rem;
-  }
   #fights-container ul a {
     padding-inline: 1em;
   }
 }
-
-
 #report-main-tables {
   display: grid;
   grid-auto-flow: row;

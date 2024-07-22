@@ -39,11 +39,11 @@
           <ul class="diffs">
             {% for diff_data in boss_data['children'] %}
             <li>
-              <a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a>
+              <div class="expand"><span></span><a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a></div>
               <ul class="segments">
                 {% for segment in diff_data['children'] %}
                 <li>
-                  <a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a>
+                  <div class="expand"><span></span><a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a></div>
                 </li>
                 {% endfor %}
               </ul>
