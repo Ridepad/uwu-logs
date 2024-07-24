@@ -277,6 +277,7 @@ nav::after {
   display: none;
   position: absolute;
   width: 100%;
+  text-wrap: nowrap;
 }
 #top-nav > a {
   text-align: center;
