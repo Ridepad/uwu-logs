@@ -10,7 +10,9 @@ from bisect import bisect
 
 import numpy
 
-from constants import get_report_name_info, running_time, sort_dict_by_value
+from h_debug import running_time
+from h_other import get_report_name_info, sort_dict_by_value
+
 from logs_top_statistics import convert_boss_data
 
 PATH = Path(__file__).parent
@@ -219,8 +221,12 @@ class Cache:
         if self.on_cooldown():
             return True
 
+        db_path = get_top_db_path(self.server)
+        if not db_path.is_file():
+            return False
+        _mtime = int(db_path.stat().st_mtime)
+
         db_mtime = self.m_time[self.server]
-        _mtime = int(get_top_db_path(self.server).stat().st_mtime)
         if not db_mtime:
             self.m_time[self.server] = _mtime
             return True
@@ -294,6 +300,8 @@ class RaidRank(Cache):
         return _cache[self.table_name]
 
     def _get_spec_data(self, spec_index: int) -> list[float]:
+        if not self.cursor:
+            return []
         q = query_dps_spec(self.table_name, spec_index)
         return sorted(x for x, in self.cursor.execute(q))
     
