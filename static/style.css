@@ -289,7 +289,7 @@ nav::after {
   padding: 0 1ch;
 }
 
-@media (orientation: portrait) {
+@media (max-aspect-ratio: 3/2) {
   #top-nav {
     top: var(--margin-top);
     background-color: var(--background);
@@ -302,7 +302,7 @@ nav::after {
   }
 }
 
-@media (orientation: landscape) {
+@media (min-aspect-ratio: 3/2) {
   nav,
   #top-nav {
     display: inline-block;
@@ -373,7 +373,7 @@ footer::before {
   box-shadow: inset 0 .5rem .5rem -.5rem var(--primary-color), 0 -.75rem 1.5rem -.5rem var(--primary-color)
 }
 
-@media (orientation: landscape) {
+@media (min-aspect-ratio: 3/2) {
   footer > ul {
     row-gap: 1rem;
   }
@@ -459,7 +459,7 @@ footer::before {
   background-color: var(--background);
   z-index: 9;
 }
-@media (orientation: landscape) {
+@media (min-aspect-ratio: 5/4) {
   #top-row-wrap {
     flex-direction: row;
   }
