@@ -1,0 +1,342 @@
+#graph-controls {
+  background: var(--background);
+  display: flex;
+  gap: .25rem;
+}
+@media (orientation: portrait) {
+  #graph-controls {
+    position: fixed;
+    left: 0;
+    transform: translateY(-100%);
+  }
+}
+#spell-toggle-hidden + label {
+  padding: 0;
+}
+
+#flag-filter-wrap > div {
+  min-width: 7em;
+}
+@media (orientation: landscape) {
+  #flag-filter-wrap > div {
+    padding-inline: 2em;
+  }
+}
+#flag-filter-wrap > #flag-filter {
+  visibility: hidden;
+  position: absolute;
+  bottom: 90%;
+  padding: .1rem;
+  width: max-content;
+  background-color: var(--background);
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
+}
+#flag-filter > li {
+  text-align: left;
+}
+#flag-filter-wrap:hover > #flag-filter {
+  visibility: visible;
+}
+.flag-color-picker {
+  width: 2em;
+  border: none;
+}
+.flag-checkbox:checked + label {
+  color: var(--secondary-color);
+}
+
+#spell-timeline-mult {
+  width: 100%;
+}
+#spell-timeline-mult-label {
+  min-width: 4ch;
+}
+
+.table-wrap {
+  padding-bottom: 5rem;
+}
+.casts-section {
+  padding-top: 5rem;
+}
+
+spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
+  box-shadow: inset 0 .2rem var(--secondary-color);
+}
+
+
+#casts-section-wrap {
+  --row-height: 1.25rem;
+  --row-height-border: calc(var(--row-height) + 2px);
+  --event-width-mult: 1;
+  --tenth-width: calc(var(--mult) * 1px);
+  --event-width: calc(var(--event-width-mult) * var(--tenth-width));
+  width: calc(var(--mult) * var(--duration) * 10px + 2px);
+  overflow-y: clip;
+}
+.spell-row {
+  --row-targets: 1;
+  display: block;
+  height: calc(var(--row-targets) * var(--row-height-border));
+}
+spell-name div,
+spell-name-data,
+.spell-history {
+  border: 1px solid var(--table-border);
+  height: var(--row-height-border);
+}
+
+spell-name,
+spell-history-wrap {
+	background-color: black;
+}
+.casts-section .spell-row:nth-of-type(even) > spell-name,
+.casts-section .spell-row:nth-of-type(even) > spell-history-wrap {
+  background-color: hsl(0, 0%, 3%);
+}
+spell-history-wrap > * {
+  background-color: inherit;
+}
+
+spell-name-data {
+  display: flex;
+}
+spell-name-data::before {
+  content: attr(data-count);
+  text-align: right;
+  min-width: 4ch;
+}
+spell-name-data img {
+  min-width: var(--row-height);
+  max-width: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
+  padding-inline: .25em;
+}
+spell-name-data a {
+  overflow: hidden;
+}
+spell-name div::before {
+  display: inline-block;
+  content: attr(data-uptime);
+  text-align: right;
+  min-width: 6ch;
+  padding-right: 1ch;
+}
+
+.spell-history {
+  position: relative;
+  width: 100%;
+}
+spell-cleu {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: var(--event-width);
+  background-color: currentColor;
+  box-shadow: -1px 0 gainsboro;
+}
+.copy {
+  display: none;
+}
+.openned .copy {
+  display: block;
+}
+
+#the-tooltip {
+  position: absolute;
+  width: fit-content;
+  background-color: var(--background);
+  text-align: center;
+  padding: .5em;
+  border-radius: 6px;
+  box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
+  z-index: 5;
+}
+
+.negative::before {
+  content: '-';
+}
+#timeline-ruler {
+  padding-top: 1rem;
+  background-color: black;
+  margin-left: 1px;
+}
+.timeline-ruler-tick {
+	position: relative;
+	display: inline-block;
+  box-shadow: -1px 1px currentColor;
+	width: var(--tenth-width);
+}
+.timeline-ruler-second {
+	height: 1rem;
+}
+.timeline-ruler-half-second {
+	height: .6rem;
+  font-size: 75%;
+}
+.timeline-ruler-tenth-second {
+	height: .25rem;
+  font-size: 50%;
+}
+.timeline-ruler-number {
+  font-size: inherit;
+	position: absolute;
+  bottom: 100%;
+  transform: translate(-50%, 0);
+}
+#spells-fav-reminder {
+  font-size: 200%;
+  max-width: 75vw;
+}
+#spells-fav-reminder:not(:only-child) {
+  display: none;
+}
+
+#aura-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+#aura-controls button {
+  min-width: unset;
+  font-size: 75%;
+  padding: 0 .5em;
+}
+#spell-toggle-hidden + label {
+  min-width: 11ch;
+}
+
+
+.char-0 {
+  --custom-bg-color: hsl(0, 0%, 0%);
+}
+.char-1 {
+  --custom-bg-color: hsl(271, 100%, 5%);
+}
+.char-2 {
+  --custom-bg-color: hsl(0, 100%, 5%);
+}
+#spells-fav > spell-row > spell-name,
+#spells-fav > spell-row > spell-history-wrap {
+  background-color: var(--custom-bg-color);
+}
+.char-tab {
+  background-color: var(--custom-bg-color);
+}
+
+
+#tabs-wrap {
+  display: flex;
+  padding-bottom: 1rem;
+  row-gap: 1rem;
+  flex-flow: column;
+}
+.char-tab {
+  display: block;
+  font-size: 300%;
+  border: 2px solid var(--primary-color);
+}
+.char-tab a {
+  color: var(--link-color);
+  text-shadow: .1em .1em .5em var(--link-text-shadow);
+}
+.char-tab a:hover {
+  color: var(--link-hover);
+  text-shadow: .1em .1em .4em var(--link-text-shadow-hover);
+}
+.char-tab > div {
+	display: flex;
+	justify-content: space-between;
+  font-size: 40%;
+  align-items: end;
+  row-gap: 1rem;
+}
+.button-close {
+  width: 3ch;
+}
+.char-report-id {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+  max-width: 67%;
+}
+@media (orientation: landscape) {
+  #tabs-wrap {
+	  justify-content: space-between;
+    flex-flow: row wrap;
+  }
+  .char-tab {
+    min-width: 30%;
+  }
+}
+#add-character {
+  font-size: 350%;
+}
+dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30rem;
+  font-size: 125%;
+  color: inherit;
+  background-color: var(--background);
+  border: none;
+  box-shadow: inset 0 0 .5em var(--primary-color);
+  border-radius: .5em;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+#add-character-dialog-wrap {
+  padding: 1rem;
+  display: grid;
+  grid-auto-flow: row;
+  gap: 1rem;
+}
+#add-character-dialog-wrap div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+#input-report-id {
+  width: 85%;
+}
+
+#main-fade {
+  content: '';
+  position: absolute;
+  display: none;
+  background-color: #000C;
+  inset: 0 0 0 0;
+  z-index: 5;
+}
+dialog[open] + #main-fade {
+  display: block;
+}
+
+
+
+#boss-reminder {
+  font-size: 500%;
+}
+
+
+#spells-fav #button-unhide,
+#spells-fav #button-fav,
+spells-main #button-unhide,
+spells-hide #button-hide {
+  display: none;
+}
+
+#fight-start {
+  position: absolute;
+  height: 250rem;
+  width: 1px;
+  background-color: gainsboro;
+  z-index: 1;
+}
+
+#before-pull {
+  font-size: 150%;
+  background-color: var(--background);
+}
