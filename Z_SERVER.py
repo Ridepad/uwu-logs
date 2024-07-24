@@ -373,7 +373,7 @@ def casts(report_id, source_name):
 
     # data = report.get_spell_history_wrap(segments, source_name)
     return render_template(
-        'casts.html', **default_params,
+        'timeline.html', **default_params,
         # **data,
         FLAG_ORDER=FLAG_ORDER,
         SOURCE_NAME=source_name,

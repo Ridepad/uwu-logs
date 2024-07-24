@@ -1,0 +1,116 @@
+{% extends "layout_report.html" %}
+
+{% block scripts_head %}
+<script src="/static/timeline.js" async defer></script>
+{% endblock scripts_head %}
+
+{% block add_css_file %}
+<link rel="stylesheet" type="text/css" href="/static/timeline.css">
+{% endblock add_css_file %}
+
+{% block the_main %}
+<main>
+<section id="player-nav-wrap">
+  <ul id="player-nav">
+    <li><a href="/reports/{{ REPORT_ID }}/player/{{ SOURCE_NAME }}/{{ QUERY }}">DAMAGE</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/heal/{{ SOURCE_NAME }}/{{ QUERY }}">HEAL</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/taken/{{ SOURCE_NAME }}/{{ QUERY }}">TAKEN</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/healed/{{ SOURCE_NAME }}/{{ QUERY }}">HEALED</a></li>
+    <li><a href="/reports/{{ REPORT_ID }}/casts/{{ SOURCE_NAME }}/{{ QUERY }}">TIMELINE</a></li>
+    <li id="graph-controls">
+      <section id="flag-filter-wrap">
+        <div>≡ FLAG FILTER</div>
+        <ul id="flag-filter">
+          {% for flag in FLAG_ORDER %}
+          <li id="{{ flag }}" style="display: none;">
+            <input type="color" class="flag-color-picker">
+            <input id="{{ flag }}_CHECKBOX" type="checkbox" class="flag-checkbox" checked>
+            <label class="tab" for="{{ flag }}_CHECKBOX">{{ flag }}</label>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      <span>ZOOM:</span>
+      <input id="spell-timeline-mult" type="range" min="1" max="100" value="3">
+      <span id="spell-timeline-mult-label">3x</span>
+      <input id="spell-toggle-hidden" type="checkbox">
+      <label for="spell-toggle-hidden">Show hidden</label>
+    </li>
+  </ul>
+</section>
+<section id="boss-reminder" style="display: none;">Select boss to see casts.</section>
+<section id="tabs-wrap" style="display: none;">
+  <button id="add-character">+</button>
+</section>
+<section class="table-wrap wrap-spell" style="display: none;">
+  <div id="casts-section-wrap">
+    <div id="fight-start"></div>
+    <div class="spell-name">
+      <select id="before-pull">
+        <option value="0">Before pull</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="30">30</option>
+        <option value="60">60</option>
+        <option value="120">120</option>
+        <option value="180">180</option>
+      </select>
+    </div>
+    <div id="timeline-ruler"></div>
+    <div id="spells-fav">
+      <aside id="spells-fav-reminder">
+        <p>
+          To add spells to compare - hover spell names below and click ▲
+        </p>
+        <p>
+          You can also hide spells by clicking ✖ next to spell name
+        </p>
+      </aside>
+    </div>
+    <div id="click-reminder">
+      <p>
+        Tip: you can click on timeline to see auras/damage/etc per target and uptime
+      </p>
+    </div>
+  </div>
+</section>
+<aside id="the-tooltip" style="display: none">
+  <p id="tooltip-time"></p>
+  <p id="tooltip-flag"></p>
+  <p id="tooltip-source"></p>
+  <p id="tooltip-target"></p>
+  <p id="tooltip-data"></p>
+</aside>
+<aside id="aura-controls" style="display: none;">
+  <button id="button-fav">▲</button>
+  <button id="button-hide">✖</button>
+  <button id="button-unhide">✚</button>
+</aside>
+
+<dialog id="add-character-dialog">
+  <div id="add-character-dialog-wrap">
+    <div id="dialog-msg" style="visibility: hidden;">Report wasn't found</div>
+    <div id="input-report-id-wrap">
+      <input id="input-report-id" type="text" placeholder="Input report ID">
+      <button id="fetch-report-slices" type="button">Load</button>
+    </div>
+    <div id="select-attempts-wrap">
+      <span>Select attempt:</span>
+      <select id="select-attempts"></select>
+    </div>
+    <div id="select-players-wrap">
+      <span>Select player:</span>
+      <select id="select-players"></select>
+    </div>
+    <div>
+      <button id="button-cancel">Cancel</button>
+      <button id="button-confirm" value="default">Add Character</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="main-fade"></div>
+
+</main>
+{% endblock the_main %}
