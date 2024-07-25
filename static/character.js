@@ -1,112 +1,91 @@
-import { Gear } from "./char_parser.js?240311-2";
+import Gear from "./char_parser.js?240725-1";
+import { SPECS } from "./constants.js?240725-1";
 
-const LOADING_POINTS = document.getElementById("loading-points");
-const MISSING_POINTS = document.getElementById("missing-points");
-const player_points_wrap = document.getElementById("player-points-wrap");
-const main_body = document.getElementById("points-body");
-const tooltip = document.getElementById("tooltip-points");
-const player_name = document.getElementById("player-name");
-const player_server = document.getElementById("player-server");
-const player_overall_points = document.getElementById("player-overall-points");
-const player_overall_rank = document.getElementById("player-overall-rank");
+const INFO_LOADING_POINTS = document.getElementById("loading-points");
+const INFO_MISSING_POINTS = document.getElementById("missing-points");
+const SECTION_PLAYER_POINTS_WRAP = document.getElementById("player-points-wrap");
+const TBODY_POINTS = document.getElementById("points-body");
+const TOOLTIP_POINTS = document.getElementById("tooltip-points");
+const PLAYER_NAME = document.getElementById("player-name");
+const PLAYER_SERVER = document.getElementById("player-server");
+const PLAYER_OVERALL_POINTS = document.getElementById("player-overall-points");
+const PLAYER_OVERALL_RANK = document.getElementById("player-overall-rank");
 const BUTTON_TOGGLE_MORE_BOSSES = document.getElementById("toggle-more-bosses");
 const INPUT_CHAR = document.getElementById("charname-seach");
 const SELECT_SERVER = document.getElementById("server-select");
-const SPEC_WRAP = document.getElementById("spec-wrap");
+const SPEC_SWAP_WRAP = document.getElementById("spec-wrap");
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
-const ARMORY_SERVERS = [
-  "Lordaeron",
-  "Icecrown",
-  "Onyxia",
-];
 const SPEC_BUTTONS = [1,2,3].map(i => ({
   index: i,
   input: document.getElementById(`spec-${i}-input`),
   label: document.getElementById(`spec-${i}-label`),
 }));
-const KEY_TO_SELECTOR = {
-  "data-players": ".row-players .td-player",
-  "data-players-n": ".row-players .td-max",
-  "data-raids": ".row-raids .td-player",
-  "data-raids-n": ".row-raids .td-max",
-  "data-dps": ".row-dps .td-player",
-  "data-dps-r1": ".row-dps .td-max",
-  "data-points-dps": ".row-dps .td-points",
-  "data-points-raids": ".row-raids .td-points",
-  "data-points-players": ".row-players .td-points",
-};
-const SPECS = [
-  ["Death Knight", "class_deathknight", "death-knight"],
-  ["Blood", "spell_deathknight_bloodpresence", "death-knight"],
-  ["Frost", "spell_deathknight_frostpresence", "death-knight"],
-  ["Unholy", "spell_deathknight_unholypresence", "death-knight"],
-  ["Druid", "class_druid", "druid"],
-  ["Balance", "spell_nature_starfall", "druid"],
-  ["Feral Combat", "ability_racial_bearform", "druid"],
-  ["Restoration", "spell_nature_healingtouch", "druid"],
-  ["Hunter", "class_hunter", "hunter"],
-  ["Beast Mastery", "ability_hunter_beasttaming", "hunter"],
-  ["Marksmanship", "ability_marksmanship", "hunter"],
-  ["Survival", "ability_hunter_swiftstrike", "hunter"],
-  ["Mage", "class_mage", "mage"],
-  ["Arcane", "spell_holy_magicalsentry", "mage"],
-  ["Fire", "spell_fire_firebolt02", "mage"],
-  ["Frost", "spell_frost_frostbolt02", "mage"],
-  ["Paladin", "class_paladin", "paladin"],
-  ["Holy", "spell_holy_holybolt", "paladin"],
-  ["Protection", "spell_holy_devotionaura", "paladin"],
-  ["Retribution", "spell_holy_auraoflight", "paladin"],
-  ["Priest", "class_priest", "priest"],
-  ["Discipline", "spell_holy_wordfortitude", "priest"],
-  ["Holy", "spell_holy_guardianspirit", "priest"],
-  ["Shadow", "spell_shadow_shadowwordpain", "priest"],
-  ["Rogue", "class_rogue", "rogue"],
-  ["Assassination", "ability_rogue_eviscerate", "rogue"],
-  ["Combat", "ability_backstab", "rogue"],
-  ["Subtlety", "ability_stealth", "rogue"],
-  ["Shaman", "class_shaman", "shaman"],
-  ["Elemental", "spell_nature_lightning", "shaman"],
-  ["Enhancement", "spell_nature_lightningshield", "shaman"],
-  ["Restoration", "spell_nature_magicimmunity", "shaman"],
-  ["Warlock", "class_warlock", "warlock"],
-  ["Affliction", "spell_shadow_deathcoil", "warlock"],
-  ["Demonology", "spell_shadow_metamorphosis", "warlock"],
-  ["Destruction", "spell_shadow_rainoffire", "warlock"],
-  ["Warrior", "class_warrior", "warrior"],
-  ["Arms", "ability_rogue_eviscerate", "warrior"],
-  ["Fury", "ability_warrior_innerrage", "warrior"],
-  ["Protection", "ability_warrior_defensivestance", "warrior"]
-]
 
-const SEARCH_PARAMS = new URLSearchParams(window.location.search);
 const CURRENT_CHARACTER = {
   name: undefined,
   server: undefined,
   spec: undefined,
-  class: undefined,
+  class_i: undefined,
   popped: false,
-}
+  main_data() {
+    return {
+      name: this.name,
+      server: this.server,
+      spec: this.spec,
+    }
+  },
+  json() {
+    return JSON.stringify(this.main_data());
+  },
+  to_url_params() {
+    return new URLSearchParams(Object.entries(this.main_data()));
+  },
+};
+const CACHE_CHARACTERS = {
+  current() {
+    return this[CURRENT_CHARACTER.json()];
+  },
+};
 
 let loading_timeout;
-const CACHE = {};
-const char_request = new XMLHttpRequest();
-char_request.onreadystatechange = () => {
-  if (char_request.readyState != 4) return;
+const CHAR_REQUEST = new XMLHttpRequest();
+CHAR_REQUEST.onreadystatechange = () => {
+  if (CHAR_REQUEST.readyState != 4) return;
   clearTimeout(loading_timeout);
-  if (char_request.status != 200) {
-    player_points_wrap.style.display = "none";
-    LOADING_POINTS.style.display = "none";
-    SPEC_WRAP.style.visibility = "hidden";
-    MISSING_POINTS.style.removeProperty("display");
-    CURRENT_CHARACTER.class = undefined;
+  if (CHAR_REQUEST.status != 200) {
+    SECTION_PLAYER_POINTS_WRAP.style.display = "none";
+    INFO_LOADING_POINTS.style.display = "none";
+    SPEC_SWAP_WRAP.style.visibility = "hidden";
+    INFO_MISSING_POINTS.style.removeProperty("display");
+    CURRENT_CHARACTER.class_i = undefined;
     return;
   }
 
-  const j = JSON.parse(char_request.response);
-  CACHE[SEARCH_PARAMS] = j;
+  const j = JSON.parse(CHAR_REQUEST.response);
+  
+  if (!CURRENT_CHARACTER.spec) {
+    CURRENT_CHARACTER.spec = DEFAULT_SPEC[j.class_i];
+  }
+
+  CACHE_CHARACTERS[CURRENT_CHARACTER.json()] = j;
+
   table_add_new_data(j);
 }
+
+function armory_link_warmane(server) {
+  return name => `https://armory.warmane.com/character/${name}/${server}`;
+}
+function armory_link_rising_gods(name) {
+  return `https://db.rising-gods.de/?profile=eu.rising-gods.${name}`;
+}
+const SERVER_ARMORY_FUNCTIONS = {
+  "Lordaeron": armory_link_warmane("Lordaeron"),
+  "Icecrown": armory_link_warmane("Icecrown"),
+  "Onyxia": armory_link_warmane("Onyxia"),
+  "Rising-Gods": armory_link_rising_gods,
+};
+
 function add_point(v) {
   return (v / 100).toFixed(2);
 }
@@ -124,9 +103,28 @@ function format_dps(v) {
   return split_thousands(v);
 }
 
-function cell(v, _class) {
-  const td = document.createElement("td")
-  td.className = _class;
+const TOOLTIP_ELEMENTS = {
+  ".row-players .td-player": boss_data => split_thousands(boss_data["rank_players"]),
+  ".row-players .td-max":    boss_data => split_thousands(boss_data["n_players"]),
+//".row-players .td-max":    boss_data => split_thousands(boss_data["spec_total_players"]),
+  ".row-players .td-points": boss_data => add_point(boss_data["points_rank_players"]),
+  ".row-raids .td-player":   boss_data => split_thousands(boss_data["n_raids"]),
+//".row-raids .td-player":   boss_data => split_thousands(boss_data["rank_raids"]),
+  ".row-raids .td-max":      boss_data => split_thousands(boss_data["spec_total_raids"]),
+  ".row-raids .td-points":   boss_data => add_point(boss_data["points_rank_raids"]),
+  ".row-dps .td-player":     boss_data => format_dps(boss_data["dps_max"]),
+  ".row-dps .td-max":        boss_data => format_dps(boss_data["dps_r1"]),
+//".row-dps .td-max":        boss_data => format_dps(boss_data["spec_r1_dps"]),
+  ".row-dps .td-points":     boss_data => add_point(boss_data["points_dps"]),
+};
+
+function is_landscape() {
+  return window.matchMedia("(orientation: landscape)").matches;
+}
+
+function cell(v, class_name) {
+  const td = document.createElement("td");
+  td.className = class_name;
   td.append(v);
   return td;
 }
@@ -151,34 +149,38 @@ function cell_points(v) {
   return td;
 }
 
-function row_onenter(event) {
+function tooltip_set_values(row) {
+  const data = CACHE_CHARACTERS.current();
+  const boss_name = row.getAttribute("data-boss-name");
+  const boss_data = data.bosses[boss_name];
+
+  for (const selector in TOOLTIP_ELEMENTS) {
+    const element = TOOLTIP_POINTS.querySelector(selector);
+    const f = TOOLTIP_ELEMENTS[selector];
+    element.textContent = f(boss_data);
+  }
+}
+function row_on_enter(event) {
   const row = event.target;
-  for (const key in KEY_TO_SELECTOR) {
-    tooltip.querySelector(KEY_TO_SELECTOR[key]).textContent = row.getAttribute(key);
-  }
+  tooltip_set_values(row);
   const trRect = row.getBoundingClientRect();
-  tooltip.style.top = trRect.bottom + 'px';
-  if (window.matchMedia("(orientation: landscape)").matches) {
-    tooltip.style.left = trRect.left + 'px';
-  } else {
-    tooltip.style.left = 0;
-  }
-  tooltip.style.removeProperty("display");
+  TOOLTIP_POINTS.style.top = `${trRect.bottom}px`;
+  TOOLTIP_POINTS.style.left = is_landscape() ? `${trRect.left}px` : 0;
+  TOOLTIP_POINTS.style.removeProperty("display");
 }
 
 function cell_date(report_ID) {
-  const report_date = report_ID.toString().slice(0, 15);
+  const report_date = report_ID.slice(0, 15);
   const [year, month, day, ] = report_date.split('-');
   const date_text = `${day}-${month}-${year}`;
 
-  const server = SEARCH_PARAMS.get("server");
-  const _a = document.createElement('a');
-  _a.href = `/reports/${report_ID}--${server}`;
-  _a.target = "_blank";
-  _a.append(date_text);
+  const a = document.createElement('a');
+  a.href = `/reports/${report_ID}`;
+  a.target = "_blank";
+  a.append(date_text);
 
   const cell = document.createElement('td');
-  cell.appendChild(_a);
+  cell.appendChild(a);
   cell.className = "cell-date";
 
   return cell;
@@ -205,21 +207,14 @@ function row(boss_name, data) {
   tr.appendChild(cell_points(data["points"]));
   tr.appendChild(cell(format_dps(data["dps_max"]), "cell-dps"));
   tr.appendChild(cell(format_duration(data["dur_min"]), "cell-dur"));
+  // tr.appendChild(cell(format_duration(data["fastest_kill_duration"]), "cell-dur"));
   tr.appendChild(cell(split_thousands(data["raids"]), "cell-raids"));
   tr.appendChild(cell_date(data["report"]));
+  // tr.appendChild(cell_date(data["report_id"]));
 
-  tr.setAttribute("data-players", split_thousands(data["rank_players"]));
-  tr.setAttribute("data-players-n", split_thousands(data["n_players"]));
-  tr.setAttribute("data-raids", split_thousands(data["rank_raids"]));
-  tr.setAttribute("data-raids-n", split_thousands(data["n_raids"]));
-  tr.setAttribute("data-dps", format_dps(data["dps_max"]));
-  tr.setAttribute("data-dps-r1", format_dps(data["dps_r1"]));
-  tr.setAttribute("data-points-dps", add_point(data["points_dps"]));
-  tr.setAttribute("data-points-raids", add_point(data["points_rank_raids"]));
-  tr.setAttribute("data-points-players", add_point(data["points_rank_players"]));
-  
-  tr.addEventListener("mouseenter", row_onenter);
-  tr.addEventListener("mouseleave", () => tooltip.style.display = "none");
+  tr.setAttribute("data-boss-name", boss_name);
+  tr.addEventListener("mouseenter", row_on_enter);
+  tr.addEventListener("mouseleave", () => TOOLTIP_POINTS.style.display = "none");
   
   return tr;
 }
@@ -227,78 +222,83 @@ function row(boss_name, data) {
 function set_new_player_name() {
   const name = CURRENT_CHARACTER.name;
   const server = CURRENT_CHARACTER.server;
-  player_server.textContent = server;
-  player_name.textContent = name;
-  if (ARMORY_SERVERS.includes(server)) {
-    player_name.href = `https://armory.warmane.com/character/${name}/${server}`
-    player_name.target = "_blank";
+  PLAYER_SERVER.textContent = server;
+  PLAYER_NAME.textContent = name;
+  const armory_function = SERVER_ARMORY_FUNCTIONS[server];
+  if (armory_function) {
+    PLAYER_NAME.href = armory_function(name);
+    PLAYER_NAME.target = "_blank";
   } else {
-    player_name.removeAttribute("href");
-    player_name.removeAttribute("target");
+    PLAYER_NAME.removeAttribute("href");
+    PLAYER_NAME.removeAttribute("target");
   }
 }
 
-function table_add_new_data(data) {
-  if (!CURRENT_CHARACTER.spec) {
-    const spec = DEFAULT_SPEC[data["class"]];
-    CURRENT_CHARACTER.spec = spec;
-    SEARCH_PARAMS.set("spec", spec);
-    console.log(SEARCH_PARAMS);
-  }
-  if (!CURRENT_CHARACTER.popped) {
-    history.pushState(null, "", `?${SEARCH_PARAMS}`);
-  }
+function push_new_state() {
   SPEC_BUTTONS[CURRENT_CHARACTER.spec - 1].input.checked = true;
+  
+  if (CURRENT_CHARACTER.popped) return;
+  
+  window.localStorage.setItem("character_spec", CURRENT_CHARACTER.spec);
+  CURRENT_CHARACTER.popped = false;
 
-  main_body.innerHTML = "";
+  const url = `?${CURRENT_CHARACTER.to_url_params()}`;
+  history.pushState(null, "", url);
+}
+function refresh_spec_icons() {
+  const class_i = CURRENT_CHARACTER.class_i * 4;
+  PLAYER_NAME.className = SPECS[class_i][2];
+  for (const spec_button of SPEC_BUTTONS) {
+    const img_element = spec_button.label.querySelector("img");
+    const icon_name = SPECS[class_i + spec_button.index][1];
+    img_element.src = `/static/icons/${icon_name}.jpg`;
+  }
+}
+function table_add_new_data(data) {
+  push_new_state();
+
+  TBODY_POINTS.innerHTML = "";
   const boss_data = data.bosses;
   for (const boss_name in boss_data) {
-    const tr = row(boss_name, boss_data[boss_name])
-    main_body.appendChild(tr);
+    const tr = row(boss_name, boss_data[boss_name]);
+    TBODY_POINTS.appendChild(tr);
   }
-  set_new_player_name(data.name, data.server);
-  const _overall = add_point(data.overall_points);
-  player_overall_points.textContent = _overall;
-  player_overall_points.className = points_rank_class(_overall);
-  player_overall_rank.textContent = `(${data.overall_rank ?? 0})`;
   
-  MISSING_POINTS.style.display = "none";
-  LOADING_POINTS.style.display = "none";
-  SPEC_WRAP.style.removeProperty("visibility");
-  player_points_wrap.style.removeProperty("display");
+  const overall_points = add_point(data.overall_points);
+  PLAYER_OVERALL_POINTS.textContent = overall_points;
+  PLAYER_OVERALL_POINTS.className = points_rank_class(overall_points);
+  PLAYER_OVERALL_RANK.textContent = `(${data.overall_rank ?? 0})`;
   
-  if (data.class == CURRENT_CHARACTER.class) return;
+  INFO_MISSING_POINTS.style.display = "none";
+  INFO_LOADING_POINTS.style.display = "none";
+  SPEC_SWAP_WRAP.style.removeProperty("visibility");
+  SECTION_PLAYER_POINTS_WRAP.style.removeProperty("display");
   
-  CURRENT_CHARACTER.class = data.class;
-  const _class = data.class * 4;
-  player_name.className = SPECS[_class][2];
-  for (const spec_button of SPEC_BUTTONS) {
-    const icon_name = SPECS[_class + spec_button.index][1];
-    spec_button.label.querySelector("img").src = `static/icons/${icon_name}.jpg`;
-  }
+  if (data.class_i == CURRENT_CHARACTER.class_i) return;
+  
+  CURRENT_CHARACTER.class_i = data.class_i;
+  refresh_spec_icons();
 }
 
 function query_server() {
-  char_request.open("POST", `?${SEARCH_PARAMS}`);
-  char_request.send();
+  CHAR_REQUEST.open("POST", "/character");
+  CHAR_REQUEST.setRequestHeader("Content-Type", "application/json");
+  CHAR_REQUEST.send(CURRENT_CHARACTER.json());
   loading_timeout = setTimeout(() => {
-    player_points_wrap.style.display = "none";
-    MISSING_POINTS.style.display = "none";
-    LOADING_POINTS.style.removeProperty("display");
-    console.log('set points loading');
+    // prevents content flickering
+    SECTION_PLAYER_POINTS_WRAP.style.display = "none";
+    INFO_MISSING_POINTS.style.display = "none";
+    INFO_LOADING_POINTS.style.removeProperty("display");
   }, 100);
 }
 function fetch_data() {
-  const data = CACHE[SEARCH_PARAMS];
+  const data = CACHE_CHARACTERS.current();
   data ? table_add_new_data(data) : query_server();
 }
 
 function new_spec(spec) {
   CURRENT_CHARACTER.spec = spec;
   CURRENT_CHARACTER.popped = false;
-  SEARCH_PARAMS.set("name", CURRENT_CHARACTER.name);
-  SEARCH_PARAMS.set("server", CURRENT_CHARACTER.server);
-  SEARCH_PARAMS.set("spec", spec);
   fetch_data();
 }
 function toggle_more_bosses(e) {
@@ -308,23 +308,20 @@ function toggle_more_bosses(e) {
     window.localStorage.setItem("show-more-bosses", show);
   }
   if (show) {
-    main_body.classList.remove("hide-other-bosses");
+    TBODY_POINTS.classList.remove("hide-other-bosses");
   } else {
-    main_body.classList.add("hide-other-bosses");
+    TBODY_POINTS.classList.add("hide-other-bosses");
   }
   BUTTON_TOGGLE_MORE_BOSSES.textContent = show ? "Hide other bosses" : "Show other bosses";
 }
 
 function find_value_index(select, option_name) {
   for (let i = 0; i < select.childElementCount; i++) {
-      if (select[i].textContent == option_name) return i;
+    if (select[i].textContent == option_name) return i;
   }
 }
 function set_current_server() {
   SELECT_SERVER.selectedIndex = find_value_index(SELECT_SERVER, CURRENT_CHARACTER.server);
-}
-function to_title(string) {
-  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 function new_character() {
   set_new_player_name();
@@ -335,18 +332,19 @@ function new_character() {
   
   fetch_data();
 }
+
+function to_title(string) {
+  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
+}
 function new_character_search() {
-  const character_name = to_title(INPUT_CHAR.value);
+  INPUT_CHAR.value = to_title(INPUT_CHAR.value);
+
+  const character_name = INPUT_CHAR.value;
   const character_server = SELECT_SERVER.value;
-  
+
   CURRENT_CHARACTER.name = character_name;
   CURRENT_CHARACTER.server = character_server;
   CURRENT_CHARACTER.spec = undefined;
-  CURRENT_CHARACTER.popped = false;
-  
-  SEARCH_PARAMS.set("name", character_name);
-  SEARCH_PARAMS.set("server", character_server);
-  SEARCH_PARAMS.delete("spec");
 
   window.localStorage.setItem("character_name", character_name);
   window.localStorage.setItem("character_server", character_server);
@@ -358,24 +356,23 @@ function init_character() {
   const search = new URLSearchParams(window.location.search);
   let character_name = search.get("name");
   let character_server = search.get("server");
+  let character_spec = search.get("spec");
+  
   if (!character_name || !character_server) {
     character_name = window.localStorage.getItem("character_name");
     character_server = window.localStorage.getItem("character_server");
+    character_spec = window.localStorage.getItem("character_spec");
   }
+  
   if (!character_name || !character_server) {
     character_name = "Safiyah";
     character_server = "Lordaeron";
+    character_spec = 3;
   }
-
-  const spec = search.get("spec");
-
-  SEARCH_PARAMS.set("name", character_name);
-  SEARCH_PARAMS.set("server", character_server);
-  SEARCH_PARAMS.set("spec", spec);
 
   CURRENT_CHARACTER.name = character_name;
   CURRENT_CHARACTER.server = character_server;
-  CURRENT_CHARACTER.spec = spec;
+  CURRENT_CHARACTER.spec = character_spec;
 
   new_character();
 }
@@ -383,13 +380,11 @@ function init_character() {
 function popstate() {
   const search = new URLSearchParams(window.location.search);
   if (!search.get("name")) return;
-  console.log(search);
   
   ["name", "server", "spec"].forEach(k => {
     const value = search.get(k);
     CURRENT_CHARACTER[k] = value;
-    SEARCH_PARAMS.set(k, value);
-  })
+  });
 
   CURRENT_CHARACTER.popped = true;
   INPUT_CHAR.value = CURRENT_CHARACTER.name;

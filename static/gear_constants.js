@@ -1,5 +1,3 @@
-export const CONTROLLER = new AbortController();
-
 const LOW_GS_MULT = [1.33, 1, 0.75, 0.42, 1.66];
 const SLOT_TYPES = [
   0, 2, 1, 2, 0, null, null, 2, 
@@ -28,11 +26,11 @@ const ILVL_TO_GS = {
   200: [310, 233, 174,  98,  621],
 };
 
-export function is_two_hand(type) {
-  return type == "Two-Hand" || type == "Two Hand"
+function is_two_hand(type) {
+  return type == "Two-Hand" || type == "Two Hand";
 }
 
-export function get_gs(inv_slot, item_data, item_id) {
+function get_gs(inv_slot, item_data, item_id) {
   if (!item_data) return 0;
 
   let inv_type = SLOT_TYPES[inv_slot];
@@ -44,10 +42,10 @@ export function get_gs(inv_slot, item_data, item_id) {
 
   if (ILVL_TO_GS[item_data.ilvl]) return ILVL_TO_GS[item_data.ilvl][inv_type];
 
-  return ILVL_TO_GS["200"][inv_type] * LOW_GS_MULT[inv_type]
+  return ILVL_TO_GS["200"][inv_type] * LOW_GS_MULT[inv_type];
 }
 
-export const QUALITY_COLOR = [
+const QUALITY_COLOR = [
   "poor",
   "common",
   "uncommon",
@@ -57,7 +55,7 @@ export const QUALITY_COLOR = [
   "artifact",
   "heirloom",
 ];
-export const ENCHANTABLE = [
+const ENCHANTABLE = [
   "Head",
   "Shoulder",
   "Chest",
@@ -71,7 +69,7 @@ export const ENCHANTABLE = [
   "One-Hand",
   "Two-Hand",
 ];
-export const STATS_ORDER = {
+const STATS_ORDER = {
   ap: {
     main: [
       "attack power",
@@ -125,8 +123,8 @@ export const STATS_ORDER = {
     ],
   },
 };
-export const DEFAULT_GEM_DATA = {"socket": [0, 0, 0], 'color_hex': "ffffff"};
-export const GEM_DATA = {
+const DEFAULT_GEM_DATA = {"socket": [0, 0, 0], 'color_hex': "ffffff"};
+const GEM_DATA = {
   "red": {
     "socket": [1, 0, 0],
     "color_hex": "ff0000",
@@ -177,66 +175,76 @@ export const GEM_DATA = {
   }
 }
 
-class Cache {
-  constructor() {
-    this.CLASS_SETS = {};
-    this.CACHE_TYPE = {
-      "item": {},
-      "enchant": {},
-    };
+function find_gem_data_by_name(gem_name) {
+  gem_name = gem_name.toLowerCase().replace("perfect ", "");
+  const _values = Object.values(GEM_DATA);
+  for (const color_data of _values) {
+    if (color_data.unique.includes(gem_name)) {
+      return color_data;
+    }
   }
-  get_cache_type(type) {
-    return this.CACHE_TYPE[type];
+  const prefix = gem_name.split(' ', 1)[0];
+  for (const color_data of _values) {
+    if (color_data.prefix.includes(prefix)) {
+      return color_data;
+    }
   }
-  async make_R() {
-    const url = this.get_url(type, id);
-    const f = fetch(url, {signal: CONTROLLER.signal});
+  return DEFAULT_GEM_DATA;
+}
 
-  }
-  async get_promise(type, id, redo) {
-    const url = `/cache/${type}/${id}.json`;
-    const f = fetch(url, {signal: CONTROLLER.signal});
-    return f.then(v => {
-      if (v.status == 200) {
-        return v.json();
-      }
-      if (redo) return {};
-      const missing_item_url = `/missing/${type}/${id}`;
-      const i = {signal: CONTROLLER.signal, method: 'PUT'};
-      const z = fetch(missing_item_url, i);
-      if (z.status == 200 || z.status == 201) {
-        return this.get_promise(type, id, true)
-      }
-      return {};
-    });
-  }
-  get_data(type, id) {
-    const cache = this.get_cache_type(type);
-    if (cache[id]) {
-      return cache[id];
+function split_space_once(string) {
+  const space_at = string.indexOf(' ');
+  const value = string.substring(0, space_at);
+  const stat = string.substring(space_at + 1);
+  return [value, stat];
+}
+
+function slot_item_changed(slot_element, item_id) {
+  const current_item_id = slot_element.getAttribute("data-item-id");
+  return current_item_id != item_id;
+}
+
+function find_set_name(sets, item_id) {
+  item_id = parseInt(item_id);
+  for (const set_name in sets) {
+    if (sets[set_name].items.includes(item_id)) {
+      return set_name;
     }
-    cache[id] = this.get_promise(type, id);
-    return cache[id];
-  }
-  get_item_data(id) {
-    return this.get_data("item", id);
-  }
-  get_enchant_data(id) {
-    return this.get_data("enchant", id);
-  }
-  get_class_set(class_name) {
-    if (this.CLASS_SETS[class_name]) {
-      return this.CLASS_SETS[class_name];
-    }
-    const p = fetch(`/static/sets/${class_name}.json`).then(j => j.json())
-    this.CLASS_SETS[class_name] = p;
-    return p;
-  }
-  get_icon(icon_name) {
-    if (!icon_name) return;
-    const missing_item_url = `/missing/icon/${icon_name}`;
-    const i = {signal: CONTROLLER.signal, method: 'PUT'};
-    return fetch(missing_item_url, i);
   }
 }
-export const CACHE = new Cache();
+
+function object_default_int(_default=0) {
+  const handler = {
+    get: function(target, name) {
+      return target[name] ?? _default;
+    }
+  };
+  const o = {};
+  return new Proxy(o, handler);
+}
+
+function find_equipped_sets(gear_ids, sets) {
+  const equipped_sets = object_default_int();
+  gear_ids.forEach(item_id => {
+    const set_name = find_set_name(sets, item_id);
+    if (!set_name) return;
+    equipped_sets[set_name] += 1;
+  });
+  return equipped_sets;
+}
+
+export {
+  QUALITY_COLOR,
+  ENCHANTABLE,
+  STATS_ORDER,
+  DEFAULT_GEM_DATA,
+  GEM_DATA,
+  is_two_hand,
+  get_gs,
+  find_gem_data_by_name,
+  split_space_once,
+  slot_item_changed,
+  find_set_name,
+  object_default_int,
+  find_equipped_sets,
+}
