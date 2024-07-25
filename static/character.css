@@ -331,10 +331,7 @@ main {
 .slot::after {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 0 0;
   box-shadow:
     inset  .1em  .1em .5em var(--background),
     inset -.1em -.1em .5em var(--background);
