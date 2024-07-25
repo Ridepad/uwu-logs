@@ -624,7 +624,15 @@ def pve_stats():
 
 @SERVER.route('/character', methods=["GET", "POST"])
 def character():
-    _data: dict = request.args
+    if request.method == "GET":
+        servers = Directories.top.files_stems()
+        return render_template(
+            'character.html',
+            SERVERS=servers,
+            **GEAR,
+        )
+
+    _data: dict = request.get_json() or {}
     name = _data.get("name")
     server = _data.get("server")
     if not name or not server:
@@ -634,19 +642,12 @@ def character():
     name = name.title()
     server = server.title()
     
-    spec = _data.get("spec", type=int)
+    spec = _data.get("spec")
+    if str(spec).isdigit():
+        spec = int(spec)
     if spec not in range(1,4):
         spec = None
     
-    if request.method == "GET":
-        servers = Directories.top.files_stems()
-        return render_template(
-            'character.html',
-            NAME=name,
-            SERVERS=servers,
-            **GEAR,
-        )
-
     with DB_LOCK:
         d = logs_top_db.parse_player(server, name, spec=spec)
     
