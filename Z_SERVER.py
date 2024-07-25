@@ -93,23 +93,6 @@ def get_formatted_query_string():
         return ""
     return f"?{query}"
 
-def render_template_cache(file: str, **kwargs):
-    path = kwargs.get("PATH", "")
-    query = kwargs.get("QUERY", "")
-    page = render_template(
-        file,
-        **kwargs,
-    )
-    pages = CACHED_PAGES.setdefault(path, {})
-    pages[query] = page
-    return page
-
-def render_template_wrap(file: str, **kwargs):
-    return render_template(
-        file,
-        **kwargs,
-    )
-
 
 @SERVER.errorhandler(404)
 def method404(e):
