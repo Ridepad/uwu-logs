@@ -743,7 +743,7 @@ def parse_player(server, name, spec=None):
     guid = player_data["guid"]
     rd = {
         "name": name,
-        "class": _class,
+        "class_i": _class,
         "server": server,
     } | PlayerPoints(server, guid, spec_i).get_player_data()
 
