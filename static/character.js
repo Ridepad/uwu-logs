@@ -175,7 +175,7 @@ function cell_date(report_ID) {
   const date_text = `${day}-${month}-${year}`;
 
   const a = document.createElement('a');
-  a.href = `/reports/${report_ID}`;
+  a.href = `/reports/${report_ID}--${CURRENT_CHARACTER.server}`;
   a.target = "_blank";
   a.append(date_text);
 
