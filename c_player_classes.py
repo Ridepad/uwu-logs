@@ -353,7 +353,7 @@ SPELL_BOOK_SPEC = {
         "379": 3, # Earth Shield
         "53390": 3, # Tidal Waves
         "52752": 3, # Ancestral Awakening
-        "61301": 3, # Riptide
+        # "61301": 3, # Riptide
         "17359": 3, # Mana Tide Totem
         "16190": 3, # Mana Tide Totem
         "51886": 3, # Cleanse Spirit
