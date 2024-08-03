@@ -37,6 +37,7 @@ IGNORED_SPELL_IDS = {
     "26995", # Soothe Animal
     "56190", "56191", "55346", # Lens
     "60122", # Baby Spice
+    "1543", "28822", "55798", # Flare
     "53338", "1130", "14323", "14324", "14325", "19421", "19422", "19423", # Hunter"s Mark
     # "70861", # Sindragosa"s Lair Teleport
     # "72550", # Malleable Goo
