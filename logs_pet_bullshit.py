@@ -3,18 +3,37 @@ from c_bosses import convert_to_fight_name
 
 SPELLS = {
     "Felhunter": {
-        '19647': 'Spell Lock',
-        '19658': 'Devour Magic Effect',
-        '48011': 'Devour Magic',
-        '54053': 'Shadow Bite',
-        '54425': 'Improved Felhunter',
-        '57567': 'Fel Intelligence'
+        "19647": "Spell Lock",
+        "19658": "Devour Magic Effect",
+        "48011": "Devour Magic",
+        "54053": "Shadow Bite",
+        "54425": "Improved Felhunter",
+        "57567": "Fel Intelligence"
     },
     "Ghoul": {
-        '47468': 'Claw',
-        '47481': 'Gnaw',
-        '47482': 'Leap'
-    }
+        "47468": "Claw",
+        "47481": "Gnaw",
+        "47482": "Leap"
+    },
+    "Water Elemental": {
+        "72898": "Waterbolt",
+    },
+}
+
+
+SPEC_DATA = {
+    "Unholy": {
+        "spell_id": "50526",
+        "pet_name": "Ghoul",
+    },
+    "Affliction": {
+        "spell_id": "59164",
+        "pet_name": "Felhunter",
+    },
+    "Frost Mage": {
+        "spell_id": "44572",
+        "pet_name": "Water Elemental",
+    },
 }
 
 def sdjfsiodjfsdiojfio(owners1, owners2, pets1, pets2):
@@ -42,43 +61,45 @@ def check_negative(data):
 
 class PET_BULLSHIT:
     def __init__(self, logs: list[str], enc_data: dict[str, list], data: dict, player_spec: str) -> None:
-        if player_spec == "Unholy":
-            self.spec_spell_id = "50526"
-            self.pet_name = "Ghoul"
-        elif player_spec == "Affliction":
-            self.spec_spell_id = "59164"
-            self.pet_name = "Felhunter"
-        else:
+        if player_spec not in SPEC_DATA:
             return
         
+        pet_data = SPEC_DATA[player_spec]
+        self.spec_spell_id = pet_data["spell_id"]
+        self.pet_name = pet_data["pet_name"]
+        self.pet_spell_ids = SPELLS[self.pet_name]
+
         self.logs = logs
         self.enc_data = enc_data
         self.everything: dict[str, dict[str, str]] = data["everything"]
         self.missing_owner: list[str] = data["missing_owner"]
-        self.pet_spell_ids = SPELLS[self.pet_name]
-        self.spec_pets: defaultdict[str, set[str]] = data[self.pet_name]
-        self.pet_by_target = self.combine_pet_by_target()
-        self.pet_data = self.get_pet_data()
-        self.filter_loop()
+        self.spec_pets: defaultdict[str, set[str]] = data["other_perma_pets"][self.pet_name]
 
     def combine_pet_by_target(self):
-        q = defaultdict(set)
+        q: defaultdict[str, set[str]] = defaultdict(set)
         for pet_guid, targets in self.spec_pets.items():
             pet_id = pet_guid[6:-6]
             for target_guid in targets:
                 enc_name = convert_to_fight_name(target_guid)
                 if enc_name:
                     q[enc_name].add(pet_id)
-        return dict(q)
+        return q
 
-    def get_pet_data(self):
-        q = {}
+    @property
+    def pet_data(self):
+        try:
+            return self._pet_data
+        except AttributeError:
+            pass
+
+        q: dict[str, dict[str, str]] = {}
         for pet_guid in self.spec_pets:
             pet_id = pet_guid[6:-6]
-            if q.get(pet_id):
+            if pet_id in q:
                 continue
             q[pet_id] = self.everything[pet_guid].get('master_guid')
-        return q
+        self._pet_data = q
+        return self._pet_data
 
     def get_all_classes_in_segment(self, s, f):
         spell_id = self.spec_spell_id
@@ -107,6 +128,7 @@ class PET_BULLSHIT:
                     pets.add(sGUID)
             except:
                 pass
+        print("get_all_pets_in_segment", pets)
         return pets
         
     def update_pet_owner(self, owner_guid, pet_id):
@@ -129,7 +151,7 @@ class PET_BULLSHIT:
     def filter_pets_by_combat(self):
         iosadjfiosajfuisdoj = []
 
-        for enc_name, pet_ids in self.pet_by_target.items():
+        for enc_name, pet_ids in self.combine_pet_by_target().items():
             if not pet_ids:
                 continue
 
@@ -182,3 +204,9 @@ class PET_BULLSHIT:
         for pet_id in list(self.missing_owner):
             if self.pet_data.get(pet_id):
                 self.missing_owner.remove(pet_id)
+
+
+def find_pet_owners(logs: list[str], enc_data: dict[str, list], data: dict):
+    for spec_name in SPEC_DATA:
+        z = PET_BULLSHIT(logs, enc_data, data, spec_name)
+        z.filter_loop()
