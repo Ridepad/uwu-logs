@@ -71,7 +71,11 @@ def slice_exists(p: PathExt):
     
 def is_fully_processed(raid_id: str):
     logs_name = Directories.logs / raid_id / LOGS_CUT_NAME
-    return slice_exists(logs_name) and raw_exists(raid_id)
+    _slice_exists = slice_exists(logs_name)
+    if not _slice_exists:
+        logs_name_backup = logs_name.backup_path()
+        _slice_exists = slice_exists(logs_name_backup)
+    return _slice_exists and raw_exists(raid_id)
 
 
 def nuke_folder_contents(directory: PathExt, suffix: str=None):
