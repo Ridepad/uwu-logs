@@ -18,17 +18,21 @@ import logs_lady_spirits
 import logs_valk_grabs
 import logs_ucm
 
-from constants import (
+from c_spells import UNKNOWN_ICON
+from c_bosses import (
     BOSSES_GUIDS,
     BOSSES_FROM_HTML,
-    UNKNOWN_ICON,
-    convert_to_html_name,
-    duration_to_string,
-    get_report_name_info,
+)
+from h_debug import (
     running_time,
+
+)
+from h_other import (
     separate_thousands,
     sort_dict_by_value,
     add_new_numeric_data,
+    get_report_name_info,
+    convert_to_html_name,
 )
 
 SHIFT = {
@@ -49,6 +53,17 @@ ENTITIES_KEYS = (
     "PLAYERS",
     "OTHER",
 )
+
+def duration_to_string(t: float):
+    milliseconds = t % 1 * 1000
+    if milliseconds < 1:
+        milliseconds = milliseconds * 1000
+    
+    t = int(t)
+    hours = t // 3600
+    minutes = t // 60 % 60
+    seconds = t % 60
+    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
 def is_guid(s: str):
     try:
@@ -347,7 +362,7 @@ class THE_LOGS(
         }
     
     def report_add_spec_info(self, specs: dict[str, int], data: dict[str, dict]):
-        new_specs: dict[str, tuple(str, str)] = {}
+        new_specs: dict[str, tuple[str, str]] = {}
         for unit_name in data:
             if unit_name.endswith('-A'):
                 new_specs[unit_name] = ('Mutated Abomination', 'ability_rogue_deviouspoisons')
