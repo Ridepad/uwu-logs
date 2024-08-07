@@ -1,4 +1,7 @@
-from constants import LOGGER_UNUSUAL_SPELLS, SPELLS_SCHOOLS, UNUSUAL_SPELLS, running_time
+from h_debug import Loggers, running_time
+from c_spells import SPELLS_SCHOOLS, UNUSUAL_SPELLS
+
+LOGGER_UNUSUAL_SPELLS = Loggers.unusual_spells
 
 def spell_id_to_int(data: dict[str, dict[str, str]]):
     return {int(k): v for k,v in data.items()}
