@@ -23,6 +23,7 @@ from c_bosses import (
     BOSSES_GUIDS,
     BOSSES_FROM_HTML,
 )
+from h_datetime import duration_to_string
 from h_debug import (
     running_time,
 
@@ -53,17 +54,6 @@ ENTITIES_KEYS = (
     "PLAYERS",
     "OTHER",
 )
-
-def duration_to_string(t: float):
-    milliseconds = t % 1 * 1000
-    if milliseconds < 1:
-        milliseconds = milliseconds * 1000
-    
-    t = int(t)
-    hours = t // 3600
-    minutes = t // 60 % 60
-    seconds = t % 60
-    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
 def is_guid(s: str):
     try:
