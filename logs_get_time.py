@@ -1,5 +1,5 @@
 
-from constants import running_time
+from h_debug import running_time
 
 @running_time
 def get_timestamps(logs: list[str]):
