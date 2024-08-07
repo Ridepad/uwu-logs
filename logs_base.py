@@ -97,8 +97,15 @@ class THE_LOGS:
         try:
             return self.__path
         except AttributeError:
-            self.__path = file_functions.new_folder_path(LOGS_DIR, self.NAME, check_backup=True)
-            return self.__path
+            pass
+        
+        _dir = Directories.logs / self.NAME
+        if not _dir.is_dir():
+            _dir.copy_from_backup()
+        if not _dir.is_dir():
+            raise FileNotFoundError
+        self.__path = _dir
+        return self.__path
 
     def relative_path(self, s: str):
         return os.path.join(self.path, s)
