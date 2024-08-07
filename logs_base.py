@@ -262,7 +262,7 @@ class THE_LOGS:
         return logs_player_spec.get_specs(logs_slice, players, classes)
     
     def get_slice_spec_info(self, s, f):
-        new_specs: dict[str, tuple(str, str)] = {}
+        new_specs: dict[str, tuple[str, str]] = {}
         specs = self.get_players_specs_in_segments(s, f)
         for unit_guid, spec_index in specs.items():
             spec, icon = logs_player_spec.get_spec_info(spec_index)
