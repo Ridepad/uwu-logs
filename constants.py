@@ -33,32 +33,6 @@ REPORTS_ALLOWED = os.path.join(PATH_DIR, "__allowed.txt")
 REPORTS_PRIVATE = os.path.join(PATH_DIR, "__private.txt")
 SPELL_ICONS_DB = os.path.join(PATH_DIR, "x_spells_icons.json")
 
-LOGGING_FORMAT_DEFAULT = '''%(asctime)s | %(levelname)-5s | %(filename)18s:%(lineno)-4s | %(message)s'''
-LOGGING_FORMAT = {
-    "connections" : '''%(asctime)s | %(message)s''',
-}
-def setup_logger(logger_name):
-    log_file = os.path.join(LOGGERS_DIR, f'{logger_name}.log')
-    logger = logging.getLogger(logger_name)
-    _format = LOGGING_FORMAT.get(logger_name, LOGGING_FORMAT_DEFAULT)
-    formatter = logging.Formatter(_format)
-    fileHandler = logging.FileHandler(log_file)
-    fileHandler.setFormatter(formatter)
-    streamHandler = logging.StreamHandler()
-    streamHandler.setFormatter(formatter)
-
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(fileHandler)
-    logger.addHandler(streamHandler)
-    return logger
-
-LOGGER_CONNECTIONS = setup_logger('connections')
-LOGGER_REPORTS = setup_logger('reports')
-LOGGER_UPLOADS = setup_logger('uploads')
-LOGGER_UNUSUAL_SPELLS = setup_logger('unusual_spells')
-LOGGER_MEMORY = setup_logger('memory')
-
-
 T_DELTA = {
     "2SEC": timedelta(seconds=2),
     "15SEC": timedelta(seconds=15),
