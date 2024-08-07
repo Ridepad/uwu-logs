@@ -109,3 +109,14 @@ def to_dt_bytes_year_fix(s, year: int=None):
     if dt > CURRENT_SHIFTED:
         dt = dt.replace(year=year-1)
     return dt
+
+def duration_to_string(t: float):
+    milliseconds = t % 1 * 1000
+    if milliseconds < 1:
+        milliseconds = milliseconds * 1000
+    
+    t = int(t)
+    hours = t // 3600
+    minutes = t // 60 % 60
+    seconds = t % 60
+    return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
