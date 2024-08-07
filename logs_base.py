@@ -9,21 +9,31 @@ import logs_units_guid
 import logs_get_time
 import logs_spells_list
 from constants import (
+    LOGS_CUT_NAME_OLD,
+    LOGS_CUT_NAME,
+    UNKNOWN_ICON,
+)
+from c_path import (
+    Directories,
+    Files,
+)
+from c_spells import (
     COMBINE_SPELLS,
     CUSTOM_SPELL_NAMES,
-    LOGGER_REPORTS,
-    LOGS_CUT_NAME_OLD,
-    LOGS_DIR,
-    LOGS_CUT_NAME,
+)
+from h_datetime import (
     MONTHS,
-    UNKNOWN_ICON,
-    SPELL_ICONS_DB,
     get_now,
-    get_report_name_info,
-    running_time,
-    setup_logger,
     to_dt_year_precise,
 )
+from h_debug import (
+    Loggers,
+    running_time,
+    setup_logger,
+)
+from h_other import get_report_name_info
+
+LOGGER_REPORTS = Loggers.reports
 
 PLAYER = "0x0"
 
@@ -51,16 +61,14 @@ TOTAL_DUMMY_SPEC = {
     "class": "total",
 }
 
-@running_time
-def get_spells_int():
-    spells_json = file_functions.json_read(SPELL_ICONS_DB)
+@Files.spell_icons_db.cache_until_new_self
+def get_spells_int(spells_json) -> dict[str, str]:
+    spells_data = spells_json.json_ignore_error()
     return {
         int(spell_id): icon_name
-        for icon_name, _spells in spells_json.items()
+        for icon_name, _spells in spells_data.items()
         for spell_id in _spells
     }
-
-get_spells = file_functions.cache_file_until_new(SPELL_ICONS_DB, get_spells_int)
 
 def cache_wrap(func):
     def cache_inner(self, s, f, *args, **kwargs):
@@ -500,7 +508,7 @@ class THE_LOGS:
         except AttributeError:
             _spells = self.get_spells()
             
-            _icons = get_spells()
+            _icons = get_spells_int()
             for spell_id, spell_data in _spells.items():
                 spell_data["icon"] = _icons.get(spell_id, UNKNOWN_ICON)
 
