@@ -1,4 +1,6 @@
-from constants import BOSSES_GUIDS, duration_to_string, get_delta_simple_precise
+from c_bosses import BOSSES_GUIDS
+from h_datetime import duration_to_string, get_delta_simple_precise
+
 
 DEFAULT_DIFFICULTY = "TBD"
 DIFFICULTY = ('10N', '10H', '25N', '25H')
