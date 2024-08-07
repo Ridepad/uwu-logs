@@ -238,11 +238,11 @@ class SevenZipArchiveInfo(SevenZip):
             if TABLE_BORDER in line:
                 continue
 
-            z = re.findall(re_string, line)[0]
-            z = [x.strip() for x in z]
             try:
-                yield SevenZipLine(*z)
-            except ValueError:
+                row = re.findall(re_string, line)[0]
+                columns = [column.strip() for column in row]
+                yield SevenZipLine(*columns)
+            except (IndexError, ValueError):
                 pass
 
 
@@ -271,7 +271,8 @@ class SevenZipArchive(SevenZipArchiveInfo):
 def _test1():
     # q = SevenZip()
     # print(q)
-    q = SevenZipArchiveInfo(r"F:\Python\uwulogs\uploads\1\46.247.212.239--24-03-12--09-54-04--11_03_202_Marr_n_txt.zip")
+    p = r"F:\Python\uwulogs\__server\84.123.49.8--24-02-11--12-35-20--WoWCombatLog_txt.zip"
+    q = SevenZipArchiveInfo(p)
     print(q.path)
     for line in q.archive_info:
         print(line)
