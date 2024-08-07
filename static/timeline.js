@@ -615,6 +615,7 @@ class Character {
     this.CASTS_SECTION.appendChild(this.SPELLS_MAIN);
     this.CASTS_SECTION.appendChild(this.SPELLS_HIDE);
     this.CASTS_SECTION.className = "casts-section";
+    this.CASTS_SECTION.style.direction = "ltr";
     this.CASTS_SECTION.setAttribute("data-tab", this.TAB_N);
 
     this.add_spell_rows();
