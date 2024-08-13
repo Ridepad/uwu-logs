@@ -388,7 +388,6 @@ SPELL_BOOK_SPEC = {
         "23894": 2, # Bloodthirst
         "23881": 2, # Bloodthirst
         "12292": 2, # Death Wish
-        "12328": 2, # Death Wish
 
         "46968": 3, # Shockwave
         "47498": 3, # Devastate
