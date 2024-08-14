@@ -360,7 +360,9 @@ class THE_LOGS(
             elif unit_name == "Total":
                 new_specs[unit_name] = ('Total', 'ability_hunter_readiness')
             elif unit_name in self.CLASSES_NAMES:
-                new_specs[unit_name] = logs_player_spec.get_spec_info(specs[unit_name])
+                spec_index = specs[unit_name]
+                spec = SPECS_LIST[spec_index]
+                new_specs[unit_name] = (spec.name, spec.icon)
             else:
                 new_specs[unit_name] = (unit_name, UNKNOWN_ICON)
         return new_specs
