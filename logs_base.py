@@ -1,3 +1,5 @@
+from c_player_classes import SPECS_LIST
+
 import json
 import os
 from collections import defaultdict
@@ -280,12 +282,12 @@ class THE_LOGS:
         new_specs: dict[str, tuple[str, str]] = {}
         specs = self.get_players_specs_in_segments(s, f)
         for unit_guid, spec_index in specs.items():
-            spec, icon = logs_player_spec.get_spec_info(spec_index)
+            spec_data = SPECS_LIST[spec_index]
             new_specs[unit_guid] = {
-                "spec": spec,
-                "icon": icon,
+                "spec": spec_data.name,
+                "icon": spec_data.icon,
                 "name": self.guid_to_name(unit_guid),
-                "class": self.CLASSES[unit_guid],
+                "class": self.PLAYER_CLASSES[unit_guid],
             }
         new_specs["Total"] = TOTAL_DUMMY_SPEC
         return new_specs

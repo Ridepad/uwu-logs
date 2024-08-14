@@ -257,8 +257,8 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 players_skip.add(sGUID)
             elif spell_id in SPELL_BOOK and flag != "SPELL_AURA_REMOVED":
                 players[sGUID] = sName
-                spell_info = SPELL_BOOK[spell_id]
-                players_classes[sGUID] = CLASSES[spell_info[0]]
+                spec_i = SPELL_BOOK[spell_id]
+                players_classes[sGUID] = CLASSES[spec_i]
                 players_skip.add(sGUID)
                 # LOGGER_REPORTS.info(f" NEW CLASS | {sName:12} | {line}")
 

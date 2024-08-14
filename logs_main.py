@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from c_player_classes import SPECS_LIST
 
 import logs_base
 import logs_absorbs

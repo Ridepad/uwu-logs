@@ -7,15 +7,15 @@ from h_debug import running_time
 CLASSES_LIST = list(CLASSES)
 IGNORED_SPECS = set([*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39])
 
-def get_spec_data(spec_index):
-    spec, icon = SPECS_LIST[spec_index]
+def get_spec_data(spec_index: int):
+    _spec_info = SPECS_LIST[spec_index]
     _class = CLASSES_LIST[spec_index//4]
     return {
         "class_name": _class,
         "class_html": convert_to_html_name(_class),
-        "spec_name": spec,
-        "spec_html": convert_to_html_name(f"{_class} {spec}"),
-        "icon": icon,
+        "spec_name": _spec_info.name,
+        "spec_html": _spec_info.html_name,
+        "icon": _spec_info.icon,
     }
 
 SPECS_DATA = [

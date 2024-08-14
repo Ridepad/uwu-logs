@@ -1,18 +1,13 @@
-from c_player_classes import CLASS_FROM_HTML, SPECS_LIST, SPELL_BOOK_SPEC
+from c_player_classes import CLASSES_LIST_HTML, SPELL_BOOK_SPEC
 from h_debug import running_time
-
-CLASSES = list(CLASS_FROM_HTML)
-
-# def get_spec_info(player_class: str, spec_index: int=0):
-#     classi = CLASSES.index(player_class)
-#     return SPECS_LIST[classi*4+spec_index]
-
-def get_spec_info(spec_index):
-    return SPECS_LIST[spec_index]
 
 # 40% faster to slice 3 times, if check and slice 4 more times, than to slice every loop 8 times
 def specs_gen(logs: list[str], players: dict[str, str], classes: dict[str, str]):
-    class_spells = {guid: SPELL_BOOK_SPEC[classes[guid]] for guid in players if guid in classes}
+    class_spells = {
+        guid: SPELL_BOOK_SPEC[classes[guid]]
+        for guid in players
+        if guid in classes
+    }
     for line in logs:
         _, _, guid, etc = line.split(',', 3)
         if guid not in class_spells:
@@ -39,12 +34,12 @@ def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str],
     SPECS = {}
     for guid, spec_index in specs_gen(logs, players, classes):
         player_class = classes[guid]
-        classi = CLASSES.index(player_class)
-        SPECS[guid] = classi*4+spec_index
+        class_index = CLASSES_LIST_HTML.index(player_class)
+        SPECS[guid] = class_index * 4 + spec_index
 
     for player_guid, player_class in classes.items():
         if player_guid not in SPECS:
-            SPECS[player_guid] = CLASSES.index(player_class) * 4
+            SPECS[player_guid] = CLASSES_LIST_HTML.index(player_class) * 4
 
     return SPECS
 
