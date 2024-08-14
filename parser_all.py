@@ -16,6 +16,7 @@ ICON_URL_PREFIX = "https://wotlk.evowow.com/static/images/wow/icons/large"
 
 
 DEBUG = True
+DEBUG = False
 
 class Loader:
     path: Path
