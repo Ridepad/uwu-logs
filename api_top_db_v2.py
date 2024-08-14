@@ -404,6 +404,17 @@ class ConvertTop(TopDB):
         ]
 
 
+def convert_all_tops_to_v5():
+    for x in Directories.top.iterdir():
+        if not x.is_file():
+            continue
+        if x.suffix != ".db":
+            continue
+        server = x.stem
+        print("="*100)
+        print(server)
+        ConvertTop(server).change_db_to_without_row_id()
+
 def main():
     q = DB.get_table_name("Rotface", "25H")
     print(q)
