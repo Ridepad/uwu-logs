@@ -154,7 +154,6 @@ class RaidRank(TopDBCached):
     
     @running_time
     def _renew_data(self, spec_index: int) -> list[float]:
-        print(spec_index)
         query = self.encounter.query_dps_spec(spec_index)
         return sorted(x for x, in self.cursor.execute(query))
     
