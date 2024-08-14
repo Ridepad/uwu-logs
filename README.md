@@ -12,14 +12,18 @@ Supports any Wrath of the Lich King (3.3.5) server.
 
 - Install packages from `requirements.txt`
 
-- Run `python Z_SERVER.py` OR `gunicorn3 Z_SERVER:SERVER -D --port 5000`
+- Run `python Z_SERVER.py` OR `gunicorn3 Z_SERVER:SERVER --port 5000 -D`
 
 - Visit <http://localhost:5000/>
 
 #### Optional
+##### Top
+
+- Run `python server_top.py` OR `uvicorn server_top:app --port 5020 --proxy-headers`
+
 ##### File uploads
 
-- Run `python api_upload.py` OR `uvicorn api_upload:app --port 5010`
+- Run `python server_upload.py` OR `uvicorn server_upload:app --port 5010 --proxy-headers`
 
 ##### Download spells/classes icons pack
 
