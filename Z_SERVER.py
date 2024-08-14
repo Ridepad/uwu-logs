@@ -187,7 +187,7 @@ def before_request():
         pass
     elif not _validate:
         pass
-    elif report_id not in file_functions.get_privated_logs():
+    elif report_id not in Files.reports_private.text_lines():
         pass
     elif _validate.pwcheck.banned(request.remote_addr):
         if request.method == "GET":
