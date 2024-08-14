@@ -158,7 +158,10 @@ class Top(TopDBCached):
     
     @running_time
     def _renew_data(self):
-        db_json_strings = self._db_json_strings()
+        try:
+            db_json_strings = self._db_json_strings()
+        except Exception: # sqlite3.OperationalError
+            db_json_strings = []
         _json = self._combine_json(db_json_strings)
         data = TopDataCompressed(_json)
         self.cache[self.json_query] = data
