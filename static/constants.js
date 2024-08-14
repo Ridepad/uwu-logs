@@ -19,9 +19,11 @@ const BOSSES = {
   "The Eye of Eternity": ["Malygos"],
   "The Obsidian Sanctum": ["Sartharion"],
   "Naxxramas": [
-    "Anub'Rekhan", "Grand Widow Faerlina", "Maexxna", "Noth the Plaguebringer", "Heigan the Unclean",
-    "Loatheb", "Patchwerk", "Grobbulus", "Gluth", "Thaddius", "Instructor Razuvious", "Gothik the Harvester",
-    "The Four Horsemen", "Sapphiron", "Kel'Thuzad"
+    "Anub'Rekhan", "Grand Widow Faerlina", "Maexxna",
+    "Noth the Plaguebringer", "Heigan the Unclean", "Loatheb",
+    "Patchwerk", "Grobbulus", "Gluth", "Thaddius",
+    "Instructor Razuvious", "Gothik the Harvester", "The Four Horsemen",
+    "Sapphiron", "Kel'Thuzad"
   ],
   "Ulduar": [
     "Ignis the Furnace Master", "Razorscale", "XT-002 Deconstructor",

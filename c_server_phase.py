@@ -54,21 +54,21 @@ class Encounter:
         '''
 
 class Phase:
-    BOSSES_GET_GUID_NAME_PAIRS_FROM: list[Encounter]
-    FOR_POINTS: list[Encounter]
-    OTHER: list[Encounter]
-    ALL_BOSSES: list[Encounter]
+    BOSSES_GET_GUID_NAME_PAIRS_FROM: tuple[Encounter]
+    FOR_POINTS: tuple[Encounter]
+    OTHER: tuple[Encounter]
+    ALL_BOSSES: tuple[Encounter]
 
 
 class Tier_10:
-    BOSSES_GET_GUID_NAME_PAIRS_FROM = [
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Deathbringer Saurfang"),
         Encounter("The Lich King"),
         # Encounter("Festergut"),
         # Encounter("Blood-Queen Lana'thel"),
         # Encounter("Valithria Dreamwalker"),
-    ]
-    FOR_POINTS = [
+    )
+    FOR_POINTS = (
         Encounter("Lord Marrowgar"),
         Encounter("Lady Deathwhisper"),
         Encounter("Deathbringer Saurfang"),
@@ -79,75 +79,50 @@ class Tier_10:
         Encounter("Blood-Queen Lana'thel"),
         Encounter("Sindragosa"),
         Encounter("The Lich King"),
-    ]
-    OTHER = [
+    )
+    OTHER = (
         Encounter("Toravon the Ice Watcher", "25N"),
         Encounter("Halion"),
         Encounter("Anub'arak"),
         Encounter("Valithria Dreamwalker"),
-    ]
+    )
     ALL_BOSSES = FOR_POINTS + OTHER
-
-
-class Tier_7:
-    BOSSES_GET_GUID_NAME_PAIRS_FROM = [
-        Encounter("Patchwerk", "25N"),
-        Encounter("Anub'Rekhan", "25N"),
-        Encounter("Noth the Plaguebringer", "25N"),
-        Encounter("Kel'Thuzad", "25N"),
-    ]
-    FOR_POINTS = [
-        Encounter("Patchwerk", "25N"),
-        Encounter("Grobbulus", "25N"),
-        Encounter("Gluth", "25N"),
-        Encounter("Thaddius", "25N"),
-        Encounter("Anub'Rekhan", "25N"),
-        Encounter("Grand Widow Faerlina", "25N"),
-        Encounter("Maexxna", "25N"),
-        Encounter("Noth the Plaguebringer", "25N"),
-        Encounter("Heigan the Unclean", "25N"),
-        Encounter("Loatheb", "25N"),
-        Encounter("Instructor Razuvious", "25N"),
-        Encounter("Gothik the Harvester", "25N"),
-        Encounter("The Four Horsemen", "25N"),
-        Encounter("Sapphiron", "25N"),
-        Encounter("Kel'Thuzad", "25N"),
-    ]
-    OTHER = [
-        Encounter("Archavon the Stone Watcher", "25N"),
-    ]
-    ALL_BOSSES = FOR_POINTS + OTHER
-
 
 class Tier_3:
-    BOSSES_GET_GUID_NAME_PAIRS_FROM = [
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Patchwerk", "25N"),
         Encounter("Anub'Rekhan", "25N"),
         Encounter("Noth the Plaguebringer", "25N"),
         Encounter("Kel'Thuzad", "25N"),
-    ]
-    FOR_POINTS = [
-        Encounter("Patchwerk", "25N"),
-        Encounter("Grobbulus", "25N"),
-        Encounter("Gluth", "25N"),
-        Encounter("Thaddius", "25N"),
+    )
+    FOR_POINTS = (
         Encounter("Anub'Rekhan", "25N"),
         Encounter("Grand Widow Faerlina", "25N"),
         Encounter("Maexxna", "25N"),
         Encounter("Noth the Plaguebringer", "25N"),
         Encounter("Heigan the Unclean", "25N"),
         Encounter("Loatheb", "25N"),
+        Encounter("Patchwerk", "25N"),
+        Encounter("Grobbulus", "25N"),
+        Encounter("Gluth", "25N"),
+        Encounter("Thaddius", "25N"),
         Encounter("Instructor Razuvious", "25N"),
         Encounter("Gothik the Harvester", "25N"),
         Encounter("The Four Horsemen", "25N"),
         Encounter("Sapphiron", "25N"),
         Encounter("Kel'Thuzad", "25N"),
-    ]
-    OTHER = []
+    )
+    OTHER = ()
     ALL_BOSSES = FOR_POINTS + OTHER
 
-SERVER_PHASE: dict[str, str] = Files.server_phases.json_ignore_error()
+class Tier_7(Tier_3):
+    OTHER = (
+        Encounter("Archavon the Stone Watcher", "25N"),
+    )
+    ALL_BOSSES = Tier_3.FOR_POINTS + OTHER
 
+
+SERVER_PHASE: dict[str, str] = Files.server_phases.json_ignore_error()
 
 def get_server_phase(server):
     try:
