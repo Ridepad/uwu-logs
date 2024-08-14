@@ -165,7 +165,7 @@ def new_db_row(data: TopDict):
     ]
 
 class DB:
-    cursors = []
+    cursors = {}
 
     def __init__(self, path, new=False) -> None:
         if not new and not path.is_file():
