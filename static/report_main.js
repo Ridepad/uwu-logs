@@ -20,6 +20,8 @@ const TOTAL = {
   "useful": "damage",
   "heal": "heal_total",
 }
+const IGNORED_ENCOUNTER_MODES = ["TBD", "All"];
+
 function add_style(to_show, to_hide) {
   const style = document.createElement("style");
   style.append(`.${to_show} {display: revert} .${to_hide} {display: none}`);
@@ -102,11 +104,15 @@ function make_rank_data() {
   return data;
 }
 function send_ranks_request() {
+  const fight_name = document.getElementById("slice-name").textContent;
+  if (fight_name == "Custom Slice") return;
+
+  const fight_mode = document.getElementById("slice-tries").textContent.split(" ")[0];
+  if (IGNORED_ENCOUNTER_MODES.includes(fight_mode)) return;
+
   const ranks_data = make_rank_data();
   const report_id = window.location.pathname.split("/")[2];
   const server_name = report_id.split("--").at(-1);
-  const fight_name = document.getElementById("slice-name").textContent;
-  const fight_mode = document.getElementById("slice-tries").textContent.split(" ")[0];
   const j = JSON.stringify({
     "server": server_name,
     "boss": fight_name,
