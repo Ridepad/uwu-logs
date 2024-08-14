@@ -16,6 +16,7 @@ class DirNames(StrEnum):
     archives = "LogsRaw"
     top = "top"
     cache = "cache"
+    config = "config"
     static = "static"
     parsed = "parsed"
     uploads = "uploads"
@@ -36,6 +37,12 @@ class FileNames(StrEnum):
     linux_7z_portable = "7z2301-linux-x64.tar.xz"
     windows_7z_portable = "7zr.exe"
     windows_7z_installer = "7z2301-x64.exe"
+
+    config_phase = "server_phases.json"
+
+    logs_cut = "LOGS_CUT.zstd"
+    logs_cut_old = "LOGS_CUT.zlib"
+    logs_top = "top.json"
 
 
 class CachePath:
@@ -195,6 +202,7 @@ class Directories(dict[str, PathExt]):
     archives = main / DirNames.archives
     top = main / DirNames.top
     cache = main / DirNames.cache
+    config = main / DirNames.config
     static = main / DirNames.static
     parsed = main / DirNames.parsed
     loggers = main / DirNames.loggers
@@ -222,6 +230,8 @@ class Files(dict[str, PathExt]):
 
     cert_domain = Directories.certificates / FileNames.cert_domain
     cert_private = Directories.certificates / FileNames.cert_private
+
+    server_phases = Directories.config / FileNames.config_phase
 
 Directories.mkdirs()
 

@@ -39,6 +39,9 @@ th.sortable {
   th {
     top: calc(var(--nav-height) + 6rem + var(--padding-top) * 2);
   }
+  .table-auras {
+    min-width: 2rem;
+  }
 }
 
 td {
@@ -59,7 +62,8 @@ td:is(.table-dmg, .table-dps) {
   text-align: right;
 }
 td.table-r {
-	min-width: 4.2rem;
+	min-width: 4.75rem;
+  text-align: right;
 }
 td.table-t {
 	min-width: 2.6rem;
@@ -93,14 +97,21 @@ tbody > tr:nth-child(odd) > td {
 }
 
 @media (orientation: portrait) {
+  .table-cls {
+    display: none;
+  }
+}
+
+
+@media (orientation: portrait) {
   td.table-n {
-    max-width: calc(100vw - 21.5rem);
+    max-width: calc(100vw - 21rem);
   }
   td.table-n {
     --min-width: 2.5rem;
   }
   td {
-    padding-inline: .15rem;
+    padding-inline: .1rem;
   }
 }
 
@@ -157,10 +168,13 @@ input:disabled + label {
 
 @media (orientation: landscape) {
   #controls {
-    padding-inline: 5rem;
+    /* padding-inline: 5rem; */
     grid-template-areas:
     'inst inst boss boss boss boss size diff diff'
     'serv serv clss clss spec spec spec comb comb';
+  }
+  #controls-wrap {
+    padding-inline: 5rem;
   }
 }
 

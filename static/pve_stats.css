@@ -35,7 +35,7 @@ table {
   'serv serv size diff subm subm';
   gap: .5rem;
 }
-@media (min-width: 1100px) {
+@media (orientation: landscape) {
   #controls {
     margin-inline: 10rem;
     display: flex;
@@ -43,18 +43,26 @@ table {
     margin-inline: 10rem;
   }
 }
+@media (orientation: portrait) {
+  #select-server {
+    max-width: 8em;
+  }
+}
 
 #stats-section {
   margin-top: 2rem;
 }
+#table-wrap {
+  --left-column: 8rem;
+  position: relative;
+}
 @media (orientation: landscape) {
   #stats-section {
-    margin-inline: 10rem;
+    margin-inline: 5rem;
   }
-}
-#table-wrap {
-  --left-column: 9rem;
-  position: relative;
+  #table-wrap {
+    --left-column: 13rem;
+  }
 }
 
 #chart-timeline {
@@ -100,6 +108,7 @@ table {
   width: var(--left-column);
   max-width: var(--left-column);
   color: inherit;
+  text-wrap: nowrap;
 }
 .stats-cell-data {
   position: relative;

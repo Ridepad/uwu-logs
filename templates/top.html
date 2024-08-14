@@ -68,9 +68,10 @@
         <th id="head-total-dps" class="table-d sortable">tDPS</th>
         <th id="head-total-amount" class="table-d sortable">Total</th>
         <th id="head-duration" class="table-t sortable">Dur</th>
-        <th id="head-external" class="table-ext">E</th>
-        <th id="head-self" class="table-self">S</th>
-        <th id="head-rekt" class="table-rekt">R</th>
+        <th id="head-external" class="table-auras table-ext">Ext</th>
+        <th id="head-self" class="table-auras table-self">Slf</th>
+        <th id="head-rekt" class="table-auras table-rekt">Rkt</th>
+        <th id="head-cls" class="table-auras table-cls">Cls</th>
         <th id="head-date" class="table-r sortable">Date</th>
       </tr>
     </thead>
@@ -86,7 +87,7 @@
     </thead>
     <tbody></tbody>
   </table>
-  <table id="table-time">
+  <table id="table-speedrun">
     <thead>
       <tr>
         <th>Name</th>
@@ -108,7 +109,7 @@
 <aside id="the-tooltip" style="display: none;">
   <table>
     <tbody id="tooltip-body">
-      {% for _ in range(10) %}
+      {% for _ in range(15) %}
       <tr class="hidden">
         <td><img></td>
         <td class="count"></td>

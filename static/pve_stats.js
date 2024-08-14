@@ -23,32 +23,36 @@ const BOSSES = {
   "The Eye of Eternity": ["Malygos"],
   "The Obsidian Sanctum": ["Sartharion"],
 };
-const serverSelect = document.getElementById("select-server");
-const instanceSelect = document.getElementById("select-instance");
-const bossSelect = document.getElementById("select-boss");
-const sizeSelect = document.getElementById("select-mode");
-const difficultyCheckbox = document.getElementById("difficulty-checkbox");
-const submitButton = document.getElementById("submit-button");
-const chartTimeline = document.getElementById("chart-timeline");
-const statsTableBody = document.getElementById("stats-tbody");
-const theTooltip = document.getElementById("the-tooltip");
-const theTooltipSpec = document.getElementById("tooltip-spec-info");
-const theTooltipBody = document.getElementById("tooltip-body");
+const SELECT_SERVER = document.getElementById("select-server");
+const SELECT_INSTANCE = document.getElementById("select-instance");
+const SELECT_BOSS = document.getElementById("select-boss");
+const SELECT_SIZE = document.getElementById("select-mode");
+const CHECKBOX_DIFFICULTY = document.getElementById("difficulty-checkbox");
+const BUTTON_SUBMIT = document.getElementById("submit-button");
+const CHART_TIMELINE = document.getElementById("chart-timeline");
+const TBODY_STATS = document.getElementById("stats-tbody");
+const TOOLTIP = document.getElementById("the-tooltip");
+const TOOLTIP_HEAD_SPEC_INFO = document.getElementById("tooltip-spec-info");
+const TOOTLIP_BODY = document.getElementById("tooltip-body");
 const INTERACTABLES = {
-  server: serverSelect,
-  raid: instanceSelect,
-  boss: bossSelect,
-  size: sizeSelect,
+  server: SELECT_SERVER,
+  raid: SELECT_INSTANCE,
+  boss: SELECT_BOSS,
+  size: SELECT_SIZE,
 };
 
-const KEY_DPS = "v";
-const KEY_QUANTITY = "n";
-const DPS_JUMP = 1000;
+const KEY_DPS = "dps";
+const KEY_QUANTITY = "raids";
 const CACHE = {};
 const xrequest = new XMLHttpRequest();
+const CONFIG = {
+  tt_hide_timeout: undefined,
+  max_dps_value: 20000,
+  dps_jump: 1000,
+}
 
-let tt_hide_timeout;
-let maxvalue = 20000;
+const to_width_percent = v => `${v}%`;
+const rows_sort_func = sort_by => (a, b) => b.getAttribute(sort_by) - a.getAttribute(sort_by);
 
 function remove_children(node) {
   while(node.firstChild) node.removeChild(node.firstChild);
@@ -62,35 +66,33 @@ function new_option(value, index) {
 }
 
 function add_bosses() {
-  remove_children(bossSelect);
-  BOSSES[instanceSelect.value].forEach(boss_name => bossSelect.appendChild(new_option(boss_name)));
+  remove_children(SELECT_BOSS);
+  BOSSES[SELECT_INSTANCE.value].forEach(boss_name => SELECT_BOSS.appendChild(new_option(boss_name)));
 };
 
 function make_query() {
-  const sizeValue = sizeSelect.value;
-  const diffValue = difficultyCheckbox.checked ? 'H' : 'N';
+  const sizeValue = SELECT_SIZE.value;
+  const diffValue = CHECKBOX_DIFFICULTY.checked ? 'H' : 'N';
   const mode_str = `${sizeValue}${diffValue}`;
   const q = {
-    server: serverSelect.value,
-    boss: bossSelect.value,
+    server: SELECT_SERVER.value,
+    boss: SELECT_BOSS.value,
     mode: mode_str,
   };
   return JSON.stringify(q);
 }
 
 
-const to_width_percent = v => `${v}%`;
-
 function new_dps_line(v) {
   const line = document.createElement("div");
   line.className = "chart-column";
-  line.style.left = to_width_percent(v*DPS_JUMP/maxvalue*100);
-  line.setAttribute("data-label", `${v}k`);
-  chartTimeline.appendChild(line);
+  line.style.left = to_width_percent(v / CONFIG.max_dps_value * 100);
+  line.setAttribute("data-label", `${v / 1000}k`);
+  CHART_TIMELINE.appendChild(line);
 }
 function new_dps_columns() {
-  remove_children(chartTimeline);
-  for (let i=0; i<maxvalue/DPS_JUMP; i++) {
+  remove_children(CHART_TIMELINE);
+  for (let i=0; i < CONFIG.max_dps_value; i = i + CONFIG.dps_jump) {
     new_dps_line(i); 
   }
 }
@@ -102,32 +104,35 @@ function new_div(classname, pos) {
   return div;
 }
 
+function filter_attributes(attribute) {
+  return attribute.name.slice(0, 4) == "data" && attribute.name != "data-spec";
+}
+function remove_data_attributes(element) {
+  const filtered_attributes = Array.from(element.attributes).filter(filter_attributes);
+  filtered_attributes.forEach(attr => element.removeAttribute(attr.name));
+}
+
 function update_row(row, data) {
   const cell = row.querySelector(".stats-cell-data");
   remove_children(cell);
-  if (!data) {
-    Array.from(row.attributes)
-         .filter(attr => attr.name.slice(0,4) == "data")
-         .splice(2)
-         .forEach(attr => row.removeAttribute(attr.name));
-    return;
-  }
+  remove_data_attributes(row);
+  if (!data) return;
 
   const _divs = {};
   const _values = {};
-  for (let k in data) {
-    const _value = Math.round(data[k][KEY_DPS]);
-    const _amount = data[k][KEY_QUANTITY];
-    row.setAttribute(`data-${k}-${KEY_DPS}`, _value);
-    row.setAttribute(`data-${k}-${KEY_QUANTITY}`, _amount);
-    if (k == "all") continue;
+  for (const percentile_key in data) {
+    const dps = Math.round(data[percentile_key][KEY_DPS]);
+    const quantity = data[percentile_key][KEY_QUANTITY];
+    row.setAttribute(`data-${percentile_key}-${KEY_DPS}`, dps);
+    row.setAttribute(`data-${percentile_key}-${KEY_QUANTITY}`, quantity);
+    if (percentile_key == "all") continue;
 
-    const _pos = _value/maxvalue*100;
-    const _div = new_div(k, _pos);
+    const _pos = dps / CONFIG.max_dps_value * 100;
+    const _div = new_div(percentile_key, _pos);
     cell.appendChild(_div);
 
-    _divs[k] = _div;
-    _values[k] = _pos;
+    _divs[percentile_key] = _div;
+    _values[percentile_key] = _pos;
   }
   const _data = Array.from(Object.keys(data)).sort((a, b) => b.replace("top") - a.replace("top"));
   for (let i=0; i<_data.length-3; i++) {
@@ -140,30 +145,29 @@ function update_row(row, data) {
   passthrudiv.style.width = to_width_percent(_values.top100 - _values.top10);
   cell.insertBefore(passthrudiv, cell.children[0]);
 }
-
 function table_add_new_data(data) {
   const max_v = Math.max(...Object.values(data).map(d => d.top100[KEY_DPS]));
-  maxvalue = Math.ceil((max_v+500)/1000)*1000;
+  CONFIG.max_dps_value = Math.ceil((max_v+500)/1000)*1000;
+  CONFIG.dps_jump = Math.ceil(CONFIG.max_dps_value / 20000) * 1000;
   
   new_dps_columns();
   
-  const rows = Array.from(statsTableBody.querySelectorAll("tr"));
+  const rows = Array.from(TBODY_STATS.querySelectorAll("tr"));
   for (const tr of rows) {
     update_row(tr, data[tr.id]);
   }
 
-  rows.sort((a, b) => b.getAttribute("data-sort") - a.getAttribute("data-sort"))
-      .forEach(row => statsTableBody.appendChild(row));
+  rows.sort(rows_sort_func("data-sort")).forEach(row => TBODY_STATS.appendChild(row));
 }
 
 
 xrequest.onreadystatechange = () => {
   if (xrequest.readyState != 4) {
-    submitButton.textContent = "Loading";
+    BUTTON_SUBMIT.textContent = "Loading";
     return;
   }
   if (xrequest.status != 200) return;
-  submitButton.textContent = "Submit";
+  BUTTON_SUBMIT.textContent = "Submit";
   const data = JSON.parse(xrequest.response);
   const query = make_query();
   CACHE[query] = data;
@@ -185,16 +189,16 @@ function fetch_data() {
 function search_changed() {
   if (xrequest.readyState != 4 && xrequest.readyState != 0) return;
 
-  const __diff = difficultyCheckbox.checked ? 'H' : "N";
-  const title = `UwU Logs - Top - ${bossSelect.value} - ${sizeSelect.value}${__diff}`;
+  const difficulty = CHECKBOX_DIFFICULTY.checked ? 'H' : "N";
+  const title = `UwU Logs - Top - ${SELECT_BOSS.value} - ${SELECT_SIZE.value}${difficulty}`;
   document.title = title;
 
   const parsed = {
-    server: serverSelect.value,
-    raid: instanceSelect.value,
-    boss: bossSelect.value,
-    size: sizeSelect.value,
-    mode: difficultyCheckbox.checked ? 1 : 0,
+    server: SELECT_SERVER.value,
+    raid: SELECT_INSTANCE.value,
+    boss: SELECT_BOSS.value,
+    size: SELECT_SIZE.value,
+    mode: CHECKBOX_DIFFICULTY.checked ? 1 : 0,
   };
 
   const new_params = new URLSearchParams(parsed).toString();
@@ -212,12 +216,13 @@ function add_separator(n) {
 }
 
 function add_tooltip_info(tr) {
-  theTooltipSpec.innerHTML = "";
-  theTooltipSpec.appendChild(tr.querySelector("img").cloneNode());
-  theTooltipSpec.append(`${tr.getAttribute("data-spec")} ${tr.getAttribute("data-class")}`);
-  theTooltipSpec.className = tr.classList[1];
+  const img = TOOLTIP_HEAD_SPEC_INFO.querySelector("img");
+  const span = TOOLTIP_HEAD_SPEC_INFO.querySelector("span");
+  img.src = tr.querySelector("img").src;
+  span.textContent = tr.getAttribute("data-spec");
+  TOOLTIP_HEAD_SPEC_INFO.className = tr.classList[1];
   
-  for (const _row of theTooltipBody.children) {
+  for (const _row of TOOTLIP_BODY.children) {
     const _name = _row.className;
     const points = tr.getAttribute(`data-${_name}-${KEY_DPS}`);
     const players = tr.getAttribute(`data-${_name}-${KEY_QUANTITY}`);
@@ -232,34 +237,32 @@ function move_tooltip_to(tr) {
   if (!first_child) return;
 
   const elemRect = first_child.getBoundingClientRect();
-  const trRect = tr.getBoundingClientRect();
-  const h = document.documentElement.clientHeight / 7 * 5;
-  if (trRect.bottom > h) {
-    theTooltip.style.bottom = "0";
-    theTooltip.style.removeProperty("top");
-  } else {
-    theTooltip.style.top = `${trRect.bottom}px`;
-    theTooltip.style.removeProperty("bottom");
-  }
-  theTooltip.style.left = `${elemRect.left}px`;
-  theTooltip.style.removeProperty("display");
+  const bodyRect = document.body.getBoundingClientRect();
+  const bottom_theshold = document.documentElement.clientHeight / 7 * 5;
+  const top = elemRect.bottom > bottom_theshold ? bottom_theshold : elemRect.bottom;
+  TOOLTIP.style.top = `${top - bodyRect.top}px`;
+  TOOLTIP.style.left = `${elemRect.left}px`;
+  TOOLTIP.style.removeProperty("display");
 }
 function hide_tooltip() {
-  clearTimeout(tt_hide_timeout);
-  tt_hide_timeout = setTimeout(() => theTooltip.style.display = "none", 250)
+  clearTimeout(CONFIG.tt_hide_timeout);
+  CONFIG.tt_hide_timeout = setTimeout(() => TOOLTIP.style.display = "none", 250)
+}
+function add_row_events(tr) {
+  tr.addEventListener("mouseleave", hide_tooltip);
+  tr.addEventListener("mouseenter", () => {
+    if (!tr.getAttribute(`data-all-${KEY_QUANTITY}`)) return;
+    clearTimeout(CONFIG.tt_hide_timeout);
+    add_tooltip_info(tr);
+    move_tooltip_to(tr);
+  });
+}
+function add_rows_events() {
+  document.querySelectorAll(".stats-cell-row").forEach(tr => add_row_events(tr));
 }
 function add_tooltip_events() {
-  theTooltip.addEventListener("mouseenter", () => clearTimeout(tt_hide_timeout));
-  theTooltip.addEventListener("mouseleave", hide_tooltip);
-  document.querySelectorAll(".stats-cell-row").forEach(tr => {
-    tr.addEventListener("mouseleave", hide_tooltip);
-    tr.addEventListener("mouseenter", () => {
-      if (!tr.getAttribute(`data-all-${KEY_QUANTITY}`)) return;
-      clearTimeout(tt_hide_timeout);
-      add_tooltip_info(tr);
-      move_tooltip_to(tr);
-    });
-  });
+  TOOLTIP.addEventListener("mouseenter", () => clearTimeout(CONFIG.tt_hide_timeout));
+  TOOLTIP.addEventListener("mouseleave", hide_tooltip);
 }
 
 
@@ -267,37 +270,38 @@ function init() {
   const is_valid_param = (elm, par) => Array.from(elm.children).map(e => e.value).includes(par);
   const find_value_index = (select, option_name) => Array.from(select.children).map(e => e.innerText).indexOf(option_name);
 
-  Object.keys(BOSSES).forEach(name => instanceSelect.appendChild(new_option(name)));
+  Object.keys(BOSSES).forEach(name => SELECT_INSTANCE.appendChild(new_option(name)));
 
   const currentParams = new URLSearchParams(window.location.search);
-  difficultyCheckbox.checked = currentParams.get("mode") != 0;
+  CHECKBOX_DIFFICULTY.checked = currentParams.get("mode") != 0;
 
   for (const key in INTERACTABLES) {
     const par = currentParams.get(key);
     const elm = INTERACTABLES[key];
     if (is_valid_param(elm, par)) {
       elm.value = par;
-    } else if (elm == serverSelect) {
+    } else if (elm == SELECT_SERVER) {
       elm.selectedIndex = find_value_index(elm, "Lordaeron");
     } else {
       elm.selectedIndex = 0;
     }
 
-    if (elm == instanceSelect) {
+    if (elm == SELECT_INSTANCE) {
       add_bosses();
     }
   }
 
-  instanceSelect.addEventListener("change", add_bosses);
-  submitButton.addEventListener("click", search_changed);
+  SELECT_INSTANCE.addEventListener("change", add_bosses);
+  BUTTON_SUBMIT.addEventListener("click", search_changed);
   add_tooltip_events();
+  add_rows_events();
   search_changed();
 
   const button_click = e => {
     const sortby = `data-${e.target.className}-${KEY_DPS}`;
-    Array.from(statsTableBody.children)
-    .sort((a,b) => b.getAttribute(sortby) - a.getAttribute(sortby))
-    .forEach(tr => statsTableBody.appendChild(tr));
+    Array.from(TBODY_STATS.children)
+    .sort(rows_sort_func(sortby))
+    .forEach(tr => TBODY_STATS.appendChild(tr));
   }
   const table_sort = document.getElementById("table-sort");
   for (const button of table_sort.getElementsByTagName('button')) {

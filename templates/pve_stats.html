@@ -32,8 +32,8 @@
       <table>
         <tbody id="stats-tbody">
           {% for spec_info in SPECS_BASE %}
-          <tr class="stats-cell-row {{ spec_info['class_html'] }}" id="{{ spec_info['spec_html'] }}" data-class="{{ spec_info['class_name'] }}" data-spec="{{ spec_info['spec_name'] }}">
-            <td class="stats-cell-name" title="{{ spec_info['class_name'] }}"><img src="/static/icons/{{ spec_info['icon'] }}.jpg">{{ spec_info['spec_name'] }}</td>
+          <tr class="stats-cell-row {{ spec_info.class_name_html }}" id="{{ spec_info.html_name }}" data-spec="{{ spec_info.name }}">
+            <td class="stats-cell-name"><img src="/static/icons/{{ spec_info.icon }}.jpg">{{ spec_info.name }}</td>
             <td class="stats-cell-data"></td>
           </tr>
           {% endfor %}
@@ -53,7 +53,7 @@
   <aside id="the-tooltip" style="display: none;">
     <table>
       <thead>
-        <tr><td colspan="3" id="tooltip-spec-info"></td></tr>
+        <tr><td colspan="3" id="tooltip-spec-info"><img><span></span></td></tr>
         <tr class="column-names"><td></td><td>Raids</td><td>DPS</td></tr>
       </thead>
       <tbody id="tooltip-body">

@@ -12,13 +12,7 @@ from flask import (
 from werkzeug.exceptions import NotFound, TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# import test_prev_kills
-import logs_item_parser
-import logs_ench_parser
-
 import h_cleaner
-import logs_top_statistics
-import file_functions
 import logs_calendar
 import logs_main
 import logs_top_db
@@ -544,126 +538,12 @@ def powers(report_id):
         'powers.html', **default_params, **data
     )
 
-
-@SERVER.route('/top', methods=["GET", "POST"])
-def top():
-    if request.method == "GET":
-        servers = Directories.top.files_stems()
-        return render_template(
-            'top.html',
-            SERVERS=servers,
-            REPORT_NAME="Top",
-        )
-    
-    _data: dict = request.get_json()
-
-    server = _data.get("server")
-    boss = _data.get("boss")
-    mode = _data.get("mode")
-
-    if not all({server, boss, mode}):
-        return '', 400
-    
-    with DB_LOCK:
-        top = logs_top_db.Top(**_data)
-        if boss == "Points":
-            z = top.parse_top_points()
-        else:
-            z = top.get_data()
-    response = make_response(z["data"])
-    response.headers["Content-Type"] = "application/json"
-    response.headers["Content-Encoding"] = "gzip"
-    response.headers["Content-Length"] = z["length_compressed"]
-    response.headers["Content-Length-Full"] = z["length"]
-    return response
-
-@SERVER.route('/pve_stats', methods=["GET", "POST"])
-@SERVER.route('/top_stats', methods=["GET", "POST"])
-def pve_stats():
-    if request.method == "GET":
-        servers = Directories.top.files_stems()
-        return render_template(
-            'pve_stats.html',
-            SPECS_BASE=logs_top_statistics.SPECS_DATA_NOT_IGNORED,
-            SERVERS=servers,
-        )
-    
-    _data: dict = request.get_json()
-
-    server = _data.get("server")
-    boss = _data.get("boss")
-    mode = _data.get("mode")
-
-    if not all({server, boss, mode}):
-        return '', 400
-    
-    with DB_LOCK:
-        data = logs_top_db.PveStats(server).get_data(boss, mode)
-    
-    if data is None:
-        return '', 400
-    
-    return data
-
-@SERVER.route('/character', methods=["GET", "POST"])
-def character():
-    if request.method == "GET":
-        servers = Directories.top.files_stems()
-        return render_template(
-            'character.html',
-            SERVERS=servers,
-            **GEAR,
-        )
-
-    _data: dict = request.get_json() or {}
-    name = _data.get("name")
-    server = _data.get("server")
-    if not name or not server:
-        name = "Safiyah"
-        server = "Lordaeron"
-    
-    name = name.title()
-    server = server.title()
-    
-    spec = _data.get("spec")
-    if str(spec).isdigit():
-        spec = int(spec)
-    if spec not in range(1,4):
-        spec = None
-    
-    with DB_LOCK:
-        d = logs_top_db.parse_player(server, name, spec=spec)
-    
-    if not d:
-        return '', 400
-    return d
-
 @SERVER.route("/ladder")
 def ladder():
     return render_template(
         'ladder.html',
         REPORT_NAME="PvE Ladder",
     )
-
-@SERVER.route("/missing/<type>/<id>", methods=["PUT"])
-def missing(type, id):
-    if _validate:
-        ip = request.remote_addr
-        url = request.url
-        _limit = _validate.rate_limited_missing(ip, url)
-        if _limit:
-            add_log_entry(ip, "SPAM", url)
-            raise TooManyRequests(retry_after=_limit)
-    
-    return_code = 400
-    if type == "item":
-        return_code = logs_item_parser.parse_and_save(id)
-    elif type == "enchant":
-        return_code = logs_ench_parser.parse_and_save(id)
-    elif type == "icon":
-        return_code = logs_item_parser.save_icon(id)
-
-    return "", return_code
 
 @SERVER.route("/raid_calendar")
 def raid_calendar():

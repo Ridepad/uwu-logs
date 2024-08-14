@@ -3,51 +3,69 @@ import {
   CLASSES,
   SPECS,
   SPECS_SELECT_OPTIONS,
-  AURAS_COLUMNS,
   AURAS_ICONS,
   MONTHS,
 } from "./constants.js"
 
-const selectServer = document.getElementById('select-server');
-const selectInstance = document.getElementById('select-instance');
-const selectBoss = document.getElementById('select-boss');
-const selectSize = document.getElementById('select-size');
-const selectClass = document.getElementById('select-class');
-const selectSpec = document.getElementById('select-spec');
-const checkboxDifficulty = document.getElementById('checkbox-difficulty');
-const checkboxCombine = document.getElementById('checkbox-combine');
+const SELECT_SERVER = document.getElementById('select-server');
+const SELECT_RAID = document.getElementById('select-instance');
+const SELECT_BOSS = document.getElementById('select-boss');
+const SELECT_SIZE = document.getElementById('select-size');
+const SELECT_CLASS = document.getElementById('select-class');
+const SELECT_SPEC = document.getElementById('select-spec');
+const CHECKBOX_DIFFICULTY = document.getElementById('checkbox-difficulty');
+const CHECKBOX_COMBINE = document.getElementById('checkbox-combine');
+
+const TABLE_TOP = document.getElementById("table-top");
+const TABLE_POINTS = document.getElementById("table-points");
+const TABLE_SPEEDRUN = document.getElementById("table-speedrun");
+const PROGRESS_BAR = document.getElementById('upload-progress-bar');
+const PROGRESS_BAR_PERCENTAGE = document.getElementById('upload-progress-bar-percentage');
+const TABLE_CONTAINER = document.getElementById('table-container');
+const LOADING_INFO = document.getElementById('loading-info');
+const LOADING_INFO_PANEL = document.getElementById('loading-info-panel');
+const HEAD_USEFUL_DPS = document.getElementById('head-useful-dps');
+const TOGGLE_TOTAL_DAMAGE = document.getElementById('toggle-total-damage');
+const TOGGLE_USEFUL_DAMAGE = document.getElementById('toggle-useful-damage');
+const TOGGLE_LIMIT = document.getElementById('toggle-limit');
+const THE_TOOLTIP = document.getElementById("the-tooltip");
+const THE_TOOLTIP_BODY = document.getElementById("tooltip-body");
+
+const AURAS_CURRENT_COLUMNS = Array.from(document.querySelectorAll("thead .table-auras")).map(e => e.classList[1]);
+const AURA_INDEX_TO_COLUMN_NAME = {
+  0: "table-ext",
+  1: "table-self",
+  2: "table-rekt",
+  3: "table-cls",
+}
 
 const INTERACTABLES = {
-  server: selectServer,
-  raid: selectInstance,
-  boss: selectBoss,
-  size: selectSize,
-  mode: checkboxDifficulty,
-  best: checkboxCombine,
-  cls: selectClass,
-  spec: selectSpec,
+  server: SELECT_SERVER,
+  raid: SELECT_RAID,
+  boss: SELECT_BOSS,
+  size: SELECT_SIZE,
+  mode: CHECKBOX_DIFFICULTY,
+  best: CHECKBOX_COMBINE,
+  cls: SELECT_CLASS,
+  spec: SELECT_SPEC,
 };
-
-const tableTop = document.getElementById("table-top");
-const tablePoints = document.getElementById("table-points");
-const progressBar = document.getElementById('upload-progress-bar');
-const progressBarPercentage = document.getElementById('upload-progress-bar-percentage');
-const tableContainer = document.getElementById('table-container');
-const loadingInfo = document.getElementById('loading-info');
-const loadingInfoPanel = document.getElementById('loading-info-panel');
-const headUsefulDps = document.getElementById('head-useful-dps');
-const toggleTotalDamage = document.getElementById('toggle-total-damage');
-const toggleUsefulDamage = document.getElementById('toggle-useful-damage');
-const toggleLimit = document.getElementById('toggle-limit');
-const theTooltip = document.getElementById("the-tooltip");
-const theTooltipBody = document.getElementById("tooltip-body");
+const LOCAL_STORAGE_KEYS = {
+  [SELECT_SERVER.id]: "top_server",
+  [SELECT_RAID.id]: "top_raid",
+  [SELECT_BOSS.id]: "top_boss",
+  [SELECT_CLASS.id]: "top_class",
+  [SELECT_SPEC.id]: "top_spec",
+  [TOGGLE_TOTAL_DAMAGE.id]: "top_total",
+  [TOGGLE_USEFUL_DAMAGE.id]: "top_useful",
+  [TOGGLE_LIMIT.id]: "top_limit",
+}
 
 const IRRELEVANT_FOR_POINTS = [
-  selectSize,
-  checkboxDifficulty,
-  checkboxCombine,
-  toggleTotalDamage,
-  toggleUsefulDamage,
+  SELECT_SIZE,
+  CHECKBOX_DIFFICULTY,
+  CHECKBOX_COMBINE,
+  TOGGLE_TOTAL_DAMAGE,
+  TOGGLE_USEFUL_DAMAGE,
 ];
 
 const ROW_LIMIT = 1000;
@@ -63,7 +81,7 @@ const HAS_HEROIC = new Set([
 const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
-  column: headUsefulDps,
+  column: HEAD_USEFUL_DPS,
   reversed: false,
 };
 const DATA_KEYS = {
@@ -75,6 +93,15 @@ const DATA_KEYS = {
   tAmount: "d",
   duration: "t",
   auras: "a",
+}
+const TABLES = [
+  TABLE_POINTS,
+  TABLE_TOP,
+  TABLE_SPEEDRUN,
+];
+const POSTS = {
+  "Points": "/top_points",
+  "Speedrun": "/top_speedrun",
 }
 const CACHE = {
   lastQuery: "",
@@ -94,42 +121,45 @@ function get_icon_link(icon_name) {
   return `/static/icons/${icon_name}.jpg`;
 }
 
-function is_heroic() {
-  return HAS_HEROIC.has(selectBoss.value) && checkboxDifficulty.checked;
+function heroic_toggled() {
+  return HAS_HEROIC.has(SELECT_BOSS.value) && CHECKBOX_DIFFICULTY.checked;
 }
-function is_points() {
-  return selectInstance.value == "Points";
+function points_selected() {
+  return SELECT_RAID.value == "Points";
+}
+function speedrun_selected() {
+  return SELECT_RAID.value == "Speedrun";
 }
 
 function make_query() {
-  const size = selectSize.value;
-  const diff = is_heroic() ? 'H' : 'N';
+  const size = SELECT_SIZE.value;
+  const diff = heroic_toggled() ? 'H' : 'N';
   const mode = `${size}${diff}`;
   const q = {
-    server: selectServer.value,
-    boss: selectBoss.value,
+    server: SELECT_SERVER.value,
+    boss: SELECT_BOSS.value,
     mode: mode,
-    best_only: checkboxCombine.checked,
-    class_i: selectClass.value,
-    spec_i: selectSpec.value,
+    best_only: CHECKBOX_COMBINE.checked,
+    class_i: SELECT_CLASS.value,
+    spec_i: SELECT_SPEC.value,
     sort_by: SORT_VARS.column.id,
-    limit: toggleLimit.checked ? 1 : 0,
+    limit: TOGGLE_LIMIT.checked ? 1000 : 10000,
   };
-  console.log(q);
+  console.log("Query:", q);
   return JSON.stringify(q);
 }
 
 
 function table_modify_wrap(callback) {
-  if (tableContainer.style.display == "none") return callback();
+  if (TABLE_CONTAINER.style.display == "none") return callback();
 
-  tableContainer.style.display = "none";
-  loadingInfoPanel.style.removeProperty("display");
+  TABLE_CONTAINER.style.display = "none";
+  LOADING_INFO_PANEL.style.removeProperty("display");
   setTimeout(() => {
     callback();
     setTimeout(() => {
-      loadingInfoPanel.style.display = "none";
-      tableContainer.style.removeProperty("display");
+      LOADING_INFO_PANEL.style.display = "none";
+      TABLE_CONTAINER.style.removeProperty("display");
     });
   });
 }
@@ -153,11 +183,11 @@ function toggle_columns(checkbox, style) {
 }
 
 function toggle_useful_columns() {
-  toggle_columns(toggleUsefulDamage, hide_useful);
+  toggle_columns(TOGGLE_USEFUL_DAMAGE, hide_useful);
 }
 
 function toggle_total_columns() {
-  toggle_columns(toggleTotalDamage, hide_total);
+  toggle_columns(TOGGLE_TOTAL_DAMAGE, hide_total);
 }
 
 
@@ -183,7 +213,7 @@ function cell_name(name, spec) {
 
   const a = document.createElement('a');
   a.classList.add(spec_class_id);
-  a.href = `/character?name=${name}&server=${selectServer.value}&spec=${spec % 4}`;
+  a.href = `/character?name=${name}&server=${SELECT_SERVER.value}&spec=${spec % 4}`;
   a.target = "_blank";
   a.append(name);
   cell.appendChild(a);
@@ -231,10 +261,10 @@ function cell_date(report_ID) {
   const report_date = report_ID.toString().slice(0, 15);
   const [year, month, day, _, hour, minute] = report_date.split('-');
   const months_str = MONTHS[month - 1];
-  const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day}-${month}-${year}`;
+  const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day} ${months_str} ${year}`;
 
   const a = document.createElement('a');
-  a.href = `/reports/${report_ID}--${selectServer.value}`;
+  a.href = `/reports/${report_ID}--${SELECT_SERVER.value}`;
   a.target = "_blank";
   a.append(date_text);
 
@@ -250,11 +280,11 @@ let timeout_show_rows;
 function show_tooltip(td) {
   clearTimeout(timeout_show_rows);
   const dataset = td.dataset;
-  const sorted = Object.keys(dataset).sort();
-  const rows = Array.from(theTooltipBody.children);
-  for (const i in sorted) {
+  const keys = Object.keys(dataset);
+  const rows = Array.from(THE_TOOLTIP_BODY.children);
+  for (const i in keys) {
     const tr = rows[i];
-    const spell_id = sorted[i];
+    const spell_id = keys[i];
     const [count, uptime] = dataset[spell_id].split(',');
 
     const img = tr.querySelector("img");
@@ -267,13 +297,13 @@ function show_tooltip(td) {
   timeout_show_rows = setTimeout(() => {
     for (const i in rows) {
       const tr = rows[i];
-      if (i < sorted.length) {
+      if (i < keys.length) {
         tr.classList.remove("hidden");
       } else {
         tr.classList.add("hidden");
       }
     }
-  }, toggleLimit.checked ? 10 : 150);
+  }, TOGGLE_LIMIT.checked ? 10 : 150);
 }
 function mouseenter(event) {
   clearTimeout(timeout_hide);
@@ -281,54 +311,55 @@ function mouseenter(event) {
   show_tooltip(td);
   const bodyRect = document.body.getBoundingClientRect();
   const trRect = td.getBoundingClientRect();
-  theTooltip.style.top = `${trRect.bottom}px`;
-  theTooltip.style.right = `${bodyRect.right - trRect.left}px`;
-  theTooltip.style.removeProperty("display");
+  THE_TOOLTIP.style.top = `${trRect.bottom}px`;
+  THE_TOOLTIP.style.right = `${bodyRect.right - trRect.left}px`;
+  THE_TOOLTIP.style.removeProperty("display");
 }
 function mouseleave() {
   clearTimeout(timeout_hide);
   timeout_hide = setTimeout(() => {
-    theTooltip.style.display = "none"
+    THE_TOOLTIP.style.display = "none"
   }, 300);
 }
 
-function new_aura_columns() {
-  const cells = [];
-  const all_count = [];
-  for (const column_name of AURAS_COLUMNS) {
-    const td = document.createElement('td');
-    td.className = `table-${column_name}`;
-    cells.push(td);
-    all_count.push(0);
-  }
-  return [cells, all_count];
+function aura_cell(column_class) {
+  const td = document.createElement('td');
+  td.className = column_class;
+  return td;
 }
-
-function cell_auras(auras) {
-  const [cells, all_count] = new_aura_columns();
-  if (auras instanceof Array) {
-    for (const [spell_id, count, uptime, type] of auras) {
-      const td = cells[type];
-      td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
-      all_count[type] += count;
-    }
-  } else {
-    for (const spell_id in auras) {
-      const [count, uptime, type] = auras[spell_id];
-      const td = cells[type];
-      td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
-      all_count[type] += count;
-    }
+function aura_column_data(column_class) {
+  return {
+    count: 0,
+    cell: aura_cell(column_class),
   }
-
-  for (let i = 0; i < all_count.length; i++) {
-    if (all_count[i] == 0) continue;
-    const td = cells[i];
-    td.append(all_count[i]);
-    td.addEventListener("mouseleave", mouseleave);
-    td.addEventListener("mouseenter", mouseenter);
+}
+function new_aura_empty_columns() {
+  return Object.fromEntries(
+    AURAS_CURRENT_COLUMNS.map(column_class => [column_class, aura_column_data(column_class)])
+  );
+}
+function new_aura_columns(auras) {
+  const columns = new_aura_empty_columns();
+  for (const [spell_id, count, uptime, type] of auras) {
+    const column_name = AURA_INDEX_TO_COLUMN_NAME[type];
+    const column_data = columns[column_name];
+    column_data.count += count;
+    column_data.cell.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
   }
-  return cells;
+  return columns;
+}
+function* cell_auras(auras) {
+  const columns = new_aura_columns(auras);
+  for (const column_name in columns) {
+    const column_data = columns[column_name];
+    const td = column_data.cell;
+    if (column_data.count != 0) {
+      td.append(column_data.count);
+      td.addEventListener("mouseleave", mouseleave);
+      td.addEventListener("mouseenter", mouseenter);
+    }
+    yield td;
+  }
 }
 
 function new_row(_data) {
@@ -365,7 +396,7 @@ function cell_points(v, is_total) {
   const cell = document.createElement('td');
   cell.classList.add("table-points");
   if (!is_total) {
-    v = (v / 100).toFixed(2);
+    v = v.toFixed(2);
     cell.classList.add((points_rank_class(v)));
   }
   cell.append(v);
@@ -374,9 +405,9 @@ function cell_points(v, is_total) {
 function new_row_points(data, spec) {
   const row = document.createElement('tr');
   const [
+    name,
     p_relative,
     p_total,
-    name,
   ] = data;
 
   [
@@ -389,75 +420,98 @@ function new_row_points(data, spec) {
 }
 
 
-function update_progress(done, total) {
+function update_progress(done, total, network) {
   const percent = Math.round(done / total * 100);
-  progressBarPercentage.textContent = `${done} / ${total} (${percent}%)`;
-  progressBar.style.width = `${percent}%`;
+  if (network) {
+    done = `${(done / 1024).toFixed(1)}k`;
+    total = `${(total / 1024).toFixed(1)}k`;
+  }
+  PROGRESS_BAR_PERCENTAGE.textContent = `${done} / ${total} (${percent}%)`;
+  PROGRESS_BAR.style.width = `${percent}%`;
 }
 
 let mainTimeout;
-function table_add_new_data(table, data) {
+
+function _new_row() {
+  const class_i = parseInt(SELECT_CLASS.value);
+  const spec_i = parseInt(SELECT_SPEC.value);
+  const spec_full_index = class_i * 4 + spec_i;
+  if (points_selected()) {
+    return data => new_row_points(data, spec_full_index);
+  }
+  return new_row;
+}
+
+function finish(table_body, body_fragment) {
+  LOADING_INFO.textContent = "Rendering table...";
+  PROGRESS_BAR_PERCENTAGE.textContent = "Done!";
+
+  setTimeout(() => {
+    console.time("table_add_new_data Rendering");
+    table_body.append(body_fragment);
+    toggle_useful_columns();
+    toggle_total_columns();
+    setTimeout(() => {
+      LOADING_INFO_PANEL.style.display = "none";
+      TABLE_CONTAINER.style.removeProperty("display");
+      console.timeEnd("table_add_new_data Rendering");
+      console.timeEnd("tableAddRows");
+    });
+  })
+}
+function table_add_new_data(table_body, data) {
   clearTimeout(mainTimeout);
   console.time("clear table");
-  table.innerHTML = "";
+  table_body.innerHTML = "";
   console.timeEnd("clear table");
   if (!data) return;
-
-  loadingInfo.textContent = "Building table...";
-  loadingInfoPanel.style.removeProperty("display");
-  const LIMIT = toggleLimit.checked ? Math.min(ROW_LIMIT, data.length) : data.length;
+  
+  console.log(data.length);
+  
   const fragment = new DocumentFragment();
-  let i = 0;
-
-  const spec = parseInt(selectClass.value) * 4 + parseInt(selectSpec.value);
-  const points = i => new_row_points(data[i], spec);
-  const top = i => new_row(data[i]);
-  const _new_row = is_points() ? points : top;
-
+  LOADING_INFO.textContent = "Building table...";
+  LOADING_INFO_PANEL.style.removeProperty("display");
+  const LIMIT = TOGGLE_LIMIT.checked ? Math.min(ROW_LIMIT, data.length) : data.length;
+  let current_row_index = 0;
+  const _row = _new_row();
   console.time("tableAddRows");
+
   (function chunk() {
-    const end = Math.min(i + 100, LIMIT);
-    for (; i < end; i++) {
-      const row = _new_row(i);
+    update_progress(current_row_index, LIMIT);
+
+    if (current_row_index >= LIMIT) return finish(table_body, fragment);
+
+    const end = Math.min(current_row_index + 100, LIMIT);
+    for (; current_row_index < end; current_row_index++) {
+      const row = _row(data[current_row_index]);
       fragment.appendChild(row);
     }
-    update_progress(i, LIMIT);
 
-    if (i < LIMIT) {
-      mainTimeout = setTimeout(chunk);
-      return;
-    }
-
-    loadingInfo.textContent = "Rendering table...";
-    progressBarPercentage.textContent = "Done!";
-
-    setTimeout(() => {
-      console.time("table_add_new_data Rendering");
-      table.append(fragment);
-      toggle_useful_columns();
-      toggle_total_columns();
-      setTimeout(() => {
-        loadingInfoPanel.style.display = "none";
-        tableContainer.style.removeProperty("display");
-        console.timeEnd("table_add_new_data Rendering");
-        console.timeEnd("tableAddRows");
-      });
-    })
+    mainTimeout = setTimeout(chunk);
   })();
 }
+function get_cur_table() {
+  if (points_selected()) return TABLE_POINTS;
+  else if (speedrun_selected()) return TABLE_SPEEDRUN;
+  else return TABLE_TOP;
+}
+function hide_other_tables(current_table) {
+  TABLES.forEach(t => {
+    if (t.id == current_table.id) return;
+    t.style.display = "none";
+  });
+}
 function table_add_new_data_wrap(data) {
-  tableContainer.style.display = "none";
-  let t1, t2;
-  if (is_points()) {
-    t1 = tablePoints;
-    t2 = tableTop;
-  } else {
-    t2 = tablePoints;
-    t1 = tableTop;
-  }
-  t2.style.display = "none";
-  t1.style.removeProperty("display");
-  const body = t1.querySelector("tbody");
+  TABLE_CONTAINER.style.display = "none";
+
+  const current_table = get_cur_table();
+  hide_other_tables(current_table);
+  
+  current_table.style.removeProperty("display");
+  const body = current_table.querySelector("tbody");
+  console.time("JSONparse");
+  data = JSON.parse(data);
+  console.timeEnd("JSONparse");
   setTimeout(() => table_add_new_data(body, data));
 }
 
@@ -468,75 +522,95 @@ xrequest.onprogress = e => {
   } else {
     contentLength = parseInt(e.target.getResponseHeader('Content-Length-Full'));
   }
-  update_progress(e.loaded, contentLength);
+  update_progress(e.loaded, contentLength, true);
 };
 
 xrequest.onreadystatechange = () => {
   if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  const parsed_json = JSON.parse(xrequest.response);
-  CACHE.set_new_data(parsed_json);
-  table_add_new_data_wrap(parsed_json);
+  // CACHE.set_new_data(xrequest.response);
+  table_add_new_data_wrap(xrequest.response);
 }
 
 function query_server(query) {
-  loadingInfo.textContent = "Downloading top:";
-  tableContainer.style.display = "none";
-  loadingInfoPanel.style.removeProperty("display");
+  LOADING_INFO.textContent = "Downloading top:";
+  TABLE_CONTAINER.style.display = "none";
+  LOADING_INFO_PANEL.style.removeProperty("display");
+  console.timeEnd("query");
   console.time("query");
-  xrequest.open("POST", TOP_POST);
+  xrequest.abort();
+  update_progress(0, 1);
+  const post_endpoint = POSTS[SELECT_BOSS.value] ?? TOP_POST;
+  xrequest.open("POST", post_endpoint);
   xrequest.setRequestHeader("Content-Type", "application/json");
   xrequest.send(query);
 }
 
 function fetch_data() {
   const query = make_query();
-  CACHE.lastQuery = query;
+  console.log(query);
   const data = CACHE[query];
   data ? table_add_new_data_wrap(data) : query_server(query);
 }
 
 function search_changed() {
-  const __diff = is_heroic() ? 'H' : "N";
-  const title = `UwU Logs - Top - ${selectBoss.value} - ${selectSize.value}${__diff}`;
+  const __diff = heroic_toggled() ? 'H' : "N";
+  const title = `UwU Logs - Top - ${SELECT_BOSS.value} - ${SELECT_SIZE.value}${__diff}`;
   document.title = title;
 
   const parsed = {
-    server: selectServer.value,
-    raid: selectInstance.value,
-    boss: selectBoss.value,
-    size: selectSize.value,
-    mode: is_heroic() ? 1 : 0,
-    best: checkboxCombine.checked ? 1 : 0,
-    cls: selectClass.value,
-    spec: selectSpec.value,
+    server: SELECT_SERVER.value,
+    raid: SELECT_RAID.value,
+    boss: SELECT_BOSS.value,
+    size: SELECT_SIZE.value,
+    mode: heroic_toggled() ? 1 : 0,
+    best: CHECKBOX_COMBINE.checked ? 1 : 0,
+    cls: SELECT_CLASS.value,
+    spec: SELECT_SPEC.value,
   };
 
-  const new_params = new URLSearchParams(parsed).toString();
-  const url = `?${new_params}`;
-  history.pushState(parsed, title, url);
+  // const new_params = new URLSearchParams(parsed).toString();
+  // const url = `?${new_params}`;
+  // history.pushState(parsed, title, url);
 
   fetch_data();
 }
 
-function is_valid_param(elm, par) {
-  return [...elm.options].map(o => o.value).includes(par);
-}
-
 function find_value_index(select, option_name) {
-  for (let i = 0; i < select.childElementCount; i++) {
-    if (select[i].textContent == option_name) return i;
+  for (const e of select.children) {
+    if (e.value == option_name) return e.index;
   }
 }
 
 function get_default_index(select) {
-  if (select == selectServer) {
-    return find_value_index(select, 'Lordaeron');
-  } else if (select == selectClass) {
-    return find_value_index(select, "Priest");
-  } else if (select == selectSpec) {
-    return find_value_index(select, "Shadow");
+  switch (select) {
+    case SELECT_SERVER:
+      return find_value_index(select, "Lordaeron");
+    case SELECT_CLASS:
+      return find_value_index(select, "Priest");
+    case SELECT_SPEC:
+      return DEFAULT_SPEC[SELECT_CLASS.value];
+    default:
+      return 0;
   }
-  return 0;
+}
+
+function find_select_index(select, value) {
+  if (select == SELECT_SPEC && value == -1 && points_selected()) {
+    return get_default_index(select);
+  }
+  return find_value_index(select, value) ?? get_default_index(select);
+}
+
+function local_storage_key(elm) {
+  return LOCAL_STORAGE_KEYS[elm.id]
+}
+function local_storage_get(elm) {
+  const key = local_storage_key(elm);
+  return localStorage.getItem(key);
+}
+function local_storage_set(elm, value) {
+  const key = local_storage_key(elm);
+  return localStorage.setItem(key, value);
 }
 
 function fetch_column(event) {
@@ -553,108 +627,125 @@ function new_option(value, index) {
 }
 
 function on_change_instance() {
-  selectBoss.innerHTML = "";
-  BOSSES[selectInstance.value].forEach(boss_name => selectBoss.appendChild(new_option(boss_name)));
+  SELECT_BOSS.innerHTML = "";
+  BOSSES[SELECT_RAID.value].forEach(boss_name => SELECT_BOSS.appendChild(new_option(boss_name)));
 
-  const points_selected = is_points();
-  IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = points_selected);
-
-  on_change_class();
-};
+  const _points_selected = points_selected();
+  IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = _points_selected);
+  
+  if (_points_selected && SELECT_CLASS.selectedIndex == 0) {
+    SELECT_CLASS.selectedIndex = 1;
+    add_specs();
+  }
+}
 
 function add_specs() {
-  selectSpec.innerHTML = "";
-  const class_index = CLASSES[selectClass.value];
+  SELECT_SPEC.innerHTML = "";
+  const class_index = CLASSES[SELECT_CLASS.value];
   const specs = SPECS_SELECT_OPTIONS[class_index];
-  selectSpec.appendChild(new_option('All specs', -1));
+  SELECT_SPEC.appendChild(new_option('All specs', -1));
   if (!specs) return;
+  
+  specs.forEach((spec_name, i) => SELECT_SPEC.appendChild(new_option(spec_name, i + 1)));
 
-  specs.forEach((spec_name, i) => selectSpec.appendChild(new_option(spec_name, i + 1)));
-};
-function on_change_class(_new) {
-  if (is_points() && selectClass.value == -1) {
-    selectClass.selectedIndex = 1;
-    _new = true;
+  set_default_spec();
+}
+function on_change_class(e) {
+  if (points_selected() && SELECT_CLASS.selectedIndex == 0) {
+    e.preventDefault();
+    SELECT_CLASS.selectedIndex = 1;
   }
 
-  if (_new != undefined) add_specs();
-
-  on_change_spec();
+  add_specs();
 }
 
-function on_change_spec() {
-  if (is_points() && selectSpec.value == -1) {
-    selectSpec.selectedIndex = DEFAULT_SPEC[selectClass.value];
+function set_default_spec() {
+  SELECT_SPEC.selectedIndex = DEFAULT_SPEC[SELECT_CLASS.value];
+}
+function check_spec() {
+  if (points_selected() && SELECT_SPEC.value == -1) {
+    SELECT_SPEC.selectedIndex = DEFAULT_SPEC[SELECT_CLASS.value];
   }
 }
 
-function on_server_change() {
-  localStorage.setItem('top_server', selectServer.value);
+function set_new_server_default() {
+  localStorage.setItem('top_server', SELECT_SERVER.value);
 }
 
-function add_extra_function(elm) {
-  switch (elm) {
-    case selectInstance:
-      on_change_instance();
-      elm.addEventListener('change', on_change_instance);
-      break;
-    case selectClass:
-      on_change_class(true);
-      elm.addEventListener('change', on_change_class);
-      break;
-    case selectSpec:
-      elm.addEventListener('change', on_change_spec);
-      break;
-    case selectServer:
-      elm.addEventListener('change', on_server_change);
-      break;
+function add_extra_function() {
+  SELECT_RAID.addEventListener('change', on_change_instance);
+  SELECT_CLASS.addEventListener('change', add_specs);
+  SELECT_SPEC.addEventListener('change', check_spec);
+  SELECT_SERVER.addEventListener('change', set_new_server_default);
+}
+function add_refresh_on_change() {
+  for (const elm of Object.values(INTERACTABLES)) {
+    elm.addEventListener('change', search_changed);
   }
 }
-function add_on_change_events(elm) {
-  add_extra_function(elm);
-  elm.addEventListener('change', search_changed);
+function add_toggle_functions(toggle, callback) {
+  toggle.addEventListener('change', () => {
+    local_storage_set(toggle, toggle.checked);
+    callback();
+  });
 }
+
+function parse_custom() {
+  TOGGLE_TOTAL_DAMAGE.checked = local_storage_get(TOGGLE_TOTAL_DAMAGE) == "false" ? false : is_landscape.matches;
+  TOGGLE_USEFUL_DAMAGE.checked = local_storage_get(TOGGLE_USEFUL_DAMAGE) == "false" ? false : true;
+  TOGGLE_LIMIT.checked = local_storage_get(TOGGLE_LIMIT) == "false" ? false : true;
+  
+  const _server = local_storage_get(SELECT_SERVER) || "Lordaeron";
+  SELECT_SERVER.selectedIndex = find_value_index(SELECT_SERVER, _server);
+}
+
+function shorten_aura_column_names() {
+  if (is_landscape.matches) return;
+
+  Array.from(document.querySelectorAll("thead .table-auras")).forEach(th => {
+    th.textContent = th.textContent.charAt(0);
+  });
+}
+
+
 
 function init() {
-  Object.keys(BOSSES).forEach(name => selectInstance.appendChild(new_option(name)));
-  CLASSES.forEach((name, i) => selectClass.appendChild(new_option(name, i)));
+  Object.keys(BOSSES).forEach(name => SELECT_RAID.appendChild(new_option(name)));
+  CLASSES.forEach((name, i) => SELECT_CLASS.appendChild(new_option(name, i)));
+  
+  console.log(window.location.search);
   const currentParams = new URLSearchParams(window.location.search);
-  for (let key in INTERACTABLES) {
-    const par = currentParams.get(key);
+  console.log(currentParams);
+  if (window.location.search == "") {
+    console.log("currentParams empty");
+  } else {
+    console.log("currentParams");
+  }
+
+  for (const key in INTERACTABLES) {
+    const value = currentParams.get(key);
     const elm = INTERACTABLES[key];
+    console.log(key, value, elm);
     if (elm.nodeName == "INPUT") {
-      elm.checked = par != 0;
-    } else if (is_valid_param(elm, par)) {
-      elm.value = par;
+      elm.checked = value == 1;
+    } else if (elm.nodeName == "SELECT") {
+      elm.selectedIndex = find_select_index(elm, value);
     } else {
-      elm.selectedIndex = get_default_index(elm);
+      console.log("! Wrong element type:", elm, value);
     }
-    add_on_change_events(elm);
   }
 
-  if (is_landscape.matches) {
-    document.getElementById("head-external").textContent = "Ext";
-    document.getElementById("head-self").textContent = "Slf";
-    document.getElementById("head-rekt").textContent = "Rkt";
-  }
+  shorten_aura_column_names();
+  
+  on_change_instance();
+  on_change_class();
 
-  toggleTotalDamage.checked = localStorage.getItem("top_total") == "false" ? false : is_landscape.matches;
-  toggleUsefulDamage.checked = localStorage.getItem("top_useful") == "false" ? false : true;
-  toggleLimit.checked = localStorage.getItem("top_limit") == "false" ? false : true;
-  selectServer.value = localStorage.getItem("top_server") || 'Lordaeron';
+  add_extra_function();
+  add_refresh_on_change();
 
-  toggleTotalDamage.addEventListener('change', () => {
-    localStorage.setItem("top_total", toggleTotalDamage.checked);
-    toggle_total_columns();
-  });
-  toggleUsefulDamage.addEventListener('change', () => {
-    localStorage.setItem("top_useful", toggleUsefulDamage.checked);
-    toggle_useful_columns();
-  });
-  toggleLimit.addEventListener('change', () => {
-    localStorage.setItem("top_limit", toggleLimit.checked);
-    fetch_data();
-  });
+  add_toggle_functions(TOGGLE_TOTAL_DAMAGE, toggle_total_columns);
+  add_toggle_functions(TOGGLE_USEFUL_DAMAGE, toggle_useful_columns);
+  add_toggle_functions(TOGGLE_LIMIT, fetch_data);
 
   search_changed();
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', fetch_column));
