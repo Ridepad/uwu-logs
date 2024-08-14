@@ -1,4 +1,4 @@
-import { CACHE } from "./gear_cache.js?240725-1";
+import { CACHE } from "./gear_cache.js?v=240814-1";
 import {
   QUALITY_COLOR,
   ENCHANTABLE,
@@ -7,7 +7,7 @@ import {
   slot_item_changed,
   find_equipped_sets,
   find_set_name,
-} from "./gear_constants.js?240725-1";
+} from "./gear_constants.js?v=240814-1";
 
 const TOOLTIP = document.getElementById("tooltip-stats");
 const GEAR_WRAP = document.getElementById("gear-wrap");
