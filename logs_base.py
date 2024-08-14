@@ -230,7 +230,7 @@ class THE_LOGS:
     
     def get_guids(self, rewrite=False):
         try:
-            return self.GUIDS, self.PLAYERS, self.CLASSES
+            return self.GUIDS, self.PLAYERS, self.PLAYER_CLASSES
         except AttributeError:
             _guids: dict[str, dict[str, str]]
             _players: dict[str, str]
@@ -252,8 +252,8 @@ class THE_LOGS:
                     ]
                 except Exception:
                     return self.get_guids(rewrite=True)
-            self.GUIDS, self.PLAYERS, self.CLASSES = _guids, _players, _classes
-            return self.GUIDS, self.PLAYERS, self.CLASSES
+            self.GUIDS, self.PLAYERS, self.PLAYER_CLASSES = _guids, _players, _classes
+            return self.GUIDS, self.PLAYERS, self.PLAYER_CLASSES
 
     def get_all_guids(self):
         return self.get_guids()[0]
