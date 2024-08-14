@@ -6,7 +6,7 @@ from sys import platform
 from threading import Thread, RLock
 
 THREAD_LOCK = RLock()
-PATH = Path(__file__).parent
+PATH = Path(__file__).resolve().parent
 LINK_7Z_DL_PREFIX = "https://www.7-zip.org/a"
 TABLE_BORDER = '-------------------'
 
