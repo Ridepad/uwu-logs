@@ -105,16 +105,13 @@ function format_dps(v) {
 
 const TOOLTIP_ELEMENTS = {
   ".row-players .td-player": boss_data => split_thousands(boss_data["rank_players"]),
-  ".row-players .td-max":    boss_data => split_thousands(boss_data["n_players"]),
-//".row-players .td-max":    boss_data => split_thousands(boss_data["spec_total_players"]),
+  ".row-players .td-max":    boss_data => split_thousands(boss_data["spec_total_players"]),
   ".row-players .td-points": boss_data => add_point(boss_data["points_rank_players"]),
   ".row-raids .td-player":   boss_data => split_thousands(boss_data["rank_raids"]),
-  ".row-raids .td-max":      boss_data => split_thousands(boss_data["n_raids"]),
-//".row-raids .td-max":      boss_data => split_thousands(boss_data["spec_total_raids"]),
+  ".row-raids .td-max":      boss_data => split_thousands(boss_data["spec_total_raids"]),
   ".row-raids .td-points":   boss_data => add_point(boss_data["points_rank_raids"]),
   ".row-dps .td-player":     boss_data => format_dps(boss_data["dps_max"]),
-  ".row-dps .td-max":        boss_data => format_dps(boss_data["dps_r1"]),
-//".row-dps .td-max":        boss_data => format_dps(boss_data["spec_r1_dps"]),
+  ".row-dps .td-max":        boss_data => format_dps(boss_data["spec_r1_dps"]),
   ".row-dps .td-points":     boss_data => add_point(boss_data["points_dps"]),
 };
 
@@ -206,11 +203,9 @@ function row(boss_name, data) {
   tr.appendChild(cell(split_thousands(data["rank_players"]), "cell-rank"));
   tr.appendChild(cell_points(data["points"]));
   tr.appendChild(cell(format_dps(data["dps_max"]), "cell-dps"));
-  tr.appendChild(cell(format_duration(data["dur_min"]), "cell-dur"));
-  // tr.appendChild(cell(format_duration(data["fastest_kill_duration"]), "cell-dur"));
+  tr.appendChild(cell(format_duration(data["fastest_kill_duration"]), "cell-dur"));
   tr.appendChild(cell(split_thousands(data["raids"]), "cell-raids"));
-  tr.appendChild(cell_date(data["report"]));
-  // tr.appendChild(cell_date(data["report_id"]));
+  tr.appendChild(cell_date(data["report_id"]));
 
   tr.setAttribute("data-boss-name", boss_name);
   tr.addEventListener("mouseenter", row_on_enter);
