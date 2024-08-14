@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import TypedDict
 
 from c_path import Directories, StrEnum
-from h_debug import running_time
+from h_debug import running_time, Loggers
 from h_other import get_report_name_info
 
 
@@ -176,8 +176,10 @@ class DB:
         try:
             return self.__cursor
         except AttributeError:
+            Loggers.top.debug(f">>> DB OPEN | {self.db_path}")
             self.__cursor = sqlite3.connect(self.db_path)
             return self.__cursor
+    
     @staticmethod
     def get_table_name(boss: str, mode: str):
         return f"{boss}.{mode}"
