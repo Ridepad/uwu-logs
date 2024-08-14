@@ -165,6 +165,8 @@ def new_db_row(data: TopDict):
     ]
 
 class DB:
+    cursors = []
+
     def __init__(self, path, new=False) -> None:
         if not new and not path.is_file():
             raise FileNotFoundError
@@ -176,9 +178,14 @@ class DB:
         try:
             return self.__cursor
         except AttributeError:
+            if self.db_path in self.cursors:
+                return self.cursors[self.db_path]
+            
             Loggers.top.debug(f">>> DB OPEN | {self.db_path}")
-            self.__cursor = sqlite3.connect(self.db_path)
-            return self.__cursor
+            c = sqlite3.connect(self.db_path)
+            self.__cursor = c
+            self.cursors[self.db_path] = c
+            return c
     
     @staticmethod
     def get_table_name(boss: str, mode: str):
