@@ -526,8 +526,14 @@ xrequest.onprogress = e => {
 };
 
 xrequest.onreadystatechange = () => {
-  if (xrequest.status != 200 || xrequest.readyState != 4) return;
-  // CACHE.set_new_data(xrequest.response);
+  if (xrequest.readyState != 4) return;
+  if (xrequest.status == 422) {
+    TABLE_CONTAINER.style.removeProperty("display");
+    LOADING_INFO_PANEL.style.display = "none";
+    return;
+  }
+  if (xrequest.status != 200) return;
+
   table_add_new_data_wrap(xrequest.response);
 }
 
