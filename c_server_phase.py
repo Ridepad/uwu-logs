@@ -118,6 +118,34 @@ class Tier_7:
     ]
     ALL_BOSSES = FOR_POINTS + OTHER
 
+
+class Tier_3:
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = [
+        Encounter("Patchwerk", "25N"),
+        Encounter("Anub'Rekhan", "25N"),
+        Encounter("Noth the Plaguebringer", "25N"),
+        Encounter("Kel'Thuzad", "25N"),
+    ]
+    FOR_POINTS = [
+        Encounter("Patchwerk", "25N"),
+        Encounter("Grobbulus", "25N"),
+        Encounter("Gluth", "25N"),
+        Encounter("Thaddius", "25N"),
+        Encounter("Anub'Rekhan", "25N"),
+        Encounter("Grand Widow Faerlina", "25N"),
+        Encounter("Maexxna", "25N"),
+        Encounter("Noth the Plaguebringer", "25N"),
+        Encounter("Heigan the Unclean", "25N"),
+        Encounter("Loatheb", "25N"),
+        Encounter("Instructor Razuvious", "25N"),
+        Encounter("Gothik the Harvester", "25N"),
+        Encounter("The Four Horsemen", "25N"),
+        Encounter("Sapphiron", "25N"),
+        Encounter("Kel'Thuzad", "25N"),
+    ]
+    OTHER = []
+    ALL_BOSSES = FOR_POINTS + OTHER
+
 SERVER_PHASE: dict[str, str] = Files.server_phases.json_ignore_error()
 
 
@@ -131,6 +159,7 @@ def get_server_phase(server):
 def main():
     print(get_server_phase("Lordaeron"))
     print(get_server_phase("Whitemane-Frostmourne"))
+    print(get_server_phase("Onyxia"))
 
 
 if __name__ == "__main__":

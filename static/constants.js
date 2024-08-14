@@ -24,7 +24,7 @@ const BOSSES = {
     "The Four Horsemen", "Sapphiron", "Kel'Thuzad"
   ],
   "Ulduar": [
-    "Flame Leviathan", "Ignis the Furnace Master", "Razorscale", "XT-002 Deconstructor",
+    "Ignis the Furnace Master", "Razorscale", "XT-002 Deconstructor",
     "Assembly of Iron", "Kologarn", "Auriaya", "Hodir", "Thorim", "Freya", "Mimiron",
     "General Vezax", "Yogg-Saron", "Algalon the Observer"
   ],
