@@ -106,6 +106,7 @@ class RaidRank(TopDBCached):
         self.encounter = Encounter(model.boss, model.mode)
         self.table_name = self.encounter.table_name
 
+    @running_time
     def points(self):
         dps = self.model.dps
         specs = self.model.specs
@@ -152,7 +153,6 @@ class RaidRank(TopDBCached):
         
         return server_data[self.table_name]
     
-    @running_time
     def _renew_data(self, spec_index: int) -> list[float]:
         query = self.encounter.query_dps_spec(spec_index)
         return sorted(x for x, in self.cursor.execute(query))
