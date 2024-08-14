@@ -68,9 +68,7 @@ async def add_process_time_header(request: Request, call_next):
 
 @app.post('/top_points')
 async def top_post(request: Request, data: PointsValidation):
-    print(request.method, request.client)
     mimetype = request.headers.get('Content-Type')
-    print(mimetype)
     if mimetype != "application/json":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -87,9 +85,7 @@ async def top_post(request: Request, data: PointsValidation):
 
 @app.post('/top')
 async def top_post(request: Request, data: TopValidation):
-    print(request.method, request.client)
     mimetype = request.headers.get('Content-Type')
-    print(mimetype)
     if mimetype != "application/json":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
