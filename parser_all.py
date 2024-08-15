@@ -10,7 +10,7 @@ from h_other import requests_get
 LOGGER = Loggers.missing
 
 CACHE_DIRECTORY_NAME = "cache"
-PATH = Path(__file__).parent
+PATH = Path(__file__).resolve().parent
 HEADERS = {"User-Agent": "ItemParser/1.1; +uwu-logs.xyz"}
 ICON_URL_PREFIX = "https://wotlk.evowow.com/static/images/wow/icons/large"
 

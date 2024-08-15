@@ -1,18 +1,14 @@
 # Parses stats of enchants and gems.
 # BeautifulSoup is like document.querySelector() in js
 
-
-import json
 import re
-import time
-from pathlib import Path
-from threading import Thread
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-import requests
 
-PATH = Path(__file__).parent
+from h_other import requests_get
+
+URL_DOMAIN = "https://wotlk.evowow.com/"
 HEADERS = {'User-Agent': "EnchParser/1.1; +uwu-logs.xyz"}
 BASE_STATS = {'stamina', 'intellect', 'spirit', 'strength', 'agility'}
 SHORT_STATS = {
@@ -35,22 +31,6 @@ SHORT_STATS = {
     'str': 'strength',
     'agi': 'agility',
 }
-
-def requests_get(page_url, headers, timeout=2, attempts=3):
-    for _ in range(attempts):
-        print(timeout)
-        try:
-            page = requests.get(page_url, headers=headers, timeout=timeout, allow_redirects=False)
-            if page.status_code == 200:
-                return page
-        except requests.exceptions.ReadTimeout:
-            timeout = timeout + 2
-        except requests.exceptions.ConnectionError:
-            pass
-        time.sleep(2)
-    
-    # LOGGER.error(f"Failed to load page: {page_url}")
-    return None
 
 def get_value(text: str):
     try:
@@ -93,7 +73,7 @@ def get_enchant_names(soup: BeautifulSoup) -> tuple[str, str]:
     return n0, n1
     
 def get_ench(id):
-    url = f"https://wotlk.evowow.com/?enchantment={id}"
+    url = f"{URL_DOMAIN}?enchantment={id}"
     ench_raw = requests_get(url, HEADERS).text
     # print(ench_raw)
     soup = BeautifulSoup(ench_raw, features="html.parser")
@@ -112,75 +92,3 @@ def get_ench(id):
         "names": names,
         "stats": stats
     }
-
-
-### Used to assure single instance of parser
-
-def wait_for_thread(t: Thread):
-    try:
-        t.start()
-    except RuntimeError:
-        pass
-
-    t.join()
-
-done: set[str] = set()
-def ensure_single_instance(f):
-    threads: dict[str, Thread] = {}
-    
-    def parse_and_save_inner(id):
-        try:
-            id = str(id)
-        except Exception:
-            return 400
-
-        if id in done:
-            return 200
-        
-        if id not in threads:
-            threads[id] = Thread(target=f, args=(id, ))
-        
-        wait_for_thread(threads[id])
-        if id in done:
-            return 201
-
-        return 500
-    
-    return parse_and_save_inner
-
-@ensure_single_instance
-def parse_and_save(id: str):
-    p = (PATH / "cache" / "enchant" / id).with_suffix(".json")
-    if p.is_file():
-        done.add(id)
-        return True
-    
-    try:
-        data = get_ench(id)
-    except Exception:
-        return False
-    
-    try:
-        p.write_text(json.dumps(data))
-    except Exception:
-        return False
-    
-    done.add(id)
-    return True
-
-
-def __test():
-    from concurrent.futures import ThreadPoolExecutor
-    
-    g = [
-        3633, 3628, 3605, 2933, 2938, 3294, 2679, 3789, 3623, 3548, 3590, 3820, 3859,
-        3520, 3810, 3832, 3758, 3604, 3520, 3719, 3606, 3560, 3520, 3834, 3520, 3563,
-        3545, 3859, 3232, 3747, 3243, 3247, 3722, 2673, 2381, 3546, 3819, 3627, 3244,
-    ]
-    q = parse_and_save(g[0])
-    print(q)
-    with ThreadPoolExecutor(4) as tpe:
-        tpe.map(parse_and_save, g)
-
-if __name__ == "__main__":
-    __test()

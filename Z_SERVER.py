@@ -15,7 +15,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import h_cleaner
 import logs_calendar
 import logs_main
-import logs_top_db
 from constants import FLAG_ORDER, GEAR
 from c_bosses import ALL_FIGHT_NAMES
 from c_path import Directories, Files

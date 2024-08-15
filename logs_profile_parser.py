@@ -22,7 +22,7 @@ from bs4.element import Tag
 import requests
 
 
-PATH = Path(__file__).parent
+PATH = Path(__file__).resolve().parent
 CACHE_DIR = PATH.joinpath("cache")
 CACHE_DIR.mkdir(exist_ok=True)
 CHARACTERS_DIR = CACHE_DIR.joinpath("character")
