@@ -574,9 +574,9 @@ function search_changed() {
     spec: SELECT_SPEC.value,
   };
 
-  // const new_params = new URLSearchParams(parsed).toString();
-  // const url = `?${new_params}`;
-  // history.pushState(parsed, title, url);
+  const new_params = new URLSearchParams(parsed).toString();
+  const url = `?${new_params}`;
+  history.pushState(parsed, title, url);
 
   fetch_data();
 }
