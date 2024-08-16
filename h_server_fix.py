@@ -41,18 +41,20 @@ SERVERS_OTHER = [
     # ServerName("", ""),
 ]
 
-def server_cnv(server: str) -> None:
+def server_cnv(server: str):
     if not server:
-        return None
+        return ""
     
     _server_l = server.lower()
     for _server in SERVERS_OTHER:
         if re.findall(_server.re_string, _server_l):
             return _server.no_space
 
-    return None
+    return server.replace(" ", "-")
 
 def test1():
+    z = server_cnv("Lordaeron")
+    print(z)
     z = server_cnv("Wow Circle 3.3.5a x5")
     print(z)
     z = server_cnv("rIsing godSs")
