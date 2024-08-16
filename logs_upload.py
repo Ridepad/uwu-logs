@@ -573,11 +573,7 @@ class LogsArchiveParser(LogsArchiveStatus):
         only_slices=False,
         keep_temp_folder=False,
     ) -> None:
-        if not upload_data:
-            upload_data = UploadData()
         super().__init__(archive_path, upload_data)
-
-        self.upload_data = upload_data
 
         self.forced = forced
         self.only_slices = only_slices

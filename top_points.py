@@ -1,7 +1,6 @@
-
-from dataclasses import dataclass
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Union
 
@@ -16,6 +15,7 @@ from c_path import Directories
 from c_server_phase import get_server_phase
 from h_debug import running_time
 from h_other import sort_dict_by_value
+from h_server_fix import server_cnv
 from top_player_data import PlayerDataServer
 
 
@@ -347,7 +347,7 @@ class PointsValidation(BaseModel):
     @field_validator('server')
     @classmethod
     def validate_server(cls, server: str):
-        server = server.lower().title().replace(" ", "-")
+        server = server_cnv(server)
         servers = Directories.top.files_stems()
         if server not in servers:
             _list = ', '.join(servers)
