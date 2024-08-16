@@ -264,7 +264,7 @@ function cell_date(report_ID) {
   const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day} ${months_str} ${year}`;
 
   const a = document.createElement('a');
-  a.href = `/reports/${report_ID}`;
+  a.href = `/reports/${report_ID}--${SELECT_SERVER.value}`;
   a.target = "_blank";
   a.append(date_text);
 
