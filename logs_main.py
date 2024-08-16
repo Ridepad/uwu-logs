@@ -11,10 +11,8 @@ import logs_dmg_breakdown
 import logs_dmg_heals
 import logs_dmg_useful
 import logs_dps
-import logs_player_spec
 import logs_power
 import logs_spell_info
-import logs_top_db
 import logs_lady_spirits
 import logs_valk_grabs
 import logs_ucm
@@ -464,24 +462,9 @@ class THE_LOGS(
         specs = self.convert_dict_guids_to_names(DD["SPECS"])
         SPECS = self.report_add_spec_info(specs, PLAYERS)
 
-        points = {}
-        sc = get_dict_int(request.args, "sc")
-        fc = get_dict_int(request.args, "fc")
-        if sc and sc != 0 or fc and fc == 0:
-            pass
-        elif mode and _useful and boss_name not in BOSSES_SKIP_POINTS:
-            _useful_dps = {
-                guid: dmg / DURATION
-                for guid, dmg in _useful.items()
-            }
-            _useful_dps = self.convert_dict_guids_to_names(_useful_dps)
-            server = get_report_name_info(self.NAME)["server"]
-            points = logs_top_db.RaidRank(server, boss_name, mode).get_rank_wrap(_useful_dps, specs)
-
         return default_params | DD | {
             "DATA": TABLE,
             "SPECS": SPECS,
-            "POINTS": points,
         }
     
     @running_time
