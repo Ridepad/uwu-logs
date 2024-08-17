@@ -751,7 +751,6 @@ function add_specs() {
 }
 function on_change_class(e) {
   if (points_selected() && SELECT_CLASS.selectedIndex == 0) {
-    e.preventDefault();
     SELECT_CLASS.selectedIndex = 1;
   }
 
