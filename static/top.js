@@ -30,6 +30,9 @@ const TOGGLE_USEFUL_DAMAGE = document.getElementById('toggle-useful-damage');
 const TOGGLE_LIMIT = document.getElementById('toggle-limit');
 const THE_TOOLTIP = document.getElementById("the-tooltip");
 const THE_TOOLTIP_BODY = document.getElementById("tooltip-body");
+const SECTION_NO_DATA = document.getElementById("no-data");
+const SECTION_ON_ERROR = document.getElementById("on-error");
+const SECTION_ON_ERROR_DETAILS = document.getElementById("on-error-details");
 
 const AURAS_CURRENT_COLUMNS = Array.from(document.querySelectorAll("thead .table-auras")).map(e => e.classList[1]);
 const AURA_INDEX_TO_COLUMN_NAME = {
@@ -49,15 +52,29 @@ const INTERACTABLES = {
   cls: SELECT_CLASS,
   spec: SELECT_SPEC,
 };
-const LOCAL_STORAGE_KEYS = {
-  [SELECT_SERVER.id]: "top_server",
-  [SELECT_RAID.id]: "top_raid",
-  [SELECT_BOSS.id]: "top_boss",
-  [SELECT_CLASS.id]: "top_class",
-  [SELECT_SPEC.id]: "top_spec",
-  [TOGGLE_TOTAL_DAMAGE.id]: "top_total",
-  [TOGGLE_USEFUL_DAMAGE.id]: "top_useful",
-  [TOGGLE_LIMIT.id]: "top_limit",
+
+const LOCAL_STORAGE = {
+  keys: {
+    [SELECT_SERVER.id]: "top_server",
+    [SELECT_RAID.id]: "top_raid",
+    [SELECT_BOSS.id]: "top_boss",
+    [SELECT_CLASS.id]: "top_class",
+    [SELECT_SPEC.id]: "top_spec",
+    [TOGGLE_TOTAL_DAMAGE.id]: "top_total",
+    [TOGGLE_USEFUL_DAMAGE.id]: "top_useful",
+    [TOGGLE_LIMIT.id]: "top_limit",
+  },
+  get(elm) {
+    const key = this.convert_key(elm);
+    return localStorage.getItem(key);
+  },
+  set(elm, value) {
+    const key = this.convert_key(elm);
+    return localStorage.setItem(key, value);
+  },
+  convert_key(elm) {
+    return this.keys[elm.id];
+  },
 }
 
 const IRRELEVANT_FOR_POINTS = [
@@ -71,7 +88,6 @@ const IRRELEVANT_FOR_POINTS = [
 const ROW_LIMIT = 1000;
 const is_landscape = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
-const xrequest = new XMLHttpRequest();
 const HAS_HEROIC = new Set([
   ...BOSSES["Icecrown Citadel"],
   ...BOSSES["Trial of the Crusader"],
@@ -103,19 +119,50 @@ const POSTS = {
   "Points": "/top_points",
   "Speedrun": "/top_speedrun",
 }
-const CACHE = {
-  lastQuery: "",
-  set_new_data(data) {
-    const query = make_query();
-    if (query == this.lastQuery) {
-      this[query] = data;
+const REQUESTS_CACHE = {};
+
+function _css_rule(key) {
+  const style = document.createElement("style");
+  style.append(`.table-${key} {display: none}`);
+  return style;
+}
+const TOGGLE_COLUMNS = {
+  css_hide_total: _css_rule("d"),
+  css_hide_useful: _css_rule("u"),
+  useful_columns() {
+    this._toggle_columns(TOGGLE_USEFUL_DAMAGE, this.css_hide_useful);
+  },
+  total_columns() {
+    this._toggle_columns(TOGGLE_TOTAL_DAMAGE, this.css_hide_total);
+  },
+  _toggle_columns(checkbox, style) {
+    if (checkbox.checked) {
+      if (style.parentNode != document.head) return;
+      this._table_modify_wrap(() => document.head.removeChild(style));
+    } else if (style.parentNode != document.head) {
+      this._table_modify_wrap(() => document.head.appendChild(style));
     }
   },
-  get_current() {
-    const query = make_query();
-    return this[query];
+  _table_modify_wrap(callback) {
+    if (TABLE_CONTAINER.style.display == "none") return callback();
+  
+    TABLE_CONTAINER.style.display = "none";
+    LOADING_INFO_PANEL.style.removeProperty("display");
+    setTimeout(() => {
+      callback();
+      setTimeout(() => {
+        LOADING_INFO_PANEL.style.display = "none";
+        TABLE_CONTAINER.style.removeProperty("display");
+      });
+    });
   }
-};
+}
+
+let timeout_hide;
+let timeout_show_rows;
+let timeout_table_add_new_data;
+
+//////////////////////////////////////////
 
 function get_icon_link(icon_name) {
   return `/static/icons/${icon_name}.jpg`;
@@ -150,95 +197,54 @@ function make_query() {
 }
 
 
-function table_modify_wrap(callback) {
-  if (TABLE_CONTAINER.style.display == "none") return callback();
-
-  TABLE_CONTAINER.style.display = "none";
-  LOADING_INFO_PANEL.style.removeProperty("display");
-  setTimeout(() => {
-    callback();
-    setTimeout(() => {
-      LOADING_INFO_PANEL.style.display = "none";
-      TABLE_CONTAINER.style.removeProperty("display");
-    });
-  });
-}
-
-
-function create_css_rule(key) {
-  const style = document.createElement("style");
-  style.append(`.table-${key} {display: none}`);
-  return style;
-}
-const hide_total = create_css_rule("d");
-const hide_useful = create_css_rule("u");
-
-function toggle_columns(checkbox, style) {
-  if (checkbox.checked) {
-    if (style.parentNode != document.head) return;
-    table_modify_wrap(() => document.head.removeChild(style));
-  } else if (style.parentNode != document.head) {
-    table_modify_wrap(() => document.head.appendChild(style));
-  }
-}
-
-function toggle_useful_columns() {
-  toggle_columns(TOGGLE_USEFUL_DAMAGE, hide_useful);
-}
-
-function toggle_total_columns() {
-  toggle_columns(TOGGLE_TOTAL_DAMAGE, hide_total);
-}
-
 
 function number_with_separator(x, sep = " ") {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 }
 
-function add_inner_text(cell, text) {
+function add_inner_text(element, text) {
   if (!isNaN(text)) text = number_with_separator(text);
-  cell.append(text);
+  element.append(text);
 }
 
 function cell_name(name, spec) {
   const [spec_name, spec_icon, spec_class_id] = SPECS[spec];
 
-  const cell = document.createElement('td');
-  cell.classList.add("table-n");
-  cell.title = spec_name;
+  const td = document.createElement('td');
+  td.classList.add("table-n");
+  td.title = spec_name;
 
   const img = document.createElement("img");
   img.src = get_icon_link(spec_icon);
-  cell.appendChild(img);
+  td.appendChild(img);
 
   const a = document.createElement('a');
   a.classList.add(spec_class_id);
   a.href = `/character?name=${name}&server=${SELECT_SERVER.value}&spec=${spec % 4}`;
   a.target = "_blank";
   a.append(name);
-  cell.appendChild(a);
+  td.appendChild(a);
 
-  return cell;
+  return td;
 }
 
 function cell_dps(dps, key) {
-  const cell = document.createElement('td');
-  cell.value = dps;
-  cell.classList.add("table-dps");
-  cell.classList.add(`table-${key}`);
+  const td = document.createElement('td');
+  td.value = dps;
+  td.classList.add("table-dps");
+  td.classList.add(`table-${key}`);
   const _inside_data = dps.toFixed(1);
-  add_inner_text(cell, _inside_data);
-  return cell;
+  add_inner_text(td, _inside_data);
+  return td;
 }
 
 function cell_total(amount, key) {
-  const cell = document.createElement('td');
-  cell.value = amount;
-  cell.classList.add("table-dmg");
-  cell.classList.add(`table-${key}`);
-  add_inner_text(cell, amount);
-  // row.appendChild(cell);
-  return cell;
+  const td = document.createElement('td');
+  td.value = amount;
+  td.classList.add("table-dmg");
+  td.classList.add(`table-${key}`);
+  add_inner_text(td, amount);
+  return td;
 }
 
 function format_duration(dur) {
@@ -250,11 +256,11 @@ function format_duration(dur) {
 }
 
 function cell_duration(value) {
-  const cell = document.createElement('td');
-  cell.value = value;
-  cell.className = `table-t`;
-  cell.append(format_duration(value));
-  return cell;
+  const td = document.createElement('td');
+  td.value = value;
+  td.className = `table-t`;
+  td.append(format_duration(value));
+  return td;
 }
 
 function cell_date(report_ID) {
@@ -268,15 +274,13 @@ function cell_date(report_ID) {
   a.target = "_blank";
   a.append(date_text);
 
-  const cell = document.createElement('td');
-  cell.appendChild(a);
-  cell.className = `table-r`;
-  cell.value = report_date.replaceAll('-', '');
-  return cell;
+  const td = document.createElement('td');
+  td.appendChild(a);
+  td.className = `table-r`;
+  td.value = report_date.replaceAll('-', '');
+  return td;
 }
 
-let timeout_hide;
-let timeout_show_rows;
 function show_tooltip(td) {
   clearTimeout(timeout_show_rows);
   const dataset = td.dataset;
@@ -330,7 +334,7 @@ function aura_cell(column_class) {
 function aura_column_data(column_class) {
   return {
     count: 0,
-    cell: aura_cell(column_class),
+    td: aura_cell(column_class),
   }
 }
 function new_aura_empty_columns() {
@@ -344,7 +348,7 @@ function new_aura_columns(auras) {
     const column_name = AURA_INDEX_TO_COLUMN_NAME[type];
     const column_data = columns[column_name];
     column_data.count += count;
-    column_data.cell.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
+    column_data.td.setAttribute(`data-${spell_id}`, `${count},${uptime}`);
   }
   return columns;
 }
@@ -352,7 +356,7 @@ function* cell_auras(auras) {
   const columns = new_aura_columns(auras);
   for (const column_name in columns) {
     const column_data = columns[column_name];
-    const td = column_data.cell;
+    const td = column_data.td;
     if (column_data.count != 0) {
       td.append(column_data.count);
       td.addEventListener("mouseleave", mouseleave);
@@ -362,7 +366,7 @@ function* cell_auras(auras) {
   }
 }
 
-function new_row(_data) {
+function table_new_row_default(_data) {
   const row = document.createElement('tr');
   const [
     report_ID,
@@ -393,16 +397,16 @@ function points_rank_class(v) {
   for (const i of POINTS) if (v - i >= 0) return `top${i}`;
 }
 function cell_points(v, is_total) {
-  const cell = document.createElement('td');
-  cell.classList.add("table-points");
+  const td = document.createElement('td');
+  td.classList.add("table-points");
   if (!is_total) {
     v = v.toFixed(2);
-    cell.classList.add((points_rank_class(v)));
+    td.classList.add((points_rank_class(v)));
   }
-  cell.append(v);
-  return cell;
+  td.append(v);
+  return td;
 }
-function new_row_points(data, spec) {
+function table_new_row_points(data, spec) {
   const row = document.createElement('tr');
   const [
     name,
@@ -420,7 +424,7 @@ function new_row_points(data, spec) {
 }
 
 
-function update_progress(done, total, network) {
+function update_progress_bar(done, total, network) {
   const percent = Math.round(done / total * 100);
   if (network) {
     done = `${(done / 1024).toFixed(1)}k`;
@@ -430,40 +434,38 @@ function update_progress(done, total, network) {
   PROGRESS_BAR.style.width = `${percent}%`;
 }
 
-let mainTimeout;
-
-function _new_row() {
+function table_new_row_wrap() {
   const class_i = parseInt(SELECT_CLASS.value);
   const spec_i = parseInt(SELECT_SPEC.value);
   const spec_full_index = class_i * 4 + spec_i;
   if (points_selected()) {
-    return data => new_row_points(data, spec_full_index);
+    return data => table_new_row_points(data, spec_full_index);
   }
-  return new_row;
+  return table_new_row_default;
 }
 
-function finish(table_body, body_fragment) {
+function table_append_fragment(table_body, body_fragment) {
   LOADING_INFO.textContent = "Rendering table...";
   PROGRESS_BAR_PERCENTAGE.textContent = "Done!";
 
   setTimeout(() => {
-    console.time("table_add_new_data Rendering");
+    console.time("table_add_new_data | Rendering");
     table_body.append(body_fragment);
-    toggle_useful_columns();
-    toggle_total_columns();
+    TOGGLE_COLUMNS.useful_columns();
+    TOGGLE_COLUMNS.total_columns();
     setTimeout(() => {
       LOADING_INFO_PANEL.style.display = "none";
       TABLE_CONTAINER.style.removeProperty("display");
-      console.timeEnd("table_add_new_data Rendering");
-      console.timeEnd("tableAddRows");
+      console.timeEnd("table_add_new_data | Rendering");
+      console.timeEnd("table_add_new_data | Full");
     });
   })
 }
 function table_add_new_data(table_body, data) {
-  clearTimeout(mainTimeout);
-  console.time("clear table");
+  clearTimeout(timeout_table_add_new_data);
+  console.time("table_add_new_data | Clear Table");
   table_body.innerHTML = "";
-  console.timeEnd("clear table");
+  console.timeEnd("table_add_new_data | Clear Table");
   if (!data) return;
   
   console.log(data.length);
@@ -473,21 +475,21 @@ function table_add_new_data(table_body, data) {
   LOADING_INFO_PANEL.style.removeProperty("display");
   const LIMIT = TOGGLE_LIMIT.checked ? Math.min(ROW_LIMIT, data.length) : data.length;
   let current_row_index = 0;
-  const _row = _new_row();
-  console.time("tableAddRows");
+  const table_new_row = table_new_row_wrap();
+  console.time("table_add_new_data | Full");
 
   (function chunk() {
-    update_progress(current_row_index, LIMIT);
+    update_progress_bar(current_row_index, LIMIT);
 
-    if (current_row_index >= LIMIT) return finish(table_body, fragment);
+    if (current_row_index >= LIMIT) return table_append_fragment(table_body, fragment);
 
     const end = Math.min(current_row_index + 100, LIMIT);
     for (; current_row_index < end; current_row_index++) {
-      const row = _row(data[current_row_index]);
+      const row = table_new_row(data[current_row_index]);
       fragment.appendChild(row);
     }
 
-    mainTimeout = setTimeout(chunk);
+    timeout_table_add_new_data = setTimeout(chunk);
   })();
 }
 function get_cur_table() {
@@ -510,58 +512,102 @@ function table_add_new_data_wrap(data) {
   
   current_table.style.removeProperty("display");
   const body = current_table.querySelector("tbody");
-  console.time("JSONparse");
-  data = JSON.parse(data);
-  console.timeEnd("JSONparse");
+
   setTimeout(() => table_add_new_data(body, data));
 }
 
-xrequest.onprogress = e => {
-  let contentLength;
-  if (e.lengthComputable) {
-    contentLength = e.total;
-  } else {
-    contentLength = parseInt(e.target.getResponseHeader('Content-Length-Full'));
-  }
-  update_progress(e.loaded, contentLength, true);
-};
 
-xrequest.onreadystatechange = () => {
-  if (xrequest.readyState != 4) return;
-  if (xrequest.status == 422) {
-    TABLE_CONTAINER.style.removeProperty("display");
+const TopRequest = new class extends XMLHttpRequest {
+  constructor() {
+    super();
+
+    this.onprogress = this._onprogress;
+    this.onload = this._onload;
+    this.current_query = "";
+  }
+  get_new_data(query) {
+    this.abort();
+    update_progress_bar(0, 1);
+
+    this.current_query = query;
+    const post_endpoint = POSTS[SELECT_BOSS.value] ?? TOP_POST;
+    
+    this.open("POST", post_endpoint);
+    this.setRequestHeader("Content-Type", "application/json");
+    console.time("TopRequest | Response");
+    this.send(query);
+  }
+  _onprogress(e) {
+    const contentLength = e.lengthComputable ? e.total : this._get_full_length();
+    update_progress_bar(e.loaded, contentLength, true);
+  }
+  _get_full_length() {
+    return parseInt(this.getResponseHeader('Content-Length-Full'));
+  }
+  _onload() {
+    console.timeEnd("TopRequest | Response");
     LOADING_INFO_PANEL.style.display = "none";
-    return;
-  }
-  if (xrequest.status != 200) return;
 
-  table_add_new_data_wrap(xrequest.response);
+    if (this.status == 500) this.show_error("Server error!"); 
+  
+    const not_json = this.getResponseHeader("content-type") != "application/json";
+    if (not_json) return this.show_error("Server error!");
+  
+    const data_parsed = this.response_json();
+    const current_query = make_query();
+    
+    if (data_parsed.length != 0) {
+      if (current_query != this.current_query) return;
+      REQUESTS_CACHE[current_query] = data_parsed;
+      table_add_new_data_wrap(data_parsed);
+      return;
+    }
+  
+    REQUESTS_CACHE[current_query] = [];
+  
+    try {
+      const error_msg = data_parsed.detail[0].msg;
+      return this.show_error(error_msg); 
+    } catch (error) {
+      return this.show_no_data();
+    }
+  }
+  response_json() {
+    console.time("TopRequest | JSONparse");
+    const data_parsed = JSON.parse(this.response);
+    console.timeEnd("TopRequest | JSONparse");
+    return data_parsed;
+  }
+  show_no_data() {
+    SECTION_NO_DATA.style.removeProperty("display");
+  }
+  show_error(error) {
+    SECTION_ON_ERROR.style.removeProperty("display");
+    SECTION_ON_ERROR_DETAILS.textContent = error;
+  }
 }
 
-function query_server(query) {
+function new_state() {
   LOADING_INFO.textContent = "Downloading top:";
   TABLE_CONTAINER.style.display = "none";
+  SECTION_NO_DATA.style.display = "none";
+  SECTION_ON_ERROR.style.display = "none";
   LOADING_INFO_PANEL.style.removeProperty("display");
-  console.timeEnd("query");
-  console.time("query");
-  xrequest.abort();
-  update_progress(0, 1);
-  const post_endpoint = POSTS[SELECT_BOSS.value] ?? TOP_POST;
-  xrequest.open("POST", post_endpoint);
-  xrequest.setRequestHeader("Content-Type", "application/json");
-  xrequest.send(query);
-}
-
-function fetch_data() {
+  
   const query = make_query();
-  console.log(query);
-  const data = CACHE[query];
-  data ? table_add_new_data_wrap(data) : query_server(query);
+  const data = REQUESTS_CACHE[query];
+  data ? table_add_new_data_wrap(data) : TopRequest.get_new_data(query);
 }
 
-function search_changed() {
-  const __diff = heroic_toggled() ? 'H' : "N";
-  const title = `UwU Logs - Top - ${SELECT_BOSS.value} - ${SELECT_SIZE.value}${__diff}`;
+function fetch_column(event) {
+  SORT_VARS.column = event.target;
+  new_state();
+}
+
+function push_new_state() {
+  const difficulty = heroic_toggled() ? 'H' : "N";
+  const mode = `${SELECT_SIZE.value}${difficulty}`;
+  const title = `UwU Logs - Top - ${SELECT_BOSS.value} - ${mode}`;
   document.title = title;
 
   const parsed = {
@@ -578,9 +624,14 @@ function search_changed() {
   const new_params = new URLSearchParams(parsed).toString();
   const url = `?${new_params}`;
   history.pushState(parsed, title, url);
-
-  fetch_data();
 }
+
+function state_changed() {
+  push_new_state();
+  new_state();
+}
+
+///////////////////////////////
 
 function find_value_index(select, option_name) {
   for (const e of select.children) {
@@ -608,29 +659,65 @@ function find_select_index(select, value) {
   return find_value_index(select, value) ?? get_default_index(select);
 }
 
-function local_storage_key(elm) {
-  return LOCAL_STORAGE_KEYS[elm.id]
-}
-function local_storage_get(elm) {
-  const key = local_storage_key(elm);
-  return localStorage.getItem(key);
-}
-function local_storage_set(elm, value) {
-  const key = local_storage_key(elm);
-  return localStorage.setItem(key, value);
+function element_init(elm) {
+  switch (elm) {
+    case SELECT_RAID:
+      return on_change_instance();
+    case SELECT_CLASS:
+      return on_change_class();
+  }
 }
 
-function fetch_column(event) {
-  SORT_VARS.column = event.target;
-  fetch_data();
+function element_set_value(elm, value) {
+  if (elm.nodeName == "INPUT") {
+    elm.checked = value != 0;
+  } else if (elm.nodeName == "SELECT") {
+    elm.selectedIndex = find_select_index(elm, value);
+    element_init(elm);
+  } else {
+    console.error("! Wrong element type:", elm, value);
+  }
 }
 
+function init_from_query(search_params) {
+  for (const key in INTERACTABLES) {
+    const elm = INTERACTABLES[key];
+    const value = search_params.get(key);
+    element_set_value(elm, value);
+  }
+}
+function init_from_localstorage() {
+  for (const key in INTERACTABLES) {
+    const elm = INTERACTABLES[key];
+    const value = LOCAL_STORAGE.get(elm);
+    element_set_value(elm, value);
+  }
+}
+
+function add_toggle_functions(toggle, callback) {
+  toggle.addEventListener('change', () => {
+    LOCAL_STORAGE.set(toggle, toggle.checked);
+    callback();
+  });
+}
+function init_other_elements() {
+  const show_total = LOCAL_STORAGE.get(TOGGLE_TOTAL_DAMAGE);
+  TOGGLE_TOTAL_DAMAGE.checked = show_total == "true" ? true : show_total == "false" ? false : is_landscape.matches;
+  TOGGLE_USEFUL_DAMAGE.checked = LOCAL_STORAGE.get(TOGGLE_USEFUL_DAMAGE) != "false";
+  TOGGLE_LIMIT.checked = LOCAL_STORAGE.get(TOGGLE_LIMIT) != "false";
+
+  add_toggle_functions(TOGGLE_TOTAL_DAMAGE, () => TOGGLE_COLUMNS.total_columns());
+  add_toggle_functions(TOGGLE_USEFUL_DAMAGE, () => TOGGLE_COLUMNS.useful_columns());
+  add_toggle_functions(TOGGLE_LIMIT, new_state);
+}
+
+///////////////////////////////
 
 function new_option(value, index) {
-  const _option = document.createElement('option');
-  _option.value = index === undefined ? value : index;
-  _option.innerHTML = value;
-  return _option;
+  const option = document.createElement('option');
+  option.value = index === undefined ? value : index;
+  option.innerHTML = value;
+  return option;
 }
 
 function on_change_instance() {
@@ -644,8 +731,13 @@ function on_change_instance() {
     SELECT_CLASS.selectedIndex = 1;
     add_specs();
   }
+
+  LOCAL_STORAGE.set(SELECT_RAID, SELECT_RAID.value);
 }
 
+function set_default_spec() {
+  SELECT_SPEC.selectedIndex = DEFAULT_SPEC[SELECT_CLASS.value];
+}
 function add_specs() {
   SELECT_SPEC.innerHTML = "";
   const class_index = CLASSES[SELECT_CLASS.value];
@@ -664,86 +756,50 @@ function on_change_class(e) {
   }
 
   add_specs();
+
+  if (!e) return;
+  LOCAL_STORAGE.set(SELECT_CLASS, SELECT_CLASS.value);
 }
 
-function set_default_spec() {
-  SELECT_SPEC.selectedIndex = DEFAULT_SPEC[SELECT_CLASS.value];
-}
-function check_spec() {
+function on_change_spec() {
   if (points_selected() && SELECT_SPEC.value == -1) {
     SELECT_SPEC.selectedIndex = DEFAULT_SPEC[SELECT_CLASS.value];
   }
+  LOCAL_STORAGE.set(SELECT_SPEC, SELECT_SPEC.value);
 }
 
 function set_new_server_default() {
-  localStorage.setItem('top_server', SELECT_SERVER.value);
+  LOCAL_STORAGE.set(SELECT_SERVER, SELECT_SERVER.value);
 }
 
 function add_extra_function() {
   SELECT_RAID.addEventListener('change', on_change_instance);
-  SELECT_CLASS.addEventListener('change', add_specs);
-  SELECT_SPEC.addEventListener('change', check_spec);
+  SELECT_CLASS.addEventListener('change', on_change_class);
+  SELECT_SPEC.addEventListener('change', on_change_spec);
   SELECT_SERVER.addEventListener('change', set_new_server_default);
 }
+
 function add_refresh_on_change() {
   for (const elm of Object.values(INTERACTABLES)) {
-    elm.addEventListener('change', search_changed);
+    elm.addEventListener('change', state_changed);
   }
 }
-function add_toggle_functions(toggle, callback) {
-  toggle.addEventListener('change', () => {
-    local_storage_set(toggle, toggle.checked);
-    callback();
-  });
-}
-
-function parse_custom() {
-  TOGGLE_TOTAL_DAMAGE.checked = local_storage_get(TOGGLE_TOTAL_DAMAGE) == "false" ? false : is_landscape.matches;
-  TOGGLE_USEFUL_DAMAGE.checked = local_storage_get(TOGGLE_USEFUL_DAMAGE) == "false" ? false : true;
-  TOGGLE_LIMIT.checked = local_storage_get(TOGGLE_LIMIT) == "false" ? false : true;
-  
-  const _server = local_storage_get(SELECT_SERVER) || "Lordaeron";
-  SELECT_SERVER.selectedIndex = find_value_index(SELECT_SERVER, _server);
-}
-
 
 function init() {
   Object.keys(BOSSES).forEach(name => SELECT_RAID.appendChild(new_option(name)));
   CLASSES.forEach((name, i) => SELECT_CLASS.appendChild(new_option(name, i)));
   
-  console.log(window.location.search);
-  const currentParams = new URLSearchParams(window.location.search);
-  console.log(currentParams);
-  if (window.location.search == "") {
-    console.log("currentParams empty");
-  } else {
-    console.log("currentParams");
-  }
+  const search_params = new URLSearchParams(window.location.search);
+  search_params.size ? init_from_query(search_params) : init_from_localstorage();
 
-  for (const key in INTERACTABLES) {
-    const value = currentParams.get(key);
-    const elm = INTERACTABLES[key];
-    console.log(key, value, elm);
-    if (elm.nodeName == "INPUT") {
-      elm.checked = value == 1;
-    } else if (elm.nodeName == "SELECT") {
-      elm.selectedIndex = find_select_index(elm, value);
-    } else {
-      console.log("! Wrong element type:", elm, value);
-    }
-  }
-  
-  on_change_instance();
-  on_change_class();
+  init_other_elements();
 
   add_extra_function();
   add_refresh_on_change();
 
-  add_toggle_functions(TOGGLE_TOTAL_DAMAGE, toggle_total_columns);
-  add_toggle_functions(TOGGLE_USEFUL_DAMAGE, toggle_useful_columns);
-  add_toggle_functions(TOGGLE_LIMIT, fetch_data);
-
-  search_changed();
+  state_changed();
+  console.log(SELECT_SPEC);
+  
   document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', fetch_column));
 }
 
