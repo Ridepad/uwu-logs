@@ -35,7 +35,7 @@ th {
 th.sortable {
   cursor: pointer;
 }
-.table-auras::before {
+.table-auras::after {
   content: attr(data-short);
 }
 @media (orientation: landscape) {
@@ -45,7 +45,7 @@ th.sortable {
   .table-auras {
     min-width: 2rem;
   }
-  .table-auras::before {
+  .table-auras::after {
     content: attr(data-full);
   }
 }
