@@ -35,12 +35,18 @@ th {
 th.sortable {
   cursor: pointer;
 }
+.table-auras::before {
+  content: attr(data-short);
+}
 @media (orientation: landscape) {
   th {
     top: calc(var(--nav-height) + 6rem + var(--padding-top) * 2);
   }
   .table-auras {
     min-width: 2rem;
+  }
+  .table-auras::before {
+    content: attr(data-full);
   }
 }
 

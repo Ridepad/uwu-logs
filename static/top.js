@@ -705,15 +705,6 @@ function parse_custom() {
   SELECT_SERVER.selectedIndex = find_value_index(SELECT_SERVER, _server);
 }
 
-function shorten_aura_column_names() {
-  if (is_landscape.matches) return;
-
-  Array.from(document.querySelectorAll("thead .table-auras")).forEach(th => {
-    th.textContent = th.textContent.charAt(0);
-  });
-}
-
-
 
 function init() {
   Object.keys(BOSSES).forEach(name => SELECT_RAID.appendChild(new_option(name)));
@@ -740,8 +731,6 @@ function init() {
       console.log("! Wrong element type:", elm, value);
     }
   }
-
-  shorten_aura_column_names();
   
   on_change_instance();
   on_change_class();
