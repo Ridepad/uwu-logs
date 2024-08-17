@@ -8,19 +8,17 @@ For testing, run it when needed manually.
 
 import itertools
 import os
+import sys
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from time import perf_counter
 
+import api_7z
+import api_top_db_v2
 import logs_calendar
 import logs_top
-import logs_top_db
-import api_7z
-from constants import (
-    DEFAULT_SERVER_NAME,
-    TOP_FILE_NAME,
-)
-from c_path import Directories
+from constants import DEFAULT_SERVER_NAME
+from c_path import Directories, FileNames
 from h_debug import Loggers, get_ms_str
 from h_other import get_report_name_info
 
@@ -65,14 +63,14 @@ def add_new_top_data(server, reports):
 
     _data = defaultdict(list)
     for report_id in reports:
-        top_file = Directories.logs.joinpath(report_id, TOP_FILE_NAME)
+        top_file = Directories.logs.joinpath(report_id, FileNames.logs_top)
         top_data = top_file._json()
         for boss_name, modes in top_data.items():
             for mode, data in modes.items():
-                table_name = logs_top_db.get_table_name(boss_name, mode)
+                table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
                 _data[table_name].extend(data)
 
-    logs_top_db.add_new_entries_wrap(server, _data)
+    api_top_db_v2.TopDB(server).add_new_entries_wrap(_data)
     
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Saved top | {server}')
 
@@ -80,37 +78,42 @@ def group_reports_by_server(new_logs):
     new_logs = sorted(new_logs, key=_report_server)
     return itertools.groupby(new_logs, key=_report_server)
 
+def _make_report_top_wrap(report_id: str):
+    done = logs_top.make_report_top_wrap(report_id)
+    return report_id, done
 
-def main_sequential(new_logs):
-    for report_id in new_logs:
-        logs_top.make_report_top_wrap(report_id)
-
-    # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs(new_logs)
+def make_top_data(new_logs: list[str], processes: int=1):
+    if processes > 1:
+        with ProcessPoolExecutor(max_workers=processes) as executor:
+            done_data = executor.map(_make_report_top_wrap, new_logs)
+    else:
+        done_data = [
+            _make_report_top_wrap(report_id)
+            for report_id in new_logs
+        ]
     
-    for server, reports in group_reports_by_server(new_logs):
-        add_new_top_data(server, reports)
-    
-    for report_id in new_logs:
-        save_raw_logs(report_id)
+    for report_id, done in done_data:
+        if done:
+            continue
+        
+        LOGGER_UPLOADS.error(f'{report_id} | Top error')
+        
+        try:
+            new_logs.remove(report_id)
+        except Exception:
+            pass
 
+def add_to_archives(new_logs: list[str], processes: int=1):
+    api_7z.SevenZip().download()
 
-def main_proccess_pool(new_logs):
-    MAX_CPU = max(os.cpu_count() - 1, 1)
+    if processes > 1:
+        with ProcessPoolExecutor(max_workers=processes) as executor:
+            executor.map(save_raw_logs, new_logs)
+    else:
+        for report_id in new_logs:
+            save_raw_logs(report_id)
 
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(logs_top.make_report_top_wrap, new_logs)
-
-    # needs player and encounter data, thats why after logs top
-    logs_calendar.add_new_logs(new_logs)
-    
-    for server, reports in group_reports_by_server(new_logs):
-        add_new_top_data(server, reports)
-    
-    with ProcessPoolExecutor(max_workers=MAX_CPU) as executor:
-        executor.map(save_raw_logs, new_logs)
-
-def main():
+def main(multiprocessing=True):
     if not Directories.pending_archive.is_dir():
         return
     
@@ -122,11 +125,20 @@ def main():
     if not NEW_LOGS:
         return
 
-    main_proccess_pool(NEW_LOGS)
-    # main_sequential(NEW_LOGS)
+    if multiprocessing:
+        MAX_CPU = max(os.cpu_count() - 1, 1)
+    else:
+        MAX_CPU = 1
 
-    api_7z.SevenZip().download()
+    make_top_data(NEW_LOGS, MAX_CPU)
 
+    # needs player and encounter data, thats why after logs top
+    logs_calendar.add_new_logs(NEW_LOGS)
+
+    for server, reports in group_reports_by_server(NEW_LOGS):
+        add_new_top_data(server, reports)
+        
+    add_to_archives(NEW_LOGS, MAX_CPU)
 
     for report_id in NEW_LOGS:
         tz_path = Directories.pending_archive / f"{report_id}.timezone"
@@ -134,10 +146,11 @@ def main():
             tz_path.unlink()
 
 def main_wrap():
+    no_debug = "--debug" not in sys.argv
     pc = perf_counter()
     try:
         LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto start')
-        main()
+        main(multiprocessing=no_debug)
         LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto finish')
     except Exception:
         LOGGER_UPLOADS.exception(f'{get_ms_str(pc)} | Auto error')
