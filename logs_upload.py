@@ -888,10 +888,11 @@ class LogsArchive(LogsArchiveParser):
             LOGGER_UPLOADS.debug(f"/ is_fully_proccessed self.new_server")
             return False
 
-        # if not self.prev_info.get("slices"):
+        if not self.prev_info.get("slices"):
         #     self.finish(ALREADY_DONE_NONE_FOUND)
-        #     LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info.get('slices')")
+            LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info.get('slices')")
         #     return True
+            return False
         
         slices = self.prev_info.get("slices", [])
         for raid_id in slices:
