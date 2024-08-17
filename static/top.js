@@ -497,8 +497,9 @@ function get_cur_table() {
 }
 function hide_other_tables(current_table) {
   TABLES.forEach(t => {
-    if (t.id == current_table.id) return;
-    t.style.display = "none";
+    if (t.id != current_table.id) {
+      t.style.display = "none";
+    }
   });
 }
 function table_add_new_data_wrap(data) {
