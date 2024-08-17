@@ -876,20 +876,25 @@ class LogsArchive(LogsArchiveParser):
 
     @running_time
     def is_fully_proccessed(self):
-        if self.forced or not self.prev_info:
-            LOGGER_UPLOADS.debug(f"/ is_fully_proccessed self.forced or not self.prev_info")
+        if self.forced:
+            LOGGER_UPLOADS.debug(f"/ is_fully_proccessed self.forced")
+            return False
+        
+        if not self.prev_info:
+            LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info")
             return False
         
         if self.is_new_server():
             LOGGER_UPLOADS.debug(f"/ is_fully_proccessed self.new_server")
             return False
 
-        if not self.prev_info.get("slices"):
-            self.finish(ALREADY_DONE_NONE_FOUND)
-            LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info.get('slices')")
-            return True
+        # if not self.prev_info.get("slices"):
+        #     self.finish(ALREADY_DONE_NONE_FOUND)
+        #     LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info.get('slices')")
+        #     return True
         
-        for raid_id in self.prev_info["slices"]:
+        slices = self.prev_info.get("slices", [])
+        for raid_id in slices:
             if not is_fully_processed(raid_id):
                 LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not is_fully_processed {raid_id}")
                 return False
@@ -981,3 +986,11 @@ class NewUpload:
 
         *words, ext = re.findall('([A-Za-z0-9]+)', file_name)
         return f"{'_'.join(words)}.{ext}"
+
+def main():
+    q = is_fully_processed("24-08-04--19-28--Etch--Whitemane-Frostmourne")
+    print(q)
+
+
+if __name__ == "__main__":
+    main()
