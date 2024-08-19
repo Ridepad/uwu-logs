@@ -21,6 +21,11 @@ const TOTAL = {
   "heal": "heal_total",
 }
 const IGNORED_ENCOUNTER_MODES = ["TBD", "All"];
+const IGNORED_ENCOUNTERS = [
+  "Custom Slice",
+  "Gunship",
+  "Valithria Dreamwalker",
+];
 
 function add_style(to_show, to_hide) {
   const style = document.createElement("style");
@@ -105,7 +110,7 @@ function make_rank_data() {
 }
 function send_ranks_request() {
   const fight_name = document.getElementById("slice-name").textContent;
-  if (fight_name == "Custom Slice") return;
+  if (IGNORED_ENCOUNTERS.includes(fight_name)) return;
 
   const fight_mode = document.getElementById("slice-tries").textContent.split(" ")[0];
   if (IGNORED_ENCOUNTER_MODES.includes(fight_mode)) return;
