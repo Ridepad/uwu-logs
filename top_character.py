@@ -7,11 +7,10 @@ from pydantic import (
     field_validator,
 )
 
+from api_top_db_v2 import TopDB
 from c_path import Directories
 from h_debug import running_time
-from api_top_db_v2 import (
-    TopDB,
-)
+from h_server_fix import server_cnv
 from top_player_data import PlayerDataServer
 from top_points import PointsServer
 
@@ -40,7 +39,7 @@ class CharacterValidation(BaseModel):
     @field_validator('server')
     @classmethod
     def validate_server(cls, server: str):
-        server = server.lower().title().replace(" ", "-")
+        server = server_cnv(server)
         servers = Directories.top.files_stems()
         if server not in servers:
             _list = ', '.join(servers)
