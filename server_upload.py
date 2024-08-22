@@ -8,10 +8,7 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from h_debug import Loggers
 from logs_upload import LogsArchive, NewUpload, UploadChunk
-
-LOGGER_UPLOADS = Loggers.uploads
 
 app = FastAPI()
 TEMPLATES = Jinja2Templates(directory="templates")
