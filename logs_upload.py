@@ -914,7 +914,8 @@ class NewUpload:
         self.ip = ip
         self.upload_id = 0
         self.chunks: dict[int, bytes] = {}
-    
+        self.cleaner_timer = threading.Timer(900.0, self.chunks.clear)
+
     def add_chunk(self, chunk: UploadChunk):
         if self.upload_id != chunk.upload_id:
             self.chunks.clear()
@@ -953,7 +954,8 @@ class NewUpload:
                     f.write(chunk)
         finally:
             self.chunks.clear()
-     
+            self.cleaner_timer.cancel()
+
         return LogsArchive(archive_save_path, upload_data=upload_data)
 
     def _correct_chunks(self, file_data):
