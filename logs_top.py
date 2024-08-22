@@ -59,18 +59,7 @@ def find_kill(segments):
 
 
 class Top(logs_main.THE_LOGS):
-    def _make_report_top(self):
-        report_top = defaultdict(dict)
-        for boss_name, boss_segments in self.SEGMENTS.items():
-            for kill_segment in find_kill(boss_segments):
-                diff = kill_segment['diff']
-                s = kill_segment["start"]
-                f = kill_segment["end"]
-                report_top[boss_name][diff] = self.make_boss_top(s, f, boss_name)
-        return report_top
-    
     def make_report_top(self, rewrite=False):
-        # top_path = self.relative_path(TOP_FILE_NAME)
         top_path = Directories.logs / self.NAME / TOP_FILE_NAME
         if not rewrite and top_path.is_file():
             return
@@ -86,6 +75,17 @@ class Top(logs_main.THE_LOGS):
 
         top_path.json_write(report_top)
         return report_top
+
+    def _make_report_top(self):
+        report_top = defaultdict(dict)
+        for boss_name, boss_segments in self.SEGMENTS.items():
+            for kill_segment in find_kill(boss_segments):
+                diff = kill_segment['diff']
+                s = kill_segment["start"]
+                f = kill_segment["end"]
+                report_top[boss_name][diff] = self.make_boss_top(s, f, boss_name)
+        return report_top
+    
 
     def get_vali_heal(self, s, f):
         data = defaultdict(lambda: defaultdict(int))
@@ -157,7 +157,8 @@ class Top(logs_main.THE_LOGS):
 def make_report_top_wrap(report_name, rewrite=False):
     try:
         t = Top(report_name)
-        return t.make_report_top(rewrite=rewrite)
+        t.make_report_top(rewrite=rewrite)
+        return True
     except Exception:
         LOGGER_REPORTS.exception(report_name)
 
