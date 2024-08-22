@@ -212,13 +212,20 @@ class Upload extends XMLHttpRequest {
     
     setTimeout(() => this.send_new_chunk_wrap(), 1000);
   }
+  get_error_msg() {
+    const t = this.getResponseHeader("content-type");
+    if (t == "application/json") {
+      const response_json = JSON.parse(this.response);
+      return response_json.detail;
+    }
+    return "Server encountered unknown error!  Why can't it just work?";
+  }
   upload_error() {
-    console.log('upload_error');
-    const response_json = JSON.parse(this.response);
-    console.log(response_json);
+    const error = this.get_error_msg();
+    console.log("upload_error", error);
     PROGRESS_BAR.classList.add("error");
     PROGRESS_BAR_PERCENTAGE.textContent = "Server error!";
-    new_status_msg(response_json.detail);
+    new_status_msg(error);
   }
   uploaded_bytes() {
     const t = this.current_chunk * CHUNK_SIZE;
