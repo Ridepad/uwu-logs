@@ -1,5 +1,8 @@
 import re
 
+from constants import SERVERS
+SERVERS = set(SERVERS.values())
+
 class ServerID:
     __slots__ = "name", "re_string"
 
@@ -44,6 +47,8 @@ SERVERS_OTHER = [
 def server_cnv(server: str):
     if not server:
         return ""
+    if server in SERVERS:
+        return server
     
     _server_l = server.lower()
     for _server in SERVERS_OTHER:
