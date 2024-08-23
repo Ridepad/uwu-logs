@@ -70,7 +70,7 @@ def add_new_top_data(server, reports):
                 table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
                 _data[table_name].extend(data)
 
-    api_top_db_v2.TopDB(server).add_new_entries_wrap(_data)
+    api_top_db_v2.TopDB(server, new=True).add_new_entries_wrap(_data)
     
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Saved top | {server}')
 
