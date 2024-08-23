@@ -63,7 +63,7 @@ class Phase:
 class Tier_10:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Deathbringer Saurfang"),
-        Encounter("The Lich King"),
+        # Encounter("The Lich King"),
         # Encounter("Festergut"),
         # Encounter("Blood-Queen Lana'thel"),
         # Encounter("Valithria Dreamwalker"),
