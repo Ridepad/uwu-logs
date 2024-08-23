@@ -48,7 +48,7 @@ class Encounter:
         FROM (
             SELECT {Columns.GUID}, {Columns.NAME}, {Columns.SPEC}
             FROM [{self.table_name}]
-            ORDER BY {Columns.PLAYER_RAID_ID} DESC
+            ORDER BY {Columns.PLAYER_RAID_ID} ASC
         )
         GROUP BY {Columns.GUID}
         '''
