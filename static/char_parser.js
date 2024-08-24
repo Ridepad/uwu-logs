@@ -200,7 +200,7 @@ export default class Gear {
     this.NAME = to_title(name);
   }
   init() {
-    if (!SERVERS_AVAILABLE_GEAR.includes(SERVERS_AVAILABLE_GEAR)) {
+    if (!SERVERS_AVAILABLE_GEAR.includes(this.SERVER)) {
       console.log(`${this.SERVER} doesn't have gear cache yet.`);
       LOADING_INFO.style.display = "none";
       NO_GEAR_INFO.style.removeProperty("display");
