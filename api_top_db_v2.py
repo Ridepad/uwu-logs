@@ -260,6 +260,7 @@ class TopDB(DB):
         db_path = self.get_top_db_path(server)
         super().__init__(db_path, new)
         self.server = server
+        self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
 
     @staticmethod
     def get_top_db_path(server: str):
@@ -325,42 +326,33 @@ class TopDB(DB):
         """
 
 class TopDBCached(TopDB):
-    access: defaultdict[str, datetime]
-    m_time: defaultdict[str, float]
-    server: str
-
+    access = defaultdict(lambda: defaultdict(datetime.now))
+    m_time = defaultdict(lambda: defaultdict(float))
     cooldown = timedelta(seconds=15)
 
-    def db_was_updated(self, from_function="?"):
+    def db_was_updated(self):
         if self.on_cooldown():
-            # Loggers.top.debug(f">>> {self.server[:10]:10} | {from_function:20} | on_cooldown")
-            return False
-
-        if not self.path.is_file():
+            # Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Cooldown")
             return False
         
         mtime_current = int(self.path.mtime)
-        mtime_cached = self.m_time[self.server]
-        if not mtime_cached:
-            Loggers.top.debug(f"/// {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | New")
-            self.m_time[self.server] = mtime_current
-            return False
+        mtime_cached = self.m_time[self.object_id][self.server]
 
         if mtime_current == mtime_cached:
-            Loggers.top.debug(f"=== {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | Same")
+            Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Same")
             return False
         
-        self.m_time[self.server] = mtime_current
-        Loggers.top.debug(f"+++ {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | Updated")
+        Loggers.top.debug(f"+++ {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Updated")
+        self.m_time[self.object_id][self.server] = mtime_current
         return True
     
     def on_cooldown(self):
-        last_check = self.access[self.server]
+        last_check = self.access[self.object_id][self.server]
         now = datetime.now()
         if last_check > now:
             return True
         
-        self.access[self.server] = now + self.cooldown
+        self.access[self.object_id][self.server] = now + self.cooldown
         return False
 
 
