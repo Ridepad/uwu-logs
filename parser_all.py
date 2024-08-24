@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 from threading import Thread
 
-import logs_item_parser
-import logs_ench_parser
+import parser_item
+import parser_ench
 from h_debug import Loggers
 from h_other import requests_get
 
@@ -121,7 +121,7 @@ class Item(Loader):
         if DEBUG:
             p = PATH / CACHE_DIRECTORY_NAME / f"{self.type}_test" / f"{self.id}.{self.extension}"
             return json.loads(p.read_text())
-        return logs_item_parser.parse_item(self.id)
+        return parser_item.parse_item(self.id)
 
     def save(self, data):
         self.path.write_text(json.dumps(data))
@@ -135,7 +135,7 @@ class Ench(Loader):
         if DEBUG:
             p = PATH / CACHE_DIRECTORY_NAME / f"{self.type}_test" / f"{self.id}.{self.extension}"
             return json.loads(p.read_text())
-        return logs_ench_parser.get_ench(self.id)
+        return parser_ench.get_ench(self.id)
 
     def save(self, data):
         self.path.write_text(json.dumps(data))
