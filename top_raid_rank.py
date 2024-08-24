@@ -1,6 +1,6 @@
 from bisect import bisect_right
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Union
 
 from pydantic import BaseModel, field_validator
@@ -97,8 +97,6 @@ class RaidRankValidation(BaseModel):
 
 class RaidRank(TopDBCached):
     cache: defaultdict[str, dict[str, dict[int, list[float]]]] = defaultdict(dict)
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
-    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=2)
 
     def __init__(self, model: RaidRankValidation) -> None:
@@ -144,7 +142,7 @@ class RaidRank(TopDBCached):
         }
 
     def _cache(self):
-        if self.db_was_updated(from_function="RaidRank"):
+        if self.db_was_updated():
             server_data = self.cache[self.server] = {}
         else:
             server_data = self.cache[self.server]

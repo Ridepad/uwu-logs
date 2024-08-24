@@ -51,8 +51,6 @@ class PlayerData(dict[str, PlayerInfo]):
 
 class PlayerDataServer(TopDBCached):
     cache: dict[str, PlayerData] = {}
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
-    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=2)
     
     def __init__(self, server: str) -> None:
@@ -60,7 +58,7 @@ class PlayerDataServer(TopDBCached):
         self.phase = get_server_phase(server)
 
     def player_info(self, name_or_guid: str):
-        if self.server not in self.cache or self.db_was_updated(from_function="PlayerDataServer"):
+        if self.db_was_updated() or self.server not in self.cache:
             self.cache[self.server] = self._renew_data()
         return self.cache[self.server][name_or_guid]
 

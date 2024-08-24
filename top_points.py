@@ -1,7 +1,6 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Union
 
 from pydantic import BaseModel, field_validator
@@ -304,15 +303,13 @@ class ServerSpecData(dict[str, BossDataBySpec]):
 
 class PointsServer(TopDBCached):
     cache: dict[str, dict[int, ServerSpecData]] = defaultdict(dict)
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
-    m_time: defaultdict[str, float] = defaultdict(float)
     
     def get_spec_data(self, spec_i):
         if spec_i not in range(40):
             raise ValueError("Wrong spec index")
         
         server_data = self.cache[self.server]
-        if self.db_was_updated(from_function="PointsServer"):
+        if self.db_was_updated():
             server_data = self.cache[self.server] = {}
         
         if spec_i not in server_data:
@@ -373,8 +370,6 @@ class PointsValidation(BaseModel):
 
 class Points(TopDBCached):
     cache: defaultdict[str, dict[int, TopDataCompressed]] = defaultdict(dict)
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
-    m_time: defaultdict[str, float] = defaultdict(float)
 
     def __init__(self, model: PointsValidation) -> None:
         super().__init__(model.server)
@@ -383,14 +378,13 @@ class Points(TopDBCached):
     @running_time
     def parse_top_points(self):
         server_data = self.cache[self.server]
-        if self.db_was_updated(from_function="Points"):
+        if self.db_was_updated():
             server_data = self.cache[self.server] = {}
-        elif self.spec_i in server_data:
-            return server_data[self.spec_i]
+        
+        if self.spec_i not in server_data:
+            server_data[self.spec_i] = self._new_compressed_data()
             
-        data = self._new_compressed_data()
-        server_data[self.spec_i] = data
-        return data
+        return server_data[self.spec_i]
     
     def _new_compressed_data(self):
         a = self._make_top()

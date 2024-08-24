@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import numpy
 from pydantic import BaseModel, field_validator
@@ -112,8 +112,6 @@ class PveStatsValidation(BaseModel):
 
 class PveStats(TopDBCached):
     cache = defaultdict(dict)
-    access: defaultdict[str, datetime] = defaultdict(datetime.now)
-    m_time: defaultdict[str, float] = defaultdict(float)
     cooldown = timedelta(minutes=10)
 
     def __init__(self, model: PveStatsValidation) -> None:
@@ -123,14 +121,13 @@ class PveStats(TopDBCached):
 
     def get_data(self):
         server_data = self.cache[self.server]
-        if self.db_was_updated(from_function="PveStats"):
+        if self.db_was_updated():
             server_data = self.cache[self.server] = {}
-        elif self.table_name in server_data:
-            return server_data[self.table_name]
+        
+        if self.table_name not in server_data:
+            server_data[self.table_name] = self._renew_data()
 
-        data = self._renew_data()
-        server_data[self.table_name] = data
-        return data
+        return server_data[self.table_name]
 
     def _renew_data(self):
         query = self.encounter.query_stats()
