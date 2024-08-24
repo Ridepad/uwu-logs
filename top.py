@@ -1,6 +1,6 @@
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import islice
 from typing import Union
 
@@ -142,6 +142,7 @@ class Top(TopDBCached):
     cache: dict[str, TopDataCompressed] = {}
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
     m_time: defaultdict[str, float] = defaultdict(float)
+    cooldown = timedelta(seconds=15)
 
     def __init__(self, model: TopValidation) -> None:
         super().__init__(model.server)
@@ -152,7 +153,7 @@ class Top(TopDBCached):
         self.best_only = model.best_only
 
     def get_data(self):
-        if self.json_query not in self.cache or self.db_was_updated():
+        if self.json_query not in self.cache or self.db_was_updated(from_function="Top"):
             self._renew_data()
         return self.cache[self.json_query]
     

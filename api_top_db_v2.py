@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TypedDict
 
-from c_path import Directories, StrEnum
+from c_path import Directories, PathExt, StrEnum
 from h_debug import running_time, Loggers
 from h_other import get_report_name_info
 
@@ -325,30 +325,33 @@ class TopDB(DB):
         """
 
 class TopDBCached(TopDB):
-    cache: defaultdict[str, dict]
     access: defaultdict[str, datetime]
     m_time: defaultdict[str, float]
     server: str
 
     cooldown = timedelta(seconds=15)
 
-    def db_was_updated(self):
+    def db_was_updated(self, from_function="?"):
         if self.on_cooldown():
+            # Loggers.top.debug(f">>> {self.server[:10]:10} | {from_function:20} | on_cooldown")
             return False
 
-        if not self.db_path.is_file():
+        if not self.path.is_file():
             return False
         
-        mtime_current = int(self.db_path.mtime)
+        mtime_current = int(self.path.mtime)
         mtime_cached = self.m_time[self.server]
         if not mtime_cached:
+            Loggers.top.debug(f"/// {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | New")
             self.m_time[self.server] = mtime_current
             return False
 
         if mtime_current == mtime_cached:
+            Loggers.top.debug(f"=== {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | Same")
             return False
         
         self.m_time[self.server] = mtime_current
+        Loggers.top.debug(f"+++ {self.server[:10]:10} | {from_function:20} | {mtime_cached:10} | {mtime_current:10} | Updated")
         return True
     
     def on_cooldown(self):

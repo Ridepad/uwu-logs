@@ -114,7 +114,7 @@ class PveStats(TopDBCached):
     cache = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
     m_time: defaultdict[str, float] = defaultdict(float)
-    cooldown = timedelta(hours=1)
+    cooldown = timedelta(minutes=10)
 
     def __init__(self, model: PveStatsValidation) -> None:
         super().__init__(model.server)
@@ -123,7 +123,7 @@ class PveStats(TopDBCached):
 
     def get_data(self):
         server_data = self.cache[self.server]
-        if self.db_was_updated():
+        if self.db_was_updated(from_function="PveStats"):
             server_data = self.cache[self.server] = {}
         elif self.table_name in server_data:
             return server_data[self.table_name]

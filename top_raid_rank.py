@@ -99,7 +99,7 @@ class RaidRank(TopDBCached):
     cache: defaultdict[str, dict[str, dict[int, list[float]]]] = defaultdict(dict)
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
     m_time: defaultdict[str, float] = defaultdict(float)
-    cooldown = timedelta(minutes=15)
+    cooldown = timedelta(minutes=2)
 
     def __init__(self, model: RaidRankValidation) -> None:
         super().__init__(model.server)
@@ -144,7 +144,7 @@ class RaidRank(TopDBCached):
         }
 
     def _cache(self):
-        if self.db_was_updated():
+        if self.db_was_updated(from_function="RaidRank"):
             server_data = self.cache[self.server] = {}
         else:
             server_data = self.cache[self.server]

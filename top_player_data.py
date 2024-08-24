@@ -3,12 +3,14 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from api_top_db_v2 import TopDBCached
-from c_player_classes import CLASSES_LIST
+# from c_player_classes import CLASSES_LIST
+from c_player_classes import CLASSES_LIST, SPECS_LIST
 from c_server_phase import get_server_phase
 from h_debug import running_time
 
 
 class PlayerInfo:
+    # __slots__ = "name", "spec", "class_i"
     __slots__ = "guid", "name", "spec", "class_i"
     def __init__(
         self,
@@ -37,8 +39,8 @@ class PlayerData(dict[str, PlayerInfo]):
         return v
 
     def has_latest_info(self, guid, name, spec):
-        _current = self.get(guid)
-        return _current and _current.name == name and _current.spec == spec
+        _current = self.get(name)
+        return _current and _current.guid == guid and _current.spec == spec
 
     def add_new_data(self, boss_rows: tuple[str]):
         for guid, name, spec in boss_rows:
@@ -51,14 +53,14 @@ class PlayerDataServer(TopDBCached):
     cache: dict[str, PlayerData] = {}
     access: defaultdict[str, datetime] = defaultdict(datetime.now)
     m_time: defaultdict[str, float] = defaultdict(float)
-    cooldown = timedelta(minutes=30)
+    cooldown = timedelta(minutes=2)
     
     def __init__(self, server: str) -> None:
         super().__init__(server)
         self.phase = get_server_phase(server)
 
     def player_info(self, name_or_guid: str):
-        if self.server not in self.cache or self.db_was_updated():
+        if self.server not in self.cache or self.db_was_updated(from_function="PlayerDataServer"):
             self.cache[self.server] = self._renew_data()
         return self.cache[self.server][name_or_guid]
 
@@ -77,12 +79,9 @@ class PlayerDataServer(TopDBCached):
 
 def main():
     q = PlayerDataServer("Lordaeron")
-    z = q.player_info("Nomadra")
-    print(z)
-    z = q.player_info("Safiyah")
-    print(z)
-    z = q.player_info("Meownya")
-    print(z)
+    print(q.player_info("Stefaka"))
+    print(q.player_info("Safiyah"))
+    print(q.player_info("Meownya"))
 
 
 if __name__ == "__main__":
