@@ -38,6 +38,11 @@ const DEFAULT_SELECTOR = {
   specs: [".name", ".value a"],
   profs: [".name", ".value"],
 };
+const SERVERS_AVAILABLE_GEAR = [
+  "Icecrown",
+  "Lordaeron",
+  "Rising-Gods",
+];
 
 const TIMEOUTS = {};
 function throttle(fn, timeout=50) {
@@ -195,6 +200,13 @@ export default class Gear {
     this.NAME = to_title(name);
   }
   init() {
+    if (!SERVERS_AVAILABLE_GEAR.includes(SERVERS_AVAILABLE_GEAR)) {
+      console.log(`${this.SERVER} doesn't have gear cache yet.`);
+      LOADING_INFO.style.display = "none";
+      NO_GEAR_INFO.style.removeProperty("display");
+      return;
+    }
+    
     const url = get_char_data_url(this.SERVER, this.NAME);
     const loading_timeout = setTimeout(() => {
       GEAR_WRAP.style.display = "none";
