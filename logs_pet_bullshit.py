@@ -1,38 +1,34 @@
 from collections import defaultdict
 from c_bosses import convert_to_fight_name
 
-SPELLS = {
-    "Felhunter": {
-        "19647": "Spell Lock",
-        "19658": "Devour Magic Effect",
-        "48011": "Devour Magic",
-        "54053": "Shadow Bite",
-        "54425": "Improved Felhunter",
-        "57567": "Fel Intelligence"
-    },
-    "Ghoul": {
-        "47468": "Claw",
-        "47481": "Gnaw",
-        "47482": "Leap"
-    },
-    "Water Elemental": {
-        "72898": "Waterbolt",
-    },
-}
-
-
 SPEC_DATA = {
     "Unholy": {
         "spell_id": "50526",
         "pet_name": "Ghoul",
+        "pet_spells": {
+            "47468": "Claw",
+            "47481": "Gnaw",
+            "47482": "Leap",
+        },
     },
     "Affliction": {
         "spell_id": "59164",
         "pet_name": "Felhunter",
+        "pet_spells": {
+            "19647": "Spell Lock",
+            "19658": "Devour Magic Effect",
+            "48011": "Devour Magic",
+            "54053": "Shadow Bite",
+            "54425": "Improved Felhunter",
+            "57567": "Fel Intelligence",
+        },
     },
     "Frost Mage": {
         "spell_id": "44572",
         "pet_name": "Water Elemental",
+        "pet_spells": {
+            "72898": "Waterbolt",
+        },
     },
 }
 
@@ -67,7 +63,7 @@ class PET_BULLSHIT:
         pet_data = SPEC_DATA[player_spec]
         self.spec_spell_id = pet_data["spell_id"]
         self.pet_name = pet_data["pet_name"]
-        self.pet_spell_ids = SPELLS[self.pet_name]
+        self.pet_spell_ids = pet_data["pet_spells"]
 
         self.logs = logs
         self.enc_data = enc_data
