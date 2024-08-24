@@ -44,13 +44,8 @@ class Encounter:
         '''
     def query_players_data(self):
         return f'''
-        SELECT *
-        FROM (
-            SELECT {Columns.GUID}, {Columns.NAME}, {Columns.SPEC}
-            FROM [{self.table_name}]
-            ORDER BY {Columns.PLAYER_RAID_ID} ASC
-        )
-        GROUP BY {Columns.GUID}
+        SELECT {Columns.GUID}, {Columns.NAME}, {Columns.SPEC}
+        FROM [{self.table_name}]
         '''
 
 class Phase:
