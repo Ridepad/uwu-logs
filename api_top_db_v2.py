@@ -164,28 +164,29 @@ def new_db_row(data: TopDict):
         json_string,
     ]
 
-class DB:
-    cursors = {}
 
-    def __init__(self, path, new=False) -> None:
+class Cursors(dict[str, sqlite3.Connection]):
+    def __missing__(self, path: PathExt):
+        Loggers.top.debug(f">>> DB OPEN | {path}")
+        v = self[path] = sqlite3.connect(path)
+        return v
+
+class DB:
+    cursors = Cursors()
+
+    def __init__(self, path: PathExt, new=False) -> None:
         if not new and not path.is_file():
             raise FileNotFoundError
 
-        self.db_path = path
+        self.path = path
 
     @property
     def cursor(self):
         try:
-            return self.__cursor
+            return self._cursor
         except AttributeError:
-            if self.db_path in self.cursors:
-                return self.cursors[self.db_path]
-            
-            Loggers.top.debug(f">>> DB OPEN | {self.db_path}")
-            c = sqlite3.connect(self.db_path)
-            self.__cursor = c
-            self.cursors[self.db_path] = c
-            return c
+            self._cursor = self.cursors[self.path]
+            return self._cursor
     
     @staticmethod
     def get_table_name(boss: str, mode: str):
