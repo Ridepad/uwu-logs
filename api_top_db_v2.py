@@ -332,17 +332,17 @@ class TopDBCached(TopDB):
 
     def db_was_updated(self):
         if self.on_cooldown():
-            # Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Cooldown")
+            # Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Cooldown")
             return False
         
         mtime_current = int(self.path.mtime)
         mtime_cached = self.m_time[self.object_id][self.server]
 
         if mtime_current == mtime_cached:
-            Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Same")
+            Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Same")
             return False
         
-        Loggers.top.debug(f"+++ {self.server[:10]:10} | {self.object_id:20} | {mtime_cached:10} | {mtime_current:10} | Updated")
+        Loggers.top.debug(f"+++ {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Updated")
         self.m_time[self.object_id][self.server] = mtime_current
         return True
     
