@@ -1,19 +1,13 @@
 # Uses regex to parse stats from tooltip of an item from evowow
 # There is better way probably involving databases idk
 
-
 import json
 import re
-import time
-from pathlib import Path
-from threading import Thread
 
-import requests
+from h_other import requests_get
 
-
-PATH = Path(__file__).parent
+URL_DOMAIN = "https://wotlk.evowow.com/"
 HEADERS = {"User-Agent": "ItemParser/1.1; +uwu-logs.xyz"}
-ICON_URL_PREFIX = "https://wotlk.evowow.com/static/images/wow/icons/large"
 STATS_DICT = {
     0: "armor",
     35: "resilience rating",
@@ -36,22 +30,6 @@ STATS_DICT = {
     5: "intellect",
     6: "spirit",
 }
-
-done: dict[str, dict] = {}
-threads: dict[str, Thread] = {}
-
-def requests_get(page_url, headers, timeout=2, attempts=3):
-    for _ in range(attempts):
-        try:
-            page = requests.get(page_url, headers=headers, timeout=timeout, allow_redirects=False)
-            if page.status_code == 200:
-                return page
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
-            time.sleep(2)
-    
-    # LOGGER.error(f"Failed to load page: {page_url}")
-    return None
-
 
 def get_raw_stats(html: str):
     i_start = html.index("tooltip_enus")
@@ -114,7 +92,7 @@ def get_additional_text(html: str):
     ]
 
 def parse_item(id):
-    item_url = f'https://wotlk.evowow.com/?item={id}'
+    item_url = f'{URL_DOMAIN}?item={id}'
     item_raw = requests_get(item_url, HEADERS).text
     item_stats = re.findall('g_items[^{]+({.+?})', item_raw)
     item: dict = json.loads(item_stats[0])
@@ -150,95 +128,3 @@ def parse_item(id):
     if additional_text:
         item["add_text"] = additional_text
     return item
-
-### Used to assure single instance of parser
-
-def wait_for_thread(t: Thread):
-    try:
-        t.start()
-    except RuntimeError:
-        pass
-
-    t.join()
-
-done: set[str] = set()
-def ensure_single_request(f):
-    threads: dict[str, Thread] = {}
-    
-    def parse_and_save_inner(id):
-        print('parse_and_save_inner', id)
-        try:
-            id = str(id)
-        except Exception:
-            return 400
-
-        if id in done:
-            return 200
-        
-        if id not in threads:
-            threads[id] = Thread(target=f, args=(id, ))
-        
-        wait_for_thread(threads[id])
-        if id in done:
-            return 201
-
-        return 500
-    
-    return parse_and_save_inner
-
-@ensure_single_request
-def parse_and_save(id: str):
-    p = (PATH / "cache" / "item" / id).with_suffix(".json")
-    if p.is_file():
-        done.add(id)
-        return True
-    
-    try:
-        data = parse_item(id)
-    except Exception:
-        return False
-    
-    try:
-        p.write_text(json.dumps(data))
-    except Exception:
-        return False
-    
-    done.add(id)
-    return True
-
-def dl_icon(icon_name):
-    url = f"{ICON_URL_PREFIX}/{icon_name}.jpg"
-    return requests_get(url, HEADERS).content
-
-@ensure_single_request
-def save_icon(icon_name: str):
-    p = (PATH / "cache" / "icon" / icon_name).with_suffix(".jpg")
-    if p.is_file():
-        done.add(icon_name)
-        return True
-    
-    try:
-        icon = dl_icon(icon_name)
-    except Exception:
-        return False
-    
-    try:
-        p.write_bytes(icon)
-    except Exception as e:
-        print(e)
-        return False
-    
-    done.add(icon_name)
-    return True
-
-
-def __test():
-    from concurrent.futures import ThreadPoolExecutor
-    
-    # g = ['17723', '17755', '17772', '1787']
-    # with ThreadPoolExecutor(4) as tpe:
-    #     tpe.map(ensure_single_instance, g)
-    q = save_icon("inv_jewelry_necklace_48")
-    print(q)
-if __name__ == "__main__":
-    __test()
