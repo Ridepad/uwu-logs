@@ -402,9 +402,9 @@ class LogsSeparator:
 def get_now_timestamp():
     return datetime.now().strftime(DATE_FORMAT)
 
-def new_upload_folder(ip: str="localhost", timestamp: str=None):
+def new_upload_folder(ip: str="0.0.0.0", timestamp: str=None):
     if not ip or not isinstance(ip, str):
-        ip = "localhost"
+        ip = "0.0.0.0"
     if not timestamp:
         timestamp = get_now_timestamp()
     
