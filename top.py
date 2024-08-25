@@ -149,7 +149,7 @@ class Top(TopDBCached):
 
     def get_data(self):
         if self.db_was_updated():
-            del self.cache[self.server]
+            self.cache[self.server].clear()
         
         server_data = self.cache[self.server]
         if self.json_query not in server_data:

@@ -309,7 +309,7 @@ class PointsServer(TopDBCached):
             raise ValueError("Wrong spec index")
         
         if self.db_was_updated():
-            del self.cache[self.server]
+            self.cache[self.server].clear()
         
         server_data = self.cache[self.server]
         if spec_i not in server_data:
@@ -378,7 +378,7 @@ class Points(TopDBCached):
     @running_time
     def parse_top_points(self):
         if self.db_was_updated():
-            del self.cache[self.server]
+            self.cache[self.server].clear()
         
         server_data = self.cache[self.server]
         if self.spec_i not in server_data:

@@ -143,7 +143,7 @@ class RaidRank(TopDBCached):
 
     def _cache(self):
         if self.db_was_updated():
-            del self.cache[self.server]
+            self.cache[self.server].clear()
         
         server_data = self.cache[self.server]
         if self.table_name not in server_data:
