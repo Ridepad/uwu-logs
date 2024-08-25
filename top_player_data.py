@@ -51,7 +51,7 @@ class PlayerData(dict[str, PlayerInfo]):
 
 class PlayerDataServer(TopDBCached):
     cache: dict[str, PlayerData] = {}
-    cooldown = timedelta(minutes=2)
+    cooldown = timedelta(minutes=15)
     
     def __init__(self, server: str) -> None:
         super().__init__(server)

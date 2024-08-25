@@ -111,7 +111,7 @@ class PveStatsValidation(BaseModel):
         return mode
 
 class PveStats(TopDBCached):
-    cache = defaultdict(dict)
+    cache: defaultdict[str, dict[str, dict[str, dict]]] = defaultdict(dict)
     cooldown = timedelta(minutes=10)
 
     def __init__(self, model: PveStatsValidation) -> None:
@@ -120,10 +120,10 @@ class PveStats(TopDBCached):
         self.table_name = self.encounter.table_name
 
     def get_data(self):
-        server_data = self.cache[self.server]
         if self.db_was_updated():
-            server_data = self.cache[self.server] = {}
+            del self.cache[self.server]
         
+        server_data = self.cache[self.server]
         if self.table_name not in server_data:
             server_data[self.table_name] = self._renew_data()
 
