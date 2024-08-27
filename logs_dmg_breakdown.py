@@ -249,7 +249,6 @@ def _return_dict():
     }
 
 class SourceNumbers(logs_base.THE_LOGS):
-
     def conv_spell_id(self, spell_id: str, source_guid=None):
         self.SPELL_DATA = {}
         spell_id = self.convert_to_main_spell_id(spell_id)
@@ -258,26 +257,6 @@ class SourceNumbers(logs_base.THE_LOGS):
             if source_id != "000000":
                 return f"{spell_id}--{source_id}"
         return spell_id
-
-    def get_spell_data(self, spell_id_full: str):
-        if spell_id_full in self.SPELL_DATA:
-            return self.SPELL_DATA[spell_id_full]
-
-        if '--' in spell_id_full:
-            spell_id, source_guid = spell_id_full.split('--')
-        else:
-            source_guid = None
-            spell_id = spell_id_full
-
-        spell_id_int = int(spell_id)
-        spell_data = dict(self.SPELLS_WITH_ICONS[spell_id_int])
-        spell_data["id"] = spell_id_int
-        if source_guid and source_guid != "000000":
-            pet_name = self.guid_to_name(source_guid)
-            spell_data['name'] = f"{spell_data['name']} ({pet_name})"
-        
-        self.SPELL_DATA[spell_id_full] = spell_data
-        return spell_data
     
     @logs_base.cache_wrap
     def numbers_damage(self, s, f):
@@ -354,14 +333,29 @@ class SourceNumbers(logs_base.THE_LOGS):
             "MISS_DETAILED": misses_detailed,
         }
 
+    def _get_spell_data(self, spell_id: str):
+        source_guid = None
+        if '--' in spell_id:
+            spell_id, source_guid = spell_id.split('--')
+        
+        spell_id_int = abs(int(spell_id))
+        spell_data = self.SPELLS[spell_id_int].to_dict()
+        
+        if source_guid and source_guid != "000000":
+            pet_name = self.guid_to_name(source_guid)
+            spell_data['name'] = f"{spell_data['name']} ({pet_name})"
+
+        return spell_data
+
     def _order_spells(self, rd):
         actual_sum = rd["ACTUAL"]
-        _spells = set(actual_sum) | set(rd["OTHER"]) | set(rd["CASTS"]) | set(rd["MISSES"])
-        _spells = sorted(_spells)
-        _spells = sorted(_spells, key=lambda x: actual_sum.get(x, 0), reverse=True)
+        spell_ids = set(actual_sum) | set(rd["OTHER"]) | set(rd["CASTS"]) | set(rd["MISSES"])
+        spell_ids = sorted(spell_ids)
+        spell_ids = sorted(spell_ids, key=lambda x: actual_sum.get(x, 0), reverse=True)
+        print(spell_ids)
         return {
-            spell_id: self.get_spell_data(spell_id)
-            for spell_id in _spells
+            spell_id: self._get_spell_data(spell_id)
+            for spell_id in spell_ids
         }
 
     def _order_targets(self, all_targets: set[str]):
@@ -451,3 +445,20 @@ class SourceNumbers(logs_base.THE_LOGS):
             casts = self.numbers_cast(s, f)
             self.add_actual(casts_combined, casts)
         return combined
+
+def _test1():
+    n = "23-02-10--21-00--Safiyah--Lordaeron"
+    report = SourceNumbers(n)
+    # s, f = report.ENCOUNTER_DATA["Rotface"][-1]
+    # logs_slice = report.LOGS[s:f]
+    segments = report.ENCOUNTER_DATA["Rotface"]
+    report.LOGS
+    for _ in range(10):
+        print()
+        d = report.numbers_combined(segments)
+
+    s = set(['0x060000000054682E', '0x06000000003AC5F3', '0x06000000005992AB', '0xF130008F13000428', '0x06000000004B2086', '0x060000000057C2BB', '0x06000000002D47FB', '0x0600000000238FF1', '0x06000000000314D5', '0x0600000000353204', '0x06000000002795F1', '0x06000000001D5C6E', '0x0600000000540445', '0x0000000000000000', '0x06000000005410C6', '0x06000000003F9E49', '0xF1400EF6F3000027', '0x06000000004E2F01', '0x060000000044D28B', '0xF14008FB8E000023', '0x06000000005907E1', '0x0600000000588CE6', '0x060000000023EEB1', '0xF1401CD81C000024', '0x060000000060ED5D', '0x0600000000462207', '0xF1300007AC00054A', '0xF14006A3AC000026', '0xF1300007AC000549', '0xF1401ABD72000025', '0xF1300007AC000548', '0xF1300079F000054D', '0xF1300079F000054C', '0xF1300079F000054E', '0xF1300079F0000551', '0xF1300079F0000550', '0xF1300079F0000552', '0xF130006CB500055B', '0x06000000004EE87E', '0x060000000061945A', '0xF130009021000565', '0xF130004CD4000567', '0xF130009023000569', '0xF150008F460004D8', '0x0600000000320EBF', '0xF13000902100056F', '0xF13000902100057B', '0xF130004CD400057C', '0xF130009021000580', '0xF13000902100058B', '0xF130004CD40005A5', '0xF1300090210005AC', '0xF1300090210005AE', '0xF1300090230005B0', '0xF1300090210005B5', '0xF1300090210005BF', '0xF1300090210005C1', '0xF1300090210005DB', '0xF130006CB50005DC', '0xF1300090230005E3', '0xF1300090210005E5', '0xF130004CD40005E9', '0xF1300090210005EA', '0x060000000040B832', '0xF1300090210005ED'])
+    print(set(d["ACTUAL"].keys()) == s)
+
+if __name__ == "__main__":
+    _test1()
