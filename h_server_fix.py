@@ -42,6 +42,7 @@ SERVERS_OTHER = [
     ServerID("Way of Elendil", "(way.*?elendil)"),
     ServerID("WoW Brasil", "(wow.*?brasil)"),
     ServerID("Aequitas", "(aequitas)"),
+    ServerID("Everlook", "(everlook)"),
     # ServerName("", ""),
 ]
 
