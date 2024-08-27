@@ -52,9 +52,10 @@
 #spell-timeline-mult-label {
   min-width: 4ch;
 }
-
+.spell-name, #timeline-ruler, #spells-fav, #click-reminder {direction: ltr;}
 .table-wrap {
-  padding-bottom: 5rem;
+  /* padding-bottom: 5rem; */
+  padding-bottom: 0px; transform: rotateX(180deg);
 }
 .casts-section {
   padding-top: 5rem;
@@ -72,7 +73,12 @@ spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
   --tenth-width: calc(var(--mult) * 1px);
   --event-width: calc(var(--event-width-mult) * var(--tenth-width));
   width: calc(var(--mult) * var(--duration) * 10px + 2px);
-  overflow-y: clip;
+  /* overflow-y: clip;s */
+  direction: rtl;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  transform: rotateX(180deg);
 }
 .spell-row {
   --row-targets: 1;
