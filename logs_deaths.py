@@ -1,3 +1,6 @@
+from collections import defaultdict
+import collections
+
 import logs_base
 from h_debug import running_time
 
@@ -15,7 +18,7 @@ FLAGS_CUT = {
     "RANGE_DAMAGE": ("DAMAGE", "RANGE"),
     "SPELL_PERIODIC_DAMAGE": ("DAMAGE", "DOT"),
     "DAMAGE_SHIELD": ("DAMAGE", "SHIELD"),
-    "ENVIRONMENTAL_DAMAGE": ("DAMAGE", "ENV"),
+    "ENVIRONMENTAL_DAMAGE": ("DAMAGE", "ENVIRONMENT"),
     "SPELL_HEAL": ("HEAL", "HEAL"),
     "SPELL_PERIODIC_HEAL": ("HEAL", "HOT"),
     "SPELL_AURA_APPLIED": ("AURA", "APPLIED"),
@@ -23,6 +26,8 @@ FLAGS_CUT = {
     "SPELL_AURA_REMOVED": ("AURA", "REMOVED"),
     "SPELL_AURA_APPLIED_DOSE": ("AURA", "DOSE"),
     "SPELL_AURA_REMOVED_DOSE": ("AURA", "DOSE"),
+    "SPELL_CAST_SUCCESS": ("CAST", "SUCCESS"),
+    "SPELL_RESURRECT": ("RESURRECT", ""),
     "UNIT_DIED": ("DIED", ""),
     "SPELL_INSTAKILL": ("DIED", "INSTAKILL"),
     "SWING_MISSED": ("MISS", "SWING"),
@@ -133,6 +138,8 @@ SELF_RESSURECT = {
     "21169", # Reincarnation
     "47882", # Soulstone
 }
+# 2/15 21:38:50.554  SPELL_CAST_SUCCESS,0x07000000006CC66E,"Enhica",0x514,0x0000000000000000,nil,0x80000000,21169,"Reincarnation",0x8
+# 2/18 14:36:53.002  SPELL_CAST_SUCCESS,0x00000000003DD0B6,"Afalla",0x40514,0x0000000000000000,nil,0x80000000,47882,"Use Soulstone",0x1
 
 def to_int(line: str):
     return int(line.split(' ', 1)[1][:8].replace(':', ''))
@@ -140,96 +147,14 @@ def to_int(line: str):
 def to_int(line: str):
     return int(line[-12:-4].replace(':', ''))
 
-@running_time
-def get_deaths(logs_slice: list[str], guid):
-    DEATHS: dict[str, list] = {}
-    new_death = []
-    DEAD = False
-    last_death = 0
-
-    for line in reversed(logs_slice):
-        if guid not in line:
-            continue
-
-        line = line.split(',', 11)
-        if line[4] != guid:
-            if line[2] != guid or line[1] != "SPELL_CAST_SUCCESS":
-                continue
-            if line[6] in SELF_RESSURECT:
-                DEATHS[line[0]] = new_death = []
-                DEAD = True
-                last_death = to_int(line[0])
-                new_death.append(line)
-            else:
-                now = to_int(line[0])
-                if last_death - now < 100:
-                    new_death.append(line)
-
-        elif line[1] in DEATH_FLAGS:
-            if not DEAD:
-                DEATHS[line[0]] = new_death = []
-            DEAD = True
-            last_death = to_int(line[0])
-            new_death.append(line)
-
-        elif line[1] == "SPELL_RESURRECT":
-            DEATHS[line[0]] = new_death = []
-            DEAD = True
-            last_death = to_int(line[0])
-            new_death.append(line)
-
-        elif line[1] in FLAGS_OFFENSIVE:
-            if line[1] in FLAGS_DMG and line[10] != "0":
-                if not DEAD:
-                    DEATHS[line[0]] = new_death = []
-                DEAD = True
-                last_death = to_int(line[0])
-                new_death.append(line)
-            
-            elif DEAD:
-                new_death.append(line)
-
-        elif line[1] in HEAL_FLAGS:
-            if line[6] in ARDENT_DEFENDER:
-                if not DEAD:
-                    DEATHS[line[0]] = new_death = []
-                DEAD = True
-                last_death = to_int(line[0])
-            
-            if not DEAD:
-                continue
-            
-            if line[10] != "0":
-                DEAD = False
-            
-            new_death.append(line)
-        
-        elif line[1] in AURA_FLAGS:
-            if line[6] in SAVE_SPELLS or "DEBUFF" in line:
-                now = to_int(line[0])
-                if last_death - now < 100:
-                    new_death.append(line)
-
-
-    return {t:d for t,d in DEATHS.items() if len(d) > 1}
-
-FLAGS2 = {"SPELL_CAST_SUCCESS", "SPELL_RESURRECT"}
-def find_last_hit(death):
-    for line in death:
-        print(line[1])
-        if line[1] not in FLAGS2:
-            return death.index(line)
-
-
-
-def get_minutes_seconds(line):
+def _get_minutes_seconds(line: str):
     _, m, s = line.split(':', 3)
     return int(m), float(s)
 
-def toint3(main_line):
-    m1, s1 = get_minutes_seconds(main_line)
+def _toint3(main_line: str):
+    m1, s1 = _get_minutes_seconds(main_line)
     def inner(line):
-        m2, s2 = get_minutes_seconds(line)
+        m2, s2 = _get_minutes_seconds(line)
         if m1 != m2:
             m = m1 - m2 - 1
             s = s1 - s2 + 60
@@ -238,53 +163,159 @@ def toint3(main_line):
             s = s1 - s2
         return f"-{m}:{s:0>6.3f}"
     return inner
-    
-def normalize_line(line):
+
+def _normalize_line(line: list[str]):
     for x in [11, 8, 7, 5, 3]:
         try:
             del line[x]
         except IndexError:
             pass
+
+    while len(line) < 7:
+        line.append("")
         
-        try:
-            line[4] = int(line[4])
-        except ValueError:
-            pass
+    try:
+        line[4] = int(line[4])
+    except ValueError:
+        pass
 
-        while len(line) < 7:
-            line.append("")
+    try:
+        line[1:2] = FLAGS_CUT[line[1]]
+    except KeyError:
+        line[1:2] = line[1].split("_")[:2]
+
+    if line[1] == "AURA":
+        line[1] = line[-2]
+
+class Death(list[list[str]]):
+    pass
+
+class CharDeaths(dict[str, Death]):
+    def __init__(self):
+        self.alive = True
+        self.latest_death = Death()
+        self.latest_death_ts = 0
+
+    def new_death(self, ts):
+        self.alive = False
+        self.latest_death_ts = to_int(ts)
+        self.latest_death = Death()
+        self[ts] = self.latest_death
+        return self.latest_death
+
+    def normilize(self):
+        for _id, death in list(self.items()):
+            f0 = _toint3(death[0][0])
+            death_at = 0
+            if death[0][1] in {"SPELL_CAST_SUCCESS", "SPELL_RESURRECT"}:
+                death[0][0] = f0(death[1][0]).replace('-', '+')
+                f0 = _toint3(death[1][0])
+                death_at = 1
+
+            death[death_at][0] = "0:00.000"
+
+            for x in death[death_at+1:]:
+                x[0] = f0(x[0])
+
+            for x in death:
+                _normalize_line(x)
+
+        return self
+
+
+@running_time
+def get_deaths(logs_slice: list[str]):
+    players_deaths = defaultdict(CharDeaths)
+
+    for line in reversed(logs_slice):
+        if "0x0" not in line:
+            continue
+        
+        line = line.split(',', 11)
+        if line[4][:3] != "0x0":
+            continue
+        
+        player = players_deaths[line[4]]
+        flag = line[1]
+
+        if flag == "SPELL_CAST_SUCCESS":
+            if line[6] in SELF_RESSURECT:
+                player.new_death(line[0]).append(line)
+                continue
+            
+            now = to_int(line[0])
+            if player.latest_death_ts - now < 100:
+                player.latest_death.append(line)
+
+        elif flag in FLAGS_OFFENSIVE:
+            if flag in FLAGS_DMG and line[10] != "0":
+                if player.alive:
+                    player.new_death(line[0])
+            elif player.alive:
+                continue
+            player.latest_death.append(line)
+
+        elif flag in HEAL_FLAGS:
+            if line[6] in ARDENT_DEFENDER:
+                if player.alive:
+                    player.new_death(line[0])
+            
+            if player.alive:
+                continue
+            
+            if line[10] != "0":
+                player.alive = True
+            
+            player.latest_death.append(line)
+        
+        elif flag in AURA_FLAGS:
+            if line[6] in SAVE_SPELLS or "DEBUFF" in line:
+                now = to_int(line[0])
+                if abs(player.latest_death_ts - now) < 100:
+                    player.latest_death.append(line)
+
+        elif flag in DEATH_FLAGS:
+            if player.alive:
+                player.new_death(line[0])
+            player.latest_death.append(line)
+
+        elif flag == "SPELL_RESURRECT":
+            player.new_death(line[0]).append(line)
     
-def sfjsiojfasiojfiod(deaths: dict[str, list[str]]):
-    for death in deaths.values():
-        f0 = toint3(death[0][0])
-        death_at = 0
-        if death[0][1] in {"SPELL_CAST_SUCCESS", "SPELL_RESURRECT"}:
-            death[0][0] = f0(death[1][0]).replace('-', '+')
-            f0 = toint3(death[1][0])
-            death_at = 1
+    for player_deaths in players_deaths.values():
+        player_deaths.normilize()
 
-        death[death_at][0] = "0:00.000"
-
-        for x in death[death_at+1:]:
-            x[0] = f0(x[0])
-
-        for x in death:
-            normalize_line(x)
+    return players_deaths
 
 
 class Deaths(logs_base.THE_LOGS):
-    @logs_base.cache_wrap
-    def death_info(self, s, f, guid):
+    # @logs_base.cache_wrap
+    def get_deaths_v2(self, s, f):
         logs_slice = self.LOGS[s:f]
-        deaths = get_deaths(logs_slice, guid)
-        sfjsiojfasiojfiod(deaths)
-        return deaths
-    
-    def get_deaths(self, segments, guid):
-        deaths = {}
-        if guid:
-            for s, f in segments:
-                deaths |= self.death_info(s, f, guid)
+        slice_start = logs_slice[0].split(',')[0]
+
+        players_deaths = get_deaths(logs_slice)
+        players_deaths_sorted = sorted((
+            (ts, player_guid, player_death)
+            for player_guid, player_deaths in players_deaths.items()
+            for ts, player_death in player_deaths.items()
+        ))
+        
+        players_deaths_formatted = {}
+        for death_timestamp, player_guid, player_death in players_deaths_sorted:
+            z = self.get_timedelta_seconds(slice_start, death_timestamp)
+            name = self.guid_to_name(player_guid)
+            _id = f"{z}-{name}"
+            players_deaths_formatted[_id] = {
+                "player": name,
+                "from_start": f"{int(z//60):0>2}:{z%60:0>6.3f}",
+                "death": player_death,
+            }
+
+        return players_deaths_formatted
+
+    def get_deaths_v2_wrap(self, segments):
+        deaths = self.get_deaths_v2(*segments[0])
         return {
             "DEATHS": deaths,
             "CLASSES": self.get_classes(),
@@ -293,19 +324,14 @@ class Deaths(logs_base.THE_LOGS):
             "SPELLS": self.get_spells(),
         }
 
-
-def main_test():
-    report = Deaths("24-02-09--20-49--Meownya--Lordaeron")
+def _test2():
+    report = Deaths("23-02-10--21-00--Safiyah--Lordaeron")
+    report.LOGS
     enc_data = report.get_enc_data()
-    guid = report.name_to_guid("Arcanestorm")
-    s, f = enc_data["Lady Deathwhisper"][-1]
-    logs_slice = report.get_logs(s, f)
-    d = get_deaths(logs_slice, guid)
-    sfjsiojfasiojfiod(d)
-    for t, _d in d.items():
-        for x in _d:
-            print(x)
-
+    s, f = enc_data["The Lich King"][-2]
+    _all = report.get_deaths_v2(s, f)
+    for _id, _dth in _all.items():
+        print(_id)
 
 if __name__ == "__main__":
-    main_test()
+    _test2()

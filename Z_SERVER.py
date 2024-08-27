@@ -519,8 +519,7 @@ def deaths(report_id):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    guid = request.args.get("target")
-    data = report.get_deaths(segments, guid)
+    data = report.get_deaths_v2_wrap(segments)
 
     return render_template(
         'deaths.html', **default_params, **data,
