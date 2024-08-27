@@ -102,7 +102,7 @@ function make_rank_data() {
     const dps = tr.querySelector("td.useful.per-sec-cell").textContent.replaceAll(" ", "");
     if (dps == "") return;
     if (name == "Total") return;
-    data.dps[name] = parseFloat(dps) + 0.05;
+    data.dps[name] = (parseFloat(dps) + 0.1).toFixed(1);
     data.specs[name] = spec;
   });
 
