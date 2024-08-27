@@ -576,15 +576,15 @@ class SpellCount(logs_base.THE_LOGS):
                 spells_data[flag] = sort_by_total(spells_data.pop(flag))
 
         s_id = abs(int(spell_id))
-        SPELL_DATA = self.SPELLS_WITH_ICONS[s_id]
+        SPELL = self.SPELLS[s_id]
 
         return {
             "SPELLS": spells_data,
             "TARGETS": all_targets,
             "SPELL_ID": spell_id,
-            "SPELL_NAME": SPELL_DATA["name"],
-            "SPELL_ICON": SPELL_DATA["icon"],
-            "SPELL_COLOR": SPELL_DATA["color"],
+            "SPELL_NAME": SPELL.name,
+            "SPELL_ICON": SPELL.icon,
+            "SPELL_COLOR": SPELL.color,
         }
 
 class _TargetBuffCount(list[tuple[str, str]]):

@@ -15,7 +15,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import h_cleaner
 import logs_calendar
 import logs_main
-from constants import FLAG_ORDER, GEAR
+from constants import FLAG_ORDER
 from c_bosses import ALL_FIGHT_NAMES
 from c_path import Directories, Files
 from h_datetime import MONTHS, T_DELTA
@@ -382,7 +382,8 @@ def spellsearch(report_id):
     if data is None:
         data = request.form
     report = load_report(report_id)
-    return report.filtered_spell_list(data)
+    _filter = str(data.get("filter", ""))
+    return report.filtered_spell_list(_filter)
 
 @SERVER.route("/reports/<report_id>/get_dps", methods=["POST"])
 def get_dps(report_id):

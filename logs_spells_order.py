@@ -113,9 +113,8 @@ class Timeline(logs_base.THE_LOGS):
         players_and_pets = self.get_players_and_pets_guids()
         data = get_history(logs_slice, guid, players_and_pets, s-s_shifted)
 
-        _spells = self.SPELLS_WITH_ICONS
         data["SPELLS"] = {
-            x: _spells[int(x)]
+            x: self.SPELLS[int(x)].to_dict()
             for x in data["DATA"]
         }
         data["RDURATION"] = self.get_slice_duration(s, f)

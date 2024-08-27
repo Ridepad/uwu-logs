@@ -1,6 +1,6 @@
+import logs_base
 from c_bosses import BOSSES_GUIDS
-from h_datetime import duration_to_string, get_delta_simple_precise
-
+from h_other import convert_to_html_name
 
 DEFAULT_DIFFICULTY = "TBD"
 DIFFICULTY = ('10N', '10H', '25N', '25H')
@@ -163,7 +163,7 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
         for line in logs_slice
     )
 
-def auras_removed(logs_slice: list[str], size):
+def auras_removed(logs_slice: list[str], threshold):
     removed = 0
     for line in logs_slice:
         line = line.split(',', 5)
@@ -172,75 +172,8 @@ def auras_removed(logs_slice: list[str], size):
         if line[4][6:-6] in COWARDS:
             removed += 1
     # print(removed)
-    return removed > size
+    return removed > threshold
 
-def format_attempt(logs: list[str], segment: tuple[int, int], boss_name: str, attempt: int, shift: int):
-    # print(boss_name, segment, shift)
-    s, f = segment
-    
-    logs_slice = logs[s:f]
-    # if not logs_slice:
-    #     logs_slice = logs[s:]
-    #     for x in logs[s:s+100]:
-    #         print(x)
-    diff = get_difficulty(logs_slice, boss_name)
-    
-    slice_duration = get_delta_simple_precise(logs_slice[-1], logs_slice[0]).total_seconds()
-    slice_duration_str = duration_to_string(slice_duration)
-    slice_duration_str = slice_duration_str[2:]
-
-    kill = is_kill(logs_slice[-1])
-    # print(kill)
-    if not kill:
-        if boss_name == "The Lich King":
-            kill = has_fury_of_frostmourne(logs[f-10:f+20])
-        elif boss_name in COWARDS_NAMES:
-            if diff[:2] == "25":
-                kill = auras_removed(logs[f-100:f], 20)
-            else:
-                kill = auras_removed(logs[f-50:f], 10)
-    
-    if kill:
-        attempt_type = "kill"
-        segment_type = "Kill"
-        # segment_str = f"{slice_duration[2:]} | {diff} {boss_name}"
-    else:
-        attempt_type = "wipe"
-        segment_type = f"Wipe {attempt-shift+1}"
-        # segment_str = f"{slice_duration[2:]} | {diff} {boss_name} | Try {attempt-shift+1}"
-    
-    return {
-        "start": s,
-        "end": f,
-        "diff": diff,
-        "attempt": attempt,
-        "attempt_type": attempt_type,
-        "segment_type": segment_type,
-        "duration": slice_duration,
-        "duration_str": slice_duration_str,
-    }
-
-
-
-def convert_to_html_name(name: str):
-    return name.lower().replace(" ", "-").replace("'", "")
-
-def get_segments(logs, enc_data: dict[str, list[tuple[int, int]]]):
-    segments_data: dict[str, list[dict]] = {}
-    boss_to_html: dict[str, str] = {}
-    for boss_name, segments in enc_data.items():
-        boss_to_html[boss_name] = convert_to_html_name(boss_name)
-
-        boss_data = []
-        shift = 0
-        for attempt, segment in enumerate(segments):
-            segment_data = format_attempt(logs, segment, boss_name, attempt, shift)
-            if segment_data["attempt_type"] == "kill":
-                shift = attempt+1
-            boss_data.append(segment_data)
-        segments_data[boss_name] = boss_data
-    
-    return segments_data
 
 def separate_modes(data: dict[str, list[dict]]):
     separated: dict[str, dict[str, list[dict]]] = {}
@@ -251,3 +184,158 @@ def separate_modes(data: dict[str, list[dict]]):
             new_segments.setdefault(diff, []).append(segment)
         separated[boss_name] = new_segments
     return separated
+
+class LogsSegments(logs_base.THE_LOGS):
+    @property
+    def SEGMENTS(self):
+        try:
+            return self.__SEGMENTS
+        except AttributeError:
+            self.__SEGMENTS = self.get_segments()
+            return self.__SEGMENTS
+        
+    @property
+    def SEGMENTS_SEPARATED(self):
+        try:
+            return self.__SEGMENTS_SEPARATED
+        except AttributeError:
+            self.__SEGMENTS_SEPARATED = separate_modes(self.SEGMENTS)
+            return self.__SEGMENTS_SEPARATED
+
+    @property
+    def SEGMENTS_QUERIES(self):
+        try:
+            return self.__SEGMENTS_QUERIES
+        except AttributeError:
+            segm_links = [
+                self.make_segment_query_boss(boss_name, diffs)
+                for boss_name, diffs in self.SEGMENTS_SEPARATED.items()
+            ]
+            segm_links.insert(0, self.make_segment_query_boss("all"))
+            self.__SEGMENTS_QUERIES = segm_links
+            return segm_links
+
+    def get_segments(self):
+        segments_data: dict[str, list[dict]] = {}
+        boss_to_html: dict[str, str] = {}
+        for boss_name, segments in self.ENCOUNTER_DATA.items():
+            boss_to_html[boss_name] = convert_to_html_name(boss_name)
+
+            boss_data = []
+            shift = 0
+            for attempt, segment in enumerate(segments):
+                segment_data = self.format_attempt(segment, boss_name, attempt, shift)
+                if segment_data["attempt_type"] == "kill":
+                    shift = attempt+1
+                boss_data.append(segment_data)
+            segments_data[boss_name] = boss_data
+        
+        return segments_data
+    
+    def attempt_time(self, boss_name, attempt, shift=0):
+        enc_data = self.get_enc_data()
+        s, f = enc_data[boss_name][attempt]
+        s = self.find_index(s, 2+shift)
+        f = self.find_index(f, 1)
+        return s, f
+        
+    def make_segment_query_segment(self, seg_info, boss_name, href_prefix):
+        attempt = seg_info['attempt']
+        s, f = self.attempt_time(boss_name, attempt)
+        href = f"{href_prefix}&s={s}&f={f}&attempt={attempt}"
+        class_name = f"{seg_info['attempt_type']}-link"
+        segment_str = f"{seg_info['duration_str']} | {seg_info['segment_type']}"
+        return {
+            "href": href,
+            "class_name": class_name,
+            "text": segment_str,
+        }
+    
+    def make_segment_query_diff(self, segments, boss_name, href_prefix, diff_id):
+        href = f"{href_prefix}&mode={diff_id}"
+        return {
+            "href": href,
+            "class_name": "boss-link",
+            "text": f"{diff_id} {boss_name}",
+            "children": [
+                self.make_segment_query_segment(seg_info, boss_name, href)
+                for seg_info in segments
+            ]
+        }
+    
+    def make_segment_query_boss(self, boss_name: str, diffs: dict=None):
+        href = f"?boss={convert_to_html_name(boss_name)}"
+
+        if boss_name == "all":
+            text = f"All boss segments"
+        else:
+            text = f"All {boss_name} segments"
+        
+        if diffs is None:
+            diffs = {}
+        
+        return {
+            "href": href,
+            "class_name": "boss-link",
+            "text": text,
+            "children": [
+                self.make_segment_query_diff(segments, boss_name, href, diff_id)
+                for diff_id, segments in diffs.items()
+            ]
+        }
+
+    def format_attempt(self, segment: tuple[int, int], boss_name: str, attempt: int, shift: int):
+        # print(boss_name, segment, shift)
+        s, f = segment
+        
+        logs_slice = self.LOGS[s:f]
+        # if not logs_slice:
+        #     logs_slice = logs[s:]
+        #     for x in logs[s:s+100]:
+        #         print(x)
+        diff = get_difficulty(logs_slice, boss_name)
+        
+        slice_duration = self.get_timedelta_seconds(logs_slice[0], logs_slice[-1])
+        slice_duration_str = self.duration_to_string(slice_duration)
+        slice_duration_str = slice_duration_str[2:]
+
+        kill = is_kill(logs_slice[-1])
+        # print(kill)
+        if not kill:
+            if boss_name == "The Lich King":
+                kill = has_fury_of_frostmourne(self.LOGS[f-10:f+20])
+            elif boss_name in COWARDS_NAMES:
+                if diff[:2] == "25":
+                    _slice = self.LOGS[f-100:f]
+                    threshold = 20
+                else:
+                    _slice = self.LOGS[f-50:f]
+                    threshold = 10
+                kill = auras_removed(_slice, threshold)
+        
+        if kill:
+            attempt_type = "kill"
+            segment_type = "Kill"
+            # segment_str = f"{slice_duration[2:]} | {diff} {boss_name}"
+        else:
+            attempt_type = "wipe"
+            segment_type = f"Wipe {attempt-shift+1}"
+            # segment_str = f"{slice_duration[2:]} | {diff} {boss_name} | Try {attempt-shift+1}"
+        
+        return {
+            "start": s,
+            "end": f,
+            "diff": diff,
+            "attempt": attempt,
+            "attempt_type": attempt_type,
+            "segment_type": segment_type,
+            "duration": slice_duration,
+            "duration_str": slice_duration_str,
+        }
+
+def main():
+    report = LogsSegments("24-06-15--20-00--Xeel--Whitemane-Frostmourne")
+    print(report.SEGMENTS)
+
+if __name__ == "__main__":
+    main()

@@ -115,6 +115,7 @@ def query_no_custom(query: str):
 
 
 class THE_LOGS(
+    logs_check_difficulty.LogsSegments,
     logs_dmg_breakdown.SourceNumbers,
     logs_dmg_useful.UsefulDamage,
     logs_absorbs.Absorbs,
@@ -129,88 +130,6 @@ class THE_LOGS(
     logs_valk_grabs.ValkGrabs,
     logs_ucm.UCM,
 ):
-    def attempt_time(self, boss_name, attempt, shift=0):
-        enc_data = self.get_enc_data()
-        s, f = enc_data[boss_name][attempt]
-        s = self.find_index(s, 2+shift)
-        f = self.find_index(f, 1)
-        return s, f
-        
-    def make_segment_query_segment(self, seg_info, boss_name, href_prefix):
-        attempt = seg_info['attempt']
-        s, f = self.attempt_time(boss_name, attempt)
-        href = f"{href_prefix}&s={s}&f={f}&attempt={attempt}"
-        class_name = f"{seg_info['attempt_type']}-link"
-        segment_str = f"{seg_info['duration_str']} | {seg_info['segment_type']}"
-        return {
-            "href": href,
-            "class_name": class_name,
-            "text": segment_str,
-        }
-    
-    def make_segment_query_diff(self, segments, boss_name, href_prefix, diff_id):
-        href = f"{href_prefix}&mode={diff_id}"
-        return {
-            "href": href,
-            "class_name": "boss-link",
-            "text": f"{diff_id} {boss_name}",
-            "children": [
-                self.make_segment_query_segment(seg_info, boss_name, href)
-                for seg_info in segments
-            ]
-        }
-    
-    def make_segment_query_boss(self, boss_name: str, diffs: dict=None):
-        href = f"?boss={convert_to_html_name(boss_name)}"
-
-        if boss_name == "all":
-            text = f"All boss segments"
-        else:
-            text = f"All {boss_name} segments"
-        
-        if diffs is None:
-            diffs = {}
-        
-        return {
-            "href": href,
-            "class_name": "boss-link",
-            "text": text,
-            "children": [
-                self.make_segment_query_diff(segments, boss_name, href, diff_id)
-                for diff_id, segments in diffs.items()
-            ]
-        }
-
-    @property
-    def SEGMENTS(self):
-        try:
-            return self.__SEGMENTS
-        except AttributeError:
-            enc_data = self.get_enc_data()
-            self.__SEGMENTS = logs_check_difficulty.get_segments(self.LOGS, enc_data)
-            return self.__SEGMENTS
-        
-    @property
-    def SEGMENTS_SEPARATED(self):
-        try:
-            return self.__SEGMENTS_SEPARATED
-        except AttributeError:
-            self.__SEGMENTS_SEPARATED = logs_check_difficulty.separate_modes(self.SEGMENTS)
-            return self.__SEGMENTS_SEPARATED
-
-    @property
-    def SEGMENTS_QUERIES(self):
-        try:
-            return self.__SEGMENTS_QUERIES
-        except AttributeError:
-            segm_links = [
-                self.make_segment_query_boss(boss_name, diffs)
-                for boss_name, diffs in self.SEGMENTS_SEPARATED.items()
-            ]
-            segm_links.insert(0, self.make_segment_query_boss("all"))
-            self.__SEGMENTS_QUERIES = segm_links
-            return segm_links
-
     def get_segments_data_json(self):
         _data = {
             convert_to_html_name(fight_name): v
@@ -245,11 +164,10 @@ class THE_LOGS(
         attempt = get_dict_int(args, "attempt")
         boss_name = args.get("boss")
         ts = self.get_timestamp()
-        enc_data = self.get_enc_data()
         if boss_name == "all":
             slice_name = "Bosses"
             slice_tries = "All"
-            segments = [x for y in enc_data.values() for x in y]
+            segments = [x for y in self.ENCOUNTER_DATA.values() for x in y]
         
         elif boss_name not in BOSSES_FROM_HTML:
             slice_name = "Custom Slice"
@@ -266,7 +184,7 @@ class THE_LOGS(
             slice_name = boss_name
             if attempt is not None:
                 slice_tries = self._attempt_name(boss_name, attempt)
-                s, f = enc_data[boss_name][attempt]
+                s, f = self.ENCOUNTER_DATA[boss_name][attempt]
                 sc = get_dict_int(args, "sc", 0)
                 fc = get_dict_int(args, "fc", 0)
                 s_shifted = self.precise_shift(s, sc)
@@ -282,7 +200,7 @@ class THE_LOGS(
                 ]
             else:
                 slice_tries = "All"
-                segments = enc_data[boss_name]
+                segments = self.ENCOUNTER_DATA[boss_name]
             
             shift = get_shift(path)
             self.segments_apply_shift(segments, shift_s=shift)
@@ -319,7 +237,7 @@ class THE_LOGS(
             "SEGMENTS_LINKS": self.SEGMENTS_QUERIES,
             "PLAYER_CLASSES": self.CLASSES_NAMES,
             "DURATION": duration,
-            "DURATION_STR": duration_to_string(duration),
+            "DURATION_STR": self.duration_to_string(duration),
             "SERVER": _server,
         }
         cached_data[QUERY] = return_data
@@ -413,8 +331,7 @@ class THE_LOGS(
         if not _data:
             return {}
 
-        GUIDS = self.get_all_guids()
-        _data = logs_dmg_heals.add_pets(_data, GUIDS)
+        _data = logs_dmg_heals.add_pets(_data, self.ALL_GUIDS)
         if not _data:
             return {}
         MAX_VALUE = max(_data.values())
@@ -436,7 +353,7 @@ class THE_LOGS(
         boss_name = default_params["BOSS_NAME"]
         mode = request.args.get("mode")
 
-        DURATION = self.get_fight_duration_total(segments)
+        DURATION = default_params["DURATION"]
 
         if boss_name and boss_name != "all":
             _useful = self.target_damage_all(segments, boss_name)["useful_total"]

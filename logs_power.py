@@ -69,8 +69,10 @@ class Powers(logs_base.THE_LOGS):
         if spell_id in spell_data:
             return spell_data[spell_id]
 
-        spell_info = dict(self.SPELLS_WITH_ICONS.get(int(spell_id), {}))
-        if not spell_info:
+        spell_info = self.SPELLS.get(int(spell_id))
+        if spell_info:
+            spell_info = spell_info.to_dict()
+        else:
             spell_info = {
                 "icon": UNKNOWN_ICON,
                 "name": self.get_spell_name(spell_id)

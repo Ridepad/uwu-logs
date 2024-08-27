@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import logs_core
 from c_bosses import (
     BOSSES_GUIDS,
     MULTIBOSSES,
@@ -70,15 +71,21 @@ CAN_BE_SMALL = {
     "Highlord's Nemesis Trainer",
 }
 
+
+class LogLine(tuple[int, str, str, str, str, str, str]):
+    pass
+
+class BossLines(list[LogLine]):
+    pass
+
 def to_int(timestamp: str):
     i = timestamp.index('.')
     return int(timestamp[i-8:i].replace(':', ''))
 
-def time_pairs(boss_id, lines):
+def split_to_pulls(boss_id: str, lines: BossLines):
     # MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
     MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["30SEC"])
-    SEGMENTS = []
-    CURRENT_LINES = []
+    CURRENT_LINES = BossLines()
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
 
@@ -88,16 +95,21 @@ def time_pairs(boss_id, lines):
         now = to_int(new_timestamp)
         if now - last_time > 60 or last_time > now:
             td = get_delta(new_timestamp, last_timestamp)
+            # print()
+            # print(td, td > MAX_SEP)
+            # print(">>> OLD:", CURRENT_LINES[-1])
+            # print(">>> NEW:", line)
+            # print(now)
+            # print(last_time)
             if td > MAX_SEP:
-                SEGMENTS.append(CURRENT_LINES)
-                CURRENT_LINES = []
+                yield CURRENT_LINES
+                CURRENT_LINES = BossLines()
         
         last_time = now
         last_timestamp = new_timestamp
         CURRENT_LINES.append(line)
 
-    SEGMENTS.append(CURRENT_LINES)
-    return SEGMENTS
+    yield CURRENT_LINES
 
 def get_overkill(etc: str):
     try:
@@ -108,7 +120,7 @@ def get_overkill(etc: str):
     except ValueError:
         return 0
     
-def get_more_precise_start(lines: list[tuple[int, list[str]]]):
+def get_more_precise_start(lines: BossLines):
     # print('++++ get_more_precise_start')
     index = 0
     for index, line in enumerate(lines):
@@ -118,7 +130,7 @@ def get_more_precise_start(lines: list[tuple[int, list[str]]]):
     
     return index
     
-def get_more_precise_end(lines: list[tuple[int, list[str]]]):
+def get_more_precise_end(lines: BossLines):
     # print('++++ get_more_precise_end')
     index = 0
     _damaged = 0
@@ -143,7 +155,7 @@ def get_more_precise_end(lines: list[tuple[int, list[str]]]):
     
     return -index
 
-def get_more_precise_wrap(lines: list[tuple[int, list[str]]]):
+def get_more_precise_wrap(lines: BossLines):
     # print("==== GET MORE PRECISE START", "="*50)
     # print(lines[0])
     # print(lines[-1])
@@ -162,7 +174,8 @@ def get_more_precise_wrap(lines: list[tuple[int, list[str]]]):
         return lines[:index_end]
     return lines
 
-def refine_lk(segments: list[list]):
+def refine_lk(segments: list[BossLines]):
+    # print(segments)
     attempts_to_replace = []
     for attempt, segment in enumerate(segments):
         fofs = [line for line in segment if "72350" in line]
@@ -178,21 +191,64 @@ def refine_lk(segments: list[list]):
     for attempt, _split in reversed(attempts_to_replace):
         segments[attempt:attempt+1] = _split
 
+@running_time
+def split_boss_lines_to_pulls(groupped_boss_lines: dict[str, BossLines]):
+    for boss_id, dumped_lines in groupped_boss_lines.items():
+        if len(dumped_lines) < 100:
+            continue
+        
+        fight_name = convert_to_fight_name(boss_id)
+        if fight_name is None:
+            continue
+        
+        new_segments = [
+            get_more_precise_wrap(segment)
+            for segment in split_to_pulls(boss_id, dumped_lines)
+            if len(segment) > 100 or fight_name in CAN_BE_SMALL
+        ]
 
-class Fights:
-    def __init__(self, logs: list[str]) -> None:
-        self.logs = logs
+        if not new_segments:
+            continue
+
+        if boss_id == "008EF5":
+            refine_lk(new_segments)
+
+        start_end = [
+            [segment[0][0], segment[-1][0] + 1]
+            for segment in new_segments
+        ]
+        yield fight_name, start_end
+
+
+class Fights(logs_core.Logs):
+    @property
+    def ENCOUNTER_DATA(self):
+        try:
+            return self.__ENCOUNTER_DATA
+        except AttributeError:
+            pass
+        self.__ENCOUNTER_DATA = self._get_enc_data()
+        return self.__ENCOUNTER_DATA
+
+    def _get_enc_data(self):
+        try:
+            return self._read_enc_data()
+        except Exception:
+            return self._redo_enc_data()
     
-    def main(self):
-        self.filtered_bosses = self.dump_all_boss_lines()
-        return self.filter_bosses()
+    def _read_enc_data(self) -> dict[str, list[list[int]]]:
+        return self.relative_path("ENCOUNTER_DATA.json")._json()
+
+    def _redo_enc_data(self):
+        groupped_boss_lines = self._dump_all_boss_lines()
+        return dict(split_boss_lines_to_pulls(groupped_boss_lines))
 
     @running_time
-    def dump_all_boss_lines(self):
+    def _dump_all_boss_lines(self):
         NIL = "nil"
-        BOSSES: defaultdict[str, list[tuple[int, str, str, str, str, str, str]]] = defaultdict(list)
+        BOSSES: defaultdict[str, BossLines] = defaultdict(BossLines)
         
-        for n, line in enumerate(self.logs):
+        for n, line in enumerate(self.LOGS):
             if 'xF' not in line:
                 continue
             
@@ -202,8 +258,8 @@ class Fights:
             
             if flag == "UNIT_DIED":
                 sGUID, _, tGUID, _ = etc.split(',', 3)
-                _guid = tGUID[6:-6]
-                if _guid not in BOSSES_GUIDS_ALL:
+                guid_id = tGUID[6:-6]
+                if guid_id not in BOSSES_GUIDS_ALL:
                     continue
                 spell_id, other = NIL, NIL
             else:
@@ -211,69 +267,21 @@ class Fights:
                 if spell_id in IGNORED_SPELL_IDS:
                     continue
                 
-                _guid = tGUID[6:-6]
-                if _guid not in BOSSES_GUIDS_ALL:
+                guid_id = tGUID[6:-6]
+                if guid_id not in BOSSES_GUIDS_ALL:
                     if spell_id not in FINISH_SPELLS:
                         continue
-                    _guid = sGUID[6:-6]
+                    guid_id = sGUID[6:-6]
             
-            _guid = MULTIBOSSES_MAIN.get(_guid, _guid)
-            BOSSES[_guid].append((n, ts, flag, sGUID, tGUID, spell_id, other))
+            guid_id = MULTIBOSSES_MAIN.get(guid_id, guid_id)
+            BOSSES[guid_id].append((n, ts, flag, sGUID, tGUID, spell_id, other))
 
         return BOSSES
-    
-    @running_time
-    def filter_bosses(self):
-        BOSS_SEGMENTS: dict[str, list[tuple[int, int]]] = {}
-        
-        for boss_id, dumped_lines in self.filtered_bosses.items():
-            # print()
-            # print("="*100)
-            # print(boss_id, BOSSES_GUIDS[boss_id], len(dumped_lines))
-            if len(dumped_lines) < 100:
-                continue
-            
-            fight_name = convert_to_fight_name(boss_id)
-            # print(fight_name)
-            if fight_name is None:
-                continue
-            
-            new_segments = []
-            for segment in time_pairs(boss_id, dumped_lines):
-                # print("\n////////////// NEW SEGMENT", len(segment))
 
-                if len(segment) < 100 and fight_name not in CAN_BE_SMALL:
-                    continue
-                
-                segment = get_more_precise_wrap(segment)
-                new_segments.append(segment)
-                # pretty_print(boss_id, segment)
-            
-            if not new_segments:
-                continue
 
-            if boss_id == "008EF5":
-                # print()
-                # print("="*100)
-                # print(boss_id, BOSSES_GUIDS[boss_id], len(dumped_lines))
-                # print("\n:::::::::::::::::::: LICH KING SHIT", len(segment))
+#####################################
 
-                # print(len(segments))
-                
-                refine_lk(new_segments)
-                # print(len(segments))
-
-                # for segment in segments:
-                #     print("\n////////////// NEW SEGMENT", len(segment))
-                #     pretty_print(boss_id, segment)
-            
-            BOSS_SEGMENTS[fight_name] = [
-                [segment[0][0], segment[-1][0] + 1]
-                for segment in new_segments
-            ]
-        
-        return BOSS_SEGMENTS
-
+from time import perf_counter
 
 def pretty_print(boss_id, dumped_lines):
     print("==== PRETTY PRINT", "="*50)
@@ -292,3 +300,34 @@ def pretty_print(boss_id, dumped_lines):
         a = (line for line in reversed(dumped_lines) if "72350" in line)
         for i in a:
             print(i)
+
+def t1(logs):
+    pc = perf_counter()
+    fights = Fights(logs)._dump_all_boss_lines()
+    print(f'{(perf_counter() - pc)*1000:>10,.3f}ms | Fights(logs).dump_all_boss_lines')
+    return fights
+
+def t3():
+    fights = Fights("24-05-14--21-17--Meownya--Lordaeron")._get_enc_data()
+    print(fights)
+
+def main():
+    import logs_base
+    # report = logs_base.THE_LOGS("24-03-20--22-58--Apakalipsis--Icecrown")
+    # report = logs_base.THE_LOGS("24-03-01--21-02--Meownya--Lordaeron")
+    # report = logs_base.THE_LOGS("24-05-10--18-55--Molester--Icecrown")
+    # report = logs_base.THE_LOGS("24-05-14--21-17--Meownya--Lordaeron")
+    t3()
+    # logs = report.LOGS
+    # _runs = 5
+    # for _ in range(_runs):
+    #     q1 = t1(logs)
+    # print("="*88)
+    # for _ in range(_runs):
+    #     q2 = t2(logs)
+    # z = q2["008EF5"]
+    # print(z[:10])
+
+
+if __name__ == "__main__":
+    main()
