@@ -758,6 +758,7 @@ function on_change_class(e) {
 
   if (!e) return;
   LOCAL_STORAGE.set(SELECT_CLASS, SELECT_CLASS.value);
+  LOCAL_STORAGE.set(SELECT_SPEC, SELECT_SPEC.value);
 }
 
 function on_change_spec() {
