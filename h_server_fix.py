@@ -41,6 +41,7 @@ SERVERS_OTHER = [
     ServerID("NaerZone", "(naer.*?zone)"),
     ServerID("Way of Elendil", "(way.*?elendil)"),
     ServerID("WoW Brasil", "(wow.*?brasil)"),
+    ServerID("Aequitas", "(aequitas)"),
     # ServerName("", ""),
 ]
 
@@ -55,7 +56,7 @@ def server_cnv(server: str):
         if re.findall(_server.re_string, _server_l):
             return _server.no_space
 
-    return server.replace(" ", "-")
+    return server.replace(" ", "-").title()
 
 def test1():
     z = server_cnv("Lordaeron")
