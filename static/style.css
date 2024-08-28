@@ -563,10 +563,8 @@ footer::before {
   z-index: 15;
 }
 #fights-container .segments {
+  padding-inline: .5rem;
   z-index: 20;
-}
-#fights-container .diffs {
-  transform: translateY(-1rem);
 }
 
 @media (orientation: portrait) {
@@ -579,18 +577,19 @@ footer::before {
     padding-inline: 2rem;
     font-size: 125%;
   }
-  #fights-container .diffs {
-    transform: translateY(-.5rem);
-  }
   #fights-container .diffs li {
-    padding-block: .5rem;
+    padding-block: .25rem;
   }
   #fights-container .diffs,
   #fights-container .segments {
-    left: 4.5rem;
+    top: 100%;
+    left: 5rem;
   }
 }
 @media (orientation: landscape) {
+  #fights-container .diffs {
+    transform: translateY(-1rem);
+  }
   #fights-container .diffs,
   #fights-container .segments {
     right: 100%;
@@ -858,11 +857,13 @@ input[type="checkbox"],
 .table-wrap {
   --mult: 5;
   overflow-x: auto;
-  scrollbar-width: thin;
   scrollbar-color: var(--secondary-color) var(--background);
+	/* transform: rotateX(180deg); */
 }
 .table-wrap > div {
   padding-left: calc(clamp(var(--min-width), 20vw, var(--max-width)));
+	/* transform: rotateX(-180deg); */
+  /* padding-bottom: 7rem; */
 }
 .casts-section-wrap {
   width: calc(var(--mult) * 50rem);
