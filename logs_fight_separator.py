@@ -3,6 +3,7 @@ from collections import defaultdict
 import logs_core
 from c_bosses import (
     BOSSES_GUIDS,
+    COWARDS,
     MULTIBOSSES,
     convert_to_fight_name,
 )
@@ -59,6 +60,8 @@ BOSS_MAX_SEP = {
     "009BB7": T_DELTA["2MIN"],
     "008704": T_DELTA["2MIN"],
     "008EF5": T_DELTA["2MIN"],
+    "008246": T_DELTA["1MIN"],
+    "008208": T_DELTA["1MIN"],
 }
 HEAL_BOSSES = {
     "008FB5",
@@ -129,36 +132,57 @@ def get_more_precise_start(lines: BossLines):
             break
     
     return index
-    
+
 def get_more_precise_end(lines: BossLines):
     # print('++++ get_more_precise_end')
     index = 0
-    _damaged = 0
+    damaged = 0
+    removed = 0
+    first_removed_index = 0
     for i, line in enumerate(reversed(lines)):
-        if i > MAX_LINES or _damaged > 20:
-            # print(">>>>>>> break", i, _damaged)
+        if i > MAX_LINES:
+            # print(f">>> get_more_precise_end i > MAX_LINES\n{line}")
             break
+        
         if line[2] in SPELL_AURA:
+            if line[2] == "SPELL_AURA_REMOVED"and line[4][6:-6] in COWARDS:
+                removed += 1
+                if not first_removed_index:
+                    first_removed_index = -i
+                if removed > 15:
+                    # print(f">>> get_more_precise_end removed > 15\n{line}")
+                    return first_removed_index
             continue
+        
+        removed = 0
+        first_removed_index = 0
         if line[2] == "UNIT_DIED" and index < 10:
-            # print(line)
+            # print(f">>> get_more_precise_end UNIT_DIED\n{line}")
             index = i
             continue
 
         overkill = get_overkill(line[-1])
         if overkill == 0:
-            _damaged += 1
+            damaged += 1
+            if damaged > 20:
+                # print(">>> get_more_precise_end _damaged > 20")
+                break
         elif overkill > 2:
-            # print(line)
+            if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
+                continue
+            # print(f">>> get_more_precise_end overkill > 2\n{line}")
             index = i
             break
     
     return -index
 
+# def get_more_precise_wrap(lines: BossLines, bossname='?'):
 def get_more_precise_wrap(lines: BossLines):
     # print("==== GET MORE PRECISE START", "="*50)
     # print(lines[0])
     # print(lines[-1])
+    # print()
+    # print(bossname)
     index_start = get_more_precise_start(lines)
     index_end = get_more_precise_end(lines)
     # print("==== GET MORE PRECISE AFTER", "="*50)
@@ -202,6 +226,7 @@ def split_boss_lines_to_pulls(groupped_boss_lines: dict[str, BossLines]):
             continue
         
         new_segments = [
+            # get_more_precise_wrap(segment, fight_name)
             get_more_precise_wrap(segment)
             for segment in split_to_pulls(boss_id, dumped_lines)
             if len(segment) > 100 or fight_name in CAN_BE_SMALL
@@ -241,7 +266,10 @@ class Fights(logs_core.Logs):
 
     def _redo_enc_data(self):
         groupped_boss_lines = self._dump_all_boss_lines()
-        return dict(split_boss_lines_to_pulls(groupped_boss_lines))
+        enc_data = dict(split_boss_lines_to_pulls(groupped_boss_lines))
+        enc_data_file_name = self.relative_path("ENCOUNTER_DATA.json")
+        enc_data_file_name.json_write(enc_data)
+        return enc_data
 
     @running_time
     def _dump_all_boss_lines(self):
@@ -311,13 +339,33 @@ def t3():
     fights = Fights("24-05-14--21-17--Meownya--Lordaeron")._get_enc_data()
     print(fights)
 
-def main():
+def _test_uld():
     import logs_base
-    # report = logs_base.THE_LOGS("24-03-20--22-58--Apakalipsis--Icecrown")
+    report = logs_base.THE_LOGS("24-08-27--22-00--Blokhastiq--Lordaeron")
+    groupped_boss_lines = report._dump_all_boss_lines()
+
+    BOSS_GUID = "008063"
+    lines = groupped_boss_lines[BOSS_GUID]
+    for x in lines[:20]:
+        print(x)
+    print('='*111)
+    for x in lines[-30:]:
+        print(x)
+    
+    q = {
+        BOSS_GUID: groupped_boss_lines[BOSS_GUID]
+    }
+    z = split_boss_lines_to_pulls(q)
+    for name, ss in z:
+        print(name)
+        print(ss)
+
+def main():
+    _test_uld()
     # report = logs_base.THE_LOGS("24-03-01--21-02--Meownya--Lordaeron")
     # report = logs_base.THE_LOGS("24-05-10--18-55--Molester--Icecrown")
     # report = logs_base.THE_LOGS("24-05-14--21-17--Meownya--Lordaeron")
-    t3()
+    # t3()
     # logs = report.LOGS
     # _runs = 5
     # for _ in range(_runs):

@@ -1,5 +1,5 @@
 import logs_base
-from c_bosses import BOSSES_GUIDS
+from c_bosses import BOSSES_GUIDS, COWARDS
 from h_other import convert_to_html_name
 
 DEFAULT_DIFFICULTY = "TBD"
@@ -87,13 +87,6 @@ SPELLS: dict[str, tuple[str]] = {
         ("58695", "", "60883", ""), # Rock Shards
     "Emalon the Storm Watcher":
         ("64213", "", "64215", ""), # Chain Lightning
-}
-COWARDS = {
-    "0080A2": "Kologarn",
-    "00804D": "Hodir",
-    "008061": "Thorim",
-    "00808A": "Freya",
-    "008067": "Algalon the Observer",
 }
 COWARDS_NAMES = set(COWARDS.values())
 
