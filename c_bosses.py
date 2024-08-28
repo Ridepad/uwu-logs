@@ -306,6 +306,14 @@ MULTIBOSSES = {
     "Sulfuron Harbringer": ["002F42", "002D8E"],
 }
 
+COWARDS = {
+    "0080A2": "Kologarn",
+    "00804D": "Hodir",
+    "008061": "Thorim",
+    "00808A": "Freya",
+    "008067": "Algalon the Observer",
+}
+
 ALL_FIGHT_NAMES = set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
 
 def _convert_to_html_name(name: str):
