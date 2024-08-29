@@ -12,7 +12,7 @@ from h_datetime import (
 TYPES = (str, bool, type(None))
 
 def cache_wrap(func: 'function'):
-    def cache_inner(self: Logs, s, f, *args, **kwargs):
+    def cache_inner(self: 'Logs', s, f, *args, **kwargs):
         slice_ID = f"{s}_{f}"
         cached_data = self.CACHE[func.__name__]
         for arg in args:
