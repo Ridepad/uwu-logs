@@ -132,10 +132,4 @@ class Logs:
             report_dir.copy_from_backup()
             self.__path = report_dir
         
-        # import zstd
-        # p = self.relative_path(FileNames.logs_cut)
-        # data = p.read_bytes()
-        # data = zstd.decompress(data)
-        # print(data[5668800:][:200])
-        # return data.decode().splitlines()
         return self.relative_path(FileNames.logs_cut).zstd_read().splitlines()
