@@ -31,8 +31,9 @@ def cache_wrap(func: 'function'):
 
 
 class Logs:
-    def __init__(self, logs_name: str) -> None:
+    def __init__(self, logs_name: str, copy_from_backup: bool=True) -> None:
         self.NAME = logs_name
+        self.copy_from_backup = copy_from_backup
 
         self.year = int(logs_name[:2]) + 2000
 
@@ -80,12 +81,13 @@ class Logs:
         except AttributeError:
             pass
         
-        _dir = Directories.logs / self.NAME
-        if not _dir.is_dir():
-            _dir.copy_from_backup()
-        if not _dir.is_dir():
-            raise FileNotFoundError
-        self.__path = _dir
+        report_dir = Directories.logs / self.NAME
+        if not report_dir.is_dir():
+            report_dir = report_dir.backup_path()
+            if not report_dir.is_dir():
+                raise FileNotFoundError
+        
+        self.__path = report_dir
         return self.__path
 
     def relative_path(self, s: str):
@@ -121,9 +123,15 @@ class Logs:
 
     def get_fight_duration_total(self, segments):
         return sum(self.get_slice_duration(s, f) for s, f in segments)
-    
+
     @running_time
     def _open_logs(self):
+        if self.copy_from_backup and self.path.parent != Directories.logs:
+            print(">>>>>>>>>> COPYING FROM BACKUP")
+            report_dir = Directories.logs / self.NAME
+            report_dir.copy_from_backup()
+            self.__path = report_dir
+        
         # import zstd
         # p = self.relative_path(FileNames.logs_cut)
         # data = p.read_bytes()
