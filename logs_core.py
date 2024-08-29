@@ -111,7 +111,7 @@ class Logs:
         seconds = t % 60
         return f"{hours}:{minutes:0>2}:{seconds:0>2}.{milliseconds:0>3.0f}"
 
-    # @cache_wrap
+    @cache_wrap
     def get_slice_duration(self, s: int=None, f: int=None):
         if s is None:
             s = 0
