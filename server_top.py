@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 import parser_all
+from api_top_db_v2 import TopDataCompressed
 from c_path import Directories
 from constants import GEAR
 from h_debug import Loggers
@@ -66,6 +67,14 @@ async def add_process_time_header(request: Request, call_next):
     await add_log_entry_wrap(request)
     return await call_next(request)
 
+
+def make_response_compressed_headers(z: TopDataCompressed):
+    response = Response(content=z.data, media_type="application/json")
+    response.headers["Content-Encoding"] = "gzip"
+    response.headers["Content-Length"] = str(z.size_compressed)
+    response.headers["Content-Length-Full"] = str(z.size)
+    return response
+
 @app.post('/top_points')
 async def top_post(request: Request, data: PointsValidation):
     mimetype = request.headers.get('Content-Type')
@@ -76,12 +85,7 @@ async def top_post(request: Request, data: PointsValidation):
         )
     
     z = Points(data).parse_top_points()
-
-    response = Response(content=z.data, media_type="application/json")
-    response.headers["Content-Encoding"] = "gzip"
-    response.headers["Content-Length"] = str(z.size_compressed)
-    response.headers["Content-Length-Full"] = str(z.size)
-    return response
+    return make_response_compressed_headers(z)
 
 @app.post('/top')
 async def top_post(request: Request, data: TopValidation):
