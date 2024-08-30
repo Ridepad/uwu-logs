@@ -26,17 +26,6 @@ class Columns(StrEnum):
     AURAS = "auras"
     FORMATTED_STRING = "z"
 
-
-COLUMNS_ORDERED = list(Columns.__members__.values())
-COLUMNS_ORDERED_STR = ','.join(COLUMNS_ORDERED)
-COLUMNS_PARSE_STR = ",".join(["?"]*len(COLUMNS_ORDERED))
-
-COLUMNS_TABLE_CREATE = [
-    f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
-    *COLUMNS_ORDERED[1:],
-]
-COLUMNS_TABLE_CREATE_STR = ','.join(COLUMNS_TABLE_CREATE)
-
 HEADERS_TO_COLUMNS_NAMES = {
     "head-useful-dps": Columns.USEFUL_DPS,
     "head-useful-amount": Columns.USEFUL_AMOUNT,
@@ -58,20 +47,6 @@ SORT_GROUPPED = [
     Columns.TOTAL_DPS,
     Columns.TOTAL_AMOUNT,
     Columns.NAME,
-]
-
-INDEX_SINGLE = [
-    Columns.USEFUL_DPS,
-    Columns.TOTAL_DPS,
-    Columns.USEFUL_AMOUNT,
-    Columns.TOTAL_AMOUNT,
-    Columns.GUID,
-    Columns.DURATION,
-    Columns.SPEC,
-    # Columns.TIMESTAMP,
-]
-INDEX_COMPOSITE = [
-    (Columns.SPEC, Columns.USEFUL_DPS, Columns.GUID),
 ]
 
 LIMITS = [10, 100, 1000, 10000, 50000]
@@ -172,6 +147,11 @@ class Cursors(dict[str, sqlite3.Connection]):
         return v
 
 class DB:
+    COLUMNS_ORDERED: list[str] = []
+    COLUMNS_TABLE_CREATE: list[str] = []
+    INDEX_SINGLE: list[str] = []
+    INDEX_COMPOSITE: list[str] = []
+    
     cursors = Cursors()
 
     def __init__(self, path: PathExt, new=False) -> None:
@@ -179,6 +159,13 @@ class DB:
             raise FileNotFoundError
 
         self.path = path
+
+        # top_points.Points.Lordaeron
+        self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{path.stem}"
+        
+        self.COLUMNS_ORDERED_STR = ','.join(self.COLUMNS_ORDERED)
+        self.COLUMNS_PARSE_STR = ",".join(["?"]*len(self.COLUMNS_ORDERED))
+        self.COLUMNS_TABLE_CREATE_STR = ','.join(self.COLUMNS_TABLE_CREATE)
 
     @property
     def cursor(self):
@@ -197,10 +184,20 @@ class DB:
             self.cursor.execute(f"DROP TABLE [{table_name}]")
         try:
             with self.cursor as c:
-                c.execute(f"CREATE TABLE [{table_name}] ({COLUMNS_TABLE_CREATE_STR})")
+                c.execute(f"CREATE TABLE [{table_name}] ({self.COLUMNS_TABLE_CREATE_STR})")
             return True
         except sqlite3.OperationalError:
             return False
+    
+    @running_time
+    def add_new_rows(self, table_name: str, rows):
+        query = f"""
+        REPLACE INTO [{table_name}]
+        VALUES({self.COLUMNS_PARSE_STR})
+        """
+        with self.cursor as c:
+            c.executemany(query, rows)
+
 
     def tables_info_list(self):
         query = "SELECT * FROM sqlite_schema WHERE type='table'"
@@ -223,18 +220,12 @@ class DB:
         ]
 
     @running_time
-    def add_indexes(self, table_name: str, simple: list[Columns]=None, composite: list[list[Columns]]=None):
-        if not simple:
-            simple = []
-        
-        if not composite:
-            composite = []
-        
+    def add_indexes(self, table_name: str):
         _indexes: list[DB_Index] = []
-        for idx_id in simple:
+        for idx_id in self.INDEX_SINGLE:
             _indexes.append(DB_Index(id=idx_id, table_name=table_name, columns=idx_id))
         
-        for idx_tuple in composite:
+        for idx_tuple in self.INDEX_COMPOSITE:
             idx_id = "-".join(idx_tuple)
             _columns = ",".join(idx_tuple)
             _indexes.append(DB_Index(id=idx_id, table_name=table_name, columns=_columns))
@@ -256,24 +247,35 @@ def _dps(entry: TopDict):
     return round(entry["u"] / entry["t"], 2)
 
 class TopDB(DB):
+    COLUMNS_ORDERED = list(Columns.__members__.values())
+    COLUMNS_TABLE_CREATE = [
+        f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
+        *COLUMNS_ORDERED[1:],
+    ]
+    INDEX_SINGLE = [
+        Columns.USEFUL_DPS,
+        Columns.TOTAL_DPS,
+        Columns.USEFUL_AMOUNT,
+        Columns.TOTAL_AMOUNT,
+        Columns.GUID,
+        Columns.DURATION,
+        Columns.SPEC,
+        # Columns.TIMESTAMP,
+    ]
+    INDEX_COMPOSITE = [
+        (Columns.SPEC, Columns.USEFUL_DPS, Columns.GUID),
+    ]
+
     def __init__(self, server: str, new=False) -> None:
         db_path = self.get_top_db_path(server)
         super().__init__(db_path, new)
         self.server = server
-        self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{server}"
 
     @staticmethod
     def get_top_db_path(server: str):
         return Directories.top / f"{server}.db"
-
-    def add_top_indexes(self, table_name: str):
-        self.add_indexes(table_name, INDEX_SINGLE, INDEX_COMPOSITE)
     
-    @running_time
-    def add_new_rows(self, table_name: str, rows):
-        with self.cursor as c:
-            c.executemany(f"REPLACE INTO [{table_name}] VALUES({COLUMNS_PARSE_STR})", rows)
-
     def add_new_entries_wrap(self, data: dict[str, list[TopDict]]):
         for table_name, data_list in data.items():
             combined_data = self.squash_top(data_list)
@@ -306,7 +308,7 @@ class TopDB(DB):
         self.add_new_rows(table_name, rows)
 
         if new_table_created:
-            self.add_top_indexes(table_name)
+            self.add_indexes(table_name)
     
     def _only_better(self, table_name: str, combined_data: dict[str, dict]):
         to_insert = []
@@ -325,36 +327,39 @@ class TopDB(DB):
         WHERE {Columns.PLAYER_RAID_ID}='{player_raid_id}'
         """
 
-class TopDBCached(TopDB):
-    access = defaultdict(lambda: defaultdict(datetime.now))
-    m_time = defaultdict(lambda: defaultdict(float))
+class Cache(DB):
+    access = defaultdict(datetime.now)
+    m_time = defaultdict(float)
     cooldown = timedelta(seconds=15)
 
     def db_was_updated(self):
         if self.on_cooldown():
-            # Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Cooldown")
+            # Loggers.top.debug(f"=== {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Cooldown")
             return False
         
         mtime_current = int(self.path.mtime)
-        mtime_cached = self.m_time[self.object_id][self.server]
+        mtime_cached = self.m_time[self.object_id]
 
         if mtime_current == mtime_cached:
-            Loggers.top.debug(f"=== {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Same")
+            Loggers.top.debug(f"=== {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Same")
             return False
         
-        Loggers.top.debug(f"+++ {self.server[:10]:10} | {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Updated")
-        self.m_time[self.object_id][self.server] = mtime_current
+        Loggers.top.debug(f"+++ {self.object_id:40} | {mtime_cached:10} | {mtime_current:10} | Updated")
+        self.m_time[self.object_id] = mtime_current
         return True
     
     def on_cooldown(self):
-        last_check = self.access[self.object_id][self.server]
+        last_check = self.access[self.object_id]
         now = datetime.now()
         if last_check > now:
             return True
         
-        self.access[self.object_id][self.server] = now + self.cooldown
+        self.access[self.object_id] = now + self.cooldown
         return False
 
+
+class TopDBCached(TopDB, Cache):
+    pass
 
 
 class ConvertTop(TopDB):
@@ -364,7 +369,7 @@ class ConvertTop(TopDB):
         for table_name in tables:
             try:
                 self.convert_table_to_without_row_id(table_name)
-                self.add_top_indexes(table_name)
+                self.add_indexes(table_name)
             except Exception:
                 tables_with_errors.append(table_name)
     
@@ -384,8 +389,7 @@ class ConvertTop(TopDB):
                 print(current_query)
                 c.execute(current_query)
     
-    @staticmethod
-    def _query_new_table_without_row_id(table_name):
+    def _query_new_table_without_row_id(self, table_name):
         TMP_TABLE = "temp_table_for_without_row_id"
         return [
         "PRAGMA foreign_keys = 0;",
@@ -396,11 +400,11 @@ class ConvertTop(TopDB):
 
         f"""DROP TABLE [{table_name}];""",
 
-        f"""CREATE TABLE [{table_name}] ({COLUMNS_TABLE_CREATE_STR})
+        f"""CREATE TABLE [{table_name}] ({self.COLUMNS_TABLE_CREATE_STR})
         WITHOUT ROWID;""",
 
-        f"""INSERT INTO [{table_name}] ({COLUMNS_ORDERED_STR})
-        SELECT {COLUMNS_ORDERED_STR}
+        f"""INSERT INTO [{table_name}] ({self.COLUMNS_ORDERED_STR})
+        SELECT {self.COLUMNS_ORDERED_STR}
         FROM {TMP_TABLE};""",
 
         f"""DROP TABLE {TMP_TABLE};""",
