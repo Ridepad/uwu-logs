@@ -5,7 +5,7 @@ import {
   SPECS_SELECT_OPTIONS,
   AURAS_ICONS,
   MONTHS,
-} from "./constants.js"
+} from "./constants.js?v=240830-1"
 
 const SELECT_SERVER = document.getElementById('select-server');
 const SELECT_RAID = document.getElementById('select-instance');
@@ -24,7 +24,6 @@ const PROGRESS_BAR_PERCENTAGE = document.getElementById('upload-progress-bar-per
 const TABLE_CONTAINER = document.getElementById('table-container');
 const LOADING_INFO = document.getElementById('loading-info');
 const LOADING_INFO_PANEL = document.getElementById('loading-info-panel');
-const HEAD_USEFUL_DPS = document.getElementById('head-useful-dps');
 const TOGGLE_TOTAL_DAMAGE = document.getElementById('toggle-total-damage');
 const TOGGLE_USEFUL_DAMAGE = document.getElementById('toggle-useful-damage');
 const TOGGLE_LIMIT = document.getElementById('toggle-limit');
@@ -33,6 +32,9 @@ const THE_TOOLTIP_BODY = document.getElementById("tooltip-body");
 const SECTION_NO_DATA = document.getElementById("no-data");
 const SECTION_ON_ERROR = document.getElementById("on-error");
 const SECTION_ON_ERROR_DETAILS = document.getElementById("on-error-details");
+
+const HEAD_USEFUL_DPS_ID = "head-useful-dps";
+const HEADSPEEDRUN_TOTAL_LENGTH_ID = "head-speedrun-total-length";
 
 const AURAS_CURRENT_COLUMNS = Array.from(document.querySelectorAll("thead .table-auras")).map(e => e.classList[1]);
 const AURA_INDEX_TO_COLUMN_NAME = {
@@ -79,7 +81,14 @@ const LOCAL_STORAGE = {
 
 const IRRELEVANT_FOR_POINTS = [
   SELECT_SIZE,
-  CHECKBOX_DIFFICULTY,
+  CHECKBOX_COMBINE,
+  TOGGLE_TOTAL_DAMAGE,
+  TOGGLE_USEFUL_DAMAGE,
+];
+const IRRELEVANT_FOR_SPEEDRUN = [
+  SELECT_SIZE,
+  SELECT_CLASS,
+  SELECT_SPEC,
   CHECKBOX_COMBINE,
   TOGGLE_TOTAL_DAMAGE,
   TOGGLE_USEFUL_DAMAGE,
@@ -93,11 +102,19 @@ const HAS_HEROIC = new Set([
   ...BOSSES["Trial of the Crusader"],
   "Halion",
   "Points",
+  "Speedrun",
+]);
+const RAID_HAS_HEROIC = new Set([
+  "Icecrown Citadel",
+  "Trial of the Crusader",
 ]);
 const POINTS = [100, 99, 95, 90, 75, 50, 25, 0];
 const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
-  column: HEAD_USEFUL_DPS,
+  last_column_sort: {
+    [TABLE_TOP.id]: HEAD_USEFUL_DPS_ID,
+    [TABLE_SPEEDRUN.id]: HEADSPEEDRUN_TOTAL_LENGTH_ID,
+  },
   reversed: false,
 };
 const DATA_KEYS = {
@@ -178,24 +195,53 @@ function speedrun_selected() {
   return SELECT_RAID.value == "Speedrun";
 }
 
-function make_query() {
+function _make_query_top() {
   const size = SELECT_SIZE.value;
   const diff = heroic_toggled() ? 'H' : 'N';
   const mode = `${size}${diff}`;
-  const q = {
+  return {
     server: SELECT_SERVER.value,
     boss: SELECT_BOSS.value,
     mode: mode,
     best_only: CHECKBOX_COMBINE.checked,
     class_i: SELECT_CLASS.value,
     spec_i: SELECT_SPEC.value,
-    sort_by: SORT_VARS.column.id,
+    sort_by: SORT_VARS.last_column_sort[TABLE_TOP.id],
     limit: TOGGLE_LIMIT.checked ? 1000 : 10000,
   };
+}
+
+function _make_query_points() {
+  return {
+    server: SELECT_SERVER.value,
+    class_i: SELECT_CLASS.value,
+    spec_i: SELECT_SPEC.value,
+    limit: TOGGLE_LIMIT.checked ? 1000 : 10000,
+  };
+}
+
+function _make_query_speedrun() {
+  return {
+    server: SELECT_SERVER.value,
+    raid: SELECT_BOSS.value,
+    sort_by: SORT_VARS.last_column_sort[TABLE_SPEEDRUN.id],
+  };
+}
+
+function _make_query() {
+  if (speedrun_selected()) {
+    return _make_query_speedrun();
+  } else if (points_selected()) {
+    return _make_query_points();
+  } else {
+    return _make_query_top();
+  }
+}
+function make_query() {
+  const q = _make_query();
   console.log("Query:", q);
   return JSON.stringify(q);
 }
-
 
 
 function number_with_separator(x, sep = " ") {
@@ -247,12 +293,24 @@ function cell_total(amount, key) {
   return td;
 }
 
+function pad_duration_value(v) {
+  return v.toString().padStart(2, '0');
+}
 function format_duration(dur) {
-  const minutes = Math.floor(dur / 60);
   const seconds = Math.floor(dur % 60);
-  const m_str = minutes.toString().padStart(2, '0');
-  const s_str = seconds.toString().padStart(2, '0');
+  const s_str = pad_duration_value(seconds);
+  const minutes = Math.floor(dur / 60);
+  const m_str = pad_duration_value(minutes);
   return `${m_str}:${s_str}`;
+}
+function format_duration_hours(dur) {
+  const seconds = Math.floor(dur % 60);
+  const s_str = pad_duration_value(seconds);
+  const minutes = Math.floor(dur / 60 % 60);
+  const m_str = pad_duration_value(minutes);
+  const hours = Math.floor(dur / 3600);
+  const h_str = pad_duration_value(hours);
+  return `${h_str}:${m_str}:${s_str}`;
 }
 
 function cell_duration(value) {
@@ -260,6 +318,13 @@ function cell_duration(value) {
   td.value = value;
   td.className = `table-t`;
   td.append(format_duration(value));
+  return td;
+}
+function cell_duration_hours(value) {
+  const td = document.createElement('td');
+  td.value = value;
+  td.className = `table-bt`;
+  td.append(format_duration_hours(value));
   return td;
 }
 
@@ -422,6 +487,26 @@ function table_new_row_points(data, spec) {
 
   return row;
 }
+function table_new_row_speedrun(data) {
+  const row = document.createElement('tr');
+  const [
+    report_id,
+    total_length,
+    segments_sum,
+  ] = data;
+
+  const dummy_name = document.createElement('td');
+  dummy_name.classList.add("table-n");
+  dummy_name.classList.add("table-dummy-name");
+  [
+    dummy_name,
+    cell_date(report_id),
+    cell_duration_hours(total_length),
+    cell_duration_hours(segments_sum),
+  ].forEach(td => row.appendChild(td));
+
+  return row;
+}
 
 
 function update_progress_bar(done, total, network) {
@@ -435,13 +520,16 @@ function update_progress_bar(done, total, network) {
 }
 
 function table_new_row_wrap() {
-  const class_i = parseInt(SELECT_CLASS.value);
-  const spec_i = parseInt(SELECT_SPEC.value);
-  const spec_full_index = class_i * 4 + spec_i;
-  if (points_selected()) {
+  const current_table = get_cur_table();
+  if (current_table == TABLE_TOP) return table_new_row_default;
+  else if (current_table == TABLE_SPEEDRUN) return table_new_row_speedrun;
+  else if (current_table == TABLE_POINTS) {
+    const class_i = parseInt(SELECT_CLASS.value);
+    const spec_i = parseInt(SELECT_SPEC.value);
+    const spec_full_index = class_i * 4 + spec_i;
     return data => table_new_row_points(data, spec_full_index);
   }
-  return table_new_row_default;
+  throw Error("no table handler found!");
 }
 
 function table_append_fragment(table_body, body_fragment) {
@@ -530,7 +618,7 @@ const TopRequest = new class extends XMLHttpRequest {
     update_progress_bar(0, 1);
 
     this.current_query = query;
-    const post_endpoint = POSTS[SELECT_BOSS.value] ?? TOP_POST;
+    const post_endpoint = POSTS[SELECT_RAID.value] ?? TOP_POST;
     
     this.open("POST", post_endpoint);
     this.setRequestHeader("Content-Type", "application/json");
@@ -600,7 +688,8 @@ function new_state() {
 }
 
 function fetch_column(event) {
-  SORT_VARS.column = event.target;
+  const current_table = get_cur_table();
+  SORT_VARS.last_column_sort[current_table.id] = event.target.id;
   new_state();
 }
 
@@ -726,6 +815,11 @@ function on_change_instance() {
 
   const _points_selected = points_selected();
   IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = _points_selected);
+
+  const _speedrun_selected = speedrun_selected();
+  IRRELEVANT_FOR_SPEEDRUN.forEach(e => e.disabled = _speedrun_selected);
+
+  CHECKBOX_DIFFICULTY.disabled = !RAID_HAS_HEROIC.has(SELECT_RAID.value);
   
   if (_points_selected && SELECT_CLASS.selectedIndex == 0) {
     SELECT_CLASS.selectedIndex = 1;

@@ -23,11 +23,11 @@
 {% endblock head_meta %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/top.css?v=240817-1">
+<link rel="stylesheet" type="text/css" href="/static/top.css?v=240830-1">
 {% endblock add_css_file %}
 
 {% block scripts_head %}
-<script type="module" src="static/top.js?v=240817-3"></script>
+<script type="module" src="static/top.js?v=240830-1"></script>
 {% endblock scripts_head %}
 
 {% block the_main %}
@@ -90,8 +90,15 @@
   <table id="table-speedrun">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Time</th>
+        <th></th>
+        <th></th>
+        <th colspan="2">Length</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>Date</th>
+        <th id="head-speedrun-total-length" class="sortable">Total</th>
+        <th id="head-speedrun-segments-sum" class="sortable">Segments</th>
       </tr>
     </thead>
     <tbody></tbody>

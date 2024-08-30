@@ -18,6 +18,7 @@ from top import Top, TopValidation
 from top_points import Points, PointsValidation
 from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
+from top_speedrun import Speedrun, SpeedrunValidation
 
 try:
     import _validate
@@ -85,6 +86,11 @@ async def top_post(request: Request, data: PointsValidation):
         )
     
     z = Points(data).parse_top_points()
+    return make_response_compressed_headers(z)
+
+@app.post('/top_speedrun')
+async def rank(data: SpeedrunValidation):
+    z = Speedrun(data).data()
     return make_response_compressed_headers(z)
 
 @app.post('/top')

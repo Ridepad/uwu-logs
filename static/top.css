@@ -82,6 +82,9 @@ td.table-n {
   white-space: nowrap;
   --min-width: 3rem;
 }
+td.table-dummy-name {
+  width: 1rem;
+}
 td.table-n a {
   text-shadow: 0 0 3em currentColor;
 }
