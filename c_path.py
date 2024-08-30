@@ -18,6 +18,7 @@ class DirNames(StrEnum):
     cache = "cache"
     config = "config"
     static = "static"
+    speedrun = "speedrun"
     parsed = "parsed"
     uploads = "uploads"
     loggers = "_loggers"
@@ -206,6 +207,7 @@ class Directories(dict[str, PathExt]):
     static = main / DirNames.static
     parsed = main / DirNames.parsed
     loggers = main / DirNames.loggers
+    speedrun = main / DirNames.speedrun
     certificates = main / DirNames.certificates
     
     uploads = main / DirNames.uploads

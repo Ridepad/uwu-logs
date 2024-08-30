@@ -4,6 +4,7 @@ const AURAS_COLUMNS = ["ext", "self", "rekt", "cls"];
 
 const BOSSES = {
   "Points": ["Points"],
+  "Speedrun": ["Icecrown Citadel"],
   "Icecrown Citadel": [
     "The Lich King",
     "Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang",

@@ -1,7 +1,9 @@
 _*
 legacy*
+temp*
 test*
 q_*
+w_*
 x_*
 *.7z
 *.db
@@ -19,6 +21,7 @@ bkup/
 cache/
 LogsDir/
 LogsRaw/
+nginx/
 parsed/
 top/
 uploads/

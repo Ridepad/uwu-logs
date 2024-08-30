@@ -16,6 +16,7 @@ API_EXAMPLES = [
     {
         "server": "Lordaeron",
         "raid": "Icecrown Citadel",
+        "mode": "25H",
     },
 ]
 
@@ -44,8 +45,8 @@ class SpeedrunDB(DB):
         *COLUMNS_ORDERED[1:],
     ]
 
-    def __init__(self, new=False) -> None:
-        path = Directories.main / "speedrun.db"
+    def __init__(self, server: str, new=False) -> None:
+        path = Directories.speedrun / f"{server}.db"
         super().__init__(path, new)
 
     def add_new_data(self, table_name: str, data: list):
@@ -64,6 +65,7 @@ class SpeedrunDB(DB):
 class SpeedrunValidation(BaseModel):
     server: str
     raid: str
+    mode: str = "25H"
     sort_by: str = SpeedrunDB.COLUMNS_ORDERED[1]
 
     model_config = {
@@ -76,11 +78,25 @@ class SpeedrunValidation(BaseModel):
     @classmethod
     def validate_server(cls, server: str):
         server = server_cnv(server)
-        servers = Directories.top.files_stems()
+        servers = sorted((
+            file.stem
+            for file in Directories.speedrun.files
+            if file.suffix == ".db"
+        ))
         if server not in servers:
             _list = ', '.join(servers)
             raise ValueError(f"[server] value must be from [{_list}]")
         return server
+
+    @field_validator('mode')
+    @classmethod
+    def validate_mode(cls, mode: str):
+        mode = mode.upper()
+        modes = ["10N", "10H", "25N", "25H"]
+        if mode not in modes:
+            _list = ', '.join(modes)
+            raise ValueError(f"[boss] value value must be from [{_list}]")
+        return mode
     
     @field_validator("sort_by")
     @classmethod
@@ -92,22 +108,13 @@ class SpeedrunValidation(BaseModel):
             raise ValueError(f"[sort_by] value must be from [{_list}]")
 
 
-    def build_query_string(self):
-        table_name = DB.get_table_name(self.server, self.raid)
-        return f'''
-        SELECT *
-        FROM [{table_name}]
-        ORDER BY {self.sort_by}
-        '''
-
-
 class Speedrun(SpeedrunDB, Cache):
     cache: defaultdict[str, dict[str, TopDataCompressed]] = defaultdict(dict)
 
     def __init__(self, model: SpeedrunValidation) -> None:
-        super().__init__()
-        self.table_name = self.get_table_name(model.server, model.raid)
-        self.db_query = model.build_query_string()
+        super().__init__(model.server)
+        self.table_name = self.get_table_name(model.raid, model.mode)
+        self.sort_by = model.sort_by
         self.json_query = model.model_dump_json()
     
     @running_time
@@ -122,21 +129,25 @@ class Speedrun(SpeedrunDB, Cache):
         return server_data[self.json_query]
     
     def _new_compressed_data(self):
-        j = json.dumps(self.cursor.execute(self.db_query), default=list)
+        j = json.dumps(self._new_data(), default=list)
         return TopDataCompressed(j.encode())
-
-
-def main():
-    server = "Lordaeron"
-    raid = "Icecrown Citadel"
-    db = SpeedrunDB(new=True)
-    speedrun_dir = Directories.main.new_child("speedrun")
-    speedrun_txt = speedrun_dir / f"{server}.txt"
     
-    data = speedrun_txt.read_text().splitlines()
-    table_name = db.get_table_name(server, raid)
-    db.add_new_data(table_name, data)
+    def _new_data(self):
+        return self.cursor.execute(self._query_string())
 
+    def _query_string(self):
+        return f'''
+        SELECT *
+        FROM [{self.table_name}]
+        ORDER BY {self.sort_by}
+        '''
+
+
+def test1():
+    sv = SpeedrunValidation(**API_EXAMPLES[0])
+    data = Speedrun(sv)._new_data()
+    for x in data:
+        print(x)
 
 if __name__ == "__main__":
-    main()
+    test1()
