@@ -154,11 +154,12 @@ class DB:
     
     cursors = Cursors()
 
-    def __init__(self, path: PathExt, new=False) -> None:
+    def __init__(self, path: PathExt, new=False, without_row_id=False) -> None:
         if not new and not path.is_file():
             raise FileNotFoundError
 
         self.path = path
+        self.without_row_id = without_row_id
 
         # top_points.Points.Lordaeron
         self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{path.stem}"
@@ -182,9 +183,14 @@ class DB:
     def new_table(self, table_name: str, drop=False):
         if drop and table_name in self.tables_names():
             self.cursor.execute(f"DROP TABLE [{table_name}]")
+
+        query = f"CREATE TABLE [{table_name}] ({self.COLUMNS_TABLE_CREATE_STR})"
+        if self.without_row_id:
+            query = f"{query} WITHOUT ROWID" 
+        
         try:
             with self.cursor as c:
-                c.execute(f"CREATE TABLE [{table_name}] ({self.COLUMNS_TABLE_CREATE_STR})")
+                c.execute(query)
             return True
         except sqlite3.OperationalError:
             return False
@@ -268,7 +274,11 @@ class TopDB(DB):
 
     def __init__(self, server: str, new=False) -> None:
         db_path = self.get_top_db_path(server)
-        super().__init__(db_path, new)
+        super().__init__(
+            db_path,
+            new=new,
+            without_row_id=True,
+        )
         self.server = server
         self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{server}"
 

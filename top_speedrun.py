@@ -47,7 +47,11 @@ class SpeedrunDB(DB):
 
     def __init__(self, server: str, new=False) -> None:
         path = Directories.speedrun / f"{server}.db"
-        super().__init__(path, new)
+        super().__init__(
+            path,
+            new=new,
+            without_row_id=True,
+        )
 
     def add_new_data(self, table_name: str, data: list):
         if not data:
