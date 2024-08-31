@@ -103,12 +103,7 @@ async def top_post(request: Request, data: TopValidation):
         )
     
     z = Top(data).get_data()
-
-    response = Response(content=z.data, media_type="application/json")
-    response.headers["Content-Encoding"] = "gzip"
-    response.headers["Content-Length"] = str(z.size_compressed)
-    response.headers["Content-Length-Full"] = str(z.size)
-    return response
+    return make_response_compressed_headers(z)
 
 @app.post('/pve_stats')
 async def pve_stats(data: PveStatsValidation):
