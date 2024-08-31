@@ -11,22 +11,14 @@
 # couldnt figure out glyphs cz it seemed random to me
 
 
-import json
 import time
-from datetime import datetime
-from pathlib import Path
 from threading import Thread
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import requests
 
-
-PATH = Path(__file__).resolve().parent
-CACHE_DIR = PATH.joinpath("cache")
-CACHE_DIR.mkdir(exist_ok=True)
-CHARACTERS_DIR = CACHE_DIR.joinpath("character")
-CHARACTERS_DIR.mkdir(exist_ok=True)
+from top_gear import GearDB
 
 done: dict[str, dict] = {}
 threads: dict[str, Thread] = {}
@@ -198,56 +190,12 @@ def get_profile(char_name: str, server: str):
     profile_dict["gear_data"] = get_gear(soup)
     return profile_dict
 
-
-
-def read_json(p: Path):
-    try:
-        return json.loads(p.read_text())
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return {}
-    except Exception:
-        return {}
-
-def dump_json(p: Path, data: dict):
-    p.write_text(json.dumps(data))
-
-def is_same_as_last_recorded(player_profile: dict, new_profile: dict):
-    old_profiles = list(player_profile.values())
-    if not old_profiles:
-        return False
-    
-    last_profile = old_profiles[-1]
-    if not isinstance(last_profile, dict):
-        last_profile = player_profile.get(last_profile)
-    
-    return new_profile == last_profile
-
 def parse_and_save_player(player: dict[str, str]):
     server = player["server"]
     player_name = player["name"]
-    server_dir = CHARACTERS_DIR.joinpath(server)
-    server_dir.mkdir(exist_ok=True)
-
-    profile_path = server_dir.joinpath(player_name).with_suffix(".json")
-    player_profile = read_json(profile_path)
 
     new_profile = get_profile(player_name, server)
-    if not new_profile:
-        return player_profile
-    
-    if is_same_as_last_recorded(player_profile, new_profile):
-        return player_profile
-    
-    timestamp_now = int(datetime.now().timestamp())
-    for timestamp, profile in player_profile.items():
-        if profile == new_profile:
-            player_profile[timestamp_now] = timestamp
-            break
-    else:
-        player_profile[timestamp_now] = new_profile
-    
-    dump_json(profile_path, player_profile)
-    return player_profile
+    GearDB(server).add(player_name, new_profile)
 
 ### Used to assure single instance of parser
 
@@ -286,9 +234,7 @@ def __test():
         "name": "Nomadra",
         "server": "Lordaeron",
     }
-    q = get_profile(d["name"], d["server"])
-    print(q)
-    return
+    parse_and_save_player(d)
 
 def __test2():
     chars = [

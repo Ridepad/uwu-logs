@@ -1,5 +1,5 @@
-import Gear from "./char_parser.js?v=240824-1";
-import { SPECS } from "./constants.js?v=240814-1";
+import Gear from "./char_parser.js?v=240831-1";
+import { SPECS } from "./constants.js?v=240830-1";
 
 const INFO_LOADING_POINTS = document.getElementById("loading-points");
 const INFO_MISSING_POINTS = document.getElementById("missing-points");

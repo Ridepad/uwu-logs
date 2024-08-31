@@ -20,6 +20,8 @@ from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
 from top_speedrun import Speedrun, SpeedrunValidation
 
+from test_gear_db import GearDB
+
 try:
     import _validate
 except ImportError:
@@ -121,6 +123,13 @@ async def character(server, name, spec):
 @app.post('/rank')
 async def rank(data: RaidRankValidation):
     return RaidRank(data).points()
+
+@app.get('/gear/{server}/{player_name}')
+async def rank(server: str, player_name: str):
+    z = GearDB(server).get_player_data(player_name)
+    r = make_response_compressed_headers(z)
+    r.headers["ETag"] = z.gear_id()
+    return r
 
 async def check_rate_limit(request: Request, type: str, id: str):
     if not _validate:

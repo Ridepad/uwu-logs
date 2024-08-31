@@ -57,7 +57,7 @@ class FetchCache {
   }
 
   async _fetch_json(type, id) {
-    const url = `/cache/${type}/${id}.json`;
+    const url = `/static/${type}/${id}.json`;
     const cache_options = {signal: CONTROLLER.signal};
     const cache_response = await fetch(url, cache_options);
     if (cache_response.status == 200) {
@@ -92,7 +92,7 @@ class FetchCache {
     this.CACHES.class_set[class_name] = response.json();
   }
   async _fetch_icon_exists(id) {
-    const fetch_try_1 = await fetch(`/cache/icon/${id}.jpg`);
+    const fetch_try_1 = await fetch(`/static/icons/${id}.jpg`);
     if (fetch_try_1.status != 404) return true;
 
     return await this._fetch_missing_check_exists("icon", id);

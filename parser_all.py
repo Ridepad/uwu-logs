@@ -1,25 +1,23 @@
 import json
-from pathlib import Path
 from threading import Thread
 
 import parser_item
 import parser_ench
+from c_path import Directories
 from h_debug import Loggers
 from h_other import requests_get
 
 LOGGER = Loggers.missing
 
-CACHE_DIRECTORY_NAME = "cache"
-PATH = Path(__file__).resolve().parent
+MAIN_DIR = Directories.static
+
 HEADERS = {"User-Agent": "ItemParser/1.1; +uwu-logs.xyz"}
 ICON_URL_PREFIX = "https://wotlk.evowow.com/static/images/wow/icons/large"
-
 
 DEBUG = True
 DEBUG = False
 
 class Loader:
-    path: Path
     threads: dict[str, Thread] = {}
 
     type: str
@@ -33,7 +31,7 @@ class Loader:
         try:
             return self.__path
         except AttributeError:
-            self.__path = PATH / CACHE_DIRECTORY_NAME / self.type / f"{self.id}.{self.extension}"
+            self.__path = MAIN_DIR.new_child(self.type) / f"{self.id}.{self.extension}"
             return self.__path
     
     def wait_for_thread(self):
@@ -99,13 +97,10 @@ class Loader:
 
 
 class Icon(Loader):
-    type: str = "icon"
+    type: str = "icons"
     extension: str = "jpg"
     
     def download(self):
-        if DEBUG:
-            p = PATH / CACHE_DIRECTORY_NAME / f"{self.type}_test" / f"{self.id}.{self.extension}"
-            return p.read_bytes()
         url = f"{ICON_URL_PREFIX}/{self.id}.jpg"
         return requests_get(url, HEADERS).content
 
@@ -118,9 +113,6 @@ class Item(Loader):
     extension: str = "json"
     
     def download(self):
-        if DEBUG:
-            p = PATH / CACHE_DIRECTORY_NAME / f"{self.type}_test" / f"{self.id}.{self.extension}"
-            return json.loads(p.read_text())
         return parser_item.parse_item(self.id)
 
     def save(self, data):
@@ -132,9 +124,6 @@ class Ench(Loader):
     extension: str = "json"
     
     def download(self):
-        if DEBUG:
-            p = PATH / CACHE_DIRECTORY_NAME / f"{self.type}_test" / f"{self.id}.{self.extension}"
-            return json.loads(p.read_text())
         return parser_ench.get_ench(self.id)
 
     def save(self, data):

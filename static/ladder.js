@@ -1,6 +1,6 @@
 import {
   SPECS,
-} from "./constants.js?v=240814-1"
+} from "./constants.js?v=240830-1"
 
 const MAIN_TABLE_WRAP = document.getElementById("main-table-wrap");
 const MAIN_TABLE_BODY = document.getElementById("main-table-body");

@@ -1,4 +1,4 @@
-import { CACHE } from "./gear_cache.js?v=240814-1";
+import { CACHE } from "./gear_cache.js?v=240831-1";
 import {
   QUALITY_COLOR,
   ENCHANTABLE,

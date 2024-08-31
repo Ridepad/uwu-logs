@@ -1,3 +1,4 @@
+import { CACHE } from "./gear_cache.js?v=240831-1";
 import {
   get_gs,
   is_two_hand,
@@ -8,9 +9,7 @@ import {
   slot_item_changed,
   find_equipped_sets,
   object_default_int,
-} from "./gear_constants.js?240725-1";
-
-import { CACHE } from "./gear_cache.js?240725-1";
+} from "./gear_constants.js?v=240814-1";
 
 const ELEMENT_SET_NAME = document.getElementById("set-name");
 const BUTTON_SET_PREV = document.getElementById("set-prev");
@@ -27,8 +26,8 @@ const TABLE_STATS_BODY = document.getElementById("table-stats-body");
 const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
 
 const URL_PREFIX_TALENTS = "https://aowow.trinitycore.info/?talent#";
-const URL_PREFIX_ICON = "/cache/icon";
-const URL_PREFIX_CHARACTER = "/cache/character";
+const URL_PREFIX_ICON = "/static/icons";
+const URL_PREFIX_CHARACTER = "/gear";
 const RELEVANT_PROFS = ["Enchanting", "Blacksmithing"];
 const DEFAULT_NAME_VALUE = {
   specs: ["No spec", "0/0/0"],
@@ -57,7 +56,7 @@ function to_title(string) {
 }
 
 function get_char_data_url(server, name) {
-  return `${URL_PREFIX_CHARACTER}/${server}/${name}.json`;
+  return `${URL_PREFIX_CHARACTER}/${server}/${name}`;
 }
 
 function add_new_stats(all_stats, new_stats) {
