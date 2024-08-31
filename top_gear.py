@@ -74,7 +74,9 @@ class GearDB(DB):
         query = self.player_query(player_name)
         try:
             LAST_MODIFIED, DATA = self.cursor.execute(query).fetchone()
-        except Exception as e:
+        except TypeError:
+            LAST_MODIFIED, DATA = NO_DATA
+        except Exception:
             LOGGER_GEAR_PARSER.exception(f"get_player_data | {player_name:12}")
             LAST_MODIFIED, DATA = NO_DATA
         
