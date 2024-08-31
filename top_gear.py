@@ -3,9 +3,9 @@ import gzip
 import json
 from api_top_db_v2 import DB
 from c_path import Directories, PathExt, StrEnum
-from h_debug import running_time, setup_logger
+from h_debug import Loggers, running_time
 
-LOGGER_GEAR_PARSER = setup_logger("gear")
+LOGGER_GEAR_PARSER = Loggers.gear
 NO_DATA = (0, gzip.compress(b"{}"))
 
 def is_same_as_last_recorded(player_profile: dict, new_profile: dict):

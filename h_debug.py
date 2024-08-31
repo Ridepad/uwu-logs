@@ -37,6 +37,7 @@ class Loggers(dict[str, logging.Logger]):
     ladder_parser = setup_logger('ladder_parser')
     missing = setup_logger('missing')
     top = setup_logger('top')
+    gear = setup_logger('gear')
 
 def get_ms(timestamp):
     if timestamp is None:

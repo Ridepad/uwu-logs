@@ -328,7 +328,7 @@ def parse_gear(profile_json: dict):
         for slot in GEAR_ORDERED
     ]
 
-def doshit(profile):
+def make_profile(profile):
     if not profile:
         print("doshit | not profile")
         return
@@ -379,7 +379,7 @@ def doshit(profile):
 def parse_profile(name, forced: bool=False):
     print("> parse_profile:", name)
     profile = get_profile(name, forced)
-    new_profile = doshit(profile)
+    new_profile = make_profile(profile)
     DATABASE.add(name, new_profile)
 
 def gen_rg():
