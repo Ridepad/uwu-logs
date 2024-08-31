@@ -14,15 +14,18 @@ class StrEnum(str, Enum):
 class DirNames(StrEnum):
     logs = "LogsDir"
     archives = "LogsRaw"
-    top = "top"
     cache = "cache"
     config = "config"
     static = "static"
-    speedrun = "speedrun"
     parsed = "parsed"
     uploads = "uploads"
     loggers = "_loggers"
     certificates = "__cert"
+    
+    db = "db"
+    top = "top"
+    gear = "gear"
+    speedrun = "speedrun"
 
 class FileNames(StrEnum):
     reports_allowed = "__allowed.txt"
@@ -204,7 +207,6 @@ class Directories(dict[str, PathExt]):
     main = PathExt(__file__).resolve().parent
     logs = main / DirNames.logs
     archives = main / DirNames.archives
-    top = main / DirNames.top
     cache = main / DirNames.cache
     config = main / DirNames.config
     static = main / DirNames.static
@@ -212,6 +214,11 @@ class Directories(dict[str, PathExt]):
     loggers = main / DirNames.loggers
     speedrun = main / DirNames.speedrun
     certificates = main / DirNames.certificates
+
+    db = main / DirNames.db
+    top = db / DirNames.top
+    speedrun = db / DirNames.speedrun
+    gear = db / DirNames.gear
     
     uploads = main / DirNames.uploads
     uploaded = uploads / "uploaded"
