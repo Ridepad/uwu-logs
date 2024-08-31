@@ -107,7 +107,10 @@ class _PathExt(type(Path())):
         backup_path = self.backup_path(_main=_main, _secondary=_secondary)
         if backup_path.is_dir():
             shutil.copytree(backup_path, self)
-
+        elif backup_path.is_file():
+            shutil.copy(backup_path, self)
+        else:
+            raise FileNotFoundError("Backup path doesn't exist!")
 
 class _PathExtFiles(_PathExt):
     def _json(self) -> dict:
