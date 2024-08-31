@@ -75,7 +75,7 @@ class GearDB(DB):
         try:
             LAST_MODIFIED, DATA = self.cursor.execute(query).fetchone()
         except Exception as e:
-            print(e)
+            LOGGER_GEAR_PARSER.exception(f"get_player_data | {player_name:12}")
             LAST_MODIFIED, DATA = NO_DATA
         
         return CharGear(
@@ -131,7 +131,7 @@ class GearDB(DB):
 
 def new_db_row(name: str, data: dict):
     if not data:
-        print("no data", name)
+        LOGGER_GEAR_PARSER.debug(f"new_db_row | {name:12} | not new_profile")
         return
     
     jd = json.dumps(data, separators=(',', ':'))
