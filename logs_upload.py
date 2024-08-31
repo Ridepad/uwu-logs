@@ -11,6 +11,7 @@ from time import perf_counter, sleep
 
 import api_7z
 import h_server_fix
+from h_other import get_report_name_info
 import logs_fix
 
 from constants import (
@@ -866,13 +867,13 @@ class LogsArchive(LogsArchiveParser):
         return self.server != old_server
 
     def remove_prev_uploaded(self):
-        if not self.is_new_server():
-            return
-        
-        prev_server = self.prev_info.get("server")
+        # prev_server = self.prev_info.get("server", "Unknown")
+        prev_server = "Unknown"
         for raid_id in self.slices:
-            raid_id = raid_id.replace(self.server, prev_server)
-            remove_prev_raid_upload(raid_id)
+            _id = get_report_name_info(raid_id)
+            _id["server"] = prev_server
+            prev_raid_id = '--'.join(_id.values())
+            remove_prev_raid_upload(prev_raid_id)
 
     @running_time
     def is_fully_proccessed(self):
