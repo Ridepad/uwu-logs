@@ -20,7 +20,7 @@ from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
 from top_speedrun import Speedrun, SpeedrunValidation
 
-from test_gear_db import GearDB
+from top_gear import GearDB
 
 try:
     import _validate
@@ -128,6 +128,7 @@ async def rank(data: RaidRankValidation):
 async def rank(server: str, player_name: str):
     z = GearDB(server).get_player_data(player_name)
     r = make_response_compressed_headers(z)
+    r.headers["Cache-Control"] = "public, max-age=900"
     r.headers["ETag"] = z.gear_id()
     return r
 
