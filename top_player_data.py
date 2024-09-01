@@ -27,8 +27,8 @@ class PlayerInfo:
     def __str__(self) -> str:
         return " | ".join((
             f"GUID: {self.guid}",
-            f"Name: {self.name}",
-            f"Class: {CLASSES_LIST[self.class_i]}",
+            f"Name: {self.name:12}",
+            f"Class: {CLASSES_LIST[self.class_i]:12}",
             f"Spec: {self.spec}",
         ))
 
