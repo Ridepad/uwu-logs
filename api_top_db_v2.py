@@ -272,8 +272,8 @@ class TopDB(DB):
         (Columns.SPEC, Columns.USEFUL_DPS, Columns.GUID),
     ]
 
-    def __init__(self, server: str, new=False) -> None:
-        db_path = self.get_top_db_path(server)
+    def __init__(self, server: str, new=False, directory=Directories.top) -> None:
+        db_path = directory / f"{server}.db"
         super().__init__(
             db_path,
             new=new,
@@ -282,10 +282,6 @@ class TopDB(DB):
         self.server = server
         self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{server}"
 
-    @staticmethod
-    def get_top_db_path(server: str):
-        return Directories.top / f"{server}.db"
-    
     def add_new_entries_wrap(self, data: dict[str, list[TopDict]]):
         for table_name, data_list in data.items():
             combined_data = self.squash_top(data_list)
