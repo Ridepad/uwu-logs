@@ -114,11 +114,12 @@ def convert_to_dps(data: dict[int, int], refresh_window=None):
         return convert_to_continuous_dps_seconds(data)
     return convert_to_slice_dps_custom(data, int(refresh_window))
 
-def convert_keys(data: dict[str, int]):
+def convert_keys(data: dict[str, int], pull_start_line: str):
     if not data:
         return
     
-    FIRST_KEY = to_int(list(data)[0])
+    _timestamp = pull_start_line.split(",", 1)[0][-9:-2]
+    FIRST_KEY = to_int(_timestamp)
     for k in list(data):
         new_key = to_int(k) - FIRST_KEY
         if new_key < 0:
@@ -142,7 +143,7 @@ class Dps(logs_base.THE_LOGS):
         else:
             source_guids = all_guids
         data = get_raw_data(logs_slice, source_guids, all_guids)
-        convert_keys(data)
+        convert_keys(data, logs_slice[0])
         return data
 
     @running_time
@@ -172,16 +173,13 @@ class Dps(logs_base.THE_LOGS):
 
 def test():
     report = Dps("22-12-30--20-10--Nomadra--Lordaeron")
-    encdata = report.get_enc_data()
-    s, f = encdata["Saviana Ragefire"][-1]
-    s, f = encdata["The Lich King"][-2]
-    logs = report.LOGS[s, f]
-
-    guids = report.get_players_and_pets_guids()
-    guids = report.get_units_controlled_by("Nomadra")
-    data = get_raw_data(logs, guids)
-    dps = convert_to_continuous_dps_seconds(data)
-    print(dps)
+    report.LOGS
+    s, f = report.ENCOUNTER_DATA["The Lich King"][-2]
+    dps = report.get_dps(s, f, "Nomadra")
+    new_data = convert_to_dps(dps, 1)
+    convert_keys_to_str(new_data)
+    for x in list(new_data)[:30]:
+        print(f"{x} | {new_data[x]:>9,}")
 
 if __name__ == "__main__":
     test()
