@@ -16,7 +16,7 @@ class Timestamps(logs_core.Logs):
         except Exception:
             return self._redo_timestamps()
     
-    @running_time
+    # @running_time
     def _read_timestamps(self):
         timestamp_data_file_name = self.relative_path("TIMESTAMP_DATA.json")
         return timestamp_data_file_name._json()
