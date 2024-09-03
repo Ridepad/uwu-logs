@@ -88,7 +88,7 @@ def spells_icons(spells_json: PathExt) -> dict[str, str]:
     return {
         spell_id: icon_name
         # int(spell_id): icon_name
-        for icon_name, _spells in spells_json._json().items()
+        for icon_name, _spells in spells_json.json().items()
         for spell_id in _spells
     }
 
@@ -169,7 +169,7 @@ class Spells(Logs):
     def _read_spells(self):
         spells_data_file_name = self.relative_path("SPELLS_DATA.json")
         j: dict[str, dict[str, str]]
-        j = spells_data_file_name._json()
+        j = spells_data_file_name.json()
         return {
             spell_id: Spell(id=spell_id, **v)
             for spell_id, v in j.items()

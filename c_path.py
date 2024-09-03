@@ -116,22 +116,25 @@ class _PathExt(type(Path())):
             raise FileNotFoundError("Backup path doesn't exist!")
 
 class _PathExtFiles(_PathExt):
-    def _json(self) -> dict:
+    def json(self) -> dict:
         if self.is_dir():
             raise ValueError("Can't parse directory as json.")
         
         return json.loads(self.read_text())
-
-    @CachePath.infrequent_changes
-    def json(self):
-        return self._json()
     
-    @CachePath.infrequent_changes
     def json_ignore_error(self):
         try:
-            return self._json()
+            return self.json()
         except (FileNotFoundError, TypeError, json.decoder.JSONDecodeError):
             return {}
+
+    @CachePath.infrequent_changes
+    def json_cached(self):
+        return self.json()
+    
+    @CachePath.infrequent_changes
+    def json_cached_ignore_error(self):
+        return self.json_ignore_error()
     
     def json_write(self, data, indent: int=None, condensed: bool=False):
         separators = (',', ':') if condensed else None

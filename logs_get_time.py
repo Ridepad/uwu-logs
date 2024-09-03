@@ -19,7 +19,7 @@ class Timestamps(logs_core.Logs):
     # @running_time
     def _read_timestamps(self):
         timestamp_data_file_name = self.relative_path("TIMESTAMP_DATA.json")
-        return timestamp_data_file_name._json()
+        return timestamp_data_file_name.json()
     
     @running_time
     def _redo_timestamps(self):

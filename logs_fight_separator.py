@@ -262,7 +262,7 @@ class Fights(logs_core.Logs):
             return self._redo_enc_data()
     
     def _read_enc_data(self) -> dict[str, list[list[int]]]:
-        return self.relative_path("ENCOUNTER_DATA.json")._json()
+        return self.relative_path("ENCOUNTER_DATA.json").json()
 
     def _redo_enc_data(self):
         groupped_boss_lines = self._dump_all_boss_lines()

@@ -64,7 +64,7 @@ def add_new_top_data(server, reports):
     _data = defaultdict(list)
     for report_id in reports:
         top_file = Directories.logs.joinpath(report_id, FileNames.logs_top)
-        top_data = top_file._json()
+        top_data = top_file.json()
         for boss_name, modes in top_data.items():
             for mode, data in modes.items():
                 table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
