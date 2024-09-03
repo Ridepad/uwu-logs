@@ -178,6 +178,11 @@ def separate_modes(data: dict[str, list[dict]]):
         separated[boss_name] = new_segments
     return separated
 
+def find_kill(segments):
+    for segment_info in segments:
+        if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
+            yield segment_info
+
 class LogsSegments(logs_base.THE_LOGS):
     @property
     def SEGMENTS(self):
@@ -207,6 +212,11 @@ class LogsSegments(logs_base.THE_LOGS):
             segm_links.insert(0, self.make_segment_query_boss("all"))
             self.__SEGMENTS_QUERIES = segm_links
             return segm_links
+    
+    def gen_kill_segments(self):
+        for boss_name, boss_segments in self.SEGMENTS.items():
+            for kill_segment in find_kill(boss_segments):
+                yield boss_name, kill_segment
 
     def get_segments(self):
         segments_data: dict[str, list[dict]] = {}
@@ -298,6 +308,7 @@ class LogsSegments(logs_base.THE_LOGS):
             if boss_name == "The Lich King":
                 kill = has_fury_of_frostmourne(self.LOGS[f-10:f+20])
             elif boss_name in COWARDS_NAMES:
+                # print("\n>> COWARDS", boss_name)
                 if diff[:2] == "25":
                     _slice = self.LOGS[f-100:f]
                     threshold = 20
