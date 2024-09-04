@@ -381,7 +381,7 @@ SPELL_BOOK_SPEC = {
     "warrior": {
         "7384": 1, # Overpower
         "47486": 1, # Mortal Strike
-        "12328": 1, # Sweeping Strikes
+        "12723": 1, # Sweeping Strikes
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
 
