@@ -8,6 +8,7 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from c_path import Directories, Files
 from logs_upload import LogsArchive, NewUpload, UploadChunk
 
 app = FastAPI()
@@ -49,11 +50,28 @@ def check_chunk_header(request: Request):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="must include [x-upload-id] header with an integer of a chunk",
         )
+    
+    
+@Directories.top.cache_until_new_self
+def get_servers(folder):
+    print(">>>>>>>>>> get_servers")
+    s = set((
+        file_path.stem
+        for file_path in folder.iterdir()
+        if file_path.suffix == ".db"
+    ))
+    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
+    new = sorted(s - set(SERVERS_MAIN))
+    return SERVERS_MAIN + new
 
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_get(request: Request):
     return TEMPLATES.TemplateResponse(
-        request=request, name="upload.html"
+        request=request,
+        name="upload.html",
+        context={
+            "SERVERS": get_servers(),
+        }
     )
 
 @app.post("/upload")
