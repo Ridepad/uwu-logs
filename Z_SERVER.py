@@ -212,6 +212,18 @@ def home():
 def about():
     return render_template('about.html')
 
+
+@Directories.top.cache_until_new_self
+def get_servers(folder):
+    s = set((
+        file_path.stem
+        for file_path in folder.iterdir()
+        if file_path.suffix == ".db"
+    ))
+    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
+    new = sorted(s - set(SERVERS_MAIN))
+    return SERVERS_MAIN + new
+
 @SERVER.route("/logs_list", methods=['GET', 'POST'])
 def show_logs_list():
     if request.method == "POST":
@@ -249,7 +261,6 @@ def show_logs_list():
         calend_prev_last_week = calend_prev[-2]
     calend.insert(0, calend_prev_last_week)
 
-    servers = Directories.top.files_stems()
     return render_template(
         'logs_list.html',
         MONTH=new_month,
@@ -259,7 +270,7 @@ def show_logs_list():
         CURRENT_SERVER=server,
         MONTHS=LOGS_LIST_MONTHS,
         YEARS=YEARS,
-        SERVERS=servers,
+        SERVERS=get_servers(),
         ALL_FIGHT_NAMES=ALL_FIGHT_NAMES,
     )
 
