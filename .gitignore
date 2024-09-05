@@ -1,6 +1,5 @@
 _*
 legacy*
-temp*
 test*
 q_*
 w_*
@@ -27,6 +26,7 @@ static/enchant/
 static/icons/
 static/item/
 static/gear/
+temp/
 top/
 uploads/
 venv/
