@@ -230,6 +230,8 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     temp_pets: dict[str, dict[str, str]] = {}
     pets_perma_all: set[str] = set()
 
+    _ignored_pet_names = set()
+
     other_perma_pets: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
 
     players = {}
@@ -263,9 +265,12 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 # LOGGER_REPORTS.info(f" NEW CLASS | {sName:12} | {line}")
 
         if spell_id == "47468": # Claw
-            if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:4] == "0xF1":
+            if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:5] == "0xF14":
                 other_perma_pets["Ghoul"][sGUID].add(tGUID)
-                if sName not in GHOUL_NAMES:
+                if sName in _ignored_pet_names:
+                    pass
+                elif sName not in GHOUL_NAMES:
+                    _ignored_pet_names.add(sName)
                     LOGGER_REPORTS.debug(f"sName not in GHOUL_NAMES {sName}")
 
         elif spell_id == "54053": # Shadow Bite
