@@ -50,33 +50,39 @@ SAVING_SLICES = "Saving log slices..."
 SEMI_DONE = "Finishing caching..."
 
 
-def raw_exists(raid_id):
+def raw_exists(raid_id: str):
     pending = Directories.pending_archive / f"{raid_id}.txt"
     if pending.is_file():
+        LOGGER_UPLOADS.debug(f"raw_exists pending.is_file")
         return True
     
     archive_path = Directories.archives / f"{raid_id}.7z"
     archive = api_7z.SevenZipArchive(archive_path)
     if archive.archive_id:
+        LOGGER_UPLOADS.debug(f"raw_exists archive.archive_id")
         return True
     
     backup_archive_path = archive_path.backup_path()
     backup_archive = api_7z.SevenZipArchive(backup_archive_path)
     if backup_archive.archive_id:
+        LOGGER_UPLOADS.debug(f"raw_exists backup_archive.archive_id")
         return True
     
     return False
 
 def slice_exists(p: PathExt):
     return p.is_file() and p.stat().st_size > 2048
-    
-def is_fully_processed(raid_id: str):
+
+def logs_directory_exists(raid_id: str):
     logs_name = Directories.logs / raid_id / LOGS_CUT_NAME
     _slice_exists = slice_exists(logs_name)
     if not _slice_exists:
         logs_name_backup = logs_name.backup_path()
         _slice_exists = slice_exists(logs_name_backup)
-    return _slice_exists and raw_exists(raid_id)
+    return _slice_exists
+
+def is_fully_processed(raid_id: str):
+    return logs_directory_exists(raid_id) and raw_exists(raid_id)
 
 
 def nuke_folder_contents(directory: PathExt, suffix: str=None):
@@ -579,7 +585,6 @@ class LogsArchiveParser(LogsArchiveStatus):
         self.forced = forced
         self.only_slices = only_slices
         self.keep_temp_folder = keep_temp_folder
-        self.keep_temp_folder = True
 
         self.has_duplicates = False
         self.has_error = False
@@ -711,6 +716,7 @@ class LogsArchive(LogsArchiveParser):
     def proccess_archive(self):
         self.pc_main = perf_counter()
         if self.is_fully_proccessed():
+            self.finish(ALREADY_DONE)
             return
 
         if self.uncompressed_size > disk_usage(__file__).free:
@@ -736,8 +742,8 @@ class LogsArchive(LogsArchiveParser):
         
         self.write_file_info()
         self.remove_prev_uploaded()
-        self.move_sliced_logs()
         self.move_uploaded_archive_wrap()
+        self.move_sliced_logs()
         self.remove_temp_upload_folder()
 
     def release_archive_file(self):
@@ -749,9 +755,11 @@ class LogsArchive(LogsArchiveParser):
             return
         
         self._7z_pipe.kill()
-        LOGGER_UPLOADS.debug(f"kill {self._7z_pipe}")
+        # LOGGER_UPLOADS.debug(f"kill {self._7z_pipe}")
+        LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | kill pipe")
         self._7z_pipe.wait()
-        LOGGER_UPLOADS.debug(f"wait {self._7z_pipe}")
+        # LOGGER_UPLOADS.debug(f"wait {self._7z_pipe}")
+        LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | wait pipe")
         
     def move_uploaded_archive_wrap(self):
         self.release_archive_file()
@@ -775,7 +783,7 @@ class LogsArchive(LogsArchiveParser):
         pc = perf_counter()
         raw_path_current = self.upload_data.directory / f"{raid_id}.txt"
         if not raw_path_current.is_file():
-            print(">>> not raw_path_current.is_file", raid_id)
+            print(">>> Missing:", raw_path_current)
             return
         
         if not self.forced and raw_exists(raid_id):
@@ -795,11 +803,17 @@ class LogsArchive(LogsArchiveParser):
 
     def move_sliced_logs(self):
         if self.has_error:
-            nuke_folder_contents(self.upload_data.directory, suffix=".txt")
+            # nuke_folder_contents(self.upload_data.directory, suffix=".txt")
+            # LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | nuke_folder_contents")
             return
         
         for raid_id in self.slices:
             self._move_raid_slice(raid_id)
+        LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | _move_raid_slice")
+
+        for x in self.upload_data.directory.iterdir():
+            print(x)
+        LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | Listed")
 
     def move_uploaded_archive(self):
         if self.archive_path.parent != self.upload_data.directory:
@@ -815,6 +829,7 @@ class LogsArchive(LogsArchiveParser):
         _file_id = f"{ip}--{timestamp}--{name}"
         new_archive_name = _dir / _file_id
         self.archive_path.rename(new_archive_name)
+        LOGGER_UPLOADS.debug(f"{self.archive_path.parent} | move_uploaded_archive | {new_archive_name}")
 
     def remove_temp_upload_folder(self):
         if self.keep_temp_folder:
@@ -867,10 +882,11 @@ class LogsArchive(LogsArchiveParser):
         return self.server != old_server
 
     def remove_prev_uploaded(self):
-        # prev_server = self.prev_info.get("server", "Unknown")
-        prev_server = "Unknown"
+        prev_server = self.prev_info.get("server", "Unknown")
         for raid_id in self.slices:
             _id = get_report_name_info(raid_id)
+            if _id["server"] == prev_server:
+                continue
             _id["server"] = prev_server
             prev_raid_id = '--'.join(_id.values())
             remove_prev_raid_upload(prev_raid_id)
@@ -890,19 +906,22 @@ class LogsArchive(LogsArchiveParser):
             return False
 
         if not self.prev_info.get("slices"):
-        #     self.finish(ALREADY_DONE_NONE_FOUND)
             LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not self.prev_info.get('slices')")
-        #     return True
             return False
         
+        return self.all_slices_proccessed()
+
+    def all_slices_proccessed(self):
         slices = self.prev_info.get("slices", [])
         for raid_id in slices:
             if not is_fully_processed(raid_id):
                 LOGGER_UPLOADS.debug(f"/ is_fully_proccessed not is_fully_processed {raid_id}")
                 return False
         
-        self.finish(ALREADY_DONE)
         return True
+
+
+#######################################
 
 @dataclass
 class UploadChunk:
