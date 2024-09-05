@@ -59,7 +59,7 @@ def find_kill(segments):
 
 
 class Top(logs_main.THE_LOGS):
-    def make_report_top(self, rewrite=False):
+    def make_report_top_wrap(self, rewrite=False):
         top_path = Directories.logs / self.NAME / TOP_FILE_NAME
         if not rewrite and top_path.is_file():
             return
@@ -70,20 +70,20 @@ class Top(logs_main.THE_LOGS):
             report_top = {}
             LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Dog water | {q}')
         else:
-            report_top = self._make_report_top()
+            report_top = self.make_report_top()
             LOGGER_REPORTS.debug(f'{get_ms_str(pc)} | {self.NAME:50} | Done top')
 
         top_path.json_write(report_top)
         return report_top
 
-    def _make_report_top(self):
+    @running_time
+    def make_report_top(self):
         report_top = defaultdict(dict)
-        for boss_name, boss_segments in self.SEGMENTS.items():
-            for kill_segment in find_kill(boss_segments):
-                diff = kill_segment['diff']
-                s = kill_segment["start"]
-                f = kill_segment["end"]
-                report_top[boss_name][diff] = self.make_boss_top(s, f, boss_name)
+        for boss_name, kill_segment in self.gen_kill_segments():
+            diff = kill_segment['diff']
+            s = kill_segment["start"]
+            f = kill_segment["end"]
+            report_top[boss_name][diff] = self.make_boss_top(s, f, boss_name)
         return report_top
     
 
@@ -163,8 +163,22 @@ def make_report_top_wrap(report_name, rewrite=False):
         LOGGER_REPORTS.exception(report_name)
 
 
+def _print_boss_top(boss_top: list[dict]):
+    for x in sorted(boss_top, key=lambda x: x["u"], reverse=True):
+        q = f"{x['n']:12} | {x['u']:>11,} | {x['d']:>11,}"
+        print(q)
+
 def _test1():
-    make_report_top_wrap("24-02-09--20-49--Meownya--Lordaeron", rewrite=True)
+    # report = Top("24-02-09--20-49--Meownya--Lordaeron")
+    report = Top("24-05-10--21-04--Jengo--Lordaeron")
+    data = report.make_report_top()
+    # lk = data["The Lich King"]["25H"]
+    # for x in lk:
+    #     print(x)
+    # vali = data["Valithria Dreamwalker"]["25H"]
+    # _print_boss_top(vali)
+    fg = data["Festergut"]["25H"]
+    _print_boss_top(fg)
 
 if __name__ == "__main__":
     _test1()
