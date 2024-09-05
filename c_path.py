@@ -43,6 +43,7 @@ class FileNames(StrEnum):
     windows_7z_installer = "7z2301-x64.exe"
 
     config_phase = "server_phases.json"
+    config_server_main = "servers_main.json"
 
     logs_cut = "LOGS_CUT.zstd"
     logs_cut_old = "LOGS_CUT.zlib"
@@ -247,6 +248,7 @@ class Files(dict[str, PathExt]):
     cert_private = Directories.certificates / FileNames.cert_private
 
     server_phases = Directories.config / FileNames.config_phase
+    server_main = Directories.config / FileNames.config_server_main
 
 Directories.mkdirs()
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 import parser_all
 from api_top_db_v2 import TopDataCompressed
-from c_path import Directories
+from c_path import Directories, Files
 from constants import GEAR
 from h_debug import Loggers
 from top_character import Character, CharacterValidation
@@ -28,15 +28,26 @@ except ImportError:
     _validate = None
 
 
-app = FastAPI()
+app = FastAPI(
+    swagger_ui_parameters={"syntaxHighlight.theme": "arta"},
+)
 TEMPLATES = Jinja2Templates(directory="templates")
 TEMPLATES.env.trim_blocks = True
 TEMPLATES.env.lstrip_blocks = True
 
 LOGGER_CONNECTIONS = Loggers.connections
 
-def get_servers():
-    return Directories.top.files_stems()
+@Directories.top.cache_until_new_self
+def get_servers(folder):
+    print(">>>>>>>>>> get_servers")
+    s = set((
+        file_path.stem
+        for file_path in folder.iterdir()
+        if file_path.suffix == ".db"
+    ))
+    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
+    new = sorted(s - set(SERVERS_MAIN))
+    return SERVERS_MAIN + new
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
