@@ -19,7 +19,6 @@ from top_points import Points, PointsValidation
 from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
 from top_speedrun import Speedrun, SpeedrunValidation
-from top_healers import TopHeal
 
 from top_gear import GearDB
 
@@ -116,19 +115,6 @@ async def top_post(request: Request, data: TopValidation):
         )
     
     z = Top(data).get_data()
-    return make_response_compressed_headers(z)
-
-@app.post('/top_heal')
-async def top_heal_post(request: Request, data: TopValidation):
-    print(">>>>>>> top_heal")
-    mimetype = request.headers.get('Content-Type')
-    if mimetype != "application/json":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="requires [application/json] mimetype/content-type",
-        )
-    
-    z = TopHeal(data).get_data()
     return make_response_compressed_headers(z)
 
 @app.post('/pve_stats')
@@ -253,7 +239,6 @@ if __name__ == "__main__":
     
     @app.exception_handler(404)
     def not_found_exception_handler(request: Request, exc: HTTPException):
-        print("! 404", request.scope["root_path"])
         if request.scope["root_path"] not in _no_redirect_roots:
             return redirect_to_main_server(request.url)
         
