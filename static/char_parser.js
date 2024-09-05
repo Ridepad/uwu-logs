@@ -64,7 +64,7 @@ function add_new_stats(all_stats, new_stats) {
   for (const [stat, value] of new_stats) {
     if (isNaN(value)) continue;
     const stat_lower = stat.toLowerCase();
-    all_stats[stat_lower] += value;
+    all_stats[stat_lower] += +value;
   }
 }
 
@@ -349,7 +349,7 @@ export default class Gear {
       for (const [set_n, set_bonus] of set_data) {
         const [value, stat] = split_space_once(set_bonus);
         if (isNaN(value) || equipped_items < set_n) continue;
-        stats[stat] += value;
+        stats[stat] += +value;
       }
     }
   }
