@@ -8,7 +8,8 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from c_path import Directories, Files
+from constants import SERVERS
+from c_path import Directories
 from logs_upload import LogsArchive, NewUpload, UploadChunk
 
 app = FastAPI()
@@ -60,9 +61,8 @@ def get_servers(folder):
         for file_path in folder.iterdir()
         if file_path.suffix == ".db"
     ))
-    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
-    new = sorted(s - set(SERVERS_MAIN))
-    return SERVERS_MAIN + new
+    servers = s - set(SERVERS.values())
+    return sorted(servers)
 
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_get(request: Request):
