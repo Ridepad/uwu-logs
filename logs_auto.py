@@ -56,23 +56,44 @@ def save_raw_logs(report_id: str):
 def _report_server(report_id: str):
     return get_report_name_info(report_id)["server"]
 
+def top_has_errors(data: list[dict]):
+    for row in data:
+        for key in {"u", "d", "t"}:
+            if not row.get(key):
+                if row.get(key) == 0:
+                    continue
+                LOGGER_UPLOADS.error(f'top_has_errors | {key} | {row}')
+                return True
+    return False
+
+def gen_top_data(top_data: dict):
+    for boss_name, modes in top_data.items():
+        for mode, data in modes.items():
+            table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
+            yield table_name, data
+
+
 def add_new_top_data(server, reports):
     top_data: dict[str, dict[str, list[dict]]]
 
     pc = perf_counter()
 
+    errors = set()
     _data = defaultdict(list)
     for report_id in reports:
         top_file = Directories.logs.joinpath(report_id, FileNames.logs_top)
         top_data = top_file.json()
-        for boss_name, modes in top_data.items():
-            for mode, data in modes.items():
-                table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
-                _data[table_name].extend(data)
+        for table_name, data in gen_top_data(top_data):
+            if top_has_errors(data):
+                errors.add(report_id)
+                break
+            _data[table_name].extend(data)
 
     api_top_db_v2.TopDB(server, new=True).add_new_entries_wrap(_data)
     
     LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Saved top | {server}')
+
+    return errors
 
 def group_reports_by_server(new_logs):
     new_logs = sorted(new_logs, key=_report_server)
@@ -91,17 +112,12 @@ def make_top_data(new_logs: list[str], processes: int=1):
             _make_report_top_wrap(report_id)
             for report_id in new_logs
         ]
-    
-    for report_id, done in done_data:
-        if done:
-            continue
-        
-        LOGGER_UPLOADS.error(f'{report_id} | Top error')
-        
-        try:
-            new_logs.remove(report_id)
-        except Exception:
-            pass
+
+    return (
+        report_id
+        for report_id, done in done_data
+        if not done
+    )
 
 def add_to_archives(new_logs: list[str], processes: int=1):
     api_7z.SevenZip().download()
@@ -112,6 +128,17 @@ def add_to_archives(new_logs: list[str], processes: int=1):
     else:
         for report_id in new_logs:
             save_raw_logs(report_id)
+
+def remove_errors(reports: list, errors: list, func="?"):
+    for report_id in errors:
+        LOGGER_UPLOADS.error(f'Removed due to error | {report_id}')
+        
+        try:
+            reports.remove(report_id)
+        except Exception:
+            pass
+
+    print(f"logs left {len(reports):3} {func}")
 
 def main(multiprocessing=True):
     if not Directories.pending_archive.is_dir():
@@ -130,14 +157,19 @@ def main(multiprocessing=True):
     else:
         MAX_CPU = 1
 
-    make_top_data(NEW_LOGS, MAX_CPU)
+    errors = make_top_data(NEW_LOGS, MAX_CPU)
+    remove_errors(NEW_LOGS, errors, func="make_top_data")
+
+    errors = set()
+    for server, reports in group_reports_by_server(NEW_LOGS):
+        new_errors = add_new_top_data(server, reports)
+        errors.update(new_errors)
+
+    remove_errors(NEW_LOGS, errors, func="add_new_top_data")
 
     # needs player and encounter data, thats why after logs top
     logs_calendar.add_new_logs(NEW_LOGS)
 
-    for server, reports in group_reports_by_server(NEW_LOGS):
-        add_new_top_data(server, reports)
-        
     add_to_archives(NEW_LOGS, MAX_CPU)
 
     for report_id in NEW_LOGS:
