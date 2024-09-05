@@ -52,12 +52,6 @@ def f_auras(auras: dict[str, tuple[int, float]], spec: int):
         for spell_id, spell_data in zz.items()
     ]
 
-def find_kill(segments):
-    for segment_info in segments:
-        if segment_info['attempt_type'] == 'kill' and segment_info['diff'] != "TBD":
-            yield segment_info
-
-
 class Top(logs_main.THE_LOGS):
     def make_report_top_wrap(self, rewrite=False):
         top_path = Directories.logs / self.NAME / TOP_FILE_NAME
