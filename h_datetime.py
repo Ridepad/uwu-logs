@@ -23,6 +23,7 @@ def get_now():
 
 CURRENT_YEAR = get_now().year
 RE_FIND_ALL = re.compile("(\d+)").findall
+RE_TIMESTAMP = re.compile("(\d{1,2}).(\d{1,2}).(\d{2}).(\d{2}).(\d{2}).(\d{3})").findall
 RE_FIND_ALL_BYTES = re.compile(b'(\d+)').findall
 
 def to_dt_closure(year=None):
@@ -81,7 +82,7 @@ def to_dt_year(s: str, year: int):
     return datetime(year, *map(int, RE_FIND_ALL(s[:18])))
 
 def to_dt_year_precise(s: str, year: int):
-    q = list(map(int, RE_FIND_ALL(s[:18])))
+    q = list(map(int, RE_TIMESTAMP(s)[0]))
     q[-1] *= 1000
     return datetime(year, *q)
 
