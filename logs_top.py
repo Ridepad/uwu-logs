@@ -151,7 +151,7 @@ class Top(logs_main.THE_LOGS):
 def make_report_top_wrap(report_name, rewrite=False):
     try:
         t = Top(report_name)
-        t.make_report_top(rewrite=rewrite)
+        t.make_report_top_wrap(rewrite=rewrite)
         return True
     except Exception:
         LOGGER_REPORTS.exception(report_name)
@@ -163,6 +163,9 @@ def _print_boss_top(boss_top: list[dict]):
         print(q)
 
 def _test1():
+    make_report_top_wrap("24-05-10--21-04--Jengo--Lordaeron", True)
+
+def _test2():
     # report = Top("24-02-09--20-49--Meownya--Lordaeron")
     report = Top("24-05-10--21-04--Jengo--Lordaeron")
     data = report.make_report_top()
