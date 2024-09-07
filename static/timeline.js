@@ -419,7 +419,7 @@ function move_tooltip_to(cleu) {
   const elemRect2 = cleu.parentNode.parentNode.previousSibling.getBoundingClientRect();
   const _left = Math.max(elemRect.left, elemRect2.right);
   TOOLTIP.style.top = elemRect.bottom - main_rect.top + 'px';
-  TOOLTIP.style.right = bodyRect.right - _left + 'px';
+  TOOLTIP.style.right = main_rect.right - _left + 'px';
 }
 function mouseenter(event) {
   move_tooltip_to(event.target);
