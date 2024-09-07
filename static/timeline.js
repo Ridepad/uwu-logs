@@ -414,11 +414,11 @@ function add_tooltip_info(cleu) {
   TOOLTIP_DATA.textContent = parse_etc(cleu.getAttribute("data-etc"));
 }
 function move_tooltip_to(cleu) {
-  const bodyRect = document.body.getBoundingClientRect();
+  const main_rect = document.querySelector("main").getBoundingClientRect();
   const elemRect = cleu.getBoundingClientRect();
   const elemRect2 = cleu.parentNode.parentNode.previousSibling.getBoundingClientRect();
   const _left = Math.max(elemRect.left, elemRect2.right);
-  TOOLTIP.style.top = elemRect.bottom - bodyRect.top + 'px';
+  TOOLTIP.style.top = elemRect.bottom - main_rect.top + 'px';
   TOOLTIP.style.right = bodyRect.right - _left + 'px';
 }
 function mouseenter(event) {
