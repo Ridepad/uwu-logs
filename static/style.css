@@ -572,7 +572,7 @@ footer::before {
     overflow: clip;
   }
   #fights-container ul:not(.segments) > li::before {
-    content: '▶';
+    content: '>';
     box-shadow: inset -.2rem 0 var(--primary-color);
     padding-inline: 2rem;
     font-size: 125%;
