@@ -5,11 +5,12 @@ import logs_main
 from c_path import Directories
 from h_debug import Loggers, get_ms_str, running_time
 from constants import TOP_FILE_NAME
-from logs_spell_info import (
-    AURAS_BOSS_MECHANICS,
-    AURAS_CONSUME,
-    AURAS_EXTERNAL,
-    MULTISPELLS_D,
+from logs_auras_v2 import (
+    AuraUptimeDuration,
+    AURAS_SELF, 
+    AURAS_EXTERNAL, 
+    AURAS_BOSS_MECHANICS, 
+    AURAS_SPEC,
 )
 
 try:
@@ -19,38 +20,41 @@ except ImportError:
 
 LOGGER_REPORTS = Loggers.reports
 
-Z_SPELLS = [AURAS_EXTERNAL, AURAS_CONSUME, AURAS_BOSS_MECHANICS]
+Z_SPELLS = [
+    AURAS_EXTERNAL,
+    AURAS_SELF,
+    AURAS_BOSS_MECHANICS,
+    AURAS_SPEC,
+]
 
 HUNGER_FOR_BLOOD = "63848"
+OVERKILL = "58427"
+CLEARCASTING = "16870"
 FOCUS_MAGIC = "54646"
 BATTLE_SQUAWK = "23060"
 SPECS_NO_USE_FOR_CHICKEN = {*range(12, 16), *range(20, 24), 29, 31, 33, 35}
 
-def f_auras(auras: dict[str, tuple[int, float]], spec: int):
-    if HUNGER_FOR_BLOOD in auras and spec == 25:
-        del auras[HUNGER_FOR_BLOOD]
-    if FOCUS_MAGIC in auras and spec in range(12, 16):
+def f_auras(auras: dict[str, AuraUptimeDuration], spec: int):
+    if spec == 25:
+        if HUNGER_FOR_BLOOD in auras:
+            del auras[HUNGER_FOR_BLOOD]
+        if OVERKILL in auras:
+            del auras[OVERKILL]
+    if spec != 6 and CLEARCASTING in auras:
+        del auras[CLEARCASTING]
+    if spec in range(12, 16) and FOCUS_MAGIC in auras:
         del auras[FOCUS_MAGIC]
-    if BATTLE_SQUAWK in auras and spec in SPECS_NO_USE_FOR_CHICKEN:
+    if spec in SPECS_NO_USE_FOR_CHICKEN and BATTLE_SQUAWK in auras:
         del auras[BATTLE_SQUAWK]
     
-    zz: dict[str, list[int, float, int]] = {}
-    for spell_id, (count, uptime) in auras.items():
-        spell_id = MULTISPELLS_D.get(spell_id, spell_id)
-        for n, auras_dict in enumerate(Z_SPELLS):
-            if spell_id not in auras_dict:
+    zz = []
+    for type_index, auras_dict in enumerate(Z_SPELLS):
+        for spell_id in auras_dict:
+            if spell_id not in auras:
                 continue
-            uptime = round(uptime*100, 1)
-            if spell_id in zz:
-                count += zz[spell_id][0]
-                uptime += zz[spell_id][1]
-            zz[spell_id] = [count, uptime, n]
-            break
-
-    return [
-        [int(spell_id), *spell_data]
-        for spell_id, spell_data in zz.items()
-    ]
+            aura = auras[spell_id]
+            zz.append([int(spell_id), aura.count, aura.uptime, type_index])
+    return zz
 
 class Top(logs_main.THE_LOGS):
     def make_report_top_wrap(self, rewrite=False):
@@ -119,7 +123,7 @@ class Top(logs_main.THE_LOGS):
         PLAYERS = self.get_players_guids()
         SPECS = self.get_players_specs_in_segments(s, f)
         DURATION = self.get_slice_duration(s, f)
-        AURAS = self.auras_info(s, f)
+        AURAS = self.get_auras_uptime_percentage(s, f)
 
         if boss_name == "Valithria Dreamwalker":
             _data = self.get_vali_heal_wrap(s, f)
@@ -164,6 +168,8 @@ def _print_boss_top(boss_top: list[dict]):
 
 def _test1():
     make_report_top_wrap("24-05-10--21-04--Jengo--Lordaeron", True)
+    make_report_top_wrap("24-09-06--20-54--Meownya--Lordaeron", True)
+    make_report_top_wrap("24-08-30--21-04--Meownya--Lordaeron", True)
 
 def _test2():
     # report = Top("24-02-09--20-49--Meownya--Lordaeron")

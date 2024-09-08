@@ -16,6 +16,7 @@ import logs_spell_info
 import logs_lady_spirits
 import logs_valk_grabs
 import logs_ucm
+import logs_auras_v2
 
 from c_spells import UNKNOWN_ICON
 from c_bosses import (
@@ -123,6 +124,7 @@ class THE_LOGS(
     logs_spell_info.Consumables,
     logs_spell_info.SpellCount,
     logs_spell_info.AuraUptime,
+    logs_auras_v2.AurasUptimes,
     logs_dps.Dps,
     logs_power.Powers,
     logs_deaths.Deaths,
