@@ -2,9 +2,8 @@ from collections import defaultdict
 from time import perf_counter
 
 import logs_main
-from c_path import Directories
+from c_path import FileNames
 from h_debug import Loggers, get_ms_str, running_time
-from constants import TOP_FILE_NAME
 from logs_auras_v2 import (
     AuraUptimeDuration,
     AURAS_SELF, 
@@ -58,7 +57,7 @@ def f_auras(auras: dict[str, AuraUptimeDuration], spec: int):
 
 class Top(logs_main.THE_LOGS):
     def make_report_top_wrap(self, rewrite=False):
-        top_path = Directories.logs / self.NAME / TOP_FILE_NAME
+        top_path = self.relative_path(FileNames.logs_top)
         if not rewrite and top_path.is_file():
             return
         
