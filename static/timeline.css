@@ -79,7 +79,7 @@ spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
 .spell-row {
   --row-targets: 1;
   display: block;
-  height: calc(var(--row-targets) * var(--row-height-border));
+  /* height: calc(var(--row-targets) * var(--row-height-border)); */
 }
 spell-name div,
 spell-name-data,
@@ -143,6 +143,10 @@ spell-cleu {
 }
 .openned .copy {
   display: block;
+}
+.openned .copy:last-of-type {
+  margin-bottom: 1rem;
+  border-bottom: .25rem solid var(--dimmed);
 }
 
 #the-tooltip {
