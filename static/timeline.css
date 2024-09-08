@@ -55,7 +55,7 @@
 
 .table-wrap {
   padding-top: 5rem;
-  transform: scaleY(-1);
+  /* transform: scaleY(-1); */
 }
 .casts-section {
   padding-top: 5rem;
@@ -74,7 +74,7 @@ spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
   --event-width: calc(var(--event-width-mult) * var(--tenth-width));
   width: calc(var(--mult) * var(--duration) * 10px + 2px);
   overflow-y: clip;
-  transform: scaleY(-1);
+  /* transform: scaleY(-1); */
 }
 .spell-row {
   --row-targets: 1;
