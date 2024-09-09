@@ -882,7 +882,7 @@ class LogsArchive(LogsArchiveParser):
         return self.server != old_server
 
     def remove_prev_uploaded(self):
-        prev_server = self.prev_info.get("server", "Unknown")
+        prev_server = self.prev_info.get("server") or "Unknown"
         for raid_id in self.slices:
             _id = get_report_name_info(raid_id)
             if _id["server"] == prev_server:
