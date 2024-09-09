@@ -277,6 +277,7 @@ const AURAS_ICONS = {
   73022: "ability_creature_disease_02",
   73023: "ability_creature_disease_02",
   73070: "spell_shadow_deathscream",
+  73422: "inv_axe_113",
   73762: "inv_bannerpvp_02",
   73816: "spell_fire_incinerate",
   73818: "spell_fire_incinerate",
