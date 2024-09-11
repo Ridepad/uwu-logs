@@ -265,7 +265,8 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 # LOGGER_REPORTS.info(f" NEW CLASS | {sName:12} | {line}")
 
         if spell_id == "47468": # Claw
-            if sGUID[6:-6] not in TEMP_DK_PETS and tGUID[:5] == "0xF14":
+            # if sGUID[6:-6] not in TEMP_DK_PETS:
+            if sGUID[:5] == "0xF14":
                 other_perma_pets["Ghoul"][sGUID].add(tGUID)
                 if sName in _ignored_pet_names:
                     pass
