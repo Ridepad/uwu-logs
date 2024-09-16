@@ -33,7 +33,7 @@ class Loggers(dict[str, logging.Logger]):
     memory = setup_logger('memory')
     archives = setup_logger("archives")
     player_queue = setup_logger('player_queue')
-    ladder = setup_logger('ladder')
+    ladder_watchdog = setup_logger('ladder_watchdog')
     ladder_parser = setup_logger('ladder_parser')
     missing = setup_logger('missing')
     top = setup_logger('top')
