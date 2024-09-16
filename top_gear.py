@@ -150,7 +150,7 @@ def new_db_row_wrap_file(fpath: PathExt):
     return new_db_row(fpath.stem, data_dict)
 
 def _convert():
-    char_path = Directories.cache / "character"
+    char_path = Directories.main / "cache" / "character"
     for char_path_server in char_path.iterdir():
         if not char_path_server.is_dir():
             continue

@@ -14,7 +14,6 @@ class StrEnum(str, Enum):
 class DirNames(StrEnum):
     logs = "LogsDir"
     archives = "LogsRaw"
-    cache = "cache"
     config = "config"
     static = "static"
     parsed = "parsed"
@@ -211,7 +210,6 @@ class Directories(dict[str, PathExt]):
     main = PathExt(__file__).resolve().parent
     logs = main / DirNames.logs
     archives = main / DirNames.archives
-    cache = main / DirNames.cache
     config = main / DirNames.config
     static = main / DirNames.static
     parsed = main / DirNames.parsed
