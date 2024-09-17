@@ -24,6 +24,10 @@ TEMP_DK_PETS = {
 NIL_GUID = "0x0000000000000000"
 FLAG_SKIP = {"PARTY_KILL", "UNIT_DIED"}
 FLAG_PET_AGGRO = {"SWING_DAMAGE", "SPELL_DAMAGE"}
+FLAG_IGNORE_PLAYER_CLASS = {
+    "SPELL_AURA_REMOVED",
+    "ENCHANT_APPLIED",
+}
 NAMES_SKIP = {"nil", "Unknown"}
 PET_FILTER_SPELLS = {
 "43771", # Well Fed (Spiced Mammoth Treats)
@@ -257,7 +261,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
         if sGUID not in players_skip:
             if not is_player(sGUID):
                 players_skip.add(sGUID)
-            elif spell_id in SPELL_BOOK and flag != "SPELL_AURA_REMOVED":
+            elif spell_id in SPELL_BOOK and flag not in FLAG_IGNORE_PLAYER_CLASS:
                 players[sGUID] = sName
                 class_i = SPELL_BOOK[spell_id]
                 players_classes[sGUID] = CLASSES[class_i]

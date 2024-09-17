@@ -17,7 +17,7 @@ SPELL_BOOK = {
     "29166": 1, # Innervate
      "5570": 1, # Insect Swarm
     "24977": 1, # Insect Swarm
-    # "48468": 1, # Insect Swarm // they bugged it
+    "48468": 1, # Insect Swarm
     "24932": 1, # Leader of the Pack
     "48566": 1, # Mangle (Cat)
     "48422": 1, # Master Shapeshifter
@@ -207,7 +207,7 @@ SPELL_BOOK_SPEC = {
     },
     "druid": {
         "60433": 1, # Earth and Moon
-        # "48468": 1, # Insect Swarm // they bugged it
+        "48468": 1, # Insect Swarm
         "48518": 1, # Eclipse (Lunar)
         "48517": 1, # Eclipse (Solar)
         "33831": 1, # Force of Nature
