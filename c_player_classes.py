@@ -56,6 +56,7 @@ SPELL_BOOK = {
     "36032": 3, # Arcane Blast
     "42921": 3, # Arcane Explosion
     "12042": 3, # Arcane Power
+    "44401": 3, # Missile Barrage
     "42938": 3, # Blizzard
     "42833": 3, # Fireball
     "12472": 3, # Icy Veins
@@ -261,6 +262,7 @@ SPELL_BOOK_SPEC = {
     "mage": {
         "44781": 1, # Arcane Barrage
         "12042": 1, # Arcane Power
+        "44401": 1, # Missile Barrage
         "12654": 2, # Ignite
         "55360": 2, # Living Bomb
         "48108": 2, # Hot Streak
