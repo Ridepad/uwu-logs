@@ -201,12 +201,12 @@ input:disabled + label {
   min-width: fit-content;
   text-align: right;
 }
-#the-tooltip td:nth-child(2) {
-  min-width: 1.5em;
+#the-tooltip td.count {
+  min-width: 2rem;
 }
-#the-tooltip td:nth-child(3) {
-  min-width: 3em;
+#the-tooltip td.uptime {
+  min-width: 3rem;
 }
-.hidden {
+#the-tooltip tr.hidden {
   display: none;
 }
