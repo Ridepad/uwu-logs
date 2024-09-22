@@ -41,10 +41,14 @@ class FesterPlayerDamage:
         self.total = 0
 
     def change_stacks(self, flag: str):
-        if flag == "SPELL_AURA_REMOVED":
+        if flag == "SPELL_AURA_APPLIED_DOSE":
+            self.stacks += 1
+        elif flag == "SPELL_AURA_APPLIED":
+            self.stacks = 1
+        elif flag == "SPELL_AURA_REMOVED":
             self.stacks = 0
         else:
-            self.stacks += 1
+            return
         
         self.increased_by = 1 + self.stacks / 10
 
