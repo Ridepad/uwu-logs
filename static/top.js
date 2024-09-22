@@ -97,14 +97,10 @@ const IRRELEVANT_FOR_SPEEDRUN = [
 const ROW_LIMIT = 1000;
 const is_landscape = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
-const HAS_HEROIC = new Set([
-  ...BOSSES["Icecrown Citadel"],
-  ...BOSSES["Trial of the Crusader"],
+const BOSSES_WITH_HEROIC_MODE = new Set([
   "Halion",
-  "Points",
-  "Speedrun",
 ]);
-const RAID_HAS_HEROIC = new Set([
+const RAID_WITH_HEROIC_MODE = new Set([
   "Icecrown Citadel",
   "Trial of the Crusader",
 ]);
@@ -184,15 +180,24 @@ let timeout_table_add_new_data;
 function get_icon_link(icon_name) {
   return `/static/icons/${icon_name}.jpg`;
 }
+function has_heroic() {
+  return RAID_WITH_HEROIC_MODE.has(SELECT_RAID.value) || BOSSES_WITH_HEROIC_MODE.has(SELECT_BOSS.value);
+}
+function toggle_difficulty_checkbox() {
+  CHECKBOX_DIFFICULTY.disabled = !has_heroic();
+}
 
 function heroic_toggled() {
-  return HAS_HEROIC.has(SELECT_BOSS.value) && CHECKBOX_DIFFICULTY.checked;
+  return has_heroic() && CHECKBOX_DIFFICULTY.checked;
 }
 function points_selected() {
   return SELECT_RAID.value == "Points";
 }
 function speedrun_selected() {
   return SELECT_RAID.value == "Speedrun";
+}
+function healing_toggled() {
+  return CHECKBOX_HEALING.checked;
 }
 
 function _make_query_top() {
@@ -798,6 +803,8 @@ function init_other_elements() {
   add_toggle_functions(TOGGLE_TOTAL_DAMAGE, () => TOGGLE_COLUMNS.total_columns());
   add_toggle_functions(TOGGLE_USEFUL_DAMAGE, () => TOGGLE_COLUMNS.useful_columns());
   add_toggle_functions(TOGGLE_LIMIT, new_state);
+
+  toggle_difficulty_checkbox();
 }
 
 ///////////////////////////////
@@ -819,7 +826,7 @@ function on_change_instance() {
   const _speedrun_selected = speedrun_selected();
   IRRELEVANT_FOR_SPEEDRUN.forEach(e => e.disabled = _speedrun_selected);
 
-  CHECKBOX_DIFFICULTY.disabled = !RAID_HAS_HEROIC.has(SELECT_RAID.value);
+  toggle_difficulty_checkbox();
   
   if (_points_selected && SELECT_CLASS.selectedIndex == 0) {
     SELECT_CLASS.selectedIndex = 1;
@@ -868,6 +875,7 @@ function set_new_server_default() {
 
 function add_extra_function() {
   SELECT_RAID.addEventListener('change', on_change_instance);
+  SELECT_BOSS.addEventListener('change', toggle_difficulty_checkbox);
   SELECT_CLASS.addEventListener('change', on_change_class);
   SELECT_SPEC.addEventListener('change', on_change_spec);
   SELECT_SERVER.addEventListener('change', set_new_server_default);
