@@ -95,7 +95,7 @@ class UploadProgress extends XMLHttpRequest {
   }
 
   upload_progress() {
-    if (this.status === 404) {
+    if (this.status === 204) {
       console.log("upload_progress reset");
       return;
     }

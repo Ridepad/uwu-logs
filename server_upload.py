@@ -119,7 +119,7 @@ async def upload_progress(request: Request, response: Response):
     ip = real_ip(request)
     uploads_progress = CURRENT_UPLOADS_PROGRESS.get(ip)
     if uploads_progress is None:
-        response.status_code = status.HTTP_404_NOT_FOUND
+        response.status_code = status.HTTP_204_NO_CONTENT
         return
         
     if not uploads_progress.thread.is_alive():
