@@ -255,7 +255,7 @@ FILE_SELECT.onchange = () => {
     alert('File is not an archive.\nPlease archive the file first.');
     FILE_SELECT.value = "";
   } else if (file.size < 16*1024) {
-    alert('Archive is too small, did you archive correct file?');
+    alert('Archive is too small, did you archive correct file?\nTry to archive without compression.');
     FILE_SELECT.value = "";
   } else if (file.size > 1024**4) {
     alert("Archive is too big.\nAre you sure it's the correct file?\nAre you sure you compressed it?");
