@@ -250,6 +250,7 @@ FILE_SELECT.value = "";
 FILE_SELECT.accept = ALLOWED_EXTENSIONS.map(e => `.${e}`);
 FILE_SELECT.onchange = () => {
   const file = FILE_SELECT.files[0];
+  console.log(file);
   const ext = file.name.split('.').pop().toLowerCase();
   if (!ALLOWED_EXTENSIONS.includes(ext) || file.type == "text/plain") {
     alert('File is not an archive.\nPlease archive the file first.');
