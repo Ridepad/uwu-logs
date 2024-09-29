@@ -77,7 +77,7 @@ class GearDB(DB):
         except TypeError:
             LAST_MODIFIED, DATA = NO_DATA
         except Exception:
-            LOGGER_GEAR_PARSER.exception(f"get_player_data | {player_name:12}")
+            LOGGER_GEAR_PARSER.exception(f"{player_name:12} | get_player_data")
             LAST_MODIFIED, DATA = NO_DATA
         
         return CharGear(
@@ -101,12 +101,12 @@ class GearDB(DB):
     
     def add(self, player_name: str, new_profile: dict):
         if not new_profile:
-            LOGGER_GEAR_PARSER.debug(f"parse_profile | {player_name:12} | not new_profile")
+            LOGGER_GEAR_PARSER.debug(f"{player_name:12} | parse_profile | not new_profile")
             return
         
         player_profile = self.get_player_data_dict(player_name)
         if is_same_as_last_recorded(player_profile, new_profile):
-            LOGGER_GEAR_PARSER.debug(f"parse_profile | {player_name:12} | same as before")
+            LOGGER_GEAR_PARSER.debug(f"{player_name:12} | parse_profile | same as before")
             return
 
         add_new_gear_set(player_profile, new_profile)
@@ -115,7 +115,7 @@ class GearDB(DB):
             new_db_row(player_name, player_profile),
         )
         self.add_new_data(rows)
-        LOGGER_GEAR_PARSER.debug(f"parse_profile | {player_name:12} | added")
+        LOGGER_GEAR_PARSER.debug(f"{player_name:12} | parse_profile | added")
         return True
 
     def add_new_data(self, rows: list):
@@ -133,7 +133,7 @@ class GearDB(DB):
 
 def new_db_row(name: str, data: dict):
     if not data:
-        LOGGER_GEAR_PARSER.debug(f"new_db_row | {name:12} | not new_profile")
+        LOGGER_GEAR_PARSER.debug(f"{name:12} | new_db_row | not new_profile")
         return
     
     jd = json.dumps(data, separators=(',', ':'))
