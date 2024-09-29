@@ -1,5 +1,5 @@
 import logs_base
-from c_bosses import BOSSES_GUIDS, COWARDS
+from c_bosses import BOSSES_GUIDS, COWARDS, ENCOUNTER_MIN_DURATION
 from h_other import convert_to_html_name
 
 DEFAULT_DIFFICULTY = "TBD"
@@ -302,7 +302,10 @@ class LogsSegments(logs_base.THE_LOGS):
         slice_duration_str = self.duration_to_string(slice_duration)
         slice_duration_str = slice_duration_str[2:]
 
-        kill = is_kill(logs_slice[-1])
+        if slice_duration < ENCOUNTER_MIN_DURATION.get(boss_name, 15):
+            kill = False
+        else:
+            kill = is_kill(logs_slice[-1])
         # print(kill)
         if not kill:
             if boss_name == "The Lich King":

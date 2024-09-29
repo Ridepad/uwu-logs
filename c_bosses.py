@@ -314,6 +314,25 @@ COWARDS = {
     "008067": "Algalon the Observer",
 }
 
+ENCOUNTER_MIN_DURATION = {
+    "Malygos": 120,
+    "Onyxia": 25,
+    "Lord Marrowgar": 25,
+    "Lady Deathwhisper": 25,
+    "Gunship Battle": 60,
+    "Deathbringer Saurfang": 30,
+    "Festergut": 30,
+    "Rotface": 25,
+    "Professor Putricide": 75,
+    "Blood Prince Council": 20,
+    "Blood-Queen Lana'thel": 70,
+    "Valithria Dreamwalker": 30,
+    "Sindragosa": 70,
+    "The Lich King": 320,
+    "Halion": 75,
+    "Northrend Beasts": 75,
+}
+
 ALL_FIGHT_NAMES = set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
 
 def _convert_to_html_name(name: str):
