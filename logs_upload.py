@@ -11,9 +11,7 @@ from time import perf_counter, sleep
 
 import api_7z
 import h_server_fix
-from h_other import get_report_name_info
 import logs_fix
-
 from constants import (
     DEFAULT_SERVER_NAME,
     LOGS_CUT_NAME,
@@ -23,6 +21,7 @@ from c_bosses import convert_to_fight_name
 from c_path import Directories, PathExt
 from h_debug import Loggers, get_ms_str, running_time
 from h_datetime import to_dt_bytes_closure
+from h_other import get_report_name_info
 
 LOGGER_UPLOADS = Loggers.uploads
 
