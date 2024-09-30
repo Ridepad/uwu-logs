@@ -66,8 +66,9 @@ BOSS_MAX_SEP = {
 HEAL_BOSSES = {
     "008FB5",
 }
-FINISH_SPELLS = {
-    "72350",
+SOME_BOSS_SPELLS = {
+    "72350", # Fury of Frostmourne
+    "70157", # Ice Tomb
 }
 CAN_BE_SMALL = {
     "Heroic Training Dummy",
@@ -100,8 +101,9 @@ def split_to_pulls(boss_id: str, lines: BossLines):
             td = get_delta(new_timestamp, last_timestamp)
             # print()
             # print(td, td > MAX_SEP)
-            # print(">>> OLD:", CURRENT_LINES[-1])
-            # print(">>> NEW:", line)
+            # print("/// S:", CURRENT_LINES[0])
+            # print("/// E:", CURRENT_LINES[-1])
+            # print(">>> N:", line)
             # print(now)
             # print(last_time)
             if td > MAX_SEP:
@@ -297,7 +299,7 @@ class Fights(logs_core.Logs):
                 
                 guid_id = tGUID[6:-6]
                 if guid_id not in BOSSES_GUIDS_ALL:
-                    if spell_id not in FINISH_SPELLS:
+                    if spell_id not in SOME_BOSS_SPELLS:
                         continue
                     guid_id = sGUID[6:-6]
             
@@ -360,21 +362,14 @@ def _test_uld():
         print(name)
         print(ss)
 
+def test1():
+    report = Fights("24-09-22--19-39--Razwar--WoW-Mania")
+    report.LOGS
+    report._redo_enc_data()
+
 def main():
-    _test_uld()
-    # report = logs_base.THE_LOGS("24-03-01--21-02--Meownya--Lordaeron")
-    # report = logs_base.THE_LOGS("24-05-10--18-55--Molester--Icecrown")
-    # report = logs_base.THE_LOGS("24-05-14--21-17--Meownya--Lordaeron")
-    # t3()
-    # logs = report.LOGS
-    # _runs = 5
-    # for _ in range(_runs):
-    #     q1 = t1(logs)
-    # print("="*88)
-    # for _ in range(_runs):
-    #     q2 = t2(logs)
-    # z = q2["008EF5"]
-    # print(z[:10])
+    test1()
+    # _test_uld()
 
 
 if __name__ == "__main__":
