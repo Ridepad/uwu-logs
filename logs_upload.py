@@ -939,12 +939,12 @@ class NewUpload:
     def add_chunk(self, chunk: UploadChunk):
         if self.upload_id != chunk.upload_id:
             self.upload_id = chunk.upload_id
-            self.last_chunk_time = datetime.now()
             LOGGER_UPLOADS.debug(f"{self.ip:>15} | New")
 
         if not chunk.data:
             return
 
+        self.last_chunk_time = datetime.now()
         self.chunks[chunk.chunk_id] = chunk.data
         return True
 
