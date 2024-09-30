@@ -940,6 +940,7 @@ class NewUpload:
         if self.upload_id != chunk.upload_id:
             self.upload_id = chunk.upload_id
             LOGGER_UPLOADS.debug(f"{self.ip:>15} | New")
+            self._cleaner("add_chunk")
 
         if not chunk.data:
             return
