@@ -934,13 +934,13 @@ class NewUpload:
         self.upload_id = 0
         self.chunks: dict[int, bytes] = {}
 
-        self._start_new_cleaner_timer()
+        self.last_chunk_time = datetime.now()
 
     def add_chunk(self, chunk: UploadChunk):
         if self.upload_id != chunk.upload_id:
             self.upload_id = chunk.upload_id
-            self._cleaner("add_chunk")
-            self._start_new_cleaner_timer()
+            self.last_chunk_time = datetime.now()
+            LOGGER_UPLOADS.debug(f"{self.ip:>15} | New")
 
         if not chunk.data:
             return
@@ -951,8 +951,7 @@ class NewUpload:
     def save_uploaded_file(self, file_data: dict[str, str]):
         chunks_amount_from_client = self._file_data_chunks(file_data)
         amount_chunks_uploaded = len(self.chunks)
-        LOGGER_UPLOADS.debug(f"CHUNKS | {chunks_amount_from_client:>4} | {amount_chunks_uploaded:>4}")
-        
+        LOGGER_UPLOADS.debug(f"{self.ip:>15} | CHUNKS | {chunks_amount_from_client:>4} | {amount_chunks_uploaded:>4}")
         if chunks_amount_from_client and chunks_amount_from_client != amount_chunks_uploaded:
             raise ValueError("chunks missing")
 
@@ -979,23 +978,8 @@ class NewUpload:
         return LogsArchive(archive_save_path, upload_data=upload_data)
     
     def _cleaner(self, called_from: str="xd?"):
-        LOGGER_UPLOADS.debug(f">>>>>>>>>>> clear_chunks {called_from}")
+        LOGGER_UPLOADS.debug(f"{self.ip:>15} | clear_chunks | {called_from}")
         self.chunks.clear()
-        self.cleaner_timer.cancel()
-
-    def _start_new_cleaner_timer(self):
-        self.cleaner_timer = threading.Timer(60.0, self._clear_chunks_wrap_cleaner_timer)
-        self.cleaner_timer.start()
-        self.cleaner_timer_last_length = 0
-    
-    def _clear_chunks_wrap_cleaner_timer(self):
-        current_len = len(self.chunks)
-        if self.cleaner_timer_last_length == current_len:
-            self._cleaner("clear_chunks_wrap_cleaner_timer")
-            return
-
-        self._start_new_cleaner_timer()
-        self.cleaner_timer_last_length = current_len
 
     def _correct_chunks(self, file_data):
         chunks_amount_from_client = self._file_data_chunks(file_data)
@@ -1028,6 +1012,35 @@ class NewUpload:
 
         *words, ext = re.findall('([A-Za-z0-9]+)', file_name)
         return f"{'_'.join(words)}.{ext}"
+
+
+class CurrentUploads(dict[str, NewUpload]):
+    def __init__(self):
+        self.cleaner = threading.Thread(target=self._cleaner_wrap, daemon=True)
+        self.cleaner.start()
+    
+    def __missing__(self, ip: str):
+        v = self[ip] = NewUpload(ip)
+        return v
+    
+    def _cleaner(self):
+        old = datetime.now() - timedelta(seconds=30)
+        # LOGGER_UPLOADS.debug(f"CurrentUploads run")
+        for ip in list(self):
+            try:
+                if self[ip].last_chunk_time < old:
+                    self[ip]._cleaner("CurrentUploads")
+                    del self[ip]
+            except KeyError:
+                pass
+    
+    def _cleaner_wrap(self):
+        while True:
+            sleep(30)
+            try:
+                self._cleaner()
+            except Exception:
+                LOGGER_UPLOADS.exception(f"CurrentUploads exception")
 
 def main():
     q = is_fully_processed("24-08-04--19-28--Etch--Whitemane-Frostmourne")

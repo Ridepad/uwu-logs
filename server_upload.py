@@ -10,15 +10,14 @@ from fastapi.templating import Jinja2Templates
 
 from constants import SERVERS
 from c_path import Directories
-from logs_upload import LogsArchive, NewUpload, UploadChunk
+from logs_upload import (
+    CurrentUploads,
+    LogsArchive,
+    UploadChunk,
+)
 
 app = FastAPI()
 TEMPLATES = Jinja2Templates(directory="templates")
-
-class CurrentUploads(dict[str, NewUpload]):
-    def __missing__(self, ip: str):
-        v = self[ip] = NewUpload(ip)
-        return v
 
 class CurrentUploadsProgress(dict[str, LogsArchive]):
     ...
