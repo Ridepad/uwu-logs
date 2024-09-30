@@ -82,6 +82,9 @@ td.table-n {
   white-space: nowrap;
   --min-width: 3rem;
 }
+#table-speedrun td.table-n {
+  width: 17rem;
+}
 td.table-dummy-name {
   width: 1rem;
 }

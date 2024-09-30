@@ -25,6 +25,8 @@ class ColumnsSpeedrun(StrEnum):
     REPORT_ID = "report_id"
     TOTAL_LENGTH = "total_length"
     SEGMENTS_SUM = "segments_sum"
+    GUILD = "guild"
+    FACTION = "faction"
 
 HEADERS_TO_COLUMNS_NAMES = {
     "head-speedrun-total-length": ColumnsSpeedrun.TOTAL_LENGTH,

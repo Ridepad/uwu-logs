@@ -34,7 +34,7 @@ const SECTION_ON_ERROR = document.getElementById("on-error");
 const SECTION_ON_ERROR_DETAILS = document.getElementById("on-error-details");
 
 const HEAD_USEFUL_DPS_ID = "head-useful-dps";
-const HEADSPEEDRUN_TOTAL_LENGTH_ID = "head-speedrun-total-length";
+const HEAD_SPEEDRUN_TOTAL_LENGTH_ID = "head-speedrun-total-length";
 
 const AURAS_CURRENT_COLUMNS = Array.from(document.querySelectorAll("thead .table-auras")).map(e => e.classList[1]);
 const AURA_INDEX_TO_COLUMN_NAME = {
@@ -109,7 +109,7 @@ const DEFAULT_SPEC = [3, 1, 2, 2, 3, 3, 2, 1, 2, 2];
 const SORT_VARS = {
   last_column_sort: {
     [TABLE_TOP.id]: HEAD_USEFUL_DPS_ID,
-    [TABLE_SPEEDRUN.id]: HEADSPEEDRUN_TOTAL_LENGTH_ID,
+    [TABLE_SPEEDRUN.id]: HEAD_SPEEDRUN_TOTAL_LENGTH_ID,
   },
   reversed: false,
 };
@@ -128,10 +128,6 @@ const TABLES = [
   TABLE_TOP,
   TABLE_SPEEDRUN,
 ];
-const POSTS = {
-  "Points": "/top_points",
-  "Speedrun": "/top_speedrun",
-}
 const REQUESTS_CACHE = {};
 
 function _css_rule(key) {
@@ -171,15 +167,21 @@ const TOGGLE_COLUMNS = {
   }
 }
 
+function get_icon_link(icon_name) {
+  return `/static/icons/${icon_name}.jpg`;
+}
+const DEFAULT_ICON = get_icon_link("undefined");
+const FACTIONS_ICONS = {
+  0: `/static/alliance.png`,
+  1: `/static/horde.png`,
+}
+
 let timeout_hide;
 let timeout_show_rows;
 let timeout_table_add_new_data;
 
 //////////////////////////////////////////
 
-function get_icon_link(icon_name) {
-  return `/static/icons/${icon_name}.jpg`;
-}
 function has_heroic() {
   return RAID_WITH_HEROIC_MODE.has(SELECT_RAID.value) || BOSSES_WITH_HEROIC_MODE.has(SELECT_BOSS.value);
 }
@@ -196,9 +198,9 @@ function points_selected() {
 function speedrun_selected() {
   return SELECT_RAID.value == "Speedrun";
 }
-function healing_toggled() {
-  return CHECKBOX_HEALING.checked;
-}
+// function healing_toggled() {
+//   return CHECKBOX_HEALING.checked;
+// }
 
 function _make_query_top() {
   const size = SELECT_SIZE.value;
@@ -234,13 +236,9 @@ function _make_query_speedrun() {
 }
 
 function _make_query() {
-  if (speedrun_selected()) {
-    return _make_query_speedrun();
-  } else if (points_selected()) {
-    return _make_query_points();
-  } else {
+  if (speedrun_selected()) return _make_query_speedrun();
+  if (points_selected()) return _make_query_points();
     return _make_query_top();
-  }
 }
 function make_query() {
   const q = _make_query();
@@ -277,6 +275,15 @@ function cell_name(name, spec) {
   td.appendChild(a);
 
   return td;
+}
+function cell_guild(guild_name, faction) {
+  const guild_cell = document.createElement('td');
+  guild_cell.classList.add("table-n");
+  const img = document.createElement("img");
+  img.src = FACTIONS_ICONS[faction] ?? DEFAULT_ICON;
+  guild_cell.appendChild(img);
+  guild_cell.append(guild_name);
+  return guild_cell
 }
 
 function cell_dps(dps, key) {
@@ -498,16 +505,15 @@ function table_new_row_speedrun(data) {
     report_id,
     total_length,
     segments_sum,
+    guild_name,
+    faction,
   ] = data;
 
-  const dummy_name = document.createElement('td');
-  dummy_name.classList.add("table-n");
-  dummy_name.classList.add("table-dummy-name");
   [
-    dummy_name,
-    cell_date(report_id),
+    cell_guild(guild_name, faction),
     cell_duration_hours(total_length),
     cell_duration_hours(segments_sum),
+    cell_date(report_id),
   ].forEach(td => row.appendChild(td));
 
   return row;
@@ -527,8 +533,8 @@ function update_progress_bar(done, total, network) {
 function table_new_row_wrap() {
   const current_table = get_cur_table();
   if (current_table == TABLE_TOP) return table_new_row_default;
-  else if (current_table == TABLE_SPEEDRUN) return table_new_row_speedrun;
-  else if (current_table == TABLE_POINTS) {
+  if (current_table == TABLE_SPEEDRUN) return table_new_row_speedrun;
+  if (current_table == TABLE_POINTS) {
     const class_i = parseInt(SELECT_CLASS.value);
     const spec_i = parseInt(SELECT_SPEC.value);
     const spec_full_index = class_i * 4 + spec_i;
@@ -587,8 +593,8 @@ function table_add_new_data(table_body, data) {
 }
 function get_cur_table() {
   if (points_selected()) return TABLE_POINTS;
-  else if (speedrun_selected()) return TABLE_SPEEDRUN;
-  else return TABLE_TOP;
+  if (speedrun_selected()) return TABLE_SPEEDRUN;
+  return TABLE_TOP;
 }
 function hide_other_tables(current_table) {
   TABLES.forEach(t => {
@@ -609,6 +615,11 @@ function table_add_new_data_wrap(data) {
   setTimeout(() => table_add_new_data(body, data));
 }
 
+function get_post_endpoint() {
+  if (speedrun_selected()) return "/top_speedrun";
+  if (points_selected()) return "/top_points";
+  return TOP_POST;
+}
 
 const TopRequest = new class extends XMLHttpRequest {
   constructor() {
@@ -623,8 +634,7 @@ const TopRequest = new class extends XMLHttpRequest {
     update_progress_bar(0, 1);
 
     this.current_query = query;
-    const post_endpoint = POSTS[SELECT_RAID.value] ?? TOP_POST;
-    
+    const post_endpoint = get_post_endpoint();
     this.open("POST", post_endpoint);
     this.setRequestHeader("Content-Type", "application/json");
     console.time("TopRequest | Response");
