@@ -21,6 +21,8 @@ class DirNames(StrEnum):
     loggers = "_loggers"
     certificates = "__cert"
     
+    temp = "temp"
+    
     db = "db"
     top = "top"
     gear = "gear"
@@ -216,6 +218,8 @@ class Directories(dict[str, PathExt]):
     loggers = main / DirNames.loggers
     speedrun = main / DirNames.speedrun
     certificates = main / DirNames.certificates
+
+    temp = main / DirNames.temp
 
     db = main / DirNames.db
     top = db / DirNames.top
