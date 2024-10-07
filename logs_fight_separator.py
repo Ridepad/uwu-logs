@@ -176,6 +176,8 @@ def get_more_precise_end(lines: BossLines):
         elif overkill > 2:
             if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
                 continue
+            if line[4][6:-6] not in BOSSES_GUIDS_ALL:
+                continue
             # print(f">>> get_more_precise_end overkill > 2\n{line}")
             index = i
             break
