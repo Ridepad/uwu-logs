@@ -93,6 +93,11 @@ def split_to_pulls(boss_id: str, lines: BossLines):
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
 
+    # print()
+    # print("="*150)
+    # boss = convert_to_fight_name(boss_id)
+    # print(boss)
+
     for line in lines:
         new_timestamp = line[1]
         
@@ -101,11 +106,10 @@ def split_to_pulls(boss_id: str, lines: BossLines):
             td = get_delta(new_timestamp, last_timestamp)
             # print()
             # print(td, td > MAX_SEP)
+            # print(f"{last_time:06} > {now:06}")
             # print("/// S:", CURRENT_LINES[0])
             # print("/// E:", CURRENT_LINES[-1])
             # print(">>> N:", line)
-            # print(now)
-            # print(last_time)
             if td > MAX_SEP:
                 yield CURRENT_LINES
                 CURRENT_LINES = BossLines()
@@ -363,7 +367,7 @@ def _test_uld():
         print(ss)
 
 def test1():
-    report = Fights("24-09-22--19-39--Razwar--WoW-Mania")
+    report = Fights("24-10-02--21-25--Gattamorta--Icecrown")
     report.LOGS
     report._redo_enc_data()
 
