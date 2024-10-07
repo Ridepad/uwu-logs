@@ -147,7 +147,7 @@ def get_more_precise_end(lines: BossLines):
             break
         
         if line[2] in SPELL_AURA:
-            if line[2] == "SPELL_AURA_REMOVED"and line[4][6:-6] in COWARDS:
+            if line[2] == "SPELL_AURA_REMOVED" and line[4][6:-6] in COWARDS:
                 removed += 1
                 if not first_removed_index:
                     first_removed_index = -i
