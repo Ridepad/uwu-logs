@@ -72,6 +72,7 @@ AURAS_EXTERNAL = {
     "29166": 10,    # Innervate
     "19753": 180,   # Divine Intervention
     "72553": 100,   # Gastric Bloat
+    "70227": 30,    # Empowered Blood
     "71532": 75,    # Essence of the Blood Queen
     "71533": 60,    # Essence of the Blood Queen
     "67108": 30,    # Nether Power
