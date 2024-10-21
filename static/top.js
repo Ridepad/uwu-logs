@@ -3,9 +3,12 @@ import {
   CLASSES,
   SPECS,
   SPECS_SELECT_OPTIONS,
-  AURAS_ICONS,
   MONTHS,
-} from "./constants.js?v=240909-1"
+} from "./constants.js?v=240909-1";
+
+console.time("aura_icons fetch");
+const AURAS_ICONS = await fetch("/static/aura_icons.json").then(response => response.json());
+console.timeEnd("aura_icons fetch");
 
 const SELECT_SERVER = document.getElementById('select-server');
 const SELECT_RAID = document.getElementById('select-instance');
