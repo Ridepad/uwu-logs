@@ -13,12 +13,12 @@ TABLE_BORDER = '-------------------'
 class _SevenZipLinux:
     __executable = "7zz"
     __portable = "7z2301-linux-x64.tar.xz"
+    __portable_path = str(PATH / __portable)
     executable_path = PATH / __executable
     dl_cmd = (
-        ('apt', 'install', 'wget'),
-        ('wget', f'{LINK_7Z_DL_PREFIX}/{__portable}'),
+        ('curl', f'{LINK_7Z_DL_PREFIX}/{__portable}', '--output', __portable_path),
         ('tar', '-xf', __portable, __executable),
-        ('rm', __portable),
+        ('rm', __portable_path),
     )
 
 class _SevenZipWindows:
