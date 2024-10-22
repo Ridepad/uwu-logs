@@ -372,7 +372,7 @@ def get_water_elementals(logs_slice: list[str]):
 
         if WATER_ELEMENTAL_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 50:
+            if lines_from_last_summon > 100:
                 last_water_elemental = None
             continue
 
