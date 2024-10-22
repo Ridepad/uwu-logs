@@ -365,6 +365,7 @@ def get_water_elementals(logs_slice: list[str]):
         if WATER_ELEMENTAL_SUMMON_ID in line:
             _, _, source_guid, source_name, _, _, spell_id, _ = line.split(',', 7)
             if spell_id == WATER_ELEMENTAL_SUMMON_ID:
+
                 last_water_elemental = new_unit("Water Elemental", source_name, source_guid)
                 lines_from_last_summon = 0
         elif not last_water_elemental:
@@ -372,8 +373,9 @@ def get_water_elementals(logs_slice: list[str]):
 
         if WATER_ELEMENTAL_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 50:
-                last_water_elemental = None
+            if lines_from_last_summon > 100:
+                raise Exception(f"DEEZ NUTZ {line}")
+
             continue
 
         _, _, source_guid, _, target_guid, _ = line.split(',', 5)
