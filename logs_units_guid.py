@@ -282,7 +282,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
             if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
                 other_perma_pets["Felhunter"][sGUID].add(tGUID)
 
-        elif spell_id == "31707": # Waterbolt
+        elif spell_id == "72898": # Waterbolt
             if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
                 other_perma_pets["Water Elemental"][sGUID].add(tGUID)
 
@@ -372,7 +372,7 @@ def get_water_elementals(logs_slice: list[str]):
 
         if WATER_ELEMENTAL_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 500:
+            if lines_from_last_summon > 100:
                 last_water_elemental = None
             continue
 
