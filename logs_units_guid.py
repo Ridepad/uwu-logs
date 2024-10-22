@@ -282,7 +282,7 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
             if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
                 other_perma_pets["Felhunter"][sGUID].add(tGUID)
 
-        elif spell_id == "72898": # Waterbolt
+        elif spell_id == "31707": # Waterbolt
             if sGUID[:5] == "0xF14" and tGUID[:4] == "0xF1":
                 other_perma_pets["Water Elemental"][sGUID].add(tGUID)
 
@@ -365,7 +365,6 @@ def get_water_elementals(logs_slice: list[str]):
         if WATER_ELEMENTAL_SUMMON_ID in line:
             _, _, source_guid, source_name, _, _, spell_id, _ = line.split(',', 7)
             if spell_id == WATER_ELEMENTAL_SUMMON_ID:
-
                 last_water_elemental = new_unit("Water Elemental", source_name, source_guid)
                 lines_from_last_summon = 0
         elif not last_water_elemental:
@@ -373,9 +372,8 @@ def get_water_elementals(logs_slice: list[str]):
 
         if WATER_ELEMENTAL_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 100:
-                raise Exception(f"DEEZ NUTZ {line}")
-
+            if lines_from_last_summon > 500:
+                last_water_elemental = None
             continue
 
         _, _, source_guid, _, target_guid, _ = line.split(',', 5)
