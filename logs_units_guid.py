@@ -356,23 +356,27 @@ def convert_nested_masters(data: dict[str, dict[str, str]]):
 def get_water_elementals(logs_slice: list[str]):
     WATER_ELEMENTAL_ID = "00946A"
     WATER_ELEMENTAL_SUMMON_ID = "31687"
+    WATER_ELEMENTAL_SUMMON_ID_STR = f",{WATER_ELEMENTAL_SUMMON_ID},"
 
     water_elementals = {}
     last_water_elemental = None
     lines_from_last_summon = 0
 
     for line in logs_slice:
-        if WATER_ELEMENTAL_SUMMON_ID in line:
+        if WATER_ELEMENTAL_SUMMON_ID_STR in line:
             _, _, source_guid, source_name, _, _, spell_id, _ = line.split(',', 7)
             if spell_id == WATER_ELEMENTAL_SUMMON_ID:
                 last_water_elemental = new_unit("Water Elemental", source_name, source_guid)
                 lines_from_last_summon = 0
-        elif not last_water_elemental:
             continue
-
+        
+        if last_water_elemental is None:
+            continue
+        
         if WATER_ELEMENTAL_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 50:
+            if lines_from_last_summon > 200:
+                LOGGER_REPORTS.debug(f"Water Elemental | {last_water_elemental['master_name']:12} >>> not found")
                 last_water_elemental = None
             continue
 
@@ -387,6 +391,7 @@ def get_water_elementals(logs_slice: list[str]):
         if elemental_guid in water_elementals:
             continue
 
+        LOGGER_REPORTS.debug(f"Water Elemental | {last_water_elemental['master_name']:12} >>> {elemental_guid}")
         water_elementals[elemental_guid] = last_water_elemental
         last_water_elemental = None
         lines_from_last_summon = 0
@@ -396,23 +401,27 @@ def get_water_elementals(logs_slice: list[str]):
 def get_mutated_aboms(logs_slice: list[str]):
     MUTATED_ABOMINATION_ID = "00958D"
     MUTATED_TRANSFORMATION_ID = "70308"
+    MUTATED_TRANSFORMATION_ID_STR = f",{MUTATED_TRANSFORMATION_ID},"
 
     mutated_aboms = {}
     last_abom_unit_data = None
     lines_from_last_summon = 0
 
     for line in logs_slice:
-        if MUTATED_TRANSFORMATION_ID in line:
+        if MUTATED_TRANSFORMATION_ID_STR in line:
             _, _, source_guid, source_name, _, _, spell_id, _ = line.split(',', 7)
             if spell_id == MUTATED_TRANSFORMATION_ID:
                 last_abom_unit_data = new_unit("Mutated Abomination", source_name, source_guid)
                 lines_from_last_summon = 0
-        elif not last_abom_unit_data:
+            continue
+        
+        if last_abom_unit_data is None:
             continue
 
         if MUTATED_ABOMINATION_ID not in line:
             lines_from_last_summon += 1
-            if lines_from_last_summon > 50:
+            if lines_from_last_summon > 200:
+                LOGGER_REPORTS.debug(f"Mutated Abomination | {last_abom_unit_data['master_name']:12} >>> not found")
                 last_abom_unit_data = None
             continue
 
@@ -422,6 +431,7 @@ def get_mutated_aboms(logs_slice: list[str]):
         if source_guid[6:-6] != MUTATED_ABOMINATION_ID:
             continue
 
+        LOGGER_REPORTS.debug(f"Mutated Abomination | {last_abom_unit_data['master_name']:12} >>> {source_guid}")
         mutated_aboms[source_guid] = last_abom_unit_data
         last_abom_unit_data = None
         lines_from_last_summon = 0
