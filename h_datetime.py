@@ -22,12 +22,12 @@ def get_now():
     return datetime.now()
 
 CURRENT_YEAR = get_now().year
-RE_FIND_ALL = re.compile("(\d+)").findall
-RE_TIMESTAMP = re.compile("(\d{1,2}).(\d{1,2}).(\d{2}).(\d{2}).(\d{2}).(\d{3})").findall
-RE_FIND_ALL_BYTES = re.compile(b'(\d+)').findall
+RE_FIND_ALL = re.compile(r"(\d+)").findall
+RE_TIMESTAMP = re.compile(r"(\d{1,2}).(\d{1,2}).(\d{2}).(\d{2}).(\d{2}).(\d{3})").findall
+RE_FIND_ALL_BYTES = re.compile(rb'(\d+)').findall
 
 def to_dt_closure(year=None):
-    re_find_all = re.compile('(\d+)').findall
+    re_find_all = re.compile(r'(\d+)').findall
     CURRENT = get_now()
     CURRENT_SHIFT = CURRENT + T_DELTA["14H"]
 
