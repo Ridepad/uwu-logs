@@ -66,8 +66,8 @@ def load_report(report_id: str):
         report.last_access = now
         return report
     
-    if _validate:
-        _limit = _validate.rate_limited_reports(ip, report_id)
+    if _validate is not None:
+        _limit = _validate.rate_limited_reports(ip, "report", report_id)
         if _limit:
             add_log_entry(ip, "SPAM", report_id)
             raise TooManyRequests(retry_after=_limit)
@@ -79,13 +79,6 @@ def load_report(report_id: str):
 
     report.last_access = now
     return report
-
-def get_formatted_query_string():
-    query = request.query_string.decode()
-    if not query:
-        return ""
-    return f"?{query}"
-
 
 @SERVER.errorhandler(404)
 def method404(e):
@@ -119,20 +112,8 @@ def method500(e):
 
 @SERVER.route("/pw_validate", methods=["POST"])
 def pw_validate():
-    if not _validate:
-        return ""
+    return _validate and _validate.check(request)
     
-    if _validate.pwcheck.banned(request.remote_addr):
-        return "", 403
-
-    if _validate.pw(request):
-        resp = make_response('Success')
-        _validate.set_cookie(resp)
-        return resp
-    
-    attempts_left = _validate.pwcheck.attempts_left(request.remote_addr)
-    return f'{attempts_left}', 401
-
 def get_incoming_connection_info():
     path = request.path
     
@@ -184,24 +165,18 @@ def before_request():
     
     if not USE_FILTER:
         pass
-    elif not _validate:
+    elif _validate is None:
         pass
     elif report_id not in Files.reports_private.text_lines():
         pass
     elif _validate.pwcheck.banned(request.remote_addr):
         if request.method == "GET":
-            return redirect("/")
+            raise NotFound
         return "", 403
     elif not _validate.cookie(request):
         if request.method == "GET":
-            return render_template('protected.html')
+            return render_template('protected.html'), 401
         return "", 403
-
-    if not SERVER.debug and request.method == "GET" and request.path in CACHED_PAGES:
-        query = get_formatted_query_string()
-        pages = CACHED_PAGES[request.path]
-        if query in pages:
-            return pages[query]
 
 
 @SERVER.route("/")
