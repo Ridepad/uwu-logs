@@ -67,12 +67,17 @@ async def add_log_entry_wrap(request: Request, method: str=None):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
 
 async def request_format(request: Request):
-    msg = str(request.url)
+    try:
+        msg = request.scope["path"]
+    except KeyError:
+        msg = str(request.url)
+
     try:
         data = await request.body()
         msg = f"{msg} | {data.decode()}"
     except UnicodeDecodeError:
         pass
+
     return f"{msg} | {request.headers.get('User-Agent')}"
 
 @app.middleware("http")
