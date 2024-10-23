@@ -63,6 +63,10 @@ def get_servers(folder):
     servers = s - set(SERVERS.values())
     return sorted(servers)
 
+@app.get("/")
+def root_path():
+    return RedirectResponse("/upload")
+
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_get(request: Request):
     return TEMPLATES.TemplateResponse(
