@@ -181,10 +181,6 @@ async def missing(item: Missing, request: Request, response: Response):
 
 ######## Get endpoints to prevent cors
 
-@app.get("/")
-def root_path():
-    return RedirectResponse("/top")
-
 @app.get("/top", deprecated=True, description="Used to prevent CORS")
 def top_get(request: Request):
     servers = get_servers()
@@ -230,6 +226,10 @@ if __name__ == "__main__":
     from h_other import Ports
 
     app.mount("/static", StaticFiles(directory=Directories.static))
+
+    @app.get("/")
+    def root_path():
+        return RedirectResponse("/top")
 
     _NO_REDIRECT_ROOTS = [
         "/static",

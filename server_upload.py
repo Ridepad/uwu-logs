@@ -63,10 +63,6 @@ def get_servers(folder):
     servers = s - set(SERVERS.values())
     return sorted(servers)
 
-@app.get("/")
-def root_path():
-    return RedirectResponse("/upload")
-
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_get(request: Request):
     return TEMPLATES.TemplateResponse(
@@ -140,6 +136,10 @@ if __name__ == "__main__":
     from h_other import Ports
 
     app.mount("/static", StaticFiles(directory="static"))
+
+    @app.get("/")
+    def root_path():
+        return RedirectResponse("/upload")
 
     @app.exception_handler(404)
     def not_found_exception_handler(request: Request, exc: HTTPException):
