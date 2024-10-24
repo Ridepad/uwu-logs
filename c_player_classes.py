@@ -212,8 +212,6 @@ SPELL_BOOK_SPEC = {
         "48518": 1, # Eclipse (Lunar)
         "48517": 1, # Eclipse (Solar)
         "33831": 1, # Force of Nature
-        "71023": 1, # Languish
-        "70721": 1, # Omen of Doom
         "53195": 1, # Starfall
         "53227": 1, # Typhoon
 
