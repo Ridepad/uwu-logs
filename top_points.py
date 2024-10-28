@@ -5,10 +5,10 @@ from typing import Union
 
 from pydantic import BaseModel, field_validator
 
+from api_db import DataCompressed
 from api_top_db_v2 import (
     TopDB,
     TopDBCached,
-    TopDataCompressed,
 )
 from c_path import Directories
 from c_server_phase import get_server_phase
@@ -369,7 +369,7 @@ class PointsValidation(BaseModel):
 
 
 class Points(TopDBCached):
-    cache: defaultdict[str, dict[int, TopDataCompressed]] = defaultdict(dict)
+    cache: defaultdict[str, dict[int, DataCompressed]] = defaultdict(dict)
 
     def __init__(self, model: PointsValidation) -> None:
         super().__init__(model.server)
@@ -389,7 +389,8 @@ class Points(TopDBCached):
     def _new_compressed_data(self):
         a = self._make_top()
         j = json.dumps(a, separators=(",", ":"))
-        return TopDataCompressed(j.encode())
+        jb = j.encode()
+        return DataCompressed(jb)
 
     def _make_top(self):
         player_data = PlayerDataServer(self.server)

@@ -1,11 +1,13 @@
-
-from collections import defaultdict
 import json
+from collections import defaultdict
+
 from pydantic import BaseModel, field_validator
-from api_top_db_v2 import (
-    DB,
+
+from api_db import (
     Cache,
-    TopDataCompressed,
+    DB,
+    DataCompressed,
+    Table,
 )
 from c_path import Directories, StrEnum
 from h_debug import running_time
@@ -21,7 +23,7 @@ API_EXAMPLES = [
 ]
 
 
-class ColumnsSpeedrun(StrEnum):
+class Columns(StrEnum):
     REPORT_ID = "report_id"
     TOTAL_LENGTH = "total_length"
     SEGMENTS_SUM = "segments_sum"
@@ -29,9 +31,25 @@ class ColumnsSpeedrun(StrEnum):
     FACTION = "faction"
 
 HEADERS_TO_COLUMNS_NAMES = {
-    "head-speedrun-total-length": ColumnsSpeedrun.TOTAL_LENGTH,
-    "head-speedrun-segments-sum": ColumnsSpeedrun.SEGMENTS_SUM,
+    "head-speedrun-total-length": Columns.TOTAL_LENGTH,
+    "head-speedrun-segments-sum": Columns.SEGMENTS_SUM,
 }
+
+
+class TableSpeedrun(Table):
+    COLUMNS_ORDERED = list(Columns.__members__.values())
+    COLUMNS_TABLE_CREATE = [
+        f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
+        *COLUMNS_ORDERED[1:],
+    ]
+
+    def query_get(self, sort_by="DESC"):
+        return f'''
+        SELECT *
+        FROM [{self.name}]
+        ORDER BY {sort_by}
+        '''
+
 
 def new_db_row(s: str):
     total_length, segments_sum, report_id = s.split('--', 2)
@@ -41,12 +59,6 @@ def new_db_row(s: str):
     return report_id, total_length, segments_sum
 
 class SpeedrunDB(DB):
-    COLUMNS_ORDERED = list(ColumnsSpeedrun.__members__.values())
-    COLUMNS_TABLE_CREATE = [
-        f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
-        *COLUMNS_ORDERED[1:],
-    ]
-
     def __init__(self, server: str, new=False) -> None:
         path = Directories.speedrun / f"{server}.db"
         super().__init__(
@@ -54,25 +66,18 @@ class SpeedrunDB(DB):
             new=new,
             without_row_id=True,
         )
+        self.server = server
 
-    def add_new_data(self, table_name: str, data: list):
-        if not data:
-            return
-        
-        new_table_created = self.new_table(table_name)
-
-        rows = map(new_db_row, data)
-        self.add_new_rows(table_name, rows)
-
-        if new_table_created:
-            self.add_indexes(table_name)
-
-
+    def add_new_data(self, table_name: str, data: list[str]):
+        table = TableSpeedrun(table_name)
+        rows = list(map(new_db_row, data))
+        self.add_new_rows(table, rows)
+    
 class SpeedrunValidation(BaseModel):
     server: str
     raid: str
     mode: str = "25H"
-    sort_by: str = SpeedrunDB.COLUMNS_ORDERED[1]
+    sort_by: str = Columns.TOTAL_LENGTH
 
     model_config = {
         "json_schema_extra": {
@@ -115,38 +120,36 @@ class SpeedrunValidation(BaseModel):
 
 
 class Speedrun(SpeedrunDB, Cache):
-    cache: defaultdict[str, dict[str, TopDataCompressed]] = defaultdict(dict)
+    cache: defaultdict[str, dict[str, DataCompressed]] = defaultdict(dict)
 
     def __init__(self, model: SpeedrunValidation) -> None:
         super().__init__(model.server)
-        self.table_name = self.get_table_name(model.raid, model.mode)
-        self.sort_by = model.sort_by
         self.json_query = model.model_dump_json()
+        
+        sort_by = model.sort_by
+        table_name = self.get_table_name(model.raid, model.mode)
+        table = TableSpeedrun(table_name)
+        self.query = table.query_get(sort_by)
     
     @running_time
     def data(self):
-        if self.db_was_updated():
-            self.cache[self.json_query].clear()
-        
         server_data = self.cache[self.json_query]
+        if self.db_was_updated():
+            server_data.clear()
+        
         if self.json_query not in server_data:
             server_data[self.json_query] = self._new_compressed_data()
             
         return server_data[self.json_query]
     
     def _new_compressed_data(self):
-        j = json.dumps(self._new_data(), default=list)
-        return TopDataCompressed(j.encode())
+        a = self._new_data()
+        j = json.dumps(a, separators=(",", ":"), default=list)
+        jb = j.encode()
+        return DataCompressed(jb)
     
     def _new_data(self):
-        return self.cursor.execute(self._query_string())
-
-    def _query_string(self):
-        return f'''
-        SELECT *
-        FROM [{self.table_name}]
-        ORDER BY {self.sort_by}
-        '''
+        return self.cursor.execute(self.query)
 
 
 def test1():

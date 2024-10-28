@@ -69,7 +69,7 @@ def top_has_errors(data: list[dict]):
 def gen_top_data(top_data: dict):
     for boss_name, modes in top_data.items():
         for mode, data in modes.items():
-            table_name = api_top_db_v2.DB.get_table_name(boss_name, mode)
+            table_name = api_top_db_v2.TopDB.get_table_name(boss_name, mode)
             yield table_name, data
 
 

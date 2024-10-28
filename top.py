@@ -4,14 +4,16 @@ from typing import Union
 
 from pydantic import BaseModel, field_validator
 
-from api_top_db_v2 import (
+from api_db import (
     DB,
-    Columns,
-    TopDBCached,
-    TopDataCompressed,
-    HEADERS_TO_COLUMNS_NAMES,
+    DataCompressed,
     LIMITS,
     LIMITS_JOINED,
+)
+from api_top_db_v2 import (
+    Columns,
+    TopDBCached,
+    HEADERS_TO_COLUMNS_NAMES,
     SORT_REVERSED,
 )
 from c_bosses import ALL_FIGHT_NAMES
@@ -137,7 +139,7 @@ class TopValidation(BaseModel):
 
 
 class Top(TopDBCached):
-    cache: defaultdict[str, dict[int, TopDataCompressed]] = defaultdict(dict)
+    cache: defaultdict[str, dict[int, DataCompressed]] = defaultdict(dict)
 
     def __init__(self, model: TopValidation) -> None:
         super().__init__(model.server)
@@ -164,7 +166,7 @@ class Top(TopDBCached):
         except Exception: # sqlite3.OperationalError
             db_json_strings = []
         _json = self._combine_json(db_json_strings)
-        return TopDataCompressed(_json)
+        return DataCompressed(_json)
     
     def _db_json_strings(self):
         if self.best_only:

@@ -9,12 +9,12 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 import parser_all
-from api_top_db_v2 import TopDataCompressed
+from api_db import DataCompressed
 from c_path import Directories, Files
 from constants import GEAR
 from h_debug import Loggers
-from top_character import Character, CharacterValidation
 from top import Top, TopValidation
+from top_character import Character, CharacterValidation
 from top_points import Points, PointsValidation
 from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
@@ -86,7 +86,7 @@ async def add_process_time_header(request: Request, call_next):
     return await call_next(request)
 
 
-def make_response_compressed_headers(z: TopDataCompressed):
+def make_response_compressed_headers(z: DataCompressed):
     response = Response(content=z.data, media_type="application/json")
     response.headers["Content-Encoding"] = "gzip"
     response.headers["Content-Length"] = str(z.size_compressed)

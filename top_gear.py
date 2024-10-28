@@ -1,7 +1,8 @@
-from datetime import datetime
 import gzip
 import json
-from api_top_db_v2 import DB
+from datetime import datetime
+
+from api_db import DB, Table
 from c_path import Directories, PathExt, StrEnum
 from h_debug import Loggers, running_time
 
@@ -50,28 +51,77 @@ class CharGear:
         self.size = len(data)
         self.size_compressed = self.size
 
-    def gear_dict(self):
+    @property
+    def gear_dict(self) -> dict:
+        try:
+            return self._gear_dict
+        except AttributeError:
+            pass
+
         json_bytes = gzip.decompress(self.data)
-        return json.loads(json_bytes)
+        self._gear_dict = json.loads(json_bytes)
+        return self._gear_dict
 
     def gear_id(self):
         return f"{self.server}-{self.name}-{self.last_modified}"
+    
+    def add_new_gear_snippet(self, new_profile: dict):
+        if not new_profile:
+            LOGGER_GEAR_PARSER.debug(f"{self.name:12} | parse_profile | not new_profile")
+            return
+        
+        if self.is_same_as_last_recorded(new_profile):
+            LOGGER_GEAR_PARSER.debug(f"{self.name:12} | parse_profile | same as before")
+            return
+        
+        timestamp_now = int(datetime.now().timestamp())
+        for timestamp, profile in self.gear_dict.items():
+            if profile == new_profile:
+                self.gear_dict[timestamp_now] = timestamp
+                return
+
+        self.gear_dict[timestamp_now] = new_profile
+        return True
+    
+    def is_same_as_last_recorded(self, new_profile: dict):
+        try:
+            last_profile = next(reversed(self.gear_dict.values()))
+        except StopIteration:
+            return False
+        
+        if not isinstance(last_profile, dict):
+            last_profile = self.gear_dict.get(last_profile)
+        
+        return new_profile == last_profile
 
 
-class GearDB(DB):
+class TableGear(Table):
+    without_row_id = True
     COLUMNS_ORDERED = list(Columns.__members__.values())
     COLUMNS_TABLE_CREATE = [
         f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
         *COLUMNS_ORDERED[1:],
     ]
+    def __init__(self, name: str="main"):
+        super().__init__(name)
 
+    def player_query(self, player_name: str):
+        return "\n".join((
+            f"SELECT {Columns.LAST_MODIFIED}, {Columns.DATA}",
+            f"FROM [{self.name}]",
+            f"WHERE {Columns.NAME}='{player_name}'",
+        ))
+
+
+class GearDB(DB):
     def __init__(self, server: str, new=False) -> None:
         path = Directories.gear / f"{server}.db"
         super().__init__(path, new, without_row_id=True)
         self.server = server
+        self.table = TableGear(server)
 
     def get_player_data(self, player_name: str):
-        query = self.player_query(player_name)
+        query = self.table.player_query(player_name)
         try:
             LAST_MODIFIED, DATA = self.cursor.execute(query).fetchone()
         except TypeError:
@@ -79,7 +129,7 @@ class GearDB(DB):
         except Exception:
             LOGGER_GEAR_PARSER.exception(f"{player_name:12} | get_player_data")
             LAST_MODIFIED, DATA = NO_DATA
-        
+
         return CharGear(
             name=player_name,
             server=self.server,
@@ -90,16 +140,9 @@ class GearDB(DB):
     @running_time
     def get_player_data_dict(self, player_name: str):
         character = self.get_player_data(player_name)
-        return character.gear_dict()
+        return character.gear_dict
 
-    def player_query(self, player_name: str):
-        return f"""
-        SELECT {Columns.LAST_MODIFIED}, {Columns.DATA}
-        FROM [{self.server}]
-        WHERE {Columns.NAME}='{player_name}'
-        """
-    
-    def add(self, player_name: str, new_profile: dict):
+    def update_player(self, player_name: str, new_profile: dict):
         if not new_profile:
             LOGGER_GEAR_PARSER.debug(f"{player_name:12} | parse_profile | not new_profile")
             return
@@ -114,21 +157,9 @@ class GearDB(DB):
         rows = (
             new_db_row(player_name, player_profile),
         )
-        self.add_new_data(rows)
+        self.add_new_rows(self.table, rows)
         LOGGER_GEAR_PARSER.debug(f"{player_name:12} | parse_profile | added")
         return True
-
-    def add_new_data(self, rows: list):
-        if not rows:
-            return
-        
-        table_name = self.server
-        new_table_created = self.new_table(table_name)
-
-        self.add_new_rows(table_name, rows)
-
-        if new_table_created:
-            self.add_indexes(table_name)
 
 
 def new_db_row(name: str, data: dict):
@@ -149,33 +180,28 @@ def new_db_row_wrap_file(fpath: PathExt):
         return
     return new_db_row(fpath.stem, data_dict)
 
-def _convert():
-    char_path = Directories.main / "cache" / "character"
-    for char_path_server in char_path.iterdir():
-        if not char_path_server.is_dir():
-            continue
-
-        server = char_path_server.stem
-        g = (
-            new_db_row_wrap_file(file)
-            for file in char_path_server.iterdir()
-            if file.suffix == ".json"
-        )
-        g = (x for x in g if x)
-        db = GearDB(server, new=True)
-        db.add_new_data(g)
-
 def test1():
     server = "Lordaeron"
     db = GearDB(server)
-    z = db.get_player_data_dict("Nomadra")
-    print(z)
-    server = "Icecrown"
-    db = GearDB(server)
-    z = db.get_player_data_dict("Deydraenna")
-    print(z)
+    # z = db.get_player_data_dict("Nomadra")
+    z = db.get_player_data_dict("Nyaffliction")
+    print(z.keys())
+    # server = "Icecrown"
+    # db = GearDB(server)
+    # z = db.get_player_data_dict("Deydraenna")
+    # print(z)
 
+def test2():
+    f = PathExt(r"F:\Python\uwulogs\temp\Nyaffliction.json")
+    fj = f.json()
+
+    d = list(fj.values())[-1]
+
+    db = GearDB("Lordaeron")
+    s = db.update_player("Nyaffliction", d)
+    print(s)
 
 if __name__ == "__main__":
     # _convert()
+    test2()
     test1()

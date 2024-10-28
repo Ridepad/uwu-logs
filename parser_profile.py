@@ -195,7 +195,7 @@ def parse_and_save_player(player: dict[str, str]):
     player_name = player["name"]
 
     new_profile = get_profile(player_name, server)
-    GearDB(server).add(player_name, new_profile)
+    GearDB(server).update_player(player_name, new_profile)
 
 ### Used to assure single instance of parser
 
