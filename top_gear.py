@@ -63,7 +63,7 @@ class CharGear:
         return self._gear_dict
 
     def gear_id(self):
-        return f"{self.server}-{self.name}-{self.last_modified}"
+        return f"{self.server}--{hash(self.name)}--{self.last_modified}"
     
     def add_new_gear_snippet(self, new_profile: dict):
         if not new_profile:
