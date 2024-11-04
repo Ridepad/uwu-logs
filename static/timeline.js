@@ -623,7 +623,6 @@ class Character {
     scrollContainer.addEventListener('scroll', () => 
     {
         const scrollLeft = scrollContainer.scrollLeft;
-        console.log("here", fixedElements)
         fixedElements.forEach((element) => 
         {
             element.style.left = `${scrollLeft}px`; // Move each element based on horizontal scroll
