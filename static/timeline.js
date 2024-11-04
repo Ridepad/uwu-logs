@@ -541,7 +541,7 @@ class Character {
 
   new_spell_name_cell(spell_id) {
     const name_cell_wrap = document.createElement("spell-name");
-    name_cell_wrap.className = "spell-name";
+    name_cell_wrap.className = "spell-name fixed-container";
     const name_cell = document.createElement("spell-name-data");
 
     const _img = document.createElement("img");
@@ -616,9 +616,19 @@ class Character {
     this.CASTS_SECTION.appendChild(this.SPELLS_HIDE);
     this.CASTS_SECTION.className = "casts-section";
     this.CASTS_SECTION.setAttribute("data-tab", this.TAB_N);
-
     this.add_spell_rows();
-
+    const scrollContainer = document.querySelector('.scroll-container');
+    const fixedElements = document.querySelectorAll('.fixed-container');
+    
+    scrollContainer.addEventListener('scroll', () => 
+    {
+        const scrollLeft = scrollContainer.scrollLeft;
+        console.log("here", fixedElements)
+        fixedElements.forEach((element) => 
+        {
+            element.style.left = `${scrollLeft}px`; // Move each element based on horizontal scroll
+        });
+    });
     toggle_aura_duration_wrap();
     init_flag_filter();
     toggle_rows_wrap();
