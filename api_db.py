@@ -153,7 +153,6 @@ class DB:
         with self.cursor as c:
             c.executemany(query, rows)
     
-    @running_time
     def add_new_rows(self, table: Table, rows: list[str]):
         try:
             self._add_rows(table, rows)
