@@ -21,6 +21,7 @@ const CHAR_RACE = document.getElementById("char-race");
 const GEAR_WRAP = document.getElementById("gear-wrap");
 const LOADING_INFO = document.getElementById("loading-gear");
 const NO_GEAR_INFO = document.getElementById("missing-gear");
+const NO_CACHE_INFO = document.getElementById("server-no-cache");
 const TABLE_STATS_BODY = document.getElementById("table-stats-body");
 
 const GEAR_SLOTS = Array.from(document.querySelectorAll(".slot"));
@@ -200,31 +201,35 @@ export default class Gear {
   constructor(server, name) {
     this.SERVER = server;
     this.NAME = to_title(name);
+    this.URL = get_char_data_url(this.SERVER, this.NAME);
   }
   init() {
+    NO_GEAR_INFO.style.display = "none";
+    NO_CACHE_INFO.style.display = "none";
     if (!SERVERS_AVAILABLE_GEAR.includes(this.SERVER)) {
-      console.log(`${this.SERVER} doesn't have gear cache yet.`);
+      GEAR_WRAP.style.display = "none";
       LOADING_INFO.style.display = "none";
-      NO_GEAR_INFO.style.removeProperty("display");
+      const msg = `${this.SERVER} doesn't have gear cache yet.`
+      console.log(msg);
+      NO_CACHE_INFO.textContent = `${this.SERVER} doesn't have gear cache yet.`;
+      NO_CACHE_INFO.style.removeProperty("display");
       return;
     }
     
-    const url = get_char_data_url(this.SERVER, this.NAME);
     const loading_timeout = setTimeout(() => {
       GEAR_WRAP.style.display = "none";
-      NO_GEAR_INFO.style.display = "none";
       LOADING_INFO.style.removeProperty("display");
     }, 100);
 
-    fetch(url).then(response => {
+    fetch(this.URL).then(response => {
       clearTimeout(loading_timeout);
       if (response.ok) {
         this.parse_json(response);
         return;
       }
       console.log('not found');
-      LOADING_INFO.style.display = "none";
       GEAR_WRAP.style.display = "none";
+      LOADING_INFO.style.display = "none";
       NO_GEAR_INFO.style.removeProperty("display");
     });
   }

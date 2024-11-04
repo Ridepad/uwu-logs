@@ -19,7 +19,26 @@ main {
 @media (orientation: landscape) {
   #top-player-info {
     grid-auto-flow: column;
+    font-size: clamp(150%, 3vw, 250%);
   }
+}
+#server-select {
+  padding: 0;
+  border: none;
+  box-shadow: inset 0 -0.1em 0 0 currentColor;
+}
+#server-select > option {
+  font-size: 50%;
+}
+#charname-seach {
+  background: none;
+  color: var(--unfocused);
+  border: none;
+  outline: none;
+  box-shadow: inset 0 -0.1em 0 0 currentColor;
+}
+#charname-seach:focus {
+  color: var(--secondary-color);
 }
 #player-search-label {
   opacity: .5;
@@ -48,7 +67,7 @@ main {
     0 0 1rem currentColor;
 }
 .player-server {
-  width: 8em;
+  width: 12em;
 }
 #player-overall {
   min-width: max-content;
@@ -69,6 +88,7 @@ main {
 }
 #spec-wrap label {
   padding: 0;
+  max-height: 1em;
 }
 #spec-wrap img {
   opacity: .2;
@@ -103,6 +123,14 @@ main {
 }
 .cell-raids {
   min-width: 1.75em;
+}
+
+
+.info {
+  font-size: 200%;
+}
+.error {
+  color: crimson;
 }
 
 #tooltip-points {
@@ -191,30 +219,37 @@ main {
   }
 }
 
-#rank-info {
+#rank-info,
+#rank-info-tt {
   position: absolute;
   right: 0;
   bottom: 0;
-  padding: .25em;
+  padding: .5em;
+  background-color: var(--background);
   box-shadow:
     inset 0 0 .25rem .1rem var(--primary-color),
           0 0  .5rem .1rem var(--primary-color);
+}
+#rank-info {
+  padding: .25em;
+  z-index: 10;
 }
 #rank-info:hover #rank-info-tt {
   display: block;
 }
 #rank-info-tt {
   display: none;
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  min-width: 60vw;
-  background-color: var(--background);
-  z-index: 5;
-  padding: .5em;
-  box-shadow:
-    inset 0 0 .25rem .1rem var(--primary-color),
-          0 0  .5rem .1rem var(--primary-color);
+  min-width: max-content;
+}
+@media (orientation: portrait) {
+  #rank-info,
+  #rank-info-tt {
+    top: 0;
+    bottom: auto;
+  }
+  #rank-info-tt {
+    min-width: 90vw;
+  }
 }
 
 
@@ -234,41 +269,20 @@ main {
   visibility: hidden;
 }
 
-#loading-gear,
-#loading-points,
-#missing-gear,
-#missing-points {
-  font-size: 200%;
-}
-#loading-gear,
-#missing-gear {
+#gear-block {
   --width: calc(var(--icon-size) * 7);
-  width: var(--width);
+  --height: calc(var(--icon-size) * 9);
   min-width: var(--width);
   max-width: var(--width);
-}
-#missing-gear,
-#missing-points {
-  color: crimson;
+  min-height: var(--height);
+  max-height: var(--height);
+  place-self: center;
 }
 #gear-wrap {
   display: grid;
-  height: fit-content;
-  width: fit-content;
   grid-template-areas: 
   "gear-left gear-info gear-right"
   ". weapons .";
-}
-@media (orientation: portrait) {
-  #gear-wrap {
-    place-self: center;
-  }
-}
-#gear-wrap thead tr:last-child td {
-  border-bottom: 1em var(--primary-color);
-}
-#gear-wrap thead tr:last-child {
-  border-bottom: 1em var(--primary-color);
 }
 #gear-wrap td:first-child {
   text-align: right;
@@ -281,22 +295,20 @@ main {
 }
 
 #gear-info {
+  grid-area: gear-info;
+  position: relative;
+  display: flex;
   height: 100%;
+  width: calc(var(--icon-size) * 5);
   font-size: 150%;
+  flex-direction: column;
+  row-gap: 0;
 }
 #gear-right {
   grid-area: gear-right;
 }
 #gear-left {
   grid-area: gear-left;
-}
-#gear-info {
-  position: relative;
-  width: calc(var(--icon-size) * 5);
-  grid-area: gear-info;
-  display: flex;
-  flex-direction: column;
-  row-gap: 0;
 }
 #table-stats-wrap {
   max-height: 13.5em;

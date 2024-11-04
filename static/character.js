@@ -1,4 +1,4 @@
-import Gear from "./char_parser.js?v=240831-1";
+import Gear from "./char_parser.js?v=241104-1";
 import { SPECS } from "./constants.js?v=240830-1";
 
 const INFO_LOADING_POINTS = document.getElementById("loading-points");
@@ -6,6 +6,7 @@ const INFO_MISSING_POINTS = document.getElementById("missing-points");
 const SECTION_PLAYER_POINTS_WRAP = document.getElementById("player-points-wrap");
 const TBODY_POINTS = document.getElementById("points-body");
 const TOOLTIP_POINTS = document.getElementById("tooltip-points");
+const PLAYER_SEARCH = document.getElementById("player-search");
 const PLAYER_NAME = document.getElementById("player-name");
 const PLAYER_SERVER = document.getElementById("player-server");
 const PLAYER_OVERALL_POINTS = document.getElementById("player-overall-points");
@@ -332,9 +333,8 @@ function to_title(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 function new_character_search() {
-  INPUT_CHAR.value = to_title(INPUT_CHAR.value);
-
-  const character_name = INPUT_CHAR.value;
+  const _character_name = INPUT_CHAR.value.length > 1 ? INPUT_CHAR.value : PLAYER_NAME.textContent;
+  const character_name = to_title(_character_name);
   const character_server = SELECT_SERVER.value;
 
   CURRENT_CHARACTER.name = character_name;
@@ -382,9 +382,12 @@ function popstate() {
   });
 
   CURRENT_CHARACTER.popped = true;
-  INPUT_CHAR.value = CURRENT_CHARACTER.name;
 
   new_character();
+}
+
+function invalid_character_name() {
+  return !INPUT_CHAR.value.length || PLAYER_NAME.textContent == INPUT_CHAR.value;
 }
 
 function init() {
@@ -397,9 +400,11 @@ function init() {
     spec_button.input.addEventListener("click", () => new_spec(spec_button.index));
   }
   INPUT_CHAR.addEventListener("keydown", event => {
-    if (event.key === "Space") {
+    const key = [event.key, event.code];
+    if (key.includes("Space")) {
       event.preventDefault();
-    } else if (event.key === "Enter") {
+    } else if (key.includes("Enter")) {
+      if (invalid_character_name()) return;
       new_character_search();
     }
   });
@@ -407,6 +412,14 @@ function init() {
     if (event.inputType !== "insertFromPaste") return;
     event.preventDefault();
     INPUT_CHAR.value = event.data.replaceAll(" ", "").slice(0, 12);
+  });
+  PLAYER_SEARCH.addEventListener("change", () => {
+    if (PLAYER_SEARCH.checked) {
+      INPUT_CHAR.value = "";
+      return;
+    }
+    if (invalid_character_name()) return;
+    new_character_search();
   });
   SELECT_SERVER.addEventListener("change", () => new_character_search());
 }

@@ -1,19 +1,12 @@
 {% extends "layout.html" %}
 
 {% block scripts_head %}
-<link rel="modulepreload" href="/static/char_parser.js?v=240831-1" />
-<link rel="modulepreload" href="/static/constants.js?v=240830-1" />
-<link rel="modulepreload" href="/static/gear_cache.js?v=240831-1" />
-<link rel="modulepreload" href="/static/gear_constants.js?v=240814-1" />
-<link rel="modulepreload" href="/static/character.js?v=240831-1" />
-<link rel="modulepreload" href="/static/gear_tooltip.js?v=240831-1" />
-
-<script type="module" src="/static/character.js?v=240831-1"></script>
+<script type="module" src="/static/character.js?v=241104-1"></script>
 <script type="module" src="/static/gear_tooltip.js?v=240831-1"></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/character.css?v=240814-1">
+<link rel="stylesheet" type="text/css" href="/static/character.css?v=241104-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -23,7 +16,7 @@
   <label id="player-search-label" for="player-search">🔍</label>
   
   <div class="search-input">
-    <input id="charname-seach" class="player-name" type="text" maxlength="12" placeholder="Press enter when done">
+    <input id="charname-seach" class="player-name" type="search" maxlength="12" placeholder="Press enter when done">
   </div>
   <select id="server-select" class="search-input player-server">
     {% for server in SERVERS %}
@@ -48,79 +41,81 @@
   </div>
 </section>
 <div id="wraprwprperweproe">
-  <div id="loading-gear">Loading gear data...</div>
-  <div id="missing-gear" style="display: none;">No gear snapshots found for this character.</div>
-  <section id="gear-wrap" style="display: none;">
-    <div id="gear-left">
-      {% for slotname in LEFT %}
-      <div class="slot {{ slotname }} hidden">
-        <img>
-        <span></span>
+  <div id="gear-block">
+    <div id="loading-gear" class="info">Loading gear data...</div>
+    <div id="missing-gear" class="info error" style="display: none;">No gear snapshots found for this character.</div>
+    <div id="server-no-cache" class="info error" style="display: none;">Server doesn't have gear cache yet.</div>
+    <section id="gear-wrap" style="display: none;">
+      <div id="gear-left">
+        {% for slotname in LEFT %}
+        <div class="slot {{ slotname }} hidden">
+          <img>
+          <span></span>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-    <div id="gear-info">
-      <aside id="tooltip-stats" class="hidden"></aside>
-      <table id="table-info">
-        <tbody id="table-info-body">
-          <tr>
-            <td id="gear-info-gs"></td>
-            <td id="char-class"></td>
-          </tr>
-          <tr>
-            <td id="char-level"></td>
-            <td id="char-race"></td>
-          </tr>
-          {% for i in range(2) %}
-          <tr class="row-spec">
-            <td class="value"><a target="_blank"></a></td>
-            <td class="name"></td>
-          </tr>
-          {% endfor %}
-          {% for i in range(2) %}
-          <tr class="row-prof">
-            <td class="value"></td>
-            <td class="name"></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <div id="table-stats-wrap">
-        <table id="table-stats">
-          <tbody id="table-stats-body"></tbody>
+      <div id="gear-info">
+        <aside id="tooltip-stats" class="hidden"></aside>
+        <table id="table-info">
+          <tbody id="table-info-body">
+            <tr>
+              <td id="gear-info-gs"></td>
+              <td id="char-class"></td>
+            </tr>
+            <tr>
+              <td id="char-level"></td>
+              <td id="char-race"></td>
+            </tr>
+            {% for i in range(2) %}
+            <tr class="row-spec">
+              <td class="value"><a target="_blank"></a></td>
+              <td class="name"></td>
+            </tr>
+            {% endfor %}
+            {% for i in range(2) %}
+            <tr class="row-prof">
+              <td class="value"></td>
+              <td class="name"></td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
+        <div id="table-stats-wrap">
+          <table id="table-stats">
+            <tbody id="table-stats-body"></tbody>
+          </table>
+        </div>
+        <div id="set-wrap">
+          <button id="set-prev">&lt</button>
+          <span id="set-name"></span>
+          <button id="set-next">&gt</button>
+        </div>
       </div>
-      <div id="set-wrap">
-        <button id="set-prev">&lt</button>
-        <span id="set-name"></span>
-        <button id="set-next">&gt</button>
+      <div id="gear-right">
+        {% for slotname in RIGHT %}
+        <div class="slot {{ slotname }} hidden">
+          <img>
+          <span></span>
+        </div>
+        {% endfor %}
       </div>
-    </div>
-    <div id="gear-right">
-      {% for slotname in RIGHT %}
-      <div class="slot {{ slotname }} hidden">
-        <img>
-        <span></span>
+      <div id="weapons">
+        {% for slotname in WEAPONS %}
+        <div class="slot {{ slotname }} hidden">
+          <img>
+          <span></span>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-    <div id="weapons">
-      {% for slotname in WEAPONS %}
-      <div class="slot {{ slotname }} hidden">
-        <img>
-        <span></span>
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-  <div id="loading-points">Loading raid data...</div>
-  <div id="missing-points" style="display: none;">
+    </section>
+  </div>
+  <div id="loading-points" class="info">Loading raid data...</div>
+  <div id="missing-points" class="info error" style="display: none;">
     <p>
       No raid data found for this character.
     </p>
     <p>
-      Points are calculated based on ICC 25 Heroic.
-      <!-- Points are calculated based on 25 man heroic mode of the latest expansion phase. -->
+      Points are calculated based on 25 man heroic mode for the latest expansion phase of the server.
     </p>
   </div>
   <section id="player-points-wrap" style="display: none;">
@@ -148,17 +143,17 @@
     <div id="toggle-more-bosses-wrap">
       <button id="toggle-more-bosses">Show more</button>
     </div>
-    <div id="rank-info">Rank info
-      <div id="rank-info-tt">
-        <p>DPS rank is based on % dps from top 1.</p> 
-        <p>-</p>
-        <p>Player rank is based on best results from each player.</p>
-        <p>-</p>
-        <p>Raid rank is based on position relative to all logged raids.</p>
-        <p>Can be decreased by other players, if they consistently have better dps than you.</p>
-      </div>
-    </div>
   </section>
+</div>
+<div id="rank-info">Rank info
+  <div id="rank-info-tt">
+    <p>DPS rank is based on % dps from top 1.</p> 
+    <p>-</p>
+    <p>Player rank is based on best results from each player.</p>
+    <p>-</p>
+    <p>Raid rank is based on position relative to all logged raids.</p>
+    <p>Can be decreased by other players, if they consistently have better dps than you.</p>
+  </div>
 </div>
 <aside id="tooltip-points" style="display: none;">
   <table>
