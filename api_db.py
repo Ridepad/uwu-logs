@@ -83,7 +83,10 @@ class Table:
             f"REPLACE INTO [{self.name}]",
             f"VALUES({self.COLUMNS_PARSE_STR})",
         ))
-    
+
+    def query_rename(self, new_name: str):
+        return f"ALTER TABLE [{self.name}] RENAME TO [{new_name}]"
+
     def gen_indexes(self):
         for idx_id in self.INDEX_SINGLE:
             yield DB_Index(id=idx_id, table_name=self.name, columns=idx_id)
@@ -129,6 +132,11 @@ class DB:
     @staticmethod
     def get_table_name(boss: str, mode: str):
         return f"{boss}.{mode}"
+
+    def rename_table(self, table: Table, new_name: str):
+        q = table.query_rename(new_name)
+        with self.cursor as c:
+            c.execute(q)
 
     def new_table(self, table: Table, drop=False):
         if table.name in self.tables_names():
