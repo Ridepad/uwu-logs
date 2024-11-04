@@ -225,15 +225,16 @@ if __name__ == "__main__":
     from c_path import Directories
     from h_other import Ports
 
+    _NO_REDIRECT_ROOTS = [
+        "/static",
+        "/gear",
+    ]
+
     app.mount("/static", StaticFiles(directory=Directories.static))
 
     @app.get("/")
-    def root_path():
+    def main_redirect():
         return RedirectResponse("/top")
-
-    _NO_REDIRECT_ROOTS = [
-        "/static",
-    ]
 
     def redirect_to_main_server(url):
         _url = str(url).replace(f":{Ports.top}/", f":{Ports.main}/")
@@ -244,8 +245,14 @@ if __name__ == "__main__":
     
     @app.exception_handler(404)
     def not_found_exception_handler(request: Request, exc: HTTPException):
-        if request.scope["root_path"] not in _NO_REDIRECT_ROOTS:
-            return redirect_to_main_server(request.url)
+        if request.method == "GET":
+            root_path = request.scope["path"]
+            starts_with_no_redirect = any(
+                root_path.startswith(x)
+                for x in _NO_REDIRECT_ROOTS
+            )
+            if not starts_with_no_redirect:
+                return redirect_to_main_server(request.url)
         
         return Response(
             content="Not Found",
