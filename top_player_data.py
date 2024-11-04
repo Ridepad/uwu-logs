@@ -70,8 +70,11 @@ class PlayerDataServer(TopDBCached):
         players = PlayerData()
         for encounter in self.phase.BOSSES_GET_GUID_NAME_PAIRS_FROM:
             query = encounter.query_players_data()
-            rows = self.cursor.execute(query)
-            players.add_new_data(rows)
+            try:
+                rows = self.cursor.execute(query)
+                players.add_new_data(rows)
+            except Exception:
+                pass
         return players
 
 
