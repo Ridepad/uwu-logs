@@ -1,4 +1,3 @@
-import threading
 from datetime import datetime
 
 from flask import (
@@ -52,8 +51,6 @@ CLEANER = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
 LOGGER_CONNECTIONS = Loggers.connections
 LOGGER_CONNECTIONS.debug("Starting server...")
-
-DB_LOCK = threading.RLock()
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
