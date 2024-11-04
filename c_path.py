@@ -31,7 +31,7 @@ class DirNames(StrEnum):
 class FileNames(StrEnum):
     reports_allowed = "__allowed.txt"
     reports_private = "__private.txt"
-    spell_icons_db = "x_spells_icons.json"
+    spell_icons_db = "spells_icons.json"
 
     cert_domain = "domain.cert.pem"
     cert_private = "private.key.pem"
@@ -244,7 +244,7 @@ class Files(dict[str, PathExt]):
 
     reports_allowed = Directories.main / FileNames.reports_allowed
     reports_private = Directories.main / FileNames.reports_private
-    spell_icons_db = Directories.main / FileNames.spell_icons_db
+    spell_icons_db = Directories.static / FileNames.spell_icons_db
 
     cert_domain = Directories.certificates / FileNames.cert_domain
     cert_private = Directories.certificates / FileNames.cert_private
