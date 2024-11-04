@@ -140,6 +140,13 @@ def log_exists(report_id: str):
             return False
     return True
 
+def format_report_server(report_id: str):
+    server = report_id.rsplit("--", 1)[-1]
+    server_old = server.replace(" ", "-")
+    if "WoW-Circle" in server_old:
+        server_old = "WoW-Circle"
+    return report_id.replace(server, server_old)
+
 @SERVER.before_request
 def before_request():
     log_incoming_connection()
@@ -153,9 +160,7 @@ def before_request():
         return redirect("/logs_list")
 
     if not log_exists(report_id):
-        server = report_id.rsplit("--", 1)[-1]
-        server_old = server.replace("-", " ")
-        report_id = report_id.replace(server, server_old)
+        report_id = format_report_server(report_id)
         if log_exists(report_id):
             return redirect(f"/reports/{report_id}")
         raise NotFound()
