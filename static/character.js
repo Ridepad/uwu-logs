@@ -220,6 +220,7 @@ function set_new_player_name() {
   const server = CURRENT_CHARACTER.server;
   PLAYER_SERVER.textContent = server;
   PLAYER_NAME.textContent = name;
+  document.title = `UwU Logs - Character - ${name} - ${server}`;
   const armory_function = SERVER_ARMORY_FUNCTIONS[server];
   if (armory_function) {
     PLAYER_NAME.href = armory_function(name);
