@@ -430,7 +430,7 @@ class UploadData:
         self.timestamp = get_now_timestamp()
         self.directory = new_upload_folder(ip, self.timestamp)
 
-class LogsArchiveStatus(api_7z.SevenZipArchiveInfo):
+class LogsArchiveStatus(api_7z.SevenZipArchive):
     def __init__(
         self,
         archive_path: PathExt,
@@ -589,21 +589,7 @@ class LogsArchiveParser(LogsArchiveStatus):
         self.has_error = False
         self.finished = False
         self.mod_time_delta = None
-        
-        self._7z_pipe: subprocess.Popen = None
-    
-    def pipe_gen(self, file_line: api_7z.SevenZipLine):
-        file_name = file_line.file_name
-        if "*" in file_name:
-            file_name = f'"{file_name}"'
-        cmd_list = [self.path, 'e', self.archive_path, "-so", "--", file_name]
-        self._7z_pipe = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
-        stdout = self._7z_pipe.stdout
-        line = stdout.readline(5000)
-        while line:
-            yield line
-            line = stdout.readline(5000)
-    
+
     def adjust_mod_time(self, file_line: api_7z.SevenZipLine, segment: LogsSlice):
         _mod_time_delta = file_line.datetime - segment.get_last_line_dt()
         if not self.mod_time_delta or self.mod_time_delta > _mod_time_delta:
@@ -619,7 +605,7 @@ class LogsArchiveParser(LogsArchiveStatus):
         self.current_segment_pc = perf_counter()
         for file_line in all_text_files:
             # print(file_line)
-            lines = self.pipe_gen(file_line)
+            lines = self.read_file_into_stdout(file_line)
             separator = LogsSeparator(server=self.server, timestamp=file_line.timestamp)
             for segment in separator.generate_segments(lines):
                 if not segment:

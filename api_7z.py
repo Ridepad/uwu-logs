@@ -258,6 +258,8 @@ class SevenZipArchiveInfo(SevenZip):
 
 
 class SevenZipArchive(SevenZipArchiveInfo):
+    _7z_pipe: subprocess.Popen = None
+
     def extract(self, extract_to: Path=None, file_name_to_extract: str=None):
         if extract_to is None:
             extract_to = self.archive_path.parent
@@ -277,6 +279,17 @@ class SevenZipArchive(SevenZipArchiveInfo):
             self.archive_path.unlink()
         return self.append(file_path, custom_mode)
 
+    def read_file_into_stdout(self, file_line: SevenZipLine):
+        file_name = file_line.file_name
+        if "*" in file_name:
+            file_name = f'"{file_name}"'
+        cmd_list = [self.path, 'e', self.archive_path, "-so", "--", file_name]
+        self._7z_pipe = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
+        stdout = self._7z_pipe.stdout
+        line = stdout.readline(5000)
+        while line:
+            yield line
+            line = stdout.readline(5000)
 
 
 def _test1():
