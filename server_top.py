@@ -130,7 +130,12 @@ async def rank(data: RaidRankValidation):
 
 @app.get('/gear/{server}/{player_name}')
 async def rank(server: str, player_name: str):
-    z = GearDB(server).get_player_data(player_name)
+    try:
+        z = GearDB(server).get_player_data(player_name)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     r = make_response_compressed_headers(z)
     r.headers["Cache-Control"] = "public, max-age=900"
     r.headers["ETag"] = z.gear_id()
