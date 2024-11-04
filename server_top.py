@@ -10,9 +10,9 @@ from pydantic import BaseModel
 
 import parser_all
 from api_db import DataCompressed
-from c_path import Directories, Files
 from constants import GEAR
 from h_debug import Loggers
+from h_server_fix import get_servers
 from top import Top, TopValidation
 from top_character import Character, CharacterValidation
 from top_points import Points, PointsValidation
@@ -36,17 +36,6 @@ TEMPLATES.env.trim_blocks = True
 TEMPLATES.env.lstrip_blocks = True
 
 LOGGER_CONNECTIONS = Loggers.connections
-
-@Directories.top.cache_until_new_self
-def get_servers(folder):
-    s = set((
-        file_path.stem
-        for file_path in folder.iterdir()
-        if file_path.suffix == ".db"
-    ))
-    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
-    new = sorted(s - set(SERVERS_MAIN))
-    return SERVERS_MAIN + new
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")
@@ -228,6 +217,7 @@ if __name__ == "__main__":
     from fastapi.staticfiles import StaticFiles
     from fastapi.responses import RedirectResponse
 
+    from c_path import Directories
     from h_other import Ports
 
     app.mount("/static", StaticFiles(directory=Directories.static))

@@ -41,6 +41,9 @@ const SERVERS_AVAILABLE_GEAR = [
   "Icecrown",
   "Lordaeron",
   "Rising-Gods",
+  "WoW-Circle-x1",
+  "WoW-Circle-x5",
+  "WoW-Circle-x100",
 ];
 
 const TIMEOUTS = {};

@@ -48,7 +48,7 @@ main {
     0 0 1rem currentColor;
 }
 .player-server {
-  width: 7em;
+  width: 8em;
 }
 #player-overall {
   min-width: max-content;
