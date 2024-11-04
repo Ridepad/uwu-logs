@@ -1,7 +1,23 @@
 import re
 
-from constants import SERVERS
-SERVERS = set(SERVERS.values())
+from c_path import Directories, Files
+
+SERVERS = {
+    "0x06": "Lordaeron",
+    "0x07": "Icecrown",
+    "0x0D": "Frostmourne3",
+    "0x0C": "Frostmourne2",
+    "0x0A": "Blackrock",
+    "0x0E": "Onyxia",
+}
+SERVERS_WC = {
+    "WoW-Circle-x100": "6",
+    "WoW-Circle-x1":   "2",
+    "WoW-Circle-x5":   "1",
+    "WoW-Circle-Fun":  "13",
+}
+SERVERS_NAMES = set(SERVERS.values())
+
 
 class ServerID:
     __slots__ = "name", "re_string"
@@ -49,7 +65,9 @@ SERVERS_OTHER = [
 def server_cnv(server: str):
     if not server:
         return ""
-    if server in SERVERS:
+    if server in SERVERS_NAMES:
+        return server
+    if server in SERVERS_WC:
         return server
     
     _server_l = server.lower()
@@ -58,6 +76,21 @@ def server_cnv(server: str):
             return _server.no_space
 
     return server.replace(" ", "-").title()
+
+
+@Directories.top.cache_until_new_self
+def _get_servers(folder):
+    s = set((
+        file_path.stem
+        for file_path in folder.iterdir()
+        if file_path.suffix == ".db"
+    ))
+    SERVERS_MAIN = Files.server_main.json_cached_ignore_error()
+    new = sorted(s - set(SERVERS_MAIN))
+    return SERVERS_MAIN + new
+
+def get_servers() -> list[str]:
+    return _get_servers()
 
 def test1():
     z = server_cnv("Lordaeron")
