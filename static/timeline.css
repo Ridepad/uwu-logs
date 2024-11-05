@@ -53,33 +53,54 @@
   min-width: 4ch;
 }
 
-.table-wrap {
-  padding-top: 5rem;
-  /* transform: scaleY(-1); */
-}
-.casts-section {
-  padding-top: 5rem;
-}
-
 spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
   box-shadow: inset 0 .2rem var(--secondary-color);
 }
 
+#click-reminder {
+  position: sticky;
+  left: 0;
+}
 
+.table-wrap {
+  max-height: 66vh;
+  scrollbar-width: thin;
+}
 #casts-section-wrap {
   --row-height: 1.25rem;
   --row-height-border: calc(var(--row-height) + 2px);
   --event-width-mult: 1;
   --tenth-width: calc(var(--mult) * 1px);
   --event-width: calc(var(--event-width-mult) * var(--tenth-width));
-  width: calc(var(--mult) * var(--duration) * 10px + 2px);
+  --spell-name-width: clamp(var(--min-width), 20vw, var(--max-width));
+  --timeline-width: 10rem;
+  
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: unset;
+
+  width: calc(var(--mult) * var(--duration) * 10px + 2px + var(--spell-name-width));
   overflow-y: clip;
-  /* transform: scaleY(-1); */
 }
+
+
+.casts-header {
+  position: sticky;
+  top: 0;
+}
+
 .spell-row {
   --row-targets: 1;
   display: block;
-  /* height: calc(var(--row-targets) * var(--row-height-border)); */
+  width: calc(var(--spell-name-width) + var(--timeline-width));
+  display: flex;
+}
+.table-wrap .spell-name {
+  position: sticky;
+  z-index: 10;
+}
+.casts-header.spell-name {
+  z-index: 11;
 }
 spell-name div,
 spell-name-data,
@@ -126,6 +147,9 @@ spell-name div::before {
   padding-right: 1ch;
 }
 
+spell-history-wrap {
+  flex: 1;
+}
 .spell-history {
   position: relative;
   width: 100%;
@@ -157,7 +181,7 @@ spell-cleu {
   padding: .5em;
   border-radius: 6px;
   box-shadow: inset 0 0 .25rem .1rem var(--primary-color), 0 0 .5rem .1rem var(--primary-color);
-  z-index: 5;
+  z-index: 50;
 }
 
 .negative::before {
@@ -167,6 +191,7 @@ spell-cleu {
   padding-top: 1rem;
   background-color: black;
   margin-left: 1px;
+  z-index: 5;
 }
 .timeline-ruler-tick {
 	position: relative;
@@ -226,6 +251,9 @@ spell-cleu {
 #spells-fav > spell-row > spell-name,
 #spells-fav > spell-row > spell-history-wrap {
   background-color: var(--custom-bg-color);
+}
+#spells-fav > spell-row:last-of-type {
+  border-bottom: .25rem solid var(--dimmed);
 }
 .char-tab {
   background-color: var(--custom-bg-color);
@@ -314,7 +342,7 @@ dialog {
   display: none;
   background-color: #000C;
   inset: 0 0 0 0;
-  z-index: 5;
+  z-index: 100;
 }
 dialog[open] + #main-fade {
   display: block;
@@ -339,10 +367,10 @@ spells-hide #button-hide {
   height: 250rem;
   width: 1px;
   background-color: gainsboro;
-  z-index: 1;
 }
 
 #before-pull {
+  width: 100%;
   font-size: 150%;
   background-color: var(--background);
 }

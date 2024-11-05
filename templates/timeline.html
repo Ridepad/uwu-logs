@@ -1,11 +1,11 @@
 {% extends "layout_report.html" %}
 
 {% block scripts_head %}
-<script src="/static/timeline.js" async defer></script>
+<script src="/static/timeline.js?v=241105-1" async defer></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/timeline.css">
+<link rel="stylesheet" type="text/css" href="/static/timeline.css?v=241105-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -44,8 +44,7 @@
 </section>
 <section class="table-wrap wrap-spell" style="display: none;">
   <div id="casts-section-wrap">
-    <div id="fight-start"></div>
-    <div class="spell-name">
+    <div class="spell-name casts-header">
       <select id="before-pull">
         <option value="0">Before pull</option>
         <option value="5">5</option>
@@ -57,7 +56,14 @@
         <option value="180">180</option>
       </select>
     </div>
-    <div id="timeline-ruler"></div>
+    <div id="timeline-ruler" class="casts-header">
+      <div id="fight-start"></div>
+    </div>
+    <div id="click-reminder">
+      <p>
+        Tip: you can click on timeline to see auras/damage/etc per target and uptime
+      </p>
+    </div>
     <div id="spells-fav">
       <aside id="spells-fav-reminder">
         <p>
@@ -67,11 +73,6 @@
           You can also hide spells by clicking ✖ next to spell name
         </p>
       </aside>
-    </div>
-    <div id="click-reminder">
-      <p>
-        Tip: you can click on timeline to see auras/damage/etc per target and uptime
-      </p>
     </div>
   </div>
 </section>

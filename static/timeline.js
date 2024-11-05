@@ -535,6 +535,7 @@ class Character {
     CASTS_SECTION_WRAP.appendChild(this.CASTS_SECTION);
 
     this.WIDTH = `calc(var(--mult) * ${((this.DURATION + CONFIG.shift)*10).toFixed(2)}px)`;
+    CASTS_SECTION_WRAP.style.setProperty("--timeline-width", this.WIDTH)
     check_timeline(this.DURATION);
     this.new_character();
   }
@@ -596,7 +597,7 @@ class Character {
       spellhistorywrap.appendChild(this.new_spell_history_cell(spell_id));
       spellRow.appendChild(spellhistorywrap);
       
-      spellRow.style.width = this.WIDTH;
+      // spellRow.style.width = this.WIDTH;
       spellhistorywrap.addEventListener("click", spell_row_click);
 
       this.SPELLS_MAIN.appendChild(spellRow);
