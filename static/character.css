@@ -182,11 +182,10 @@ main {
   display: none;
 }
 .table-wrap {
-  --min-width: 13ch;
-  --max-width: calc(100vw - 25rem - 25em);  
-}
-.table-wrap :is(.spell-name, .player-cell) {
-	width: clamp(var(--min-width), var(--width), var(--max-w));
+  --min-width: 6.5em;
+  --width: calc(100vw - 25rem - 25em);
+  --max-width: 13em;
+  --sticky-column-width: clamp(var(--min-width), var(--width), var(--max-width));
 }
 
 #toggle-more-bosses-wrap {
