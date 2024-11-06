@@ -23,7 +23,7 @@ def format_data(combined_dict: dict[str, dict], source_guid):
     _poped_by = combined_dict[KEY_LADY_POPED_BY].get(source_guid)
     targets = sorted(combined_dict[KEY_LADY_TARGETS][source_guid])
     if not _poped_by:
-        _poped_by = "nil"
+        _poped_by = "???"
         if len(targets) == 1:
             _poped_by = targets[0]
     
