@@ -11,15 +11,15 @@ VALK_LIGHT = "Fjola Lightbane"
 VALK_DARK  = "Eydis Darkbane"
 CAST_DURATION = 15 + 1
 TWIN_PACT_IDS = {
-    "67303": VALK_LIGHT, # 25
-    "67304": VALK_LIGHT, # 10 H
-    "67305": VALK_LIGHT, # 25H
-    "65875": VALK_LIGHT, # 10
+    "67303": VALK_DARK,  # 25
+    "67304": VALK_DARK,  # 10 H
+    "67305": VALK_DARK,  # 25H
+    "65875": VALK_DARK,  # 10
     
-    "67306": VALK_DARK,  # 25
-    "67307": VALK_DARK,  # 10 H
-    "67308": VALK_DARK,  # 25H
-    "65876": VALK_DARK,  # 10
+    "67306": VALK_LIGHT, # 25
+    "67307": VALK_LIGHT, # 10 H
+    "67308": VALK_LIGHT, # 25H
+    "65876": VALK_LIGHT, # 10
 }
 
 @dataclass
