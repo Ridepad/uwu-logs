@@ -5,12 +5,37 @@
 td {
   width: 21em;
 }
+th {
+  position: sticky;
+  top: 0;
+}
+section {
+  display: flex;
+  flex-direction: row;
+  gap: .5rem;
+}
+@media (orientation: landscape) {
+  section > div {
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+@media (orientation: portrait) {
+  section {
+    flex-direction: column;
+  }
+  tbody tr:last-of-type td {
+    border-bottom: .2em solid var(--primary-color);
+  }
+}
 </style>
 {% endblock add_style %}
 {% block the_main %}
 <main id="auras">
-<section class="table-wrap wrap-damage">
+<section>
   {% for category, guids in ENTITIES.items() %}
+  <div>
   <table>
     <thead>
       <tr>
@@ -31,6 +56,7 @@ td {
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% endfor %}
 </section>
 </main>
