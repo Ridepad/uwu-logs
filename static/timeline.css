@@ -99,7 +99,7 @@ spells-hide spell-row:first-child :is(spell-name-data, .spell-history) {
   position: sticky;
   z-index: 10;
 }
-.casts-header.spell-name {
+.casts-header.sticky-column {
   z-index: 11;
 }
 spell-name div,
