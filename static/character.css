@@ -14,7 +14,7 @@ main {
   background-color: var(--background);
 	align-items: baseline;
   justify-items: center;
-  z-index: 5;
+  z-index: 20;
 }
 @media (orientation: landscape) {
   #top-player-info {
@@ -104,10 +104,6 @@ main {
 #points-body tr:nth-child(11) td {
   border-top: .1em solid var(--primary-color);
 }
-.table-wrap {
-	--min-width: 6em;
-	--max-width: 21em;
-}
 .cell-dps {
   min-width: 4em;
 }
@@ -174,7 +170,7 @@ main {
   position: relative;
   width: 100%;
 }
-#points-body td:not(.player-cell) {
+#points-body td:not(.sticky-column) {
   text-align: right;
   padding-inline: .25em; 
 }
@@ -185,11 +181,9 @@ main {
 .hide-other-bosses tr:nth-child(n+11) {
   display: none;
 }
-
-#points-wrap-inner {
-  --width: 24vw;
-  --max-w: calc(100vw - 25rem - 25em);  
-	padding-left: clamp(var(--min-width), var(--width), var(--max-w));
+.table-wrap {
+  --min-width: 13ch;
+  --max-width: calc(100vw - 25rem - 25em);  
 }
 .table-wrap :is(.spell-name, .player-cell) {
 	width: clamp(var(--min-width), var(--width), var(--max-w));
@@ -221,7 +215,7 @@ main {
 
 #rank-info,
 #rank-info-tt {
-  position: absolute;
+  position: fixed;
   right: 0;
   bottom: 0;
   padding: .5em;
@@ -232,7 +226,7 @@ main {
 }
 #rank-info {
   padding: .25em;
-  z-index: 10;
+  z-index: 50;
 }
 #rank-info:hover #rank-info-tt {
   display: block;
@@ -244,7 +238,7 @@ main {
 @media (orientation: portrait) {
   #rank-info,
   #rank-info-tt {
-    top: 0;
+    top: var(--margin-top);
     bottom: auto;
   }
   #rank-info-tt {
@@ -276,7 +270,11 @@ main {
   max-width: var(--width);
   min-height: var(--height);
   max-height: var(--height);
-  place-self: center;
+}
+@media (orientation: portrait) {
+  #gear-block {
+    place-self: center;
+  }
 }
 #gear-wrap {
   display: grid;

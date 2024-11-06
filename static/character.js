@@ -195,7 +195,7 @@ function add_dummy_cells(tr) {
 
 function row(boss_name, data) {
   const tr = document.createElement("tr");
-  tr.appendChild(cell(boss_name, "player-cell"));
+  tr.appendChild(cell(boss_name, "sticky-column"));
   if (!data["rank_players"]) {
     add_dummy_cells(tr);
     return tr;

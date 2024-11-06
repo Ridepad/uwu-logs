@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
 {% block scripts_head %}
-<script type="module" src="/static/character.js?v=241104-1"></script>
+<script type="module" src="/static/character.js?v=241106-1"></script>
 <script type="module" src="/static/gear_tooltip.js?v=240831-1"></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/character.css?v=241104-1">
+<link rel="stylesheet" type="text/css" href="/static/character.css?v=241106-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -121,11 +121,10 @@
   <section id="player-points-wrap" style="display: none;">
     <div class="table-wrap-wrap">
       <div class="table-wrap">
-        <div id="points-wrap-inner">
           <table>
             <thead>
               <tr>
-                <th class="player-cell">Boss</th>
+                <th class="sticky-column">Boss</th>
                 <th>Rank</th>
                 <th>Points</th>
                 <th>Best Dps</th>
@@ -137,7 +136,6 @@
             <tbody id="points-body">
             </tbody>
           </table>
-        </div>
       </div>
     </div>
     <div id="toggle-more-bosses-wrap">
