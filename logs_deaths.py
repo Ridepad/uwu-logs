@@ -203,14 +203,17 @@ class CharDeaths(dict[str, Death]):
         self[ts] = self.latest_death
         return self.latest_death
 
-    def normilize(self):
+    def normalize(self):
         for _id, death in list(self.items()):
             f0 = _toint3(death[0][0])
             death_at = 0
             if death[0][1] in {"SPELL_CAST_SUCCESS", "SPELL_RESURRECT"}:
-                death[0][0] = f0(death[1][0]).replace('-', '+')
-                f0 = _toint3(death[1][0])
-                death_at = 1
+                try:
+                    death[0][0] = f0(death[1][0]).replace('-', '+')
+                    f0 = _toint3(death[1][0])
+                    death_at = 1
+                except IndexError:
+                    death[0][0] = f0(death[0][0]).replace('-', '+')
 
             death[death_at][0] = "0:00.000"
 
@@ -240,9 +243,9 @@ def get_deaths(logs_slice: list[str]):
 
         if flag == "SPELL_CAST_SUCCESS":
             if line[6] in SELF_RESSURECT:
+                player = players_deaths[line[2]]
                 player.new_death(line[0]).append(line)
                 continue
-            
             now = to_int(line[0])
             if player.latest_death_ts - now < 100:
                 player.latest_death.append(line)
@@ -283,7 +286,7 @@ def get_deaths(logs_slice: list[str]):
             player.new_death(line[0]).append(line)
     
     for player_deaths in players_deaths.values():
-        player_deaths.normilize()
+        player_deaths.normalize()
 
     return players_deaths
 
