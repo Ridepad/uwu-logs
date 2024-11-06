@@ -501,6 +501,18 @@ def ucm(report_id):
         **data,
     )
 
+@SERVER.route("/reports/<report_id>/toc_valks/")
+def toc_valks(report_id):
+    report = load_report(report_id)
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+    
+    data = report.parse_shields_casts_wrap(*segments[0])
+    return render_template(
+        'toc_valks.html', **default_params,
+        **data,
+    )
+
 @SERVER.route("/reports/<report_id>/deaths/")
 def deaths(report_id):
     report = load_report(report_id)

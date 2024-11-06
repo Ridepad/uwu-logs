@@ -14,6 +14,7 @@ import logs_dps
 import logs_power
 import logs_spell_info
 import logs_lady_spirits
+import logs_toc_valks
 import logs_valk_grabs
 import logs_ucm
 import logs_auras_v2
@@ -131,6 +132,7 @@ class THE_LOGS(
     logs_lady_spirits.LadySpirits,
     logs_valk_grabs.ValkGrabs,
     logs_ucm.UCM,
+    logs_toc_valks.ValksTOC,
 ):
     def get_segments_data_json(self):
         _data = {

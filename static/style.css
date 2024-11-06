@@ -230,6 +230,14 @@ ul {
   position: relative;
 }
 
+td:is(.spell-name, .player-cell) img {
+  display: inline-block;
+  vertical-align: text-bottom;
+  max-height: 1.1em;
+  max-width: 1.1em;
+  min-height: 1.1em;
+  min-width: 1.1em;
+}
 
 main {
   position: relative;
@@ -970,6 +978,7 @@ input[type="checkbox"],
 #toggle-graph:checked ~ #chart-wrap {
   display: block;
 }
+
 
 .progress-bar-wrapper {
   --radius: .5em;

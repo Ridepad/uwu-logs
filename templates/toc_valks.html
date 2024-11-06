@@ -1,0 +1,49 @@
+{% extends "layout_report.html" %}
+
+{% block the_main %}
+<main id="report-main" data-duration="{{ DURATION }}">
+  <p>Shield damage for each cast</p>
+  <section class="table-wrap table-players">
+    <table class="add-player-rank">
+      <thead>
+        <tr>
+          <th class="player-cell"></th>
+          {% for _th in TARGETS %}
+          <th class="sortable">{{ _th }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for player_guid, dmg_by_target in ATTEMPT_DATA.items() %}
+        <tr>
+          <td class="player-cell" title="{{ SPECS[player_guid]['spec'] }}">
+            <img src="/static/icons/{{ SPECS[player_guid]['icon'] }}.jpg">
+            {% if player_guid == "Total" %}
+            Total
+            {% else %}
+            <a class="{{ SPECS[player_guid]['class'] }}" href="/reports/{{ REPORT_ID }}/player/{{ SPECS[player_guid]['name'] }}/{{ QUERY }}">{{ SPECS[player_guid]['name'] }}</a>
+            {% endif %}
+          </td>
+          {% for damage in dmg_by_target %}
+          <td class="total-cell">{{ damage }}</td>
+          {% endfor %}
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<script>
+const getCellValue = (tr, idx) => tr.children[idx].textContent.replace(/ /g, "");
+const comparer = idx => (a, b) => getCellValue(b, idx) - getCellValue(a, idx);
+function table_sort_by_th(th) {
+  const tbody = document.querySelector("tbody");
+  Array.from(tbody.querySelectorAll("tr"))
+       .sort(comparer(th.cellIndex))
+       .forEach(tr => tbody.appendChild(tr));
+}
+document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", e => table_sort_by_th(e.target)));
+</script>
+{% endblock the_main %}
+
+

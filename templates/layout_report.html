@@ -64,7 +64,11 @@
   <input id="open-bot" type="checkbox"></button>
   <label id="bot-chkbox" for="open-bot">≣</label>
   <div id="bot-nav">
-    <a {% if 'boss' in QUERY %}href="/reports/{{ REPORT_ID }}/damage/{{ QUERY }}"{% endif %}>TARGETS</a>
+    {% if 'boss' in QUERY %}
+    <a href="/reports/{{ REPORT_ID }}/damage/{{ QUERY }}">TARGETS</a>
+    {% else %}
+    <a>TARGETS</a>
+    {% endif %}
     <a href="/reports/{{ REPORT_ID }}/consumables/{{ QUERY }}">CONSUMABLES</a>
     <a href="/reports/{{ REPORT_ID }}/entities/{{ QUERY }}">ENTITIES</a>
     <a href="/reports/{{ REPORT_ID }}/all_auras/{{ QUERY }}">AURAS</a>
@@ -73,12 +77,12 @@
     <a href="/reports/{{ REPORT_ID }}/compare/{{ QUERY }}">COMPARE</a>
     {% if SLICE_NAME == "The Lich King" %}
     <a class="special-tab" href="/reports/{{ REPORT_ID }}/valks/{{ QUERY }}">GRABS</a>
-    {% endif %}
-    {% if SLICE_NAME == "Lady Deathwhisper" %}
+    {% elif SLICE_NAME == "Lady Deathwhisper" %}
     <a class="special-tab" href="/reports/{{ REPORT_ID }}/lady_spirits/{{ QUERY }}">SPIRITS</a>
-    {% endif %}
-    {% if SLICE_NAME == "Sindragosa" %}
+    {% elif SLICE_NAME == "Sindragosa" %}
     <a class="special-tab" href="/reports/{{ REPORT_ID }}/ucm/{{ QUERY }}">UCM</a>
+    {% elif SLICE_NAME == "Twin Val'kyr" %}
+    <a class="special-tab" href="/reports/{{ REPORT_ID }}/toc_valks/{{ QUERY }}">SHIELDS</a>
     {% endif %}
     <!-- <li>
       <a href="/reports/{{ REPORT_ID }}/custom_search/{{ QUERY }}">SEARCH</a>
