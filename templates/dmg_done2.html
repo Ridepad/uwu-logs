@@ -78,7 +78,7 @@ button:hover {
   box-shadow:
     inset 0 0 .25rem .1rem var(--primary-color),
           0 0  .5rem .1rem var(--primary-color);
-  z-index: 5;
+  z-index: 10;
 }
 .has-tooltip {
   position: relative;
@@ -88,7 +88,7 @@ button:hover {
 }
 
 .table-wrap {
-  padding-bottom: 7rem;
+  max-height: 60vh;
 }
 
 #dmg-done-main > table > tbody > tr > td:hover {
@@ -112,7 +112,7 @@ button:hover {
   top: 100%;
   left: 95%;
 }
-.table-details td {
+.tooltip.table-details td {
   min-width: 5em;
 }
 .avgs tr:nth-child(1) > td {
@@ -138,32 +138,6 @@ button:hover {
 }
 .border-thin {
   border-right: .4rem solid var(--table-border);
-}
-#toggle-graph:checked + label + section + section {
-  display: block;
-}
-#toggle-graph:checked + label + section {
-  display: inline-flex;
-}
-#chart-wrap-wrap {
-  font-size: 1.5rem;
-}
-#chart-wrap-wrap section {
-  display: none;
-}
-#controls-wrap {
-  gap: 2rem;
-  align-items: center;
-}
-.range-values {
-  min-width: 14rem;
-}
-#chart-wrap {
-  height: 10rem;
-  width: 100%;
-}
-#chart {
-  margin-right: 1rem;
 }
 </style>
 {% endblock add_style %}
@@ -219,43 +193,35 @@ button:hover {
   </ul>
 </section>
 <section id="chart-wrap-wrap">
-  <input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label>
-  <section id="controls-wrap">
-    <div class="sliced-control">
-      <span>Average</span>
-      <select id="sliced-sec">
-        <option value=0 selected>0</option>
-        <option value=1>1</option>
-        <option value=2>2</option>
-        <option value=3>3</option>
-        <option value=5>5</option>
-        <option value=10>10</option>
-        <option value=15>15</option>
-        <option value=20>20</option>
-        <option value=30>30</option>
-      </select>
-      <span>sec</span>
-    </div>
-    <div class="range-values">
-      <span class="min-value"></span>
-      <span> - </span>
-      <span class="max-value"></span>
-      <span class="total-value"></span>
-    </div>
-    <div>
-      <button class="min-max-slider-submit" type="submit">Slice</button>
-    </div>
-  </section>
+  <input type="checkbox" id="toggle-graph">
+  <label for="toggle-graph">Show graph</label>
+  <select id="sliced-sec" class="controls">
+    <option value=0 selected>Avg whole fight</option>
+    <option value=1>Avg every second</option>
+    <option value=2>Avg every 2 seconds</option>
+    <option value=3>Avg every 3 seconds</option>
+    <option value=5>Avg every 5 seconds</option>
+    <option value=10>Avg every 10 seconds</option>
+    <option value=15>Avg every 15 seconds</option>
+    <option value=20>Avg every 20 seconds</option>
+    <option value=30>Avg every 30 seconds</option>
+  </select>
+  <div class="controls range-values">
+    <span class="min-value"></span>
+    <span> - </span>
+    <span class="max-value"></span>
+    <span class="total-value"></span>
+  </div>
+  <button class="controls min-max-slider-submit" type="submit">Slice</button>
   <section id="chart-wrap">
     <canvas id="overlay" width="600" height="400" style="position:absolute;pointer-events:none;"></canvas>
     <canvas id="chart"></canvas>
   </section>
 </section>
-<section id="dmg-done-main" class="table-wrap wrap-spell">
+<section id="dmg-done-main" class="table-wrap table-spells">
   {% if SPELLS_DATA %}
-  <div>
     <table>
-      <tbody>
+      <thead>
         <tr>
           <th class="spell-name">-</th>
           <th colspan="2">Actual</th>
@@ -279,6 +245,8 @@ button:hover {
           <th colspan="2">Hits</th>
           <th colspan="3">Crits</th>
         </tr>
+      </thead>
+      <tbody>
         {% for spell_id, spell_data in SPELLS_DATA.items() %} 
         <tr>
           <td class="spell-name">
@@ -349,7 +317,6 @@ button:hover {
         </tr>
       </tfoot>
     </table>
-  </div>
   {% else %}
   <p>No data</p>
   {% endif %}

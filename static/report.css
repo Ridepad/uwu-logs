@@ -7,6 +7,10 @@ img {
   min-width: 1.1em;
 }
 
+.table-wrap {
+  max-height: 80vh;
+}
+
 th,
 .points,
 .rectangle-cell {
@@ -51,31 +55,4 @@ th,
 .heal_total .percent-bar {
   background-color: hsl(120, 100%, 25%);
   box-shadow: .1em .1em 1em forestgreen;
-}
-
-#toggle-graph:checked + label ~ section {
-  display: block;
-}
-#toggle-graph:checked + label + section {
-  display: inline-flex;
-}
-#chart-wrap-wrap {
-  font-size: 1.5rem;
-}
-#chart-wrap-wrap section {
-  display: none;
-}
-#controls-wrap {
-  gap: 2rem;
-  align-items: center;
-}
-.range-values {
-  min-width: 14rem;
-}
-#chart-wrap {
-  height: 10rem;
-  width: 100%;
-}
-#chart {
-  margin-right: 1rem;
 }

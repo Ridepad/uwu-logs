@@ -7,89 +7,77 @@
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/report.css?240229-1">
+<link rel="stylesheet" type="text/css" href="/static/report.css?241106-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
 <main id="report-main" data-duration="{{ DURATION }}">
   <section id="chart-wrap-wrap">
-    <input type="checkbox" id="toggle-graph"><label for="toggle-graph">Show graph</label>
-    <section id="controls-wrap">
-      <div class="sliced-control">
-        <span>Average</span>
-        <select id="sliced-sec">
-          <option value=0 selected>0</option>
-          <option value=1>1</option>
-          <option value=2>2</option>
-          <option value=3>3</option>
-          <option value=5>5</option>
-          <option value=10>10</option>
-          <option value=15>15</option>
-          <option value=20>20</option>
-          <option value=30>30</option>
-        </select>
-        <span>sec</span>
-      </div>
-      <div class="range-values">
-        <span class="min-value"></span>
-        <span> - </span>
-        <span class="max-value"></span>
-        <span class="total-value"></span>
-      </div>
-      <div>
-        <button class="min-max-slider-submit" type="submit">Slice</button>
-      </div>
-    </section>
-    <section id="chart-additional-info">
-      <p style="font-size: 75%;">Select range with mouse, then press "Slice". Points shown only if sliced from the start.</p>
-    </section>
+    <input type="checkbox" id="toggle-graph">
+    <label for="toggle-graph">Show graph</label>
+    <select id="sliced-sec" class="controls">
+      <option value=0 selected>Avg whole fight</option>
+      <option value=1>Avg every second</option>
+      <option value=2>Avg every 2 seconds</option>
+      <option value=3>Avg every 3 seconds</option>
+      <option value=5>Avg every 5 seconds</option>
+      <option value=10>Avg every 10 seconds</option>
+      <option value=15>Avg every 15 seconds</option>
+      <option value=20>Avg every 20 seconds</option>
+      <option value=30>Avg every 30 seconds</option>
+    </select>
+    <div class="controls range-values">
+      <span class="min-value"></span>
+      <span> - </span>
+      <span class="max-value"></span>
+      <span class="total-value"></span>
+    </div>
+    <button class="controls min-max-slider-submit" type="submit">Slice</button>
     <section id="chart-wrap">
       <canvas id="overlay" width="600" height="400" style="position:absolute;pointer-events:none;"></canvas>
       <canvas id="chart"></canvas>
     </section>
   </section>
-  <section class="table-wrap wrap-player">
-    <div>
-      <table class="add-player-rank">
-        <thead>
-          <tr>
-            <th class="player-cell">Name</th>
-            <th class="points-rank sortable">Rank</th>
-            <th class="points-dps sortable">Dps%</th>
-            <th class="useful sortable" colspan="3">Useful Damage<button class="swap swap-damage">⇄</button></th>
-            <th class="damage sortable" colspan="3">Total Damage<button class="swap swap-damage">⇄</button></th>
-            <th class="heal sortable" colspan="3">Heal<button class="swap swap-heal">⇄</button></th>
-            <th class="heal_total sortable" colspan="3">Total heal<button class="swap swap-heal">⇄</button></th>
-            <th class="taken sortable" colspan="3">Damage Taken</th>
-          </tr> 
-        </thead>
-        <tbody class="table-has-total">
-          {% for player_name, (spec_name, spec_icon) in SPECS.items() %}
-          <tr>
-            <td class="player-cell" title="{{ spec_name }}">
-              <img src="/static/icons/{{ spec_icon }}.jpg">
-              {% if player_name == "Total" %}
-              <a>Total</a>
-              {% else %}
-              <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
-              {% endif %}
-            </td>
-            <td class="points points-rank total-cell"></td>
-            <td class="points points-dps total-cell"></td>
-            {% for _type, players in DATA.items() %}
-            <td class="{{ _type }} rectangle-cell">
-              {% if players.get(player_name) %}
-              <div class="percent-bar" style="--width: {{ players.get(player_name, {})['percent'] }}%"></div>
-              {% endif %}
-            </td>
-            <td class="{{ _type }} total-cell">{{ players.get(player_name, {})['value'] }}</td>
-            <td class="{{ _type }} per-sec-cell">{{ players.get(player_name, {})['per_second'] }}</td>
-            {% endfor %}
-          </tr>
+  <section class="table-wrap table-players">
+    <table class="add-player-rank">
+      <thead>
+        <tr>
+          <th class="player-cell">Name</th>
+          <th class="points-rank sortable">Rank</th>
+          <th class="points-dps sortable">Dps%</th>
+          <th class="useful sortable" colspan="3">Useful Damage<button class="swap swap-damage">⇄</button></th>
+          <th class="damage sortable" colspan="3">Total Damage<button class="swap swap-damage">⇄</button></th>
+          <th class="heal sortable" colspan="3">Heal<button class="swap swap-heal">⇄</button></th>
+          <th class="heal_total sortable" colspan="3">Total heal<button class="swap swap-heal">⇄</button></th>
+          <th class="taken sortable" colspan="3">Damage Taken</th>
+        </tr> 
+      </thead>
+      <tbody class="table-has-total">
+        {% for player_name, (spec_name, spec_icon) in SPECS.items() %}
+        <tr>
+          <td class="player-cell" title="{{ spec_name }}">
+            <img src="/static/icons/{{ spec_icon }}.jpg">
+            {% if player_name == "Total" %}
+            <a>Total</a>
+            {% else %}
+            <a class="{{ PLAYER_CLASSES[player_name] }}" href="/reports/{{ REPORT_ID }}/player/{{ player_name }}/{{ QUERY }}">{{ player_name }}</a>
+            {% endif %}
+          </td>
+          <td class="points points-rank total-cell"></td>
+          <td class="points points-dps total-cell"></td>
+          {% for _type, players in DATA.items() %}
+          <td class="{{ _type }} rectangle-cell">
+            {% if players.get(player_name) %}
+            <div class="percent-bar" style="--width: {{ players.get(player_name, {})['percent'] }}%"></div>
+            {% endif %}
+          </td>
+          <td class="{{ _type }} total-cell">{{ players.get(player_name, {})['value'] }}</td>
+          <td class="{{ _type }} per-sec-cell">{{ players.get(player_name, {})['per_second'] }}</td>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
   <section style="display: none;">
     <p>First Hit: {{ FIRST_HIT }}</p>

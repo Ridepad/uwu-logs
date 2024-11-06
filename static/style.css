@@ -234,7 +234,6 @@ ul {
 main {
   position: relative;
   margin-bottom: var(--bottom-row-one);
-  padding-bottom: 5rem;
 }
 
 nav,
@@ -845,47 +844,43 @@ input[type="checkbox"],
 }
 
 
-.wrap-player,
-.wrap-damage {
+.table-players,
+.table-damage {
   --min-width: 17ch;
   --max-width: 20ch;
 }
-.wrap-spell {
+.table-spells {
   --min-width: 15ch;
   --max-width: 32ch;
 }
 .table-wrap {
   --mult: 5;
-  overflow-x: auto;
+  --sticky-column-width: clamp(var(--min-width), 20vw, var(--max-width));
+  overflow: auto;
   scrollbar-color: var(--secondary-color) var(--background);
-	/* transform: rotateX(180deg); */
+  max-height: 80vh;
+  scrollbar-width: thin;
 }
-.table-wrap > div {
-  padding-left: calc(clamp(var(--min-width), 20vw, var(--max-width)));
-	/* transform: rotateX(-180deg); */
-  /* padding-bottom: 7rem; */
+.table-wrap thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
-.casts-section-wrap {
-  width: calc(var(--mult) * 50rem);
+.table-wrap tfoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
-.table-wrap :is(.spell-name, .player-cell) {
-  width: clamp(var(--min-width), 20vw, var(--max-width));
+.table-wrap :is(td, th):first-of-type,
+.table-wrap .sticky-column {
+  position: sticky;
+  left: 0;
+  min-width: var(--sticky-column-width);
+  max-width: var(--sticky-column-width);
   white-space: nowrap;
   overflow: hidden;
-  position: absolute;
-  left: 0;
   z-index: 2;
 }
-/* @media (min-width: 1600px) {
-  .table-wrap {
-    margin: unset;
-    max-width: unset;
-  }
-  .table-wrap :is(.spell-name, .player-cell) {
-    position: unset;
-  }
-} */
-
 
 
 #aura-controls {
@@ -936,6 +931,44 @@ input[type="checkbox"],
   #player-nav {
     font-size: 150%;
   }
+}
+
+#chart-wrap-wrap {
+  font-size: 1.5rem;
+}
+#chart-wrap-wrap section {
+  display: none;
+}
+#chart-wrap-wrap #controls-wrap {
+  gap: 2rem;
+  align-items: center;
+}
+@media (orientation: portrait) {
+  #chart-wrap-wrap #controls-wrap {
+    gap: .5rem;
+  }
+}
+#chart-wrap-wrap .sliced-control {
+  min-width: fit-content;
+}
+#chart-wrap-wrap .range-values {
+  min-width: 14rem;
+}
+#chart-wrap {
+  height: 10rem;
+  width: 100%;
+}
+#chart {
+  margin-right: 1rem;
+}
+#chart-wrap-wrap .controls {
+  display: none;
+}
+#toggle-graph:checked ~ .controls {
+  display: inline-block;
+}
+#toggle-graph:checked ~ #chart-wrap {
+  display: block;
 }
 
 .progress-bar-wrapper {

@@ -542,7 +542,8 @@ class Character {
 
   new_spell_name_cell(spell_id) {
     const name_cell_wrap = document.createElement("spell-name");
-    name_cell_wrap.className = "spell-name";
+    name_cell_wrap.classList.add("spell-name");
+    name_cell_wrap.classList.add("sticky-column");
     const name_cell = document.createElement("spell-name-data");
 
     const _img = document.createElement("img");
