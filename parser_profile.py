@@ -15,7 +15,8 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 import requests
 
-from parser_profile_talents import GLYPHS, PlayerTalents
+from parser_profile_talents import PlayerTalents
+from parser_talents_data import GLYPHS
 from top_gear import GearDB
 
 done: dict[str, dict] = {}
