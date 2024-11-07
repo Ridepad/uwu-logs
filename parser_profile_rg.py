@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 import logs_calendar
 from c_path import Directories, PathExt
 from h_debug import Loggers
-from top_gear import Columns, GearDB
 from parser_profile_talents import PlayerTalentsRG
+from parser_talents_data import GLYPHS
+from top_gear import Columns, GearDB
 
 LOGGER = Loggers.raging_gods
 
@@ -106,8 +107,12 @@ def requests_get(page_url, timeout_mult=2, attempts=5):
                 allow_redirects=False,
             )
             if response.status_code == 200:
+                # print(">>> 200")
+                # print(response.text)
+                # LOGGER.warning(f"! Not found {page_url}")
                 return response.text
             if response.status_code == 404:
+                LOGGER.warning(f"! Not found {page_url}")
                 return
             # print("! ERROR1", attempt, response.status_code)
             msg = f"ATTEMPT: {attempt:>2} | STATUS {response.status_code} | {page_url}"
@@ -122,7 +127,7 @@ def requests_get(page_url, timeout_mult=2, attempts=5):
             msg = f"ATTEMPT: {attempt:>2} | OTHER"
             LOGGER.exception(msg)
         
-        time.sleep(2)
+        time.sleep(attempts*2)
     
     return None
 
@@ -161,6 +166,36 @@ class GemToEnch:
             GEM_TO_ENCH_DICT_PATH.json_write(self.gem_to_ench_dict)
         self.cls_dict["changed"] = False
 
+
+
+
+
+class Spec:
+    def __init__(self, class_name: str, talents: str, glyphs: str):
+        self.class_name = class_name
+        self.talents = talents
+        self.glyphs = glyphs
+    
+    def make_glyph_string(self):
+        glyphs = self.glyphs.split(":")
+        return GLYPHS.make_glyph_string(self.class_name, glyphs)
+    
+    def make_talents_string(self):
+        return PlayerTalentsRG(self.class_name).convert_talents(self.talents)
+
+    def get_spec_string(self):
+        glyph_str = self.make_glyph_string()
+        talents_data = self.make_talents_string()
+        talents_data.add_glyphs_to_talent_string(glyph_str)
+        return talents_data.as_list()
+
+def get_spec_data(class_name: str, talents_data: dict[str, str]):
+    s = Spec(
+        class_name=class_name,
+        talents=talents_data.get("talents", ""),
+        glyphs=talents_data.get("glyphs", ""),
+    )
+    return s.get_spec_string()
 
 def rg_url(name):
     return f"{URL_RG_PROFILE}.{name}"
@@ -254,11 +289,10 @@ def make_profile(profile):
     
     class_name = CLASSES_ORDERED_DB[int(j["classs"])]
     
-    talents_stings = (
-        spec["talents"]
+    specs = [
+        get_spec_data(class_name, spec)
         for spec in j["talents"]["builds"]
-    )
-    specs = PlayerTalentsRG(class_name).get_talents_data_list(talents_stings)
+    ]
 
     gear = parse_gear(j)
 
@@ -285,8 +319,7 @@ def make_profile(profile):
 
 def parse_profile(name, forced: bool=False):
     profile = get_profile(name, forced)
-    new_profile = make_profile(profile)
-    DATABASE.update_player_row(name, new_profile)
+    return make_profile(profile)
 
 
 def db_where_players(players: list[str]):
@@ -337,15 +370,25 @@ class RGParser:
     def run(self):
         s = gen_players()
         total = len(s)
-        for i, player in enumerate(s, 1):
+        players_new_data = {}
+        for i, player_name in enumerate(s, 1):
             LOGGER.debug(f"{i:>6} | {total:>6}")
-            parse_profile(player)
+            try:
+                profile_txt = get_profile(player_name, self.forced)
+                profile = make_profile(profile_txt)
+                players_new_data[player_name] = profile
+            except Exception:
+                LOGGER.exception(f"RGParser run {player_name}")
+                pass
+        DATABASE.update_players_rows(players_new_data)
 
 
 def test1():
-    with RGParser():
-        z = parse_profile("Dämohexer")
-    print(z)
+    name = "Beyondurlvl"
+    name = "Phantoon"
+    profile = get_profile(name)
+    new_profile = make_profile(profile)
+    print(new_profile)
 
 
 def main():
@@ -356,4 +399,4 @@ def main():
 
 if __name__ == "__main__":
     with RGParser() as parser:
-        main()
+        test1()
