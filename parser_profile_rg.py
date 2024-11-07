@@ -107,14 +107,10 @@ def requests_get(page_url, timeout_mult=2, attempts=5):
                 allow_redirects=False,
             )
             if response.status_code == 200:
-                # print(">>> 200")
-                # print(response.text)
-                # LOGGER.warning(f"! Not found {page_url}")
                 return response.text
             if response.status_code == 404:
                 LOGGER.warning(f"! Not found {page_url}")
                 return
-            # print("! ERROR1", attempt, response.status_code)
             msg = f"ATTEMPT: {attempt:>2} | STATUS {response.status_code} | {page_url}"
             LOGGER.warning(msg)
         except requests.exceptions.ConnectionError:
@@ -274,6 +270,16 @@ def parse_gear(profile_json: dict):
         for slot in GEAR_ORDERED
     ]
 
+def parse_profs(profile_json: dict):
+    profs = []
+    profssecondary = []
+    professions = profile_json["skills"] or {}
+    for prof_id, levels in professions.items():
+        if prof_id in PROFS:
+            profs.append([PROFS[prof_id], levels[0]])
+        elif prof_id in PROFS_SECONDARY:
+            profssecondary.append([PROFS_SECONDARY[prof_id], levels[0]])
+
 def make_profile(profile):
     if not profile:
         return
@@ -384,19 +390,16 @@ class RGParser:
 
 
 def test1():
-    name = "Beyondurlvl"
     name = "Phantoon"
-    profile = get_profile(name)
-    new_profile = make_profile(profile)
+    new_profile = parse_profile(name)
     print(new_profile)
 
 
 def main():
-    forced = False
-    # forced = True
-    with RGParser(forced) as parser:
+    import sys
+    _forced = "-f" in sys.argv
+    with RGParser(_forced) as parser:
         parser.run()
 
 if __name__ == "__main__":
-    with RGParser() as parser:
-        test1()
+    main()
