@@ -15,9 +15,13 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 import requests
 
+from h_debug import Loggers
 from parser_profile_talents import PlayerTalents
-from parser_talents_data import GLYPHS
+from parser_talents_data import GLYPHS, TALENTS
 from top_gear import GearDB
+
+
+LOGGER = Loggers.gear
 
 done: dict[str, dict] = {}
 threads: dict[str, Thread] = {}
@@ -50,16 +54,34 @@ def player_id(player: dict):
 def is_valid_response(response: requests.Response):
     return response is not None and "guild-name" in response.text
 
-def requests_get(page_url, headers, timeout=2, attempts=3):
-    for _ in range(attempts):
+def requests_get(page_url, timeout_mult=2, attempts=5):
+    for attempt in range(1, attempts+1):
         try:
-            page = requests.get(page_url, headers=headers, timeout=timeout, allow_redirects=False)
-            if page.status_code == 200:
-                return page
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
-            time.sleep(2)
+            response = requests.get(
+                page_url,
+                headers=HEADERS,
+                timeout=attempt * timeout_mult,
+                allow_redirects=False,
+            )
+            if response.status_code == 200:
+                return response.text
+            if response.status_code == 404:
+                LOGGER.warning(f"! Not found {page_url}")
+                return
+            msg = f"ATTEMPT: {attempt:>2} | STATUS {response.status_code} | {page_url}"
+            LOGGER.warning(msg)
+        except requests.exceptions.ConnectionError:
+            msg = f"ATTEMPT: {attempt:>2} | CONNECTION ABORTED {page_url}"
+            LOGGER.warning(msg)
+        except requests.exceptions.ReadTimeout:
+            msg = f"ATTEMPT: {attempt:>2} | CONNECTION TIMEOUT {page_url}"
+            LOGGER.warning(msg)
+        except Exception:
+            msg = f"ATTEMPT: {attempt:>2} | OTHER"
+            LOGGER.exception(msg)
+        
+        time.sleep(1)
     
-    # LOGGER.error(f"Failed to load page: {page_url}")
     return None
 
 
@@ -76,6 +98,13 @@ def gen_stats(tags: list[Tag]):
 def get_talent_rank(talent: Tag):
     return int(talent.text.strip()[0])
 
+def get_talents_tree_allocated_levels(talents_tree_table: Tag):
+    return [
+        get_talent_rank(talent)
+        for row in talents_tree_table.find_all(class_="tier")
+        for talent in row.find_all(class_="talent")
+    ]
+
 def format_glyph_name(t: str):
     return t.replace("Glyph of the ", "").replace("Glyph of ", "")
 
@@ -88,7 +117,6 @@ def gen_glyphs(parent: Tag, class_: str):
         get_glyph_name(glyph_div)
         for glyph_div in parent.find_all(class_=class_)
     ]
-
 
 class Specs:
     def __init__(self, name: str, server: str, class_name: str=None):
@@ -103,8 +131,8 @@ class Specs:
             return self._profile_soup
         except AttributeError:
             url = f"http://armory.warmane.com/character/{self.name}/{self.server}/talents"
-            response = requests_get(url, HEADERS)
-            self._profile_soup = BeautifulSoup(response.text, "html.parser")
+            response_text = requests_get(url)
+            self._profile_soup = BeautifulSoup(response_text, "html.parser")
             return self._profile_soup
 
     @property
@@ -123,16 +151,14 @@ class Specs:
 
     def get_allocated_talents(self, spec: int):
         spec_container = self.profile_soup.find(id=f"spec-{spec}")
+        if spec_container is None:
+            return TALENTS[self.class_name].empty_trees().values()
+        
         trees_table = spec_container.find_all(class_="talent-tree")
-        talents: list[list[int]] = [
-            [
-                get_talent_rank(talent)
-                for row in tree.find_all(class_="tier")
-                for talent in row.find_all(class_="talent")
-            ]
+        return [
+            get_talents_tree_allocated_levels(tree)
             for tree in trees_table
         ]
-        return talents
 
     def glyphs_by_type(self, spec: int):
         spec_glyphs_tag = self.profile_soup.find("div", attrs={"data-glyphs": f"{spec}"})
@@ -171,8 +197,8 @@ class Profile:
         try:
             return self._profile_soup
         except AttributeError:
-            response = requests_get(self.profile_url, HEADERS)
-            self._profile_soup = BeautifulSoup(response.text, "html.parser")
+            response_text = requests_get(self.profile_url)
+            self._profile_soup = BeautifulSoup(response_text, "html.parser")
             return self._profile_soup
 
 
