@@ -169,8 +169,8 @@ class GemToEnch:
 class Spec:
     def __init__(self, class_name: str, talents: str, glyphs: str):
         self.class_name = class_name
-        self.talents = talents
-        self.glyphs = glyphs
+        self.talents = str(talents)
+        self.glyphs = str(glyphs)
     
     def make_glyph_string(self):
         glyphs = self.glyphs.split(":")
