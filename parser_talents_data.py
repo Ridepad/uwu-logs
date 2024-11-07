@@ -1,7 +1,7 @@
 from c_path import Directories
 
 jf = Directories.static / "talents.json"
-jg = Directories.temp / "glyphs.json"
+jg = Directories.static / "glyphs.json"
 TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE"
 
 
