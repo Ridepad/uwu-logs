@@ -1,114 +1,31 @@
-from dataclasses import dataclass
-
 from c_path import Directories
 
-jf = Directories.static / "talents.json"
-jg = Directories.static / "glyphs.json"
-TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE"
-GLYPHS = jg.json()
-
-class TalentBySpec:
-    def __init__(
-        self,
-        spec: int,
-        talent_index: int,
-        level: int,
-    ):
-        self.tree_index = int(spec)
-        self.talent_index = int(talent_index)
-        self.level = int(level)
-
-    def __str__(self):
-        return " | ".join((
-            f"{self.tree_index:>2}",
-            f"{self.talent_index:>3}",
-            f"{self.level:>2}",
-        ))
-
-class TalentsTree:
-    def __init__(self, spec_name: str, spec_index: int, nodes: list[list[int]]):
-        self.nodes = nodes
-        self.spec_name = spec_name
-        self.spec_index = spec_index
-        self.talent_ids = set(
-            spell_id
-            for node in nodes
-            for spell_id in node
-        )
-
-    def get_talent(self, spell_id: int):
-        for talent_index, node in enumerate(self.nodes):
-            if spell_id in node:
-                level = node.index(spell_id) + 1
-                return TalentBySpec(
-                    self.spec_index,
-                    talent_index,
-                    level,
-                )
-        return None
-
-    
-    def empty_tree(self):
-        return [0] * len(self.nodes)
+from parser_talents_data import (
+    TALENTS,
+    TALENTS_ENCODE_STR,
+)
 
 
-class TalentsData:
-    def __init__(
-        self,
-        class_name: str,
-        prefix: str,
-        specs: list[str],
-        trees: list[list[int]],
-    ):
-        self.class_name = class_name
-        # self.specs = specs
-        self.prefix = prefix
-        # self.trees = TalentsTrees()
-        self.trees = [
-            TalentsTree(
-                spec_name=specs[spec_index],
-                spec_index=spec_index,
-                nodes=nodes,
-            )
-            for spec_index, nodes in enumerate(trees)
-        ]
-    
-    def find_spec(self, spell_id: int):
-        for talents_tree in self.trees:
-            if spell_id in talents_tree.talent_ids:
-                return talents_tree.get_talent(spell_id)
-                
-        print(f"!!! {self.class_name} missing talent: {spell_id:>5}")
-
-    def empty_tree(self, spec_index: int):
-        spec_talents = self.trees[spec_index]
-        return spec_talents.empty_tree()
-    
-    def empty_trees(self):
-        return {
-            tree.spec_index: tree.empty_tree()
-            for tree in self.trees
-        }
-
-class TalentsDict(dict[str, TalentsData]):
-    def __init__(self, data):
-        for class_name, class_data in data.items():
-            self[class_name] = TalentsData(class_name, **class_data)
-    
-TALENTS = TalentsDict(jf.json())
-
-
-@dataclass
 class TalentsParsed:
-    main_spec_name: str
-    talents_allocated_str: str
-    tree_string: str
+    def __init__(
+        self,
+        main_spec_name: str,
+        talents_allocated_str: str,
+        encoded_string: str,
+    ):
+        self.main_spec_name = main_spec_name
+        self.talents_allocated_str = talents_allocated_str
+        self.encoded_string = encoded_string
+
+    def add_glyphs_to_talent_string(self, encoded_glyphs: str):
+        if encoded_glyphs:
+            self.encoded_string = f"{self.encoded_string}:{encoded_glyphs}"
 
     def as_list(self):
         return [
             self.main_spec_name,
             self.talents_allocated_str,
-            self.tree_string,
+            self.encoded_string,
         ]
 
 
@@ -199,11 +116,6 @@ class PlayerTalentsRG(PlayerTalents):
             self.get_talents_data(allocated_points)
             for allocated_points in talents
         ]
-
-
-class Glyphs:
-    def __init__(self, glyphs: list[int]):
-        pass
 
 
 def main():
