@@ -866,7 +866,7 @@ input[type="checkbox"],
   --sticky-column-width: clamp(var(--min-width), 20vw, var(--max-width));
   overflow: auto;
   scrollbar-color: var(--secondary-color) var(--background);
-  max-height: 80vh;
+  height: 80vh;
   scrollbar-width: thin;
 }
 .table-wrap thead {
