@@ -98,6 +98,12 @@ SPELLS: dict[str, tuple[str]] = {
         ("", " 62583", "", "62601"), # Frostbolt
     "Thorim22":
         ("", " 62580", "", "62604"), # Frostbolt Volley
+    "Freya_Stonebark":
+        ("", "62437", "", "62859"), # Ground Tremor
+    "Freya_Ironbranch":
+        ("", "62861", "", "62438"), # Iron Roots
+    "Freya_Brightleaf":
+        ("", "62451", "", "62865"), # Sun Beam / Unstable Energy
     "Mimiron25N":
         ("", "", "", "64582"), # Emergency Mode
     "Mimiron10N":
@@ -134,9 +140,28 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
     
     return DIFFICULTY[0]
 
+def freya_diff(logs_slice: list[str]):
+    elder_boss_ids = {
+        "Freya_Stonebark",
+        "Freya_Ironbranch",
+        "Freya_Brightleaf",
+    }
+    
+    for boss_id in elder_boss_ids:
+        diff = get_difficulty(logs_slice, boss_id)
+        if diff == DEFAULT_DIFFICULTY:
+            return None
+        
+    return diff
+
+
 def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
     if boss_name not in SPELLS:
         diff = imagine_playing_shit_expansion(logs_slice)
+        
+        if boss_name == "Freya":
+            return freya_diff(logs_slice) or diff
+        
         boss_name = f"{boss_name}{diff}"
         if boss_name not in SPELLS:
             return diff
