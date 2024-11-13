@@ -94,6 +94,10 @@ SPELLS: dict[str, tuple[str]] = {
         ("", "64637", "", "61888"), # Overwhelming Power
     "Mimiron":
         ("", "65101", "", "64582"), # Emergency Mode
+    "General Vezax25N":
+        ("", "", "", "63420"), # Saronite Animus / Profound Darkness
+    "General Vezax10N":
+        ("", "63420", "", ""), # Saronite Animus / Profound Darkness
 }
 COWARDS_NAMES = set(COWARDS.values())
 
@@ -124,7 +128,11 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
 
 def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
     if boss_name not in SPELLS:
-        return imagine_playing_shit_expansion(logs_slice)
+        diff = imagine_playing_shit_expansion(logs_slice)
+        boss_name = f"{boss_name}{diff}"
+        if boss_name not in SPELLS:
+            return diff
+    
     spell_ids = SPELLS[boss_name]
     for line in logs_slice:
         try:
