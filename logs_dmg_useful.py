@@ -371,10 +371,6 @@ ALL_GUIDS = {
     "Algalon the Observer": {
         "008067": "Algalon the Observer",
         "0080BB": "Collapsing Star",
-    },
-    "Algalon the Observer": {
-        "008067": "Algalon the Observer",
-        "0080BB": "Collapsing Star",
         "008531": "Unleashed Dark Matter",
         "00811C": "Living Constellation",
     },
