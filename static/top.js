@@ -105,6 +105,7 @@ const BOSSES_WITH_HEROIC_MODE = new Set([
   "XT-002 Deconstructor",
   "Assembly of Iron",
   "Freya",
+  "Thorim",
   "Mimiron",
   "General Vezax",
   "Yogg-Saron",
