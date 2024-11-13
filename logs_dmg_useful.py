@@ -405,9 +405,6 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
         "Halion": ("009BB7", "009CCE"),
         "Adds": ("009EE9", "009EEB"),
     },
-    "Assembly of Iron": {
-        "Bosses Useful": ("00809F", "008059", "008063"),
-    },
 }
 
 USEFUL_NAMES = {
