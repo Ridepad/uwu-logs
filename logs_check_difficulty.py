@@ -120,6 +120,11 @@ SPELLS: dict[str, tuple[str]] = {
     "General Vezax10N":
         ("", "63420", "", ""), # Saronite Animus / Profound Darkness
 }
+NOT_DETECTED_NORMAL_MODE = {
+    "Thorim",
+    "XT-002 Deconstructor",
+    "Assembly of Iron",
+}
 
 def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
@@ -178,20 +183,7 @@ def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
         return "25H"
     return "10H"
 
-def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
-    if boss_name not in SPELLS:
-        diff = imagine_playing_shit_expansion(logs_slice)
-        
-        if boss_name == "Freya":
-            return freya_diff(logs_slice) or diff
-        
-        if boss_name == "Yogg-Saron":
-            return yogg_hm(logs_slice, diff)
-        
-        boss_name = f"{boss_name}{diff}"
-        if boss_name not in SPELLS:
-            return diff
-    
+def _get_difficulty(logs_slice: list[str], boss_name: str) -> str:
     spell_ids = SPELLS[boss_name]
     for line in logs_slice:
         try:
@@ -202,8 +194,27 @@ def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
             pass
     boss_ver_2 = f"{boss_name}2"
     if boss_ver_2 in SPELLS:
-        return get_difficulty(logs_slice, boss_ver_2)
+        return _get_difficulty(logs_slice, boss_ver_2)
     return DEFAULT_DIFFICULTY
+
+def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
+    if boss_name not in SPELLS:
+        difficulty = imagine_playing_shit_expansion(logs_slice)
+        
+        if boss_name == "Freya":
+            return freya_diff(logs_slice) or difficulty
+        
+        if boss_name == "Yogg-Saron":
+            return yogg_hm(logs_slice, difficulty) 
+        
+        boss_name = f"{boss_name}{difficulty}"
+        if boss_name not in SPELLS:
+            return difficulty
+        
+    difficulty = _get_difficulty(logs_slice, boss_name)
+    if difficulty == DEFAULT_DIFFICULTY and boss_name in NOT_DETECTED_NORMAL_MODE:
+        return imagine_playing_shit_expansion(logs_slice)
+    return difficulty
 
 def is_overkill_on_boss(line: list[str]):
     if line[10] == "0":
