@@ -124,6 +124,8 @@ NOT_DETECTED_NORMAL_MODE = {
     "Thorim",
     "XT-002 Deconstructor",
     "Assembly of Iron",
+    "Mimiron",
+    "General Vezax",
 }
 
 def imagine_playing_shit_expansion(logs_slice: list[str]):
