@@ -408,6 +408,7 @@ USEFUL_NAMES = {
     "008059": "Stormcaller Brundir Useful",
     "00809F": "Runemaster Molgeim Useful",
     "008063": "Steelbreaker Useful",
+    "0080A6": "Right Arm Shield",
 }
 
 ALL_USEFUL_TARGETS = {

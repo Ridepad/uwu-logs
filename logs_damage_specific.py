@@ -213,6 +213,21 @@ def iron_useful(logs_slice: list[str]):
     
     return DAMAGE
 
+def kologarn_hands_absorb(logs_slice: list[str]):
+    RIGHT_ARM = "0080A6"
+    DAMAGE: defaultdict[str, int] = defaultdict(int)
+    for line in logs_slice:
+        if "ABSORB" not in line:
+            continue
+        try:
+            _line = line.split(',', 10)
+            if _line[4][6:-6] != RIGHT_ARM:
+                continue
+            DAMAGE[_line[2]] += int(_line[-1])
+        except ValueError:
+            pass
+    return DAMAGE
+
 def specific_useful(logs_slice, boss_name, specs):
     data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
@@ -222,6 +237,8 @@ def specific_useful(logs_slice, boss_name, specs):
         data['00808A'] = freya_useful(logs_slice)
     elif boss_name == "Festergut":
         data['008F12'] = fester_useful(logs_slice, specs)
+    elif boss_name == "Kologarn":
+        data['0080A6'] = kologarn_hands_absorb(logs_slice)
     elif boss_name == "Assembly of Iron":
         data |= iron_useful(logs_slice)
         
