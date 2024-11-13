@@ -88,6 +88,8 @@ SPELLS: dict[str, tuple[str]] = {
     "Emalon the Storm Watcher":
         ("64213", "", "64215", ""), # Chain Lightning
 
+    "XT-002 Deconstructor":
+        ("", "64227", "", "64236"), # Life Spark / Static Charged
     "Assembly of Iron":
         ("", "64637", "", "61888"), # Overwhelming Power
     "Mimiron":
