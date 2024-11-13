@@ -118,21 +118,22 @@ class Tier_7(Tier_3):
 
 class Tier_8:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
-        Encounter("XT-002 Deconstructor", "25N"),
+        # Encounter("XT-002 Deconstructor", "25N"),
+        Encounter("Kologarn", "25N"),
     )
     FOR_POINTS = (
         Encounter("Ignis the Furnace Master", "25N"),
         Encounter("Razorscale", "25N"),
-        Encounter("XT-002 Deconstructor", "25N"),
-        Encounter("Assembly of Iron", "25N"),
+        Encounter("XT-002 Deconstructor", "25H"),
+        Encounter("Assembly of Iron", "25H"),
         Encounter("Kologarn", "25N"),
         Encounter("Auriaya", "25N"),
         Encounter("Hodir", "25N"),
         Encounter("Thorim", "25N"),
-        Encounter("Freya", "25N"),
-        Encounter("Mimiron", "25N"),
-        Encounter("General Vezax", "25N"),
-        Encounter("Yogg-Saron", "25N"),
+        Encounter("Freya", "25H"),
+        Encounter("Mimiron", "25H"),
+        Encounter("General Vezax", "25H"),
+        Encounter("Yogg-Saron", "25H"),
         Encounter("Algalon the Observer", "25N"),
     )
     OTHER = (

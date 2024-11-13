@@ -102,6 +102,12 @@ const is_landscape = window.matchMedia("(orientation: landscape)");
 const TOP_POST = window.location.pathname;
 const BOSSES_WITH_HEROIC_MODE = new Set([
   "Halion",
+  "XT-002 Deconstructor",
+  "Assembly of Iron",
+  "Freya",
+  "Mimiron",
+  "General Vezax",
+  "Yogg-Saron",
 ]);
 const RAID_WITH_HEROIC_MODE = new Set([
   "Icecrown Citadel",
