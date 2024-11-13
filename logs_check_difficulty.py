@@ -89,7 +89,7 @@ SPELLS: dict[str, tuple[str]] = {
         ("64213", "", "64215", ""), # Chain Lightning
 
     "Assembly of Iron":
-        ("", "", "", "61888"), # Overwhelming Power
+        ("", "64637", "", "61888"), # Overwhelming Power
 }
 COWARDS_NAMES = set(COWARDS.values())
 
