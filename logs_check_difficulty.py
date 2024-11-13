@@ -92,6 +92,12 @@ SPELLS: dict[str, tuple[str]] = {
         ("", "64227", "", "64236"), # Life Spark / Static Charged
     "Assembly of Iron":
         ("", "64637", "", "61888"), # Overwhelming Power
+    "Thorim":
+        ("", " 62597", "", "62605"), # Frost Nova
+    "Thorim2":
+        ("", " 62583", "", "62601"), # Frostbolt
+    "Thorim22":
+        ("", " 62580", "", "62604"), # Frostbolt Volley
     "Mimiron":
         ("", "65101", "", "64582"), # Emergency Mode
     "General Vezax25N":
