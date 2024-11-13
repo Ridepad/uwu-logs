@@ -362,6 +362,12 @@ ALL_GUIDS = {
         "00815E": "Ignis the Furnace Master",
         "008161": "Iron Construct",
     },
+    "Razorscale": {
+        "0081A2": "Razorscale",
+        "00826C": "Dark Rune Guardian",
+        "0082AD": "Dark Rune Watcher",
+        "008436": "Dark Rune Sentinel",
+    },
     "Algalon the Observer": {
         "008067": "Algalon the Observer",
         "0080BB": "Collapsing Star",
