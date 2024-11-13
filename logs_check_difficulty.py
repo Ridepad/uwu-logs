@@ -5,6 +5,12 @@ from h_other import convert_to_html_name
 DEFAULT_DIFFICULTY = "TBD"
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 COWARDS_NAMES = set(COWARDS.values())
+YOGG_SARON_GUARDIAN_BUFFS = {
+    "62670": "Resilience of Nature",
+    "62650": "Fortitude of Frost",
+    "62702": "Fury of the Storm",
+    "62671": "Speed of Invention",
+}
 SPELLS: dict[str, tuple[str]] = {
     "Lord Marrowgar":
         ("69146", "70824", "70823", "70825"), # Coldflame
@@ -154,6 +160,23 @@ def freya_diff(logs_slice: list[str]):
         
     return diff
 
+def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
+    buffs = set()
+    for line in logs_slice[:2000]:
+        if ",62" not in line:
+            continue
+        try:
+            spell_id = line.split(',', 7)[6]
+            if spell_id in YOGG_SARON_GUARDIAN_BUFFS:
+                buffs.add(spell_id)
+            if len(buffs) > 1:
+                return default
+        except Exception:
+            pass
+    
+    if default == "25N":
+        return "25H"
+    return "10H"
 
 def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
     if boss_name not in SPELLS:
@@ -161,6 +184,9 @@ def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
         
         if boss_name == "Freya":
             return freya_diff(logs_slice) or diff
+        
+        if boss_name == "Yogg-Saron":
+            return yogg_hm(logs_slice, diff)
         
         boss_name = f"{boss_name}{diff}"
         if boss_name not in SPELLS:

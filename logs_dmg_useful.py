@@ -163,7 +163,7 @@ USEFUL = {
     "Algalon the Observer": {
         "008067": "Algalon the Observer",
         "0080BB": "Collapsing Star",
-        "00811C": "Living Constellation",
+        # "00811C": "Living Constellation",
         "008531": "Unleashed Dark Matter",
     },
     "Kologarn": {
@@ -371,6 +371,12 @@ ALL_GUIDS = {
     "Algalon the Observer": {
         "008067": "Algalon the Observer",
         "0080BB": "Collapsing Star",
+    },
+    "Algalon the Observer": {
+        "008067": "Algalon the Observer",
+        "0080BB": "Collapsing Star",
+        "008531": "Unleashed Dark Matter",
+        "00811C": "Living Constellation",
     },
     "Mimiron": {
         "008298": "Leviathan Mk II",
