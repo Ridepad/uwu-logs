@@ -156,8 +156,8 @@ USEFUL = {
         "00823F": "XS-013 Scrapbot",
     },
     "Assembly of Iron": {
-        "00809F": "Runemaster Molgeim",
         "008059": "Stormcaller Brundir",
+        "00809F": "Runemaster Molgeim",
         "008063": "Steelbreaker",
     },
     "Algalon the Observer": {
@@ -393,12 +393,18 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     "Halion": {
         "Halion": ("009BB7", "009CCE"),
         "Adds": ("009EE9", "009EEB"),
-    }
+    },
+    "Assembly of Iron": {
+        "Bosses Useful": ("00809F", "008059", "008063"),
+    },
 }
 
 USEFUL_NAMES = {
     "008F01": "Valks Useful",
     "00808A": "Freya Useful",
+    "008059": "Stormcaller Brundir Useful",
+    "00809F": "Runemaster Molgeim Useful",
+    "008063": "Steelbreaker Useful",
 }
 
 ALL_USEFUL_TARGETS = {

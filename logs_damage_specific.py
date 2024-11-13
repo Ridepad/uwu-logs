@@ -168,6 +168,51 @@ def freya_useful(logs_slice: list[str]):
     
     return DAMAGE
 
+@running_time
+def iron_useful(logs_slice: list[str]):
+    DAMAGE = {
+        "008059": defaultdict(int), # Stormcaller Brundir
+        "00809F": defaultdict(int), # Runemaster Molgeim
+        "008063": defaultdict(int), # Steelbreaker
+    }
+    dead = {
+        guid: False
+        for guid in DAMAGE
+    }
+    
+    def died_reset_not_dead(target_guid_id: str):
+        dead[target_guid_id] = True
+        for guid_id, v in dead.items():
+            if not v:
+                print('>>>>>>>> reset', guid_id)
+                DAMAGE[guid_id].clear()
+    
+    for line in logs_slice:
+        if "0080" not in line:
+            continue
+
+        if "UNIT_DIED" in line:
+            tGUID = line.split(',', 5)[4]
+            target_guid_id = tGUID[6:-6]
+            died_reset_not_dead(target_guid_id)
+            continue
+        
+        if "DAMAGE" not in line:
+            continue
+
+        try:
+            _, _, sGUID, _, tGUID, _, _, _, _, dmg, ok, _ = line.split(',', 11)
+            target_guid_id = tGUID[6:-6]
+            if target_guid_id not in DAMAGE:
+                continue
+            DAMAGE[target_guid_id][sGUID] += int(dmg)
+            if ok != "0":
+                died_reset_not_dead(target_guid_id)
+        except ValueError:
+            pass
+    
+    return DAMAGE
+
 def specific_useful(logs_slice, boss_name, specs):
     data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
@@ -177,6 +222,8 @@ def specific_useful(logs_slice, boss_name, specs):
         data['00808A'] = freya_useful(logs_slice)
     elif boss_name == "Festergut":
         data['008F12'] = fester_useful(logs_slice, specs)
+    elif boss_name == "Assembly of Iron":
+        data |= iron_useful(logs_slice)
         
     return data
 
@@ -192,5 +239,20 @@ def test1():
     for guid, value in d:
         print(f"{report.guid_to_name(guid):12} | {value:>10.0f}")
 
+def test2():
+    import logs_base
+    report = logs_base.THE_LOGS("24-11-12--17-27--Zazatree--Whitemane-Frostmourne")
+    boss = "Assembly of Iron"
+    s, f = report.ENCOUNTER_DATA[boss][-1]
+    logs_slice = report.LOGS[s:f+1000]
+    _damage = iron_useful(logs_slice)
+    for boss, players_damage in _damage.items():
+        print()
+        print(boss)
+        d = report.combine_pets(players_damage, trim_non_players=True)
+        d = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        for guid, value in d:
+            print(f"{report.guid_to_name(guid):12} | {value:>10.0f}")
+
 if __name__ == "__main__":
-    test1()
+    test2()
