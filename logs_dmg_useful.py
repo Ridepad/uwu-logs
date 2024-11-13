@@ -208,6 +208,7 @@ USEFUL = {
         "0084C1": "Corruptor Tentacle",
         "0084BF": "Constrictor Tentacle",
         "0084AE": "Crusher Tentacle",
+        "008497": "Portal Adds",
         "00831F": "Influence Tentacle",
         "0084C4": "Immortal Guardian",
         "0083B4": "Ruby Consort",
