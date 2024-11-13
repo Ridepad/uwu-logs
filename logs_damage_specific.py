@@ -184,7 +184,6 @@ def iron_useful(logs_slice: list[str]):
         dead[target_guid_id] = True
         for guid_id, v in dead.items():
             if not v:
-                print('>>>>>>>> reset', guid_id)
                 DAMAGE[guid_id].clear()
     
     for line in logs_slice:
@@ -271,5 +270,17 @@ def test2():
         for guid, value in d:
             print(f"{report.guid_to_name(guid):12} | {value:>10.0f}")
 
+def test3():
+    import logs_base
+    report = logs_base.THE_LOGS("24-11-12--17-27--Zazatree--Whitemane-Frostmourne")
+    s, f = report.ENCOUNTER_DATA["Kologarn"][-1]
+    logs_slice = report.LOGS[s:f]
+    players_damage = kologarn_hands_absorb(logs_slice)
+
+    d = report.combine_pets(players_damage, trim_non_players=True)
+    d = sorted(d.items(), key=lambda x: x[1], reverse=True)
+    # for guid, value in d:
+    #     print(f"{report.guid_to_name(guid):12} | {value:>10.0f}")
+
 if __name__ == "__main__":
-    test2()
+    test3()
