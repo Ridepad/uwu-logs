@@ -199,6 +199,7 @@ USEFUL = {
         "008386": "Aerial Command Unit",
         "008509": "Assault Bot",
         "00843F": "Junk Bot",
+        "00842C": "Bomb Bot",
         "008563": "Emergency Fire Bot",
     },
     "General Vezax": {
@@ -367,15 +368,6 @@ ALL_GUIDS = {
         "0080BB": "Collapsing Star",
         "008531": "Unleashed Dark Matter",
         "00811C": "Living Constellation",
-    },
-    "Mimiron": {
-        "008298": "Leviathan Mk II",
-        "008373": "VX-001",
-        "008386": "Aerial Command Unit",
-        "008509": "Assault Bot",
-        "00843F": "Junk Bot",
-        "00842C": "Bomb Bot",
-        "008563": "Emergency Fire Bot",
     },
     "Auriaya": {
         "0082EB": "Auriaya",
