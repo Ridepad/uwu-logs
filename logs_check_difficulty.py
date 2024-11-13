@@ -90,6 +90,8 @@ SPELLS: dict[str, tuple[str]] = {
 
     "Assembly of Iron":
         ("", "64637", "", "61888"), # Overwhelming Power
+    "Mimiron":
+        ("", "65101", "", "64582"), # Emergency Mode
 }
 COWARDS_NAMES = set(COWARDS.values())
 
