@@ -140,9 +140,9 @@ USEFUL = {
     # Ulduar 
     "Razorscale": {
         "0081A2": "Razorscale",
-        "00826C": "Dark Rune Guardian",
-        "0082AD": "Dark Rune Watcher",
-        "008436": "Dark Rune Sentinel",
+        # "00826C": "Dark Rune Guardian",
+        # "0082AD": "Dark Rune Watcher",
+        # "008436": "Dark Rune Sentinel",
     },
     "Ignis the Furnace Master": {
         "00815E": "Ignis the Furnace Master",
