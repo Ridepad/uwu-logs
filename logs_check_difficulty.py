@@ -4,6 +4,7 @@ from h_other import convert_to_html_name
 
 DEFAULT_DIFFICULTY = "TBD"
 DIFFICULTY = ('10N', '10H', '25N', '25H')
+COWARDS_NAMES = set(COWARDS.values())
 SPELLS: dict[str, tuple[str]] = {
     "Lord Marrowgar":
         ("69146", "70824", "70823", "70825"), # Coldflame
@@ -113,7 +114,6 @@ SPELLS: dict[str, tuple[str]] = {
     "General Vezax10N":
         ("", "63420", "", ""), # Saronite Animus / Profound Darkness
 }
-COWARDS_NAMES = set(COWARDS.values())
 
 def imagine_playing_shit_expansion(logs_slice: list[str]):
     players = set()
