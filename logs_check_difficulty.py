@@ -98,8 +98,10 @@ SPELLS: dict[str, tuple[str]] = {
         ("", " 62583", "", "62601"), # Frostbolt
     "Thorim22":
         ("", " 62580", "", "62604"), # Frostbolt Volley
-    "Mimiron":
-        ("", "65101", "", "64582"), # Emergency Mode
+    "Mimiron25N":
+        ("", "", "", "64582"), # Emergency Mode
+    "Mimiron10N":
+        ("", "64582", "", ""), # Emergency Mode
     "General Vezax25N":
         ("", "", "", "63420"), # Saronite Animus / Profound Darkness
     "General Vezax10N":
