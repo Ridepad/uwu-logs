@@ -182,12 +182,6 @@ USEFUL = {
     },
     "Thorim": {
         "008061": "Thorim",
-        "008068": "Runic Colossus",
-        "00806A": "Iron Ring Guard",
-        "00806B": "Swarming Guardian",
-        "008156": "Dark Rune Acolyte",
-        "008069": "Ancient Rune Giant",
-        "00806B": "Iron Honor Guard",
     },
     "Freya": {
         "00808A": "Freya",
@@ -388,6 +382,15 @@ ALL_GUIDS = {
         "0084F3": "Feral Defender",
         "0084DE": "Sanctum Sentry",
         "0084F2": "Swarming Guardian",
+    },
+    "Thorim": {
+        "008061": "Thorim",
+        "008068": "Runic Colossus",
+        "00806A": "Iron Ring Guard",
+        "00806B": "Swarming Guardian",
+        "008156": "Dark Rune Acolyte",
+        "008069": "Ancient Rune Giant",
+        "00806B": "Iron Honor Guard",
     },
 }
 
