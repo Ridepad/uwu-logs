@@ -254,10 +254,16 @@ def show_logs_list():
 @SERVER.route("/reports/<report_id>/")
 def report_page(report_id):
     report = load_report(report_id)
-    data = report.get_report_page_all_wrap(request)
+    default_params = report.get_default_params(request)
+
+    segments = default_params["SEGMENTS"]
+    boss_name = request.args.get("boss")
+    data = report.get_report_page_all_wrap(segments, boss_name)
 
     return render_template(
-        'report_main.html', **data,
+        'report_main.html',
+        **default_params,
+        **data,
     )
 
 @SERVER.route("/reports/<report_id>/download")

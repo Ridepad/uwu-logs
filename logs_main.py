@@ -351,19 +351,12 @@ class THE_LOGS(
         return d
 
     @running_time
-    def get_report_page_all_wrap(self, request):
-        default_params = self.get_default_params(request)
-        segments = default_params["SEGMENTS"]
-        boss_name = default_params["BOSS_NAME"]
-        mode = request.args.get("mode")
-
-        DURATION = default_params["DURATION"]
-
-        if boss_name and boss_name != "all":
+    def get_report_page_all_wrap(self, segments: list[tuple[int, int]], boss_name: str):
+        if not boss_name or  boss_name == "all":
+            _useful = {}
+        else:
             _useful = self.target_damage_all(segments, boss_name)["useful_total"]
             _useful = sort_dict_by_value(_useful)
-        else:
-            _useful = {}    
         
         columns = {
             "useful": _useful,
@@ -376,6 +369,7 @@ class THE_LOGS(
 
         TABLE = {}
         PLAYERS = {}
+        DURATION = self.get_fight_duration_total(segments)
         for k, d in columns.items():
             TABLE[k] = self.convert_to_table_data(d, DURATION)
             PLAYERS.update(TABLE[k])
@@ -383,7 +377,7 @@ class THE_LOGS(
         specs = self.convert_dict_guids_to_names(DD["SPECS"])
         SPECS = self.report_add_spec_info(specs, PLAYERS)
 
-        return default_params | DD | {
+        return {
             "DATA": TABLE,
             "SPECS": SPECS,
         }
