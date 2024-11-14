@@ -8669,6 +8669,9 @@
   "inv_mace_99": {
     "64411": "Blessing of Ancient Kings"
   },
+  "inv_misc_bell_01": {
+    "49623": "Je'Tze's Bell"
+  },
   "inv_misc_birdbeck_01": {
     "23060": "Battle Squawk",
     "41181": "Shabby Arakkoa Disguise",
@@ -8879,10 +8882,14 @@
     "67656": "Ferocious Butt"
   },
   "inv_misc_orb_03": {
-    "60512": "Healing Trance",
-    "60513": "Healing Trance",
-    "60514": "Healing Trance",
-    "60515": "Healing Trance"
+    "37706": "Soul Preserver",
+    "37721": "Soul Preserver",
+    "37722": "Soul Preserver",
+    "37723": "Soul Preserver",
+    "60512": "Soul Preserver",
+    "60513": "Soul Preserver",
+    "60514": "Soul Preserver",
+    "60515": "Soul Preserver"
   },
   "inv_misc_orb_05": {
     "74452": "Conflagration",
@@ -9042,9 +9049,11 @@
     "52048": "Healing Stream Totem",
     "52049": "Healing Stream Totem",
     "52050": "Healing Stream Totem",
+    "58757": "Healing Stream Totem",
     "58759": "Healing Stream Totem",
     "58760": "Healing Stream Totem",
     "58761": "Healing Stream Totem",
+    "58765": "Healing Stream Totem",
     "65993": "Healing Stream Totem",
     "68103": "Healing Stream Totem",
     "68104": "Healing Stream Totem",
@@ -14723,7 +14732,8 @@
     "40656": "Skyguard Flare",
     "41094": "Flare",
     "41095": "Flare",
-    "45039": "Skyguard Flare"
+    "45039": "Skyguard Flare",
+    "65014": "Pyrite Infuser"
   },
   "spell_frost_freezingbreath": {
     "13809": "Frost Trap",
@@ -17457,7 +17467,6 @@
     "47565": "Divine Providence",
     "47566": "Divine Providence",
     "47567": "Divine Providence",
-    "49623": "Effervescence",
     "57412": "Reckoning Bomb",
     "57415": "The Reckoning",
     "57544": "Ashbringer",
@@ -24008,10 +24017,6 @@
     "32913": "Dazzling Dust",
     "36592": "Shimmerwing Dust",
     "37175": "Shimmerwing Dust",
-    "37706": "Healing Trance",
-    "37721": "Healing Trance",
-    "37722": "Healing Trance",
-    "37723": "Healing Trance",
     "38730": "Refreshing Mist",
     "45610": "Pollen",
     "51922": "Lapsing Dream",
