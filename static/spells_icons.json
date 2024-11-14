@@ -2759,6 +2759,7 @@
     "56342": "Lock and Load",
     "56343": "Lock and Load",
     "56344": "Lock and Load",
+    "56453": "Lock and Load",
     "67544": "Lock and Load Marker"
   },
   "ability_hunter_longevity": {
@@ -3263,8 +3264,8 @@
     "52055": "Meatsaw",
     "54904": "Sawblade",
     "56911": "Range Marker",
-    "60063": "Now is the Time!",
-    "60064": "Now is the time!",
+    "60063": "Sundial of the Exiled",
+    "60064": "Sundial of the Exiled",
     "60319": "Mark of Norgannon",
     "60471": "Tome of Arcane Phenomena",
     "60473": "Forge Ember",
@@ -4713,6 +4714,7 @@
   },
   "ability_paladin_beaconoflight": {
     "53562": "Beacon of Light",
+    "53652": "Beacon of Light",
     "53563": "Beacon of Light",
     "53651": "Light's Beacon",
     "53654": "Beacon of Light"
@@ -5646,7 +5648,6 @@
     "48658": "Feint",
     "48659": "Feint",
     "57635": "Disengage",
-    "60302": "Meteorite Whetstone",
     "60932": "Disengage",
     "61507": "Disengage",
     "63336": "Charge to Unit",
@@ -5668,7 +5669,6 @@
     "31209": "Fleet Footed",
     "34519": "Time's Favor",
     "35062": "Maniacal Charge",
-    "59757": "Figurine - Monarch Crab",
     "60054": "Valor Medal of the First War",
     "62656": "Dodge Charge",
     "64763": "Heart of Iron"
@@ -5862,7 +5862,6 @@
     "31219": "Sinister Calling",
     "31220": "Sinister Calling",
     "33648": "Reflection of Torment",
-    "60065": "Reflection of Torment",
     "60066": "Rage of the Unraveller",
     "64792": "Blood of the Old God",
     "65013": "Pyrite Infusion",
@@ -7037,7 +7036,6 @@
     "46857": "Trauma",
     "53602": "Dart",
     "59349": "Dart",
-    "65024": "Implosion",
     "74607": "Fiery Combustion",
     "74610": "Fiery Combustion",
     "74800": "Soul Consumption"
@@ -8503,6 +8501,9 @@
   "inv_belt_18": {
     "71289": "Dominate Mind"
   },
+  "inv_box_petcarrier_01": {
+    "62757": "Call Stabled Pet"
+  },
   "inv_chest_leather_13": {
     "49222": "Bone Shield",
     "54467": "Bone Armor"
@@ -8535,6 +8536,9 @@
   },
   "inv_drink_milk_05": {
     "9512": "Thistle Tea"
+  },
+  "inv_egg_05": {
+    "60062": "The Egg of Mortal Essence"
   },
   "inv_elemental_mote_fire01": {
     "35751": "Fire Sunder",
@@ -8623,10 +8627,14 @@
     "68130": "Greatness"
   },
   "inv_inscription_tarotillusion": {
+    "57350": "Darkmoon Card: Illusion",
     "60242": "Darkmoon Card: Illusion"
   },
   "inv_jewelcrafting_azureowl": {
     "56186": "Sapphire Owl"
+  },
+  "inv_jewelcrafting_goldencrab": {
+    "59757": "Figurine - Monarch Crab"
   },
   "inv_jewelcrafting_shadowspirit_02": {
     "70503": "Spirit Burst",
@@ -8639,6 +8647,9 @@
   },
   "inv_jewelry_ring_83": {
     "72416": "Ashen Ring"
+  },
+  "inv_jewelry_talisman_08": {
+    "60065": "Mirror of Truth"
   },
   "inv_jewelry_trinket_01": {
     "71600": "Dislodged Foreign Object",
@@ -8678,6 +8689,9 @@
     "55497": "Monstrous Bite",
     "55498": "Monstrous Bite",
     "55499": "Monstrous Bite"
+  },
+  "inv_misc_eye_02": {
+    "65006": "Eye of the Broodmother"
   },
   "inv_misc_fish_52": {
     "57397": "Fish Feast"
@@ -8748,6 +8762,9 @@
   },
   "inv_misc_head_dragon_blue": {
     "51800": "Might of Malygos"
+  },
+  "inv_misc_herb_11": {
+    "28273": "Bloodthistle"
   },
   "inv_misc_herb_16": {
     "13218": "Wound Poison",
@@ -8942,6 +8959,9 @@
     "73026": "Radiating Ooze",
     "73027": "Radiating Ooze"
   },
+  "inv_misc_stonetablet_02": {
+    "60302": "Meteorite Whetstone"
+  },
   "inv_offhand_hyjal_d_01": {
     "60486": "Illustration of the Dragon Soul"
   },
@@ -8977,6 +8997,9 @@
   },
   "inv_potion_76": {
     "17531": "Major Mana Potion"
+  },
+  "inv_scroll_03": {
+    "28093": "Mongoose"
   },
   "inv_shield_05": {
     "47488": "Shield Slam",
@@ -9057,6 +9080,9 @@
     "67977": "Aimed Shot",
     "67978": "Aimed Shot",
     "67979": "Aimed Shot"
+  },
+  "inv_spiritshard_02": {
+    "64707": "Scale of Fates"
   },
   "inv_stone_04": {
     "27235": "Master Healthstone",
@@ -9209,8 +9235,15 @@
     "61381": "Interrupt",
     "64499": "Deadly Throw"
   },
+  "inv_trinket_naxxramas01": {
+    "60530": "Forethought Talisman"
+  },
   "inv_trinket_naxxramas03": {
+    "60494": "Dying Curse",
     "60538": "Soul of the Dead"
+  },
+  "inv_trinket_naxxramas04": {
+    "60492": "Embrace of the Spider"
   },
   "inv_weapon_shortblade_38": {
     "35541": "Combat Potency",
@@ -14676,7 +14709,6 @@
     "50583": "Summon Frozen Spheres",
     "51264": "QA Test Buff Spell Three",
     "54792": "Icy Veins",
-    "65003": "Memories of Love",
     "66013": "Penetrating Cold",
     "67700": "Penetrating Cold",
     "68509": "Penetrating Cold",
@@ -18992,7 +19024,6 @@
     "60301": "Meteorite Whetstone",
     "60317": "Signet of Edward the Odd",
     "60436": "Grim Toll",
-    "60494": "Dying Curse",
     "60495": "Copy of Dying Curse",
     "64786": "Comet's Trail",
     "65020": "Mjolnir Runestone",
@@ -19903,8 +19934,6 @@
     "57377": "Condemnation",
     "57465": "Holy Bolt",
     "59870": "Glare of the Tribunal",
-    "60062": "Essence of Life",
-    "60492": "Embrace of the Spider",
     "62217": "Unstable Energy",
     "62449": "Unstable Sun Beam",
     "62450": "Unstable Sun Beam",
@@ -20083,7 +20112,7 @@
     "52956": "Prophet of Akali Convocation",
     "59907": "Lightwell Charges",
     "60123": "Lightwell Renew",
-    "64713": "Flame of the Heavens",
+    "64713": "Flare of the Heavens",
     "64742": "Pandora's Plea",
     "67194": "Fountain of Light",
     "67196": "Light Rain",
@@ -20248,6 +20277,7 @@
     "55736": "Chilled Shot"
   },
   "spell_ice_rune": {
+    "65003": "Sif's Remembrance",
     "65077": "Tower of Frost",
     "65079": "Tower of Frost",
     "69090": "Ice Sphere",
@@ -25836,7 +25866,6 @@
     "60076": "Time Shock"
   },
   "spell_nature_unrelentingstorm": {
-    "28093": "Lightning Speed",
     "30664": "Unrelenting Storm",
     "30665": "Unrelenting Storm",
     "30666": "Unrelenting Storm",
@@ -26242,7 +26271,6 @@
     "59969": "Poison Cloud",
     "60182": "Mana Detonation",
     "60205": "Mana Detonation",
-    "60530": "Forethought Talisman",
     "61584": "Charged Flurry",
     "61869": "Overload",
     "61876": "Overload",
@@ -26302,7 +26330,6 @@
     "55502": "Lifeblood",
     "55503": "Lifeblood",
     "59969": "Poison Cloud",
-    "60530": "Forethought Talisman",
     "62532": "Conservator's Grip",
     "62978": "Summon Guardian",
     "62979": "Summon Guardian",
@@ -30538,6 +30565,7 @@
     "47836": "Seed of Corruption",
     "53520": "Carrion Beetles",
     "53521": "Carrion Beetles",
+    "65024": "Dark Matter",
     "70388": "Seed of Corruption",
     "74795": "Mark of Consumption"
   },
