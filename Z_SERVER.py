@@ -355,10 +355,12 @@ def casts_post(report_id):
         return "", 400
     
     _data: dict = request.json
+    player_name = _data.get("name")
+    
     report = load_report(report_id)
-    _z = report.parse_request(request.path, _data)
-    data = report.get_spell_history_wrap_json(_z["SEGMENTS"], _data["name"])
-    return data
+    default_params = report.get_default_params(request)
+    segments = default_params["SEGMENTS"]
+    return report.get_spell_history_wrap_json(segments, player_name)
 
 @SERVER.route("/reports/<report_id>/report_slices/", methods=['POST'])
 def report_slices(report_id):
