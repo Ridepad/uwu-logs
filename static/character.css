@@ -183,6 +183,7 @@ main {
   --max-width: 13em;
   --sticky-column-width: clamp(var(--min-width), var(--width), var(--max-width));
   width: 100%;
+  height: unset;
 }
 
 #toggle-more-bosses-wrap {
