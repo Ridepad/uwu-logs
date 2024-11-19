@@ -42,8 +42,11 @@ class PlayerData(dict[str, PlayerInfo]):
     def add_new_data(self, boss_rows: tuple[str]):
         for _, guid, name, spec in boss_rows:
             if self.has_latest_info(guid, name, spec):
-                continue
-            self[guid] = self[name] = PlayerInfo(guid, name, spec)
+                player = self.get(guid)
+            else:
+                player = PlayerInfo(guid, name, spec)
+
+            self[guid] = self[name] = player
 
 
 class PlayerDataServer(TopDBCached):
