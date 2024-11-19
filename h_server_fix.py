@@ -59,6 +59,8 @@ SERVERS_OTHER = [
     ServerID("WoW Brasil", "(wow.*?brasil)"),
     ServerID("Aequitas", "(aequitas)"),
     ServerID("Everlook", "(everlook)"),
+    ServerID("UltimoWoW", "(ultim.*wow)"),
+    ServerID("UltimoWoW", "(Benn?u)"),
     # ServerName("", ""),
 ]
 
@@ -93,16 +95,18 @@ def get_servers() -> list[str]:
     return _get_servers()
 
 def test1():
-    z = server_cnv("Lordaeron")
-    print(z)
-    z = server_cnv("Wow Circle 3.3.5a x5")
-    print(z)
-    z = server_cnv("rIsing godSs")
-    print(z)
-    z = server_cnv("risINGg godds")
-    print(z)
-    z = server_cnv("Way-of-Elendil")
-    print(z)
+    re_test = [
+        "Lordaeron",
+        "Wow Circle 3.3.5a x5",
+        "rIsing godSs",
+        "risINGg godds",
+        "Way-of-Elendil",
+        "Benu",
+        "Bennu",
+        "ULTIMAWOW",
+    ]
+    for s in re_test:
+        print(server_cnv(s))
 
 if __name__ == "__main__":
     test1()
