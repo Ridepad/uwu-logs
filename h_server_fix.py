@@ -77,7 +77,7 @@ def server_cnv(server: str):
         if re.findall(_server.re_string, _server_l):
             return _server.no_space
 
-    return server.replace(" ", "-").title()
+    return server.replace(" ", "-")
 
 
 @Directories.top.cache_until_new_self
