@@ -79,9 +79,9 @@ def get_delta_wrap(logs_slice, combat_start_line: str):
     first_minutes, _ = _timestamp_float(logs_slice[0])
     end_minutes, _ = _timestamp_float(logs_slice[-1])
     if first_minutes > start_minutes:
-        c = StartsBeforeHour
-    elif start_minutes > end_minutes:
         c = EndAfterHour
+    elif start_minutes > end_minutes:
+        c = StartsBeforeHour
     else:
         c = LineDeltaSeconds
     return c(start_minutes, start_seconds).get_delta
