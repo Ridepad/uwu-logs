@@ -83,16 +83,17 @@ const LOCAL_STORAGE = {
 }
 
 const IRRELEVANT_FOR_POINTS = [
-  SELECT_SIZE,
-  CHECKBOX_COMBINE,
+  INTERACTABLES.size,
+  INTERACTABLES.best,
   TOGGLE_TOTAL_DAMAGE,
   TOGGLE_USEFUL_DAMAGE,
 ];
 const IRRELEVANT_FOR_SPEEDRUN = [
-  SELECT_SIZE,
-  SELECT_CLASS,
-  SELECT_SPEC,
-  CHECKBOX_COMBINE,
+  INTERACTABLES.size,
+  INTERACTABLES.best,
+  INTERACTABLES.cls,
+  INTERACTABLES.spec,
+  INTERACTABLES.best,
   TOGGLE_TOTAL_DAMAGE,
   TOGGLE_USEFUL_DAMAGE,
 ];
@@ -840,11 +841,11 @@ function on_change_instance() {
   SELECT_BOSS.innerHTML = "";
   BOSSES[SELECT_RAID.value].forEach(boss_name => SELECT_BOSS.appendChild(new_option(boss_name)));
 
-  const _points_selected = points_selected();
-  IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = _points_selected);
-
   const _speedrun_selected = speedrun_selected();
   IRRELEVANT_FOR_SPEEDRUN.forEach(e => e.disabled = _speedrun_selected);
+
+  const _points_selected = points_selected();
+  IRRELEVANT_FOR_POINTS.forEach(e => e.disabled = _points_selected);
 
   toggle_difficulty_checkbox();
   
