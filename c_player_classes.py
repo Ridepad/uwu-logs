@@ -323,7 +323,6 @@ SPELL_BOOK_SPEC = {
     "rogue": {
         "57993": 1, # Envenom
         "48666": 1, # Mutilate
-        "14177": 1, # Cold Blood
 
         "11294": 2, # Sinister Strike
         "48638": 2, # Sinister Strike
