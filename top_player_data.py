@@ -1,16 +1,13 @@
 
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from api_top_db_v2 import TopDBCached
-# from c_player_classes import CLASSES_LIST
-from c_player_classes import CLASSES_LIST, SPECS_LIST
+from c_player_classes import CLASSES_LIST
 from c_server_phase import get_server_phase
 from h_debug import running_time
 
 
 class PlayerInfo:
-    # __slots__ = "name", "spec", "class_i"
     __slots__ = "guid", "name", "spec", "class_i"
     def __init__(
         self,
@@ -39,11 +36,11 @@ class PlayerData(dict[str, PlayerInfo]):
         return v
 
     def has_latest_info(self, guid, name, spec):
-        _current = self.get(name)
-        return _current and _current.guid == guid and _current.spec == spec
+        _current = self.get(guid)
+        return _current and _current.name == name and _current.spec == spec
 
     def add_new_data(self, boss_rows: tuple[str]):
-        for guid, name, spec in boss_rows:
+        for _, guid, name, spec in boss_rows:
             if self.has_latest_info(guid, name, spec):
                 continue
             self[guid] = self[name] = PlayerInfo(guid, name, spec)
@@ -67,23 +64,28 @@ class PlayerDataServer(TopDBCached):
 
     @running_time
     def _renew_data(self):
+        query = '\nUNION\n'.join((
+            encounter.query_players_data()
+            for encounter in self.phase.ALL_BOSSES
+        ))
+        rows = self.cursor.execute(query)
         players = PlayerData()
-        for encounter in self.phase.BOSSES_GET_GUID_NAME_PAIRS_FROM:
-            query = encounter.query_players_data()
-            try:
-                rows = self.cursor.execute(query)
-                players.add_new_data(rows)
-            except Exception:
-                pass
+        players.add_new_data(rows)
         return players
 
 
-def main():
+def test1():
+    test_players = [
+        ("0238FF1", "Zaha"),
+        ("0479745", "Stefaka"),
+    ]
+    # q = PlayerDataServer("Icecrown")
     q = PlayerDataServer("Lordaeron")
-    print(q.player_info("Stefaka"))
-    print(q.player_info("Safiyah"))
-    print(q.player_info("Meownya"))
+    for player_guid, player_name in test_players:
+        p = q.player_info(player_guid)
+        print(p)
+        print(p == q.player_info(player_name))
 
 
 if __name__ == "__main__":
-    main()
+    test1()

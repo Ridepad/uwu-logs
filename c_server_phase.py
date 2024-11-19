@@ -44,7 +44,7 @@ class Encounter:
         '''
     def query_players_data(self):
         return f'''
-        SELECT {Columns.GUID}, {Columns.NAME}, {Columns.SPEC}
+        SELECT {Columns.PLAYER_RAID_ID}, {Columns.GUID}, {Columns.NAME}, {Columns.SPEC}
         FROM [{self.table_name}]
         '''
 
@@ -58,10 +58,10 @@ class Phase:
 class Tier_10:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Deathbringer Saurfang"),
-        # Encounter("The Lich King"),
-        # Encounter("Festergut"),
-        # Encounter("Blood-Queen Lana'thel"),
-        # Encounter("Valithria Dreamwalker"),
+        Encounter("The Lich King"),
+        Encounter("Blood-Queen Lana'thel"),
+        Encounter("Valithria Dreamwalker"),
+        Encounter("Toravon the Ice Watcher", "25N"),
     )
     FOR_POINTS = (
         Encounter("Lord Marrowgar"),
@@ -118,8 +118,10 @@ class Tier_7(Tier_3):
 
 class Tier_8:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
-        # Encounter("XT-002 Deconstructor", "25N"),
+        Encounter("XT-002 Deconstructor", "25H"),
         Encounter("Kologarn", "25N"),
+        Encounter("Yogg-Saron", "25H"),
+        Encounter("Algalon the Observer", "25N"),
     )
     FOR_POINTS = (
         Encounter("Ignis the Furnace Master", "25N"),
