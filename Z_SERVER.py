@@ -8,14 +8,18 @@ from flask import (
     send_file,
 )
 
-from werkzeug.exceptions import NotFound, TooManyRequests
+from werkzeug.exceptions import (
+    BadRequest,
+    NotFound,
+    TooManyRequests,
+)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import h_cleaner
 import logs_calendar
 import logs_main
 from constants import FLAG_ORDER
-from c_bosses import ALL_FIGHT_NAMES
+from c_bosses import ALL_FIGHT_NAMES, BOSSES_FROM_HTML
 from c_path import Directories, Files
 from h_datetime import MONTHS, T_DELTA
 from h_debug import Loggers
@@ -355,12 +359,21 @@ def casts_post(report_id):
         return "", 400
     
     _data: dict = request.json
+    try:
+        boss_name = BOSSES_FROM_HTML[_data.get("boss")]
+    except KeyError:
+        raise BadRequest(f"[boss_name] is not a valid boss name")
+    
+    try:
+        attempt = int(_data.get("attempt"))
+    except (ValueError, TypeError):
+        raise BadRequest(f"[attempt] must be a number")
+    
     player_name = _data.get("name")
     
     report = load_report(report_id)
-    default_params = report.get_default_params(request)
-    segments = default_params["SEGMENTS"]
-    return report.get_spell_history_wrap_json(segments, player_name)
+    s, f = report.ENCOUNTER_DATA[boss_name][attempt]
+    return report.get_spell_history_wrap_json(s, f, player_name)
 
 @SERVER.route("/reports/<report_id>/report_slices/", methods=['POST'])
 def report_slices(report_id):

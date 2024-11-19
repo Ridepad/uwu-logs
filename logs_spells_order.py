@@ -1,5 +1,5 @@
-from collections import defaultdict
 import json
+from collections import defaultdict
 
 import logs_base
 from c_spells import COMBINE_SPELLS
@@ -36,42 +36,62 @@ def to_float(s: str):
 def _timestamp(s: str):
     return s.split(',', 1)[0]
 
-def get_delta_wrap(logs_slice, start_index):
-    start_minutes, start_seconds = to_float(_timestamp(logs_slice[start_index]))
-    first_minutes, _ = to_float(_timestamp(logs_slice[0]))
-    end_minutes, _ = to_float(_timestamp(logs_slice[-1]))
+def _timestamp_float(s: str):
+    ts = _timestamp(s)
+    return to_float(ts)
+
+
+class LineDeltaSeconds:
+    __slots__ = "start_minutes", "start_seconds", 
+    def __init__(self, start_minutes: int, start_seconds: float):
+        self.start_minutes = start_minutes
+        self.start_seconds = start_seconds
+    
+    def get_delta(self, current_ts: str):
+        _minutes, _seconds = to_float(current_ts)
+        _seconds = _seconds - self.start_seconds
+        _minutes = _minutes - self.start_minutes
+        return int((_minutes * 60 + _seconds)*1000)
+
+class EndAfterHour(LineDeltaSeconds):
+    def get_delta(self, current_ts: str):
+        _minutes, _seconds = to_float(current_ts)
+        _seconds = _seconds - self.start_seconds
+        if _minutes > 40:
+            _minutes = _minutes - self.start_minutes - 60
+        else:
+            _minutes = _minutes - self.start_minutes
+        return int((_minutes * 60 + _seconds)*1000)
+    
+class StartsBeforeHour(LineDeltaSeconds):
+    def get_delta(self, current_ts: str):
+        _minutes, _seconds = to_float(current_ts)
+        _seconds = _seconds - self.start_seconds
+        if _minutes < 20:
+            _minutes = _minutes - self.start_minutes + 60
+        else:
+            _minutes = _minutes - self.start_minutes
+        return int((_minutes * 60 + _seconds)*1000)
+
+
+def get_delta_wrap(logs_slice, combat_start_line: str):
+    start_minutes, start_seconds = _timestamp_float(combat_start_line)
+    first_minutes, _ = _timestamp_float(logs_slice[0])
+    end_minutes, _ = _timestamp_float(logs_slice[-1])
     if first_minutes > start_minutes:
-        def get_delta(current_ts):
-            _minutes, _seconds = to_float(current_ts)
-            _seconds = _seconds - start_seconds
-            if _minutes > 50:
-                _minutes = _minutes - start_minutes - 60
-            else:
-                _minutes = _minutes - start_minutes
-            return int((_minutes * 60 + _seconds)*1000)
+        c = StartsBeforeHour
     elif start_minutes > end_minutes:
-        def get_delta(current_ts: str):
-            _minutes, _seconds = to_float(current_ts)
-            _seconds = _seconds - start_seconds
-            if _minutes < 20:
-                _minutes = _minutes - start_minutes + 60
-            else:
-                _minutes = _minutes - start_minutes
-            return int((_minutes * 60 + _seconds)*1000)
+        c = EndAfterHour
     else:
-        def get_delta(current_ts):
-            _minutes, _seconds = to_float(current_ts)
-            _seconds = _seconds - start_seconds
-            _minutes = _minutes - start_minutes
-            return int((_minutes * 60 + _seconds)*1000)
-    return get_delta
+        c = LineDeltaSeconds
+    return c(start_minutes, start_seconds).get_delta
 
 @running_time
-def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str], start_index: int):
+def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str], combat_start_line: str):
     flags = set()
     history = defaultdict(list)
 
-    get_delta = get_delta_wrap(logs_slice, start_index)
+    get_delta = get_delta_wrap(logs_slice, combat_start_line)
 
     if not ignored_guids:
         ignored_guids = set()
@@ -111,7 +131,8 @@ class Timeline(logs_base.THE_LOGS):
         logs_slice = self.LOGS[s_shifted:f]
 
         players_and_pets = self.get_players_and_pets_guids()
-        data = get_history(logs_slice, guid, players_and_pets, s-s_shifted)
+        combat_start_line = self.LOGS[s]
+        data = get_history(logs_slice, guid, players_and_pets, combat_start_line)
 
         data["SPELLS"] = {
             x: self.SPELLS[int(x)].to_dict()
@@ -123,10 +144,8 @@ class Timeline(logs_base.THE_LOGS):
 
         return data
     
-    def get_spell_history_wrap(self, segments: dict, player_name: str):
-        s, f = segments[0]
-        player = self.name_to_guid(player_name)
-        return self.get_spell_history(s, f, player)
-    
-    def get_spell_history_wrap_json(self, segments: dict, player_name: str):
-        return json.dumps((self.get_spell_history_wrap(segments, player_name)), default=list)
+    @running_time
+    def get_spell_history_wrap_json(self, s: int, f: int, player_name: str):
+        player_guid = self.name_to_guid(player_name)
+        spell_history = self.get_spell_history(s, f, player_guid)
+        return json.dumps(spell_history, default=list)
