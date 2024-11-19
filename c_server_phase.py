@@ -61,7 +61,6 @@ class Tier_10:
         Encounter("The Lich King"),
         Encounter("Blood-Queen Lana'thel"),
         Encounter("Valithria Dreamwalker"),
-        Encounter("Toravon the Ice Watcher", "25N"),
     )
     FOR_POINTS = (
         Encounter("Lord Marrowgar"),

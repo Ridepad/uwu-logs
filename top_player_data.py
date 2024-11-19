@@ -69,7 +69,7 @@ class PlayerDataServer(TopDBCached):
     def _renew_data(self):
         query = '\nUNION\n'.join((
             encounter.query_players_data()
-            for encounter in self.phase.ALL_BOSSES
+            for encounter in self.phase.BOSSES_GET_GUID_NAME_PAIRS_FROM
         ))
         rows = self.cursor.execute(query)
         players = PlayerData()
