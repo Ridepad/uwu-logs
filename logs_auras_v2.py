@@ -79,6 +79,7 @@ AURAS_EXTERNAL = {
     "67215": 20,    # Empowered Darkness
     "67218": 20,    # Empowered Light
     "63848": 50,    # Hunger For Blood
+    "14177": 60*10, # Cold Blood
     "51800": 60*2,  # Might of Malygos
     "51777": 60*2,  # Arcane Focus
     "51605": 60*2,  # Zeal
