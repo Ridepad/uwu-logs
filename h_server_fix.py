@@ -60,7 +60,7 @@ SERVERS_OTHER = [
     ServerID("Aequitas", "(aequitas)"),
     ServerID("Everlook", "(everlook)"),
     ServerID("UltimoWoW", "(ultim.*wow)"),
-    ServerID("UltimoWoW", "(Benn?u)"),
+    ServerID("UltimoWoW", "(benn?u)"),
     # ServerName("", ""),
 ]
 
