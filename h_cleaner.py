@@ -1,5 +1,6 @@
 import threading
 from datetime import datetime, timedelta
+from time import perf_counter, sleep
 
 import psutil
 
@@ -15,30 +16,49 @@ def add_log_entry_memory(msg):
     percent = _m.percent
     LOGGER_MEMORY.info(f"{available:>5.2f} | {percent:>4.1f} | {msg}")
 
-class MemoryCleaner:
-    def __init__(self, OPENED_LOGS: dict) -> None:
-        self.OPENED_LOGS = OPENED_LOGS
-        self.cleaner_thread: threading.Thread = None
 
+class MemoryCleaner(threading.Thread):
+    def __init__(self, OPENED_LOGS):
+        super().__init__(daemon=True)
+        self.OPENED_LOGS = OPENED_LOGS
+        
     def cleaner(self):
-        add_log_entry_memory("STARTED")
+        add_log_entry_memory(f"MemoryCleaner started | Openned {len(self.OPENED_LOGS)}")
+        pc1 = perf_counter()
+
         now = datetime.now()
-        for report_id, report in dict(self.OPENED_LOGS).items():
+        reports = list(self.OPENED_LOGS)
+        for report_id in reports:
+            report = self.OPENED_LOGS[report_id]
             if now - report.last_access > MAX_SURVIVE_LOGS:
                 del self.OPENED_LOGS[report_id]
                 add_log_entry_memory(f"NUKED OLD | {report_id}")
-        
-        a = sorted(
-            (report.last_access, report_id)
-            for report_id, report in self.OPENED_LOGS.items()
-        )
-        while a and psutil.virtual_memory().percent > 75:
-            _, report_id = a.pop(0)
+
+        try:
+            reports = sorted(self.OPENED_LOGS, key=lambda x: self.OPENED_LOGS[x].last_access)
+        except Exception:
+            reports = list(self.OPENED_LOGS)
+            LOGGER_MEMORY.exception("sorted")
+
+        for report_id in reports:
+            if psutil.virtual_memory().percent < 75:
+                break
             del self.OPENED_LOGS[report_id]
-            add_log_entry_memory(f"NUKED MEM | {report_id}")
         
-    def run(self):
-        if self.cleaner_thread is not None and self.cleaner_thread.is_alive():
+        add_log_entry_memory(f'{(perf_counter() - pc1)*1000:>10,.3f}ms | MemoryCleaner done')
+
+    def start(self):
+        if self.is_alive():
             return
-        self.cleaner_thread = threading.Thread(target=self.cleaner)
-        self.cleaner_thread.start()
+        try:
+            return super().start()
+        except Exception:
+            LOGGER_MEMORY.exception("start")
+
+    def run(self):
+        while True:
+            sleep(10)
+            try:
+                self.cleaner()
+            except Exception:
+                LOGGER_MEMORY.exception("main")

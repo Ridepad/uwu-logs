@@ -73,7 +73,7 @@ def load_report(report_id: str):
             add_log_entry(ip, "SPAM", report_id)
             raise TooManyRequests(retry_after=_limit)
     
-    CLEANER.run()
+    CLEANER.start()
     report = logs_main.THE_LOGS(report_id)
     OPENED_LOGS[report_id] = report
     add_log_entry(ip, "OPENNED", report_id)
