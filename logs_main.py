@@ -342,6 +342,8 @@ class THE_LOGS(
 
     @running_time
     def get_report_page_all_wrap(self, segments: list[tuple[int, int]], boss_name: str):
+        boss_name = BOSSES_FROM_HTML.get(boss_name, boss_name)
+
         if not boss_name or  boss_name == "all":
             _useful = {}
         else:
