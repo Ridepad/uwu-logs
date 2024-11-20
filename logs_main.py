@@ -1,6 +1,5 @@
 import json
 from collections import defaultdict
-from c_player_classes import SPECS_LIST
 
 import logs_base
 import logs_absorbs
@@ -24,29 +23,20 @@ from c_bosses import (
     BOSSES_GUIDS,
     BOSSES_FROM_HTML,
 )
-from h_datetime import duration_to_string
-from h_debug import (
-    running_time,
-
-)
+from c_player_classes import SPECS_LIST
+from h_debug import running_time
 from h_other import (
+    add_new_numeric_data,
+    convert_to_html_name,
+    get_report_name_info,
     separate_thousands,
     sort_dict_by_value,
-    add_new_numeric_data,
-    get_report_name_info,
-    convert_to_html_name,
 )
 
 SHIFT = {
     'spell': 10,
     'consumables': 10,
     'player_auras': 10,
-}
-BOSSES_SKIP_POINTS = {
-    "Valithria Dreamwalker",
-    "Gunship",
-    "Heroic Training Dummy",
-    "Highlord's Nemesis Trainer",
 }
 ENTITIES_KEYS = (
     "BOSSES",
