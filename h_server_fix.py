@@ -69,8 +69,6 @@ def server_cnv(server: str):
         return ""
     if server in SERVERS_NAMES:
         return server
-    if server in SERVERS_WC:
-        return server
     
     _server_l = server.lower()
     for _server in SERVERS_OTHER:
