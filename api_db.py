@@ -230,17 +230,17 @@ class Cache(DB):
 
     def db_was_updated(self):
         if self.on_cooldown():
-            # LOGGER.debug(f"{mtime_cached:10} | {mtime_current:10} | {'. Cooldown':10} | {self.object_id:40}")
+            # LOGGER.debug(f"{'. Cooldown':10} | {mtime_cached:10} | {mtime_current:10} | {self.object_id:40}")
             return False
         
         mtime_current = int(self.path.mtime)
         mtime_cached = self.m_time[self.object_id]
 
         if mtime_current == mtime_cached:
-            LOGGER.debug(f"{mtime_cached:10} | {mtime_current:10} | {'= Same':10} | {self.object_id:40}")
+            LOGGER.debug(f"{'= Same':10} | {mtime_cached:10} | {mtime_current:10} | {self.object_id:40}")
             return False
         
-        LOGGER.debug(f"{mtime_cached:10} | {mtime_current:10} | {'+ Updated':10} | {self.object_id:40}")
+        LOGGER.debug(f"{'+ Updated':10} | {mtime_cached:10} | {mtime_current:10} | {self.object_id:40}")
         self.m_time[self.object_id] = mtime_current
         return True
     
