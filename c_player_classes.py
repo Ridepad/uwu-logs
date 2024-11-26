@@ -28,6 +28,8 @@ SPELL_BOOK = {
     "48443": 1, # Regrowth
      "8910": 1, # Rejuvenation
      "9841": 1, # Rejuvenation
+    "26982": 1, # Rejuvenation (Rank 13)
+    "48441": 1, # Rejuvenation (Rank 15)
     "70691": 1, # Rejuvenation
     "52610": 1, # Savage Roar
     "48572": 1, # Shred
@@ -282,9 +284,11 @@ SPELL_BOOK_SPEC = {
 
         "53595": 2, # Hammer of the Righteous
         "66233": 2, # Ardent Defender
-        "48827": 2, # Avenger's Shield
+        "32700": 2, # Avenger's Shield (Rank 3)
+        "48827": 2, # Avenger's Shield (Rank 5)
         "20132": 2, # Redoubt
-        "48952": 2, # Holy Shield
+        "27179": 2, # Holy Shield (Rank 4)
+        "48952": 2, # Holy Shield (Rank 6)
         "70760": 2, # Deliverance
         
         "59578": 3, # The Art of War
@@ -307,8 +311,11 @@ SPELL_BOOK_SPEC = {
         "63737": 2, # Serendipity
         "63544": 2, # Empowered Renew
         "63725": 2, # Holy Concentration
-        "48089": 2, # Circle of Healing
+        "34864": 2, # Circle of Healing (Rank 3)
+        "48089": 2, # Circle of Healing (Rank 7)
         "47788": 2, # Guardian Spirit
+        "27827": 2, # Spirit of Redemption
+        "34754": 2, # Clearcasting
 
         "48160": 3, # Vampiric Touch
         "63675": 3, # Improved Devouring Plague
@@ -337,9 +344,11 @@ SPELL_BOOK_SPEC = {
         "48660": 3, # Hemorrhage
     },
     "shaman": {
+        "30706": 1, # Totem of Wrath
         "57722": 1, # Totem of Wrath
         "59159": 1, # Thunderstorm
         "16166": 1, # Elemental Mastery
+        "45296": 1, # Lightning Bolt (Proc)
         "49240": 1, # Lightning Bolt (Proc)
         "49269": 1, # Chain Lightning (Proc)
 
@@ -374,7 +383,8 @@ SPELL_BOOK_SPEC = {
 
         "59172": 3, # Chaos Bolt
         "47847": 3, # Shadowfury
-        "17962": 3, # Conflagrate
+        "17962": 3, # Conflagrate (Rank 1)
+        "30912": 3, # Conflagrate (Rank 6)
         "18871": 3, # Shadowburn
     },
     "warrior": {
@@ -389,7 +399,8 @@ SPELL_BOOK_SPEC = {
         "12292": 2, # Death Wish
 
         "46968": 3, # Shockwave
-        "47498": 3, # Devastate
+        "30016": 3, # Devastate (Rank 2)
+        "47498": 3, # Devastate (Rank 5)
     },
 }
 

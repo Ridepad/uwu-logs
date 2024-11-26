@@ -102,6 +102,7 @@ COMBINE_SPELLS = {
 
 CUSTOM_SPELL_NAMES = {
     "42925": "Flamestrike (Rank 8)",
+    "45296": "Lightning Bolt (Proc)",
     "49240": "Lightning Bolt (Proc)",
     "49269": "Chain Lightning (Proc)",
     "53190": "Starfall (AoE)",

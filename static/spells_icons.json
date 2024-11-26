@@ -8977,6 +8977,12 @@
   "inv_offhand_hyjal_d_01": {
     "60486": "Illustration of the Dragon Soul"
   },
+  "inv_potion_105": {
+    "25122": "Brilliant Wizard Oil"
+  },
+  "inv_potion_107": {
+    "22839": "Destruction Potion"
+  },
   "inv_potion_108": {
     "28507": "Haste"
   },
@@ -9010,10 +9016,14 @@
   "inv_potion_76": {
     "17531": "Major Mana Potion"
   },
+  "inv_relics_idolofrejuvenation": {
+    "18562": "Swiftmend"
+  },
   "inv_scroll_03": {
     "28093": "Mongoose"
   },
   "inv_shield_05": {
+    "30356": "Shield Slam",
     "47488": "Shield Slam",
     "59653": "Damage Shield"
   },
@@ -23428,6 +23438,7 @@
     "44008": "Static Disruption",
     "45075": "Lightning Bolt",
     "45265": "Static Disruption Visual",
+    "45296": "Lightning Bolt",
     "46165": "Shock Barrier",
     "46357": "Trigger Jenny Credit",
     "46417": "Master the Storm: Storm Tempest On Health Range",
@@ -24562,7 +24573,6 @@
     "12766": "Poison Cloud",
     "15656": "Poisonous Stab",
     "16573": "Putrid Bile",
-    "18562": "Swiftmend",
     "19634": "Mana Rejuvenation",
     "20555": "Regeneration",
     "20609": "Ancestral Spirit",
