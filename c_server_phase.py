@@ -113,7 +113,6 @@ class Tier_3:
 
 class Tier_5:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
-        Encounter("Prince Malchezaar", "25N"),
         Encounter("Gruul the Dragonkiller", "25N"),
         Encounter("Magtheridon", "25N"),
     )
