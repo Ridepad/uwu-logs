@@ -39,7 +39,6 @@ const BOSSES = {
     "Netherspite", "Nightbane", "Prince Malchezaar",
   ],
   "Gruul's Lair": [
-    "Kiggler the Crazed", "Krosh Firehand", "Blindeye the Seer", "Olm the Summoner",
     "High King Maulgar", "Gruul the Dragonkiller",
   ],
   "Serpentshrine Cavern": [

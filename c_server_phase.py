@@ -128,10 +128,6 @@ class Tier_5:
         Encounter("Netherspite", "10N"),
         Encounter("Prince Malchezaar", "10N"),
 
-        Encounter("Kiggler the Crazed", "25N"),
-        Encounter("Krosh Firehand", "25N"),
-        Encounter("Blindeye the Seer", "25N"),
-        Encounter("Olm the Summoner", "25N"),
         Encounter("High King Maulgar", "25N"),
         Encounter("Gruul the Dragonkiller", "25N"),
 

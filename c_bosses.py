@@ -121,10 +121,10 @@ BOSSES_GUIDS = {
     # Gruul"s Lair
     "004A64": "Gruul the Dragonkiller",
     "00498F": "High King Maulgar",
-    "004990": "Krosh Firehand",
-    "004992": "Olm the Summoner",
-    "004993": "Kiggler the Crazed",
-    "004994": "Blindeye the Seer",
+    # "004990": "Krosh Firehand",
+    # "004992": "Olm the Summoner",
+    # "004993": "Kiggler the Crazed",
+    # "004994": "Blindeye the Seer",
     # Serpentshrine Cavern
     "0052E0": "Hydross the Unstable",
     "0052E1": "The Lurker Below",
@@ -297,6 +297,7 @@ MULTIBOSSES = {
     "Kalecgos": ["006112", "00613C"],
     "Eredar Twins": ["00624E", "00624D"],
     "M'uru": ["00648D", "0064F0"],
+    "High King Maulgar": ["00498F", "004990", "004992", "004993", "004994"],
 
     "Twin Emperors": ["003BAC", "003BAB"],
     "Bug Trio": ["003CB7", "003CB8", "003C97"],
