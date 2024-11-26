@@ -144,7 +144,7 @@ class Tier_5:
 class Tier_6:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Archimonde", "25N"),
-        Encounter("The Illidari Council", "25N"),
+        Encounter("Illidan Stormrage", "25N"),
         Encounter("Kil'jaeden", "25N"),
     )
     FOR_POINTS = (
@@ -162,8 +162,8 @@ class Tier_6:
         Encounter("Reliquary of Souls", "25N"),
         Encounter("Mother Shahraz", "25N"),
         Encounter("The Illidari Council", "25N"),
-
         Encounter("Illidan Stormrage", "25N"),
+
         Encounter("Kalecgos", "25N"),
         Encounter("Brutallus", "25N"),
         Encounter("Felmyst", "25N"),

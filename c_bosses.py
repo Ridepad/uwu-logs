@@ -160,7 +160,7 @@ BOSSES_GUIDS = {
     "0059A6": "Gathios the Shatterer",
     "0059A7": "Lady Malande",
     "0059A8": "Veras Darkshadow",
-    "005985": "Illidan",
+    "005985": "Illidan Stormrage",
     # Mount Hyjal
     "004567": "Rage Winterchill",
     "004590": "Anetheron",

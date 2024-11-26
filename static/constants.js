@@ -39,6 +39,7 @@ const BOSSES = {
     "Netherspite", "Nightbane", "Prince Malchezaar",
   ],
   "Gruul's Lair": [
+    "Kiggler the Crazed", "Krosh Firehand", "Blindeye the Seer", "Olm the Summoner",
     "High King Maulgar", "Gruul the Dragonkiller",
   ],
   "Serpentshrine Cavern": [
@@ -50,7 +51,7 @@ const BOSSES = {
   ],
   "Black Temple": [
     "High Warlord Naj'entus", "Supremus", "Shade of Akama", "Teron Gorefiend", "Gurtogg Bloodboil",
-    "Reliquary of Souls", "Mother Shahraz", "The Illidari Council", "Illidan",
+    "Reliquary of Souls", "Mother Shahraz", "The Illidari Council", "Illidan Stormrage",
   ],
   "Mount Hyjal": [
     "Rage Winterchill", "Anetheron", "Kaz'rogal", "Azgalor", "Archimonde",
