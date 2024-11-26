@@ -249,9 +249,16 @@ USEFUL = {
         "002ED4": "Golemagg the Incinerator",
         "002D98": "Core Rager",
     },
-    "002F43": {
+    "Garr": {
         "002F19": "Garr",
         "002F43": "Firesworn",
+    },
+    "High King Maulgar": {
+        "00498F": "High King Maulgar",
+        "004990": "Krosh Firehand",
+        "004992": "Olm the Summoner",
+        "004993": "Kiggler the Crazed",
+        "004994": "Blindeye the Seer",
     },
 }
 
