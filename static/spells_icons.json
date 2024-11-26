@@ -8763,6 +8763,11 @@
     "71565": "Replenish Mana",
     "71574": "Replenish Mana"
   },
+  "inv_misc_head_dragon_01": {
+    "31661": "Dragon's Breath",
+    "33043": "Dragon's Breath",
+    "42950": "Dragon's Breath"
+  },
   "inv_misc_head_dragon_blue": {
     "51800": "Might of Malygos"
   },
@@ -9288,6 +9293,7 @@
     "55763": "Tuskarr Smash"
   },
   "racial_troll_berserk": {
+    "20554": "Berserking",
     "23303": "Vaelen the Flayed [The Shadow Vault] - Invisibility",
     "26297": "Berserking",
     "43716": "Call of the Berserker",
@@ -17442,6 +17448,7 @@
   },
   "spell_holy_divineintervention": {
     "642": "Divine Shield",
+    "1020": "Divine Shield",
     "1050": "Sacrifice",
     "3169": "Invulnerability",
     "9438": "Arcane Bubble",
@@ -19680,6 +19687,7 @@
     "20166": "Seal of Wisdom",
     "20168": "Seal of Wisdom",
     "26975": "Battlegear of Eternal Justice",
+    "27166": "Seal of Wisdom",
     "38428": "Wisdom",
     "43838": "Judgement",
     "45403": "Blessedness",
@@ -20544,6 +20552,7 @@
     "21976": "Reactive Fade",
     "23196": "Quest Invisibility",
     "24466": "Banish",
+    "25429": "Fade",
     "26400": "Arcane Shroud",
     "26604": "Hallucination Invisibility",
     "27614": "Dungeon Set 2.0 Ghosts",
@@ -22828,6 +22837,8 @@
     "20656": "Faerie Fire",
     "21670": "Faerie Fire",
     "25602": "Faerie Fire",
+    "26993": "Faerie Fire",
+    "27011": "Faerie Fire",
     "32129": "Faerie Fire",
     "33600": "Improved Faerie Fire",
     "33601": "Improved Faerie Fire",
@@ -23741,6 +23752,7 @@
     "25391": "Healing Wave",
     "25396": "Healing Wave",
     "26097": "Healing Wave",
+    "27158": "Improved Seal of the Crusader",
     "27846": "Improved Healing Touch",
     "27847": "Cleanse Cost Reduced",
     "27848": "Seal Cost Reduced",
