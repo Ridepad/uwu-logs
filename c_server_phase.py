@@ -113,19 +113,20 @@ class Tier_3:
 
 class Tier_5:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
+        Encounter("Prince Malchezaar", "10N"),
         Encounter("Gruul the Dragonkiller", "25N"),
         Encounter("Magtheridon", "25N"),
     )
     FOR_POINTS = (
-        Encounter("Attumen the Huntsman", "25N"),
-        Encounter("Moroes", "25N"),
-        Encounter("Maiden of Virtue", "25N"),
-        Encounter("Opera House", "25N"),
-        Encounter("The Curator", "25N"),
-        Encounter("Terestian Illhoof", "25N"),
-        Encounter("Shade of Aran", "25N"),
-        Encounter("Netherspite", "25N"),
-        Encounter("Prince Malchezaar", "25N"),
+        Encounter("Attumen the Huntsman", "10N"),
+        Encounter("Moroes", "10N"),
+        Encounter("Maiden of Virtue", "10N"),
+        Encounter("Opera House", "10N"),
+        Encounter("The Curator", "10N"),
+        Encounter("Terestian Illhoof", "10N"),
+        Encounter("Shade of Aran", "10N"),
+        Encounter("Netherspite", "10N"),
+        Encounter("Prince Malchezaar", "10N"),
 
         Encounter("Kiggler the Crazed", "25N"),
         Encounter("Krosh Firehand", "25N"),
