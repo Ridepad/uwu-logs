@@ -248,13 +248,16 @@ spell-cleu {
 .char-2 {
   --custom-bg-color: hsl(0, 100%, 5%);
 }
+#spells-fav {
+  padding-bottom: 3rem;
+}
 #spells-fav > spell-row > spell-name,
 #spells-fav > spell-row > spell-history-wrap {
   background-color: var(--custom-bg-color);
 }
-#spells-fav > spell-row:last-of-type {
+/* #spells-fav > spell-row:last-of-type {
   border-bottom: .25rem solid var(--dimmed);
-}
+} */
 .char-tab {
   background-color: var(--custom-bg-color);
 }
