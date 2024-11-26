@@ -82,6 +82,7 @@ class Tier_10:
     )
     ALL_BOSSES = FOR_POINTS + OTHER
 
+
 class Tier_3:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Patchwerk", "25N"),
@@ -108,6 +109,71 @@ class Tier_3:
     )
     OTHER = ()
     ALL_BOSSES = FOR_POINTS + OTHER
+
+
+class Tier_5:
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = (
+        Encounter("Prince Malchezaar", "25N"),
+        Encounter("Gruul the Dragonkiller", "25N"),
+        Encounter("Magtheridon", "25N"),
+    )
+    FOR_POINTS = (
+        Encounter("Attumen the Huntsman", "25N"),
+        Encounter("Moroes", "25N"),
+        Encounter("Maiden of Virtue", "25N"),
+        Encounter("Opera House", "25N"),
+        Encounter("The Curator", "25N"),
+        Encounter("Terestian Illhoof", "25N"),
+        Encounter("Shade of Aran", "25N"),
+        Encounter("Netherspite", "25N"),
+        Encounter("Prince Malchezaar", "25N"),
+
+        Encounter("Kiggler the Crazed", "25N"),
+        Encounter("Krosh Firehand", "25N"),
+        Encounter("Blindeye the Seer", "25N"),
+        Encounter("Olm the Summoner", "25N"),
+        Encounter("High King Maulgar", "25N"),
+        Encounter("Gruul the Dragonkiller", "25N"),
+
+        Encounter("Magtheridon", "25N"),
+    )
+    OTHER = ()
+    ALL_BOSSES = FOR_POINTS + OTHER
+
+
+class Tier_6:
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = (
+        Encounter("Archimonde", "25N"),
+        Encounter("The Illidari Council", "25N"),
+        Encounter("Kil'jaeden", "25N"),
+    )
+    FOR_POINTS = (
+        Encounter("Rage Winterchill", "25N"),
+        Encounter("Anetheron", "25N"),
+        Encounter("Kaz'rogal", "25N"),
+        Encounter("Azgalor", "25N"),
+        Encounter("Archimonde", "25N"),
+
+        Encounter("High Warlord Naj'entus", "25N"),
+        Encounter("Supremus", "25N"),
+        Encounter("Shade of Akama", "25N"),
+        Encounter("Teron Gorefiend", "25N"),
+        Encounter("Gurtogg Bloodboil", "25N"),
+        Encounter("Reliquary of Souls", "25N"),
+        Encounter("Mother Shahraz", "25N"),
+        Encounter("The Illidari Council", "25N"),
+
+        Encounter("Illidan Stormrage", "25N"),
+        Encounter("Kalecgos", "25N"),
+        Encounter("Brutallus", "25N"),
+        Encounter("Felmyst", "25N"),
+        Encounter("Eredar Twins", "25N"),
+        Encounter("M'uru", "25N"),
+        Encounter("Kil'jaeden", "25N"),
+    )
+    OTHER = ()
+    ALL_BOSSES = FOR_POINTS + OTHER
+
 
 class Tier_7(Tier_3):
     OTHER = (
