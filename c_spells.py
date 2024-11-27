@@ -107,6 +107,7 @@ CUSTOM_SPELL_NAMES = {
     "49269": "Chain Lightning (Proc)",
     "53190": "Starfall (AoE)",
     "55360": "Living Bomb (DoT)",
+    "30016": "Devastate (Rank 2)",
     # Off Hand
     "66974": "Obliterate (Off Hand)",
     "66962": "Frost Strike (Off Hand)",

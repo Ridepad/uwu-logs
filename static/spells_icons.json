@@ -2679,6 +2679,7 @@
   },
   "ability_hunter_ferociousinspiration": {
     "34455": "Ferocious Inspiration",
+    "34456": "Ferocious Inspiration",
     "34459": "Ferocious Inspiration",
     "34460": "Ferocious Inspiration",
     "75446": "Ferocious Inspiration",
@@ -5068,6 +5069,8 @@
     "20050": "Vengeance",
     "20052": "Vengeance",
     "20053": "Vengeance",
+    "20054": "Vengeance",
+    "20055": "Vengeance",
     "20056": "Vengeance",
     "20057": "Vengeance",
     "29759": "Improved Berserker Stance",
@@ -9019,6 +9022,9 @@
   "inv_relics_idolofrejuvenation": {
     "18562": "Swiftmend"
   },
+  "inv_scroll_02": {
+    "33077": "Agility"
+  },
   "inv_scroll_03": {
     "28093": "Mongoose"
   },
@@ -12430,6 +12436,7 @@
     "30516": "Fire Blast",
     "30545": "Soul Fire",
     "30613": "Blast Nova",
+    "30912": "Conflagrate",
     "31263": "Pyroblast",
     "31364": "Spice Mortar",
     "31378": "Worm Blast",
@@ -18617,6 +18624,7 @@
     "25054": "Holy Smite",
     "25363": "Smite",
     "25364": "Smite",
+    "27159": "Judgement of the Crusader",
     "31740": "Holy Smite",
     "32043": "Sanctity of Battle",
     "35396": "Sanctity of Battle",
@@ -18981,6 +18989,7 @@
     "18186": "Firebolt",
     "18979": "Lightning",
     "18983": "Heal on Kill",
+    "20218": "Sanctity Aura",
     "21185": "Spinal Reaper",
     "23271": "Ephemeral Power",
     "23686": "Lightning Strike",
@@ -25887,8 +25896,15 @@
   },
   "spell_nature_unleashedrage": {
     "30802": "Unleashed Rage",
+    "30803": "Unleashed Rage",
+    "30804": "Unleashed Rage",
+    "30805": "Unleashed Rage",
+    "30806": "Unleashed Rage",
+    "30807": "Unleashed Rage",
     "30808": "Unleashed Rage",
     "30809": "Unleashed Rage",
+    "30810": "Unleashed Rage",
+    "30811": "Unleashed Rage",
     "49840": "Shock Lance",
     "60076": "Time Shock"
   },
@@ -32656,6 +32672,7 @@
     "21741": "Demonic Ally",
     "21921": "Demonic Ally",
     "21922": "Demonic Ally",
+    "27226": "Curse of Recklessness",
     "27987": "Unholy Aura",
     "27988": "Unholy Aura",
     "28340": "Unholy Aura",

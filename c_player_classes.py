@@ -224,6 +224,7 @@ SPELL_BOOK_SPEC = {
         "62606": 2, # Savage Defense
         "49800": 2, # Rip
         "48574": 2, # Rake
+        "33987": 2, # Mangle (Bear)
         "48566": 2, # Mangle (Cat)
         "51178": 2, # King of the Jungle
         "17099": 2, # Furor
@@ -260,6 +261,7 @@ SPELL_BOOK_SPEC = {
         "60053": 3, # Explosive Shot (Rank 4)
     },
     "mage": {
+        "12043": 1, # Presence of Mind
         "44781": 1, # Arcane Barrage
         "12042": 1, # Arcane Power
         "44401": 1, # Missile Barrage
@@ -295,6 +297,7 @@ SPELL_BOOK_SPEC = {
         "35395": 3, # Crusader Strike
         "53385": 3, # Divine Storm
         "54203": 3, # Sheath of Light
+        "20218": 3, # Sanctity Aura
     },
     "priest": {
         "47755": 1, # Rapture
@@ -400,6 +403,7 @@ SPELL_BOOK_SPEC = {
 
         "46968": 3, # Shockwave
         "30016": 3, # Devastate (Rank 2)
+        "30022": 3, # Devastate (Rank 3)
         "47498": 3, # Devastate (Rank 5)
     },
 }
