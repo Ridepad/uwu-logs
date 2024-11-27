@@ -38,8 +38,12 @@ def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str],
         SPECS[guid] = class_index * 4 + spec_index
 
     for player_guid, player_class in classes.items():
-        if player_guid not in SPECS:
-            SPECS[player_guid] = CLASSES_LIST_HTML.index(player_class) * 4
+        if player_guid in SPECS:
+            continue
+        spec = CLASSES_LIST_HTML.index(player_class) * 4
+        if player_class == "warlock":
+            spec += 3
+        SPECS[player_guid] = spec
 
     return SPECS
 
