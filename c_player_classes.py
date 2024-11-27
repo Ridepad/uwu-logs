@@ -216,6 +216,7 @@ SPELL_BOOK_SPEC = {
         "33831": 1, # Force of Nature
         "53195": 1, # Starfall
         "53227": 1, # Typhoon
+        "24907": 1, # Moonkin Aura
 
         "50213": 2, # Tiger's Fury
         "62078": 2, # Swipe (Cat)
