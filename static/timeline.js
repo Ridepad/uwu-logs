@@ -70,6 +70,7 @@ const CHARACTERS = [];
 CONFIG = {
   max_duration: 0,
   shift: parseInt(SELECT_BEFORE_PULL.value),
+  player_class: undefined,
 }
 
 function get_pad_value(element) {
@@ -454,16 +455,16 @@ function check_timeline(new_duraion) {
 
 
 
-function makeQuery(name) {
+function make_query(name) {
   const current_query = new URLSearchParams(window.location.search);
   const boss = current_query.get("boss");
+  if (!boss) return;
+
   const new_query = {
     name: name,
-    shift: CONFIG.shift,
+    boss: boss,
   };
-  if (!boss) return;
   
-  new_query.boss = boss;
   if (SELECT_ATTEMPTS.value) {
     new_query.attempt = SELECT_ATTEMPTS.value;
   } else {
@@ -506,6 +507,9 @@ class Character {
         break
       }
     }
+
+    const query = make_query(name);
+    if (!query) return;
     
     const req = new XMLHttpRequest();
     req.onreadystatechange = () => {
@@ -516,7 +520,7 @@ class Character {
       this.SPELLS = PARSED_DATA.SPELLS;
       this.CASTS_DATA = PARSED_DATA.DATA;
 
-      Character.PLAYER_CLASS = Character.PLAYER_CLASS ?? PARSED_DATA.CLASS
+      CONFIG.player_class = CONFIG.player_class ?? PARSED_DATA.CLASS;
       
       this.DURATION = parseFloat(PARSED_DATA.RDURATION);
       setTimeout(() => {
@@ -526,7 +530,7 @@ class Character {
     }
     req.open("POST", `/reports/${report_id}/casts/`);
     req.setRequestHeader("Content-Type", "application/json");
-    req.send(makeQuery(name));
+    req.send(query);
   }
 
   init() {
@@ -845,7 +849,7 @@ function get_report_slices() {
     const parsed_json = JSON.parse(response);
     
     for (let player_name in parsed_json) {
-      if (parsed_json[player_name] == Character.PLAYER_CLASS) {
+      if (parsed_json[player_name] == CONFIG.player_class) {
         SELECT_PLAYERS.appendChild(newOption(player_name, player_name))
       }
     }
