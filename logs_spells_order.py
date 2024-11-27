@@ -110,12 +110,6 @@ def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str]
             flags.add(flag)
         except ValueError:
             continue
-
-    for spell_id in list(history):
-        if spell_id not in COMBINE_SPELLS:
-            continue
-        main_spell_id = COMBINE_SPELLS[spell_id]
-        history[main_spell_id] = sorted(history[main_spell_id] + history.pop(spell_id))
     
     return {
         "DATA": history,
@@ -134,6 +128,8 @@ class Timeline(logs_base.THE_LOGS):
         combat_start_line = self.LOGS[s]
         data = get_history(logs_slice, guid, players_and_pets, combat_start_line)
 
+        self.spell_history_combine_spells(data["DATA"])
+        
         data["SPELLS"] = {
             x: self.SPELLS[int(x)].to_dict()
             for x in data["DATA"]
@@ -144,6 +140,16 @@ class Timeline(logs_base.THE_LOGS):
 
         return data
     
+    def spell_history_combine_spells(self, player_history: dict[str, tuple]):
+        for spell_id in list(player_history):
+            if spell_id not in COMBINE_SPELLS:
+                continue
+            main_spell_id = COMBINE_SPELLS[spell_id]
+            if main_spell_id not in self.SPELLS:
+                continue
+            combined = player_history[main_spell_id] + player_history.pop(spell_id)
+            player_history[main_spell_id] = sorted(combined)
+
     @running_time
     def get_spell_history_wrap_json(self, s: int, f: int, player_name: str):
         player_guid = self.name_to_guid(player_name)
