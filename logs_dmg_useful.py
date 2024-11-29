@@ -111,6 +111,8 @@ USEFUL = {
         "0087DC": "Lord Jaraxxus",
         "0087FD": "Infernal Volcano",
         "008809": "Nether Portal",
+        "00880A": "Mistress of Pain",
+        "0087FF": "Felflame Infernal",
     },
     "Faction Champions": TOC_CHAMPIONS,
     "Twin Val'kyr": {
@@ -120,6 +122,7 @@ USEFUL = {
     "Anub'arak": {
         "008704": "Anub'arak",
         "00872D": "Swarm Scarab",
+        "00872F": "Nerubian Burrower",
     },
     "Toravon the Ice Watcher": {
         "009621": "Toravon the Ice Watcher",
