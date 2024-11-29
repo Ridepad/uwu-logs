@@ -420,6 +420,7 @@ USEFUL_NAMES = {
     "00809F": "Runemaster Molgeim Useful",
     "008063": "Steelbreaker Useful",
     "0080A6": "Right Arm Shield",
+    "0086C0": "Valks Shield",
 }
 
 ALL_USEFUL_TARGETS = {
@@ -589,7 +590,7 @@ class UsefulDamage(logs_base.THE_LOGS):
         _w = self.target_damage_wrap(segments, boss_name)
         return self.target_damage_combine(_w["damage"], _w["no_overkill"], _w["useful_specific"])
 
-    def target_damage_all_formatted(self, segments, boss_name):
+    def damage_to_target_all_formatted(self, segments, boss_name):
         _filtered = self.target_damage_all(segments, boss_name)
         
         data_all = {

@@ -456,7 +456,9 @@ def damage_targets(report_id):
     default_params = report.get_default_params(request)
     segments = default_params["SEGMENTS"]
 
-    data = report.target_damage_all_formatted(segments, default_params["BOSS_NAME"])
+    boss_name = request.args.get("boss")
+    boss_name = BOSSES_FROM_HTML.get(boss_name, boss_name)
+    data = report.damage_to_target_all_formatted(segments, boss_name)
 
     return render_template(
         'damage_target.html', **default_params, **data,

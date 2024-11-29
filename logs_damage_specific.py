@@ -227,6 +227,21 @@ def kologarn_hands_absorb(logs_slice: list[str]):
             pass
     return DAMAGE
 
+def valks_shield(logs_slice: list[str]):
+    VALKS = {"0086C0", "0086C1"}
+    DAMAGE: defaultdict[str, int] = defaultdict(int)
+    for line in logs_slice:
+        if "ABSORB" not in line:
+            continue
+        try:
+            _line = line.split(',', 10)
+            if _line[4][6:-6] not in VALKS:
+                continue
+            DAMAGE[_line[2]] += int(_line[-1])
+        except ValueError:
+            pass
+    return DAMAGE
+
 def specific_useful(logs_slice, boss_name, specs):
     data: dict[str, defaultdict[str, int]] = {}
     if boss_name == "The Lich King":
@@ -236,6 +251,8 @@ def specific_useful(logs_slice, boss_name, specs):
         data['00808A'] = freya_useful(logs_slice)
     elif boss_name == "Festergut":
         data['008F12'] = fester_useful(logs_slice, specs)
+    elif boss_name == "Twin Val'kyr":
+        data['0086C0'] = valks_shield(logs_slice)
     elif boss_name == "Kologarn":
         data['0080A6'] = kologarn_hands_absorb(logs_slice)
     elif boss_name == "Assembly of Iron":
