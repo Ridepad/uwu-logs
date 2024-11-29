@@ -205,6 +205,23 @@ class Tier_8:
     ALL_BOSSES = FOR_POINTS + OTHER
 
 
+class Tier_6:
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = (
+        Encounter("Koralon the Flame Watcher", "25N"),
+    )
+    FOR_POINTS = (
+        Encounter("Northrend Beasts", "25H"),
+        Encounter("Lord Jaraxxus", "25H"),
+        Encounter("Faction Champions", "25H"),
+        Encounter("Twin Val'kyr", "25H"),
+        Encounter("Anub'arak", "25H"),
+    )
+    OTHER = (
+        Encounter("Koralon the Flame Watcher", "25N"),
+    )
+    ALL_BOSSES = FOR_POINTS + OTHER
+
+
 SERVER_PHASE: dict[str, str] = Files.server_phases.json_ignore_error()
 
 def get_server_phase(server):
