@@ -430,11 +430,14 @@ class UploadData:
         self.timestamp = get_now_timestamp()
         self.directory = new_upload_folder(ip, self.timestamp)
 
-class LogsArchiveStatus(api_7z.SevenZipArchive):
+class LogsArchiveParser(api_7z.SevenZipArchive):
     def __init__(
         self,
         archive_path: PathExt,
         upload_data: UploadData=None,
+        forced=False,
+        only_slices=False,
+        keep_temp_folder=False,
     ) -> None:
         super().__init__(archive_path)
         self.upload_data = upload_data or UploadData()
@@ -443,30 +446,38 @@ class LogsArchiveStatus(api_7z.SevenZipArchive):
         self.done = 0
         self.status = 'Starting...'
         self.changed = False
+        self.__slices_json = None
 
-    def slices_to_dict(self):
-        return {
+        self.forced = forced
+        self.only_slices = only_slices
+        self.keep_temp_folder = keep_temp_folder
+
+        self.has_duplicates = False
+        self.has_error = False
+        self.finished = False
+        self.mod_time_delta = None
+
+    @property
+    def slices_json(self):
+        if self.__slices_json is None:
+            self.__slices_json = self.prev_info.get("slices", {})
+        
+        if not self.changed:
+            return self.__slices_json
+        
+        self.changed = False
+        self.__slices_json = {
             k: v.to_dict()
             for k, v in self.slices.items()
         }
-
-    @property
-    def slices_dict(self):
-        try:
-            if self.changed:
-                self.changed = False
-                self.__slices_json = self.slices_to_dict()
-            return self.__slices_json
-        except AttributeError:
-            self.__slices_json = self.prev_info.get("slices", {})
-            return self.__slices_json
+        return self.__slices_json
 
     @property
     def status_dict(self):
         return {
             'done': self.done,
             'status': self.status,
-            "slices": self.slices_dict,
+            "slices": self.slices_json,
         }
 
     @property
@@ -533,6 +544,9 @@ class LogsArchiveStatus(api_7z.SevenZipArchive):
         server = self.upload_data.server
         if not server or server in SERVERS.values():
             server = DEFAULT_SERVER_NAME
+
+        if self.forced:
+            return server
         
         # print("/// NEW SERVER1:", server)
         old_server = self.prev_info.get("server")
@@ -568,27 +582,6 @@ class LogsArchiveStatus(api_7z.SevenZipArchive):
             return {}
         j: dict = json.loads(p.read_text())
         return j
-    
-
-class LogsArchiveParser(LogsArchiveStatus):
-    def __init__(
-        self,
-        archive_path: PathExt,
-        upload_data: UploadData=None,
-        forced=False,
-        only_slices=False,
-        keep_temp_folder=False,
-    ) -> None:
-        super().__init__(archive_path, upload_data)
-
-        self.forced = forced
-        self.only_slices = only_slices
-        self.keep_temp_folder = keep_temp_folder
-
-        self.has_duplicates = False
-        self.has_error = False
-        self.finished = False
-        self.mod_time_delta = None
 
     def adjust_mod_time(self, file_line: api_7z.SevenZipLine, segment: LogsSlice):
         _mod_time_delta = file_line.datetime - segment.get_last_line_dt()
@@ -844,7 +837,7 @@ class LogsArchive(LogsArchiveParser):
             "ips": _ips,
             "timestamps": _timestamps,
             "archives": _archives,
-            "slices": self.slices_dict,
+            "slices": self.slices_json,
         }
         return json.dumps(file_info, indent=2)
 
