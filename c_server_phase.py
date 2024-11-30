@@ -208,6 +208,7 @@ class Tier_8:
 class Tier_9:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Koralon the Flame Watcher", "25N"),
+        Encounter("Northrend Beasts", "25H"),
     )
     FOR_POINTS = (
         Encounter("Northrend Beasts", "25H"),
