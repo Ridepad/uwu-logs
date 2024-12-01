@@ -252,7 +252,7 @@ def specific_useful(logs_slice, boss_name, specs):
     elif boss_name == "Festergut":
         data['008F12'] = fester_useful(logs_slice, specs)
     elif boss_name == "Twin Val'kyr":
-        data['0086C0'] = valks_shield(logs_slice)
+        data['0086C2'] = valks_shield(logs_slice)
     elif boss_name == "Kologarn":
         data['0080A6'] = kologarn_hands_absorb(logs_slice)
     elif boss_name == "Assembly of Iron":
