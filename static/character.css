@@ -14,7 +14,7 @@ main {
   background-color: var(--background);
 	align-items: baseline;
   justify-items: center;
-  z-index: 20;
+  z-index: 15;
 }
 @media (orientation: landscape) {
   #top-player-info {
