@@ -263,6 +263,10 @@ USEFUL = {
         "004993": "Kiggler the Crazed",
         "004994": "Blindeye the Seer",
     },
+    "Attumen the Huntsman": {
+        "003F17": "Midnight",
+        "003F18": "Attumen the Huntsman",
+    },
 }
 
 ALL_GUIDS = {
@@ -397,6 +401,11 @@ ALL_GUIDS = {
         "008156": "Dark Rune Acolyte",
         "008069": "Ancient Rune Giant",
         "00806B": "Iron Honor Guard",
+    },
+    "Attumen the Huntsman": {
+        "003F17": "Midnight",
+        "003F18": "Attumen the Huntsman",
+        "003CBE": "Pre phase Attumen the Huntsman",
     },
 }
 
