@@ -248,7 +248,9 @@ SPELL_BOOK_SPEC = {
         "34471": 1, # The Beast Within
         "53257": 1, # Cobra Strikes
         "57475": 1, # Kindred Spirits
+        "34456": 1, # Ferocious Inspiration
         "75447": 1, # Ferocious Inspiration
+
         "20904": 2, # Aimed Shot
         "20906": 2, # Trueshot Aura
         "53220": 2, # Improved Steady Shot
@@ -256,21 +258,25 @@ SPELL_BOOK_SPEC = {
         "53353": 2, # Chimera Shot - Serpent
         "23989": 2, # Readiness
         "63468": 2, # Piercing Shots
+
         "53301": 3, # Explosive Shot (Rank 1)
         "60051": 3, # Explosive Shot (Rank 2)
         "60052": 3, # Explosive Shot (Rank 3)
         "60053": 3, # Explosive Shot (Rank 4)
+        "34501": 3, # Expose Weakness
     },
     "mage": {
         "12043": 1, # Presence of Mind
         "44781": 1, # Arcane Barrage
         "12042": 1, # Arcane Power
         "44401": 1, # Missile Barrage
+
         "12654": 2, # Ignite
         "55360": 2, # Living Bomb
         "48108": 2, # Hot Streak
         "28682": 2, # Combustion
         "11958": 3, # Cold Snap
+
         "12579": 3, # Winter's Chill
         "31687": 3, # Summon Water Elemental
         "44572": 3, # Deep Freeze
@@ -305,6 +311,7 @@ SPELL_BOOK_SPEC = {
         "52985": 1, # Penance
         "47753": 1, # Divine Aegis
         "59891": 1, # Borrowed Time
+        "10060": 1, # Power Infusion
         # 15359": 1, # Inspiration
         
         "63730": 2, # Serendipity
@@ -321,11 +328,11 @@ SPELL_BOOK_SPEC = {
         "27827": 2, # Spirit of Redemption
         "34754": 2, # Clearcasting
 
-        "48160": 3, # Vampiric Touch
+        "34917": 3, # Vampiric Touch (Rank 3)
+        "48160": 3, # Vampiric Touch (Rank 5)
         "63675": 3, # Improved Devouring Plague
-        "59000": 3, # Improved Spirit Tap
-        "48156": 3, # Mind Flay
         "33198": 3, # Misery
+        "33200": 3, # Misery
         "61792": 3, # Shadowy Insight
         "15290": 3, # Vampiric Embrace
         "15473": 3, # Shadowform
@@ -398,9 +405,12 @@ SPELL_BOOK_SPEC = {
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
 
-        "23894": 2, # Bloodthirst
         "23881": 2, # Bloodthirst
+        "23894": 2, # Bloodthirst
+        "30335": 2, # Bloodthirst
         "12292": 2, # Death Wish
+        "12292": 2, # Death Wish
+        "30033": 2, # Rampage
 
         "46968": 3, # Shockwave
         "30016": 3, # Devastate (Rank 2)
