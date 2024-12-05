@@ -9,8 +9,10 @@ def specs_gen(logs: list[str], players: dict[str, str], classes: dict[str, str])
         if guid in classes
     }
     for line in logs:
-        _, _, guid, etc = line.split(',', 3)
+        _, flag, guid, etc = line.split(',', 3)
         if guid not in class_spells:
+            continue
+        if flag == "SPELL_AURA_REMOVED":
             continue
         try:
             _spell_id = etc.split(',', 4)[3]
