@@ -119,7 +119,7 @@ const SPECS = [
   ["Demonology", "spell_shadow_metamorphosis", "warlock"],
   ["Destruction", "spell_shadow_rainoffire", "warlock"],
   ["Warrior", "class_warrior", "warrior"],
-  ["Arms", "ability_rogue_eviscerate", "warrior"],
+  ["Arms", "ability_warrior_savageblow", "warrior"],
   ["Fury", "ability_warrior_innerrage", "warrior"],
   ["Protection", "ability_warrior_defensivestance", "warrior"]
 ]
