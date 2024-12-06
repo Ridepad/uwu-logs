@@ -401,14 +401,14 @@ SPELL_BOOK_SPEC = {
     "warrior": {
         "7384": 1, # Overpower
         "47486": 1, # Mortal Strike
-        "12723": 1, # Sweeping Strikes
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
+        "46924": 1, # Bladestorm
 
+        "25251": 2, # Bloodthirst
         "23881": 2, # Bloodthirst
         "23894": 2, # Bloodthirst
         "30335": 2, # Bloodthirst
-        "12292": 2, # Death Wish
         "12292": 2, # Death Wish
         "30033": 2, # Rampage
 
