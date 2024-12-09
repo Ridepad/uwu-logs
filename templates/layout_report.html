@@ -29,21 +29,32 @@
   </h2>
   <div id="fights-container-wrap">
     <h1><a href="/reports/{{ REPORT_ID }}">{{ REPORT_NAME }}</a></h1>
-    <aside id="fights-container">
-      <input type="checkbox" id="fights-hover-dropdown-cb">
-      <label for="fights-hover-dropdown-cb" id="fights-hover-dropdown">Ξ</label>
+    <aside class="fights-container">
+      <input type="checkbox" id="kills-hover-dropdown-cb" class="fights-dropdown-cb">
+      <label for="kills-hover-dropdown-cb" id="kills-hover-dropdown-label" class="fights-dropdown-label">💀</label>
       <ul class="bosses">
-        {% for boss_data in SEGMENTS_LINKS %}
+        {% for segment in SEGMENTS_KILLS %}
         <li>
-          <a href="{{ boss_data['href'] }}" class="{{ boss_data['class_name'] }}">{{ boss_data['text'] }}</a>
+          <a href="{{ segment.href }}" class="{{ segment.css_class}}">{{ segment.segment_full_str }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </aside>
+    <aside class="fights-container">
+      <input type="checkbox" id="fights-hover-dropdown-cb" class="fights-dropdown-cb">
+      <label for="fights-hover-dropdown-cb" id="fights-hover-dropdown" class="fights-dropdown-label">Ξ</label>
+      <ul class="bosses">
+        {% for boss_segments in SEGMENTS_LINKS %}
+        <li>
+          <a href="{{ boss_segments.href }}" class="{{ boss_segments.css_class }}">{{ boss_segments.text }}</a>
           <ul class="diffs">
-            {% for diff_data in boss_data['children'] %}
+            {% for diff_data in boss_segments.by_difficulty.values() %}
             <li>
-              <a href="{{ diff_data['href'] }}" class="{{ diff_data['class_name'] }}">{{ diff_data['text'] }}</a>
+              <a href="{{ diff_data.href }}" class="{{ diff_data.css_class }}">{{ diff_data.text }}</a>
               <ul class="segments">
-                {% for segment in diff_data['children'] %}
+                {% for segment in diff_data %}
                 <li>
-                  <a href="{{ segment['href'] }}" class="{{ segment['class_name'] }}">{{ segment['text'] }}</a>
+                  <a href="{{ segment.href }}" class="{{ segment.css_class }}">{{ segment.segment_str }}</a>
                 </li>
                 {% endfor %}
               </ul>
