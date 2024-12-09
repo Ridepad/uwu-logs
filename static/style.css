@@ -456,14 +456,17 @@ footer::before {
   width: 9em;
 }
 
+/* BOSS SEGMENTS */
+
 #top-row-wrap {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   position: sticky;
   top: var(--margin-top);
   padding-block: var(--padding-top);
   background-color: var(--background);
+  flex-direction: column;
+  justify-content: space-between;
+  gap: .5em;
   z-index: 9;
 }
 @media (min-aspect-ratio: 5/4) {
@@ -472,24 +475,38 @@ footer::before {
   }
 }
 
-/* BOSS SEGMENTS */
+.fights-container .wipe-link {color: crimson;}
+.fights-container .kill-link {color: aquamarine;}
 
-#fights-container .wipe-link {color: crimson;}
-#fights-container .kill-link {color: aquamarine;}
+#top-row-wrap {
+  max-width: 100%;
+}
+#report-slice,
+#fights-container-wrap {
+  max-width: calc(100vw - .25em);
+
+}
 
 #top-row-wrap h1,
-#fights-hover-dropdown,
-#report-slice {
-  font-size: 1.75em;
+#top-row-wrap h2,
+#top-row-wrap .fights-dropdown-label {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+@media (min-aspect-ratio: 5/4) {
+  #top-row-wrap {
+    flex-direction: row;
+  }
 }
 #fights-container-wrap {
   display: flex;
   flex-direction: row;
   justify-self: end;
   align-self: end;
+  gap: .25em;
 }
 #fights-container-wrap h1 {
-  max-width: 90vw;
+  overflow: hidden;
 }
 #fights-container-wrap > h1 > a {
   display: block;
@@ -498,11 +515,13 @@ footer::before {
 	text-overflow: ellipsis;
   padding: .5em;
   margin: -.5em;
+  padding-top: 0;
+  margin-top: 0;
 }
 #report-slice a {
   display: inline-flex;
-  max-width: 100vw;
   gap: .25em;
+  max-width: 100%;
 }
 #report-slice a span {
   text-align: left;
@@ -522,92 +541,88 @@ footer::before {
   min-width: max-content;
 }
 
-#fights-hover-dropdown {
+.fights-dropdown-label {
   border: 0;
   padding-block: 0;
-  padding-inline: 1em;
-  background-color: var(--background);
+  min-width: 4rem;
+  text-align: center;
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
-  z-index: 2;
 }
-#fights-container {
+.fights-container {
   position: relative;
 }
-#fights-container .bosses {
+.fights-container .bosses {
   position: absolute;
   right: 5%;
   z-index: 10;
 }
-#fights-container ul {
+.fights-container ul {
   display: none;
   padding: 0;
   min-width: max-content;
   background-color: var(--background);
   box-shadow: 0 0 0 .15rem var(--primary-color);
 }
-#fights-container a:hover {
+.fights-container a:hover {
   color: var(--link-hover);
   text-shadow: .1em .1em .5em var(--link-text-shadow-hover);
 }
-#fights-container li {
+.fights-container li {
   position: relative;
 }
-#fights-container li:hover {
+.fights-container li:hover {
   background-color: var(--highlight-color); 
 }
-#fights-hover-dropdown-cb:checked ~ .bosses,
-#fights-container:hover .bosses, 
-#fights-container .bosses li:hover > .diffs,
-#fights-container .diffs li:hover > .segments {
+.fights-dropdown-cb:checked ~ .bosses,
+.fights-container:hover .bosses, 
+.fights-container .bosses li:hover > .diffs,
+.fights-container .diffs li:hover > .segments {
   display: block;
 }
-#fights-container .diffs,
-#fights-container .segments {
+.fights-container .diffs,
+.fights-container .segments {
   position: absolute;
   top: 0;
 }
-#fights-container .diffs {
+.fights-container .diffs {
   z-index: 15;
 }
-#fights-container .segments {
+.fights-container .segments {
   padding-inline: .5rem;
   z-index: 20;
 }
 
 @media (orientation: portrait) {
-  #fights-container > h1 > a {
-    overflow: clip;
-  }
-  #fights-container ul:not(.segments) > li::before {
+  .fights-container ul:not(.segments) > li::before {
     content: '>';
     box-shadow: inset -.2rem 0 var(--primary-color);
     padding-inline: 2rem;
     font-size: 125%;
   }
-  #fights-container .diffs li {
+  .fights-container .diffs li {
     padding-block: .25rem;
   }
-  #fights-container .diffs,
-  #fights-container .segments {
+  .fights-container .diffs,
+  .fights-container .segments {
     top: 100%;
     left: 5rem;
   }
 }
 @media (orientation: landscape) {
-  #fights-container .diffs {
+  .fights-container .diffs {
     transform: translateY(-1rem);
   }
-  #fights-container .diffs,
-  #fights-container .segments {
+  .fights-container .diffs,
+  .fights-container .segments {
     right: 100%;
   }
-  #fights-container .diffs li:first-of-type {
+  .fights-container .diffs li:first-of-type {
     padding-top: 1rem;
   }
-  #fights-container li:last-of-type {
+  .fights-container li:last-of-type {
     padding-bottom: 1rem;
   }
-  #fights-container ul a {
+  .fights-container ul a {
     padding-inline: 1em;
   }
 }
