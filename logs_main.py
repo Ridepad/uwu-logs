@@ -189,7 +189,13 @@ class THE_LOGS(
     def parse_request_by_attempt(self, query: QuerySegment):
         boss_name = BOSSES_FROM_HTML[query.boss]
         attempt_int = int(query.attempt)
-        segment = self.SEGMENTS[boss_name][attempt_int]
+
+        try:
+            segment = self.SEGMENTS[boss_name][attempt_int]
+        except IndexError:
+            segment = self.SEGMENTS[boss_name][-1]
+        except KeyError:
+            return self.parse_request_custom_slice(query)
         
         s_shifted = self.precise_shift(segment.start, query.custom_start)
         f_shifted = segment.end
@@ -214,6 +220,8 @@ class THE_LOGS(
     def parse_request_last_kill_for_difficulty(self, query: QuerySegment):
         boss_name = BOSSES_FROM_HTML[query.boss]
         segment = self.get_latest_kill(boss_name, query.mode)
+        if segment is None:
+            return self.parse_request_custom_slice(query)
         segments = [[segment.start, segment.end]]
         return {
             "SEGMENTS": segments,
