@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 
 import logs_base
 import logs_absorbs
@@ -53,13 +54,6 @@ def is_guid(s: str):
     except ValueError:
         return False
 
-def get_shift(request_path: str):
-    url_comp = request_path.split('/')
-    try:
-        return SHIFT.get(url_comp[3], 0)
-    except IndexError:
-        return 0
-
 def format_report_page_data(value: int, duration: float, max_value: int):
     return {
         "value": separate_thousands(value),
@@ -106,6 +100,40 @@ def query_no_custom(query: str):
     return query
 
 
+def to_int(v: str, default: int=None):
+    try:
+        return int(v)
+    except Exception:
+        return default
+
+@dataclass
+class QuerySegment:
+    boss: str = ""
+    mode: str = ""
+    attempt: str = ""
+    s: str = None
+    f: str = None
+    sc: str = None
+    fc: str = None
+    target: str = None
+
+    @property
+    def start(self):
+        return to_int(self.s)
+    @property
+    def end(self):
+        return to_int(self.f)
+    @property
+    def custom_start(self):
+        return to_int(self.sc)
+    @property
+    def custom_end(self):
+        return to_int(self.fc)
+    @property
+    def encounter_name(self):
+        return BOSSES_FROM_HTML.get(self.boss, self.boss)
+
+
 class THE_LOGS(
     logs_check_difficulty.LogsSegments,
     logs_dmg_breakdown.SourceNumbers,
@@ -131,83 +159,102 @@ class THE_LOGS(
         }
         return json.dumps(_data)
     
-    def segments_apply_shift(self, segments, shift_s=0, shift_f=0):
-        if not shift_s and not shift_f:
-            return
-        
-        ts = self.get_timestamp()
-        for i, (seg_s, seg_f) in enumerate(segments):
-            if shift_s:
-                seg_s_shifted = self.find_index(seg_s, shift_s)
-                seg_s = ts[seg_s_shifted]
-            if shift_f:
-                seg_f_shifted = self.find_index(seg_f, shift_f)
-                seg_f = ts[seg_f_shifted]
-            segments[i] = [seg_s, seg_f]
-    
-    def _attempt_name(self, boss_name, attempt):
-        for diff, segm_data in self.SEGMENTS_SEPARATED[boss_name].items():
-            for segm in segm_data:
-                if segm.get("attempt") == attempt:
-                    segment_type = segm.get("segment_type", "")
-                    return f"{diff} {segment_type}"
-        return f"Try {attempt+1}"
+    def _attempt_name(self, boss_name: str, attempt: int):
+        segment = self.SEGMENTS[boss_name][attempt]
+        return segment.segment_type
 
-    def parse_request(self, path: str, args: dict) -> dict:
-        segment_difficulty = args.get("mode")
-        attempt = get_dict_int(args, "attempt")
-        boss_name = args.get("boss")
-        ts = self.get_timestamp()
-        if boss_name == "all":
-            slice_name = "Bosses"
-            slice_tries = "All"
-            segments = [x for y in self.ENCOUNTER_DATA.values() for x in y]
-        
-        elif boss_name not in BOSSES_FROM_HTML:
-            slice_name = "Custom Slice"
-            slice_tries = ""
-            s = get_dict_int(args, "s")
-            f = get_dict_int(args, "f")
-            if s and f:
-                segments = [[ts[s], ts[f]]]
-            else:
-                segments =  [[None, None]]
-        
-        else:
-            boss_name = BOSSES_FROM_HTML[boss_name]
-            slice_name = boss_name
-            if attempt is not None:
-                slice_tries = self._attempt_name(boss_name, attempt)
-                s, f = self.ENCOUNTER_DATA[boss_name][attempt]
-                sc = get_dict_int(args, "sc", 0)
-                fc = get_dict_int(args, "fc", 0)
-                s_shifted = self.precise_shift(s, sc)
-                f_shifted = f
-                if fc and fc < self.get_slice_duration(s, f):
-                    f_shifted = self.precise_shift(s, fc)
-                segments = [[s_shifted, f_shifted], ]
-            elif segment_difficulty:
-                slice_tries = f"{segment_difficulty} All"
-                segments = [
-                    [segment["start"], segment["end"]]
-                    for segment in self.SEGMENTS_SEPARATED[boss_name][segment_difficulty]
-                ]
-            else:
-                slice_tries = "All"
-                segments = self.ENCOUNTER_DATA[boss_name]
-            
-            shift = get_shift(path)
-            self.segments_apply_shift(segments, shift_s=shift)
-        
+    def parse_request_all_bosses(self):
+        slice_name = "Bosses"
+        slice_tries = "All"
+        segments = [x for y in self.ENCOUNTER_DATA.values() for x in y]
         return {
             "SEGMENTS": segments,
             "SLICE_NAME": slice_name,
             "SLICE_TRIES": slice_tries,
-            "BOSS_NAME": boss_name,
         }
+    
+    def parse_request_custom_slice(self, query: QuerySegment):
+        slice_name = "Custom Slice"
+        slice_tries = ""
+        if query.start and query.end:
+            segments = [[self.TIMESTAMPS[query.start], self.TIMESTAMPS[query.end]]]
+        else:
+            segments =  [[None, None]]
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": slice_name,
+            "SLICE_TRIES": slice_tries,
+        }
+    
+    def parse_request_by_attempt(self, query: QuerySegment):
+        boss_name = BOSSES_FROM_HTML[query.boss]
+        attempt_int = int(query.attempt)
+        segment = self.SEGMENTS[boss_name][attempt_int]
+        
+        s_shifted = self.precise_shift(segment.start, query.custom_start)
+        f_shifted = segment.end
+        if query.custom_end and query.custom_end < segment.duration:
+            f_shifted = self.precise_shift(segment.start, query.custom_end)
+        segments = [[s_shifted, f_shifted], ]
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": boss_name,
+            "SLICE_TRIES": segment.segment_diff_type,
+        }
+    
+    def parse_request_by_difficulty(self, query: QuerySegment):
+        boss_name = BOSSES_FROM_HTML[query.boss]
+        segments = self.ENCOUNTER_DATA[boss_name]
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": boss_name,
+            "SLICE_TRIES": "All",
+        }
+    
+    def parse_request_last_kill_for_difficulty(self, query: QuerySegment):
+        boss_name = BOSSES_FROM_HTML[query.boss]
+        segment = self.get_latest_kill(boss_name, query.mode)
+        segments = [[segment.start, segment.end]]
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": boss_name,
+            "SLICE_TRIES": segment.segment_diff_type,
+        }
+    
+    def parse_request_all_boss_segments(self, query: QuerySegment):
+        boss_name = BOSSES_FROM_HTML[query.boss]
+        segments = [
+            [segment.start, segment.end]
+            for segment in self.SEGMENTS[boss_name]
+            if segment.difficulty == query.mode
+        ]
+        return {
+            "SEGMENTS": segments,
+            "SLICE_NAME": boss_name,
+            "SLICE_TRIES": f"{query.mode} All",
+        }
+
+    def parse_request(self, query: QuerySegment) -> dict:
+        if query.boss == "all":
+            return self.parse_request_all_bosses()
+        
+        if query.boss not in BOSSES_FROM_HTML:
+            return self.parse_request_custom_slice(query)
+        
+        if query.attempt.isdigit():
+            return self.parse_request_by_attempt(query)
+        
+        if not query.mode:
+            return self.parse_request_by_difficulty(query)
+        
+        if query.attempt == "kill":
+            return self.parse_request_last_kill_for_difficulty(query)
+        
+        return self.parse_request_all_boss_segments(query)
 
     # def get_default_params(self, path: str, query: str, args: dict) -> dict:
     def get_default_params(self, request) -> dict:
+        # print('>>>>> get_default_params')
         PATH: str = request.path
         QUERY: str = request.query_string.decode()
         if QUERY:
@@ -220,7 +267,8 @@ class THE_LOGS(
         _server = report_name_info.get("server", "")
         if _server and _server[-1].isdigit():
             _server = _server[:-1]
-        parsed = self.parse_request(PATH, request.args)
+        query_data = QuerySegment(**request.args)
+        parsed = self.parse_request(query_data)
         duration = self.get_fight_duration_total(parsed["SEGMENTS"])
         return_data = parsed | {
             "PATH": PATH,
@@ -229,6 +277,7 @@ class THE_LOGS(
             "REPORT_ID": self.NAME,
             "REPORT_NAME": self.FORMATTED_NAME,
             "SEGMENTS_LINKS": self.SEGMENTS_QUERIES,
+            "SEGMENTS_KILLS": self.SEGMENTS_KILLS,
             "PLAYER_CLASSES": self.CLASSES_NAMES,
             "DURATION": duration,
             "DURATION_STR": self.duration_to_string(duration),
