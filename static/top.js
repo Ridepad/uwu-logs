@@ -213,10 +213,14 @@ function speedrun_selected() {
 //   return CHECKBOX_HEALING.checked;
 // }
 
-function _make_query_top() {
+function selected_difficuty() {
   const size = SELECT_SIZE.value;
   const diff = heroic_toggled() ? 'H' : 'N';
-  const mode = `${size}${diff}`;
+  return `${size}${diff}`;
+}
+
+function _make_query_top() {
+  const mode = selected_difficuty();
   return {
     server: SELECT_SERVER.value,
     boss: SELECT_BOSS.value,
@@ -358,7 +362,10 @@ function cell_date(report_ID) {
   const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day} ${months_str} ${year}`;
 
   const a = document.createElement('a');
-  a.href = `/reports/${report_ID}--${SELECT_SERVER.value}`;
+  const boss = SELECT_BOSS.value.toLowerCase().replaceAll(" ", "-");
+  const link_root = `/reports/${report_ID}--${SELECT_SERVER.value}`;
+  const link_query = `?boss=${boss}&mode=${selected_difficuty()}&attempt=kill`;
+  a.href = `${link_root}/${link_query}`;
   a.target = "_blank";
   a.append(date_text);
 
@@ -720,8 +727,7 @@ function fetch_column(event) {
 }
 
 function push_new_state() {
-  const difficulty = heroic_toggled() ? 'H' : "N";
-  const mode = `${SELECT_SIZE.value}${difficulty}`;
+  const mode = selected_difficuty();
   const title = `UwU Logs - Top - ${SELECT_BOSS.value} - ${mode}`;
   document.title = title;
 
