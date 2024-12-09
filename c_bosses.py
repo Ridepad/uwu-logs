@@ -33,9 +33,9 @@ BOSSES_GUIDS = {
     "009BB7": "Halion",
     "009CCE": "Halion",
     
-    "0087EC": "Gormok the Impaler",
-    "008948": "Acidmaw",
-    "0087EF": "Dreadscale",
+    # "0087EC": "Gormok the Impaler",
+    # "008948": "Acidmaw",
+    # "0087EF": "Dreadscale",
     "0087ED": "Icehowl",
     "0087DC": "Lord Jaraxxus",
     "0086C0": "Eydis Darkbane",

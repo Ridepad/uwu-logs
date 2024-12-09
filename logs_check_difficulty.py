@@ -228,7 +228,7 @@ def is_overkill_on_boss(line: list[str]):
 def is_kill(last_line: str):
     line = last_line.split(',', 11)
     if line[1] == "UNIT_DIED":
-        return True
+        return line[4][6:-6] in BOSSES_GUIDS
     try:
         return line[6] == "72350" or is_overkill_on_boss(line)
     except IndexError:
