@@ -118,6 +118,10 @@ ITEM_INFO = {
         "name": "Haste Potion",
         "icon": "inv_potion_108",
     },
+    "28508": {
+        "name": "Destruction Potion",
+        "icon": "inv_potion_107",
+    },
     "28714": {
         "name": "Flame Cap",
         "icon": "inv_misc_herb_flamecap",
