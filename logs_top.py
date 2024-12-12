@@ -31,6 +31,7 @@ OVERKILL = "58427"
 CLEARCASTING = "16870"
 FOCUS_MAGIC = "54646"
 BATTLE_SQUAWK = "23060"
+TRICKS_OF_TRADE = "57933"
 SPECS_NO_USE_FOR_CHICKEN = {*range(12, 16), *range(20, 24), 29, 31, 33, 35}
 
 def f_auras(auras: dict[str, AuraUptimeDuration], spec: int):
@@ -41,6 +42,8 @@ def f_auras(auras: dict[str, AuraUptimeDuration], spec: int):
             del auras[OVERKILL]
     if spec != 6 and CLEARCASTING in auras:
         del auras[CLEARCASTING]
+    if spec in range(24, 28) and TRICKS_OF_TRADE in auras:
+        del auras[TRICKS_OF_TRADE]
     if spec in range(12, 16) and FOCUS_MAGIC in auras:
         del auras[FOCUS_MAGIC]
     if spec in SPECS_NO_USE_FOR_CHICKEN and BATTLE_SQUAWK in auras:
