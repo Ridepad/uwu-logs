@@ -469,7 +469,15 @@ POT_GROUP = {
 
 ALL_POTS = set(ITEM_INFO) | set(POT_GROUP)
 ALL_POTS.discard("28714")
-POTS_VALUE = {"53908", "53909", "28494", "28507", "28714", "43186"}
+POTS_VALUE = {
+    "53908",
+    "53909",
+    "28494",
+    "28507",
+    "28508",
+    "28714",
+    "43186",
+}
 
 def count_total(data: dict[str, dict[str, int]]):
     total: defaultdict[str, int] = defaultdict(int)
