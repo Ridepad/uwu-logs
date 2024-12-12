@@ -32,6 +32,20 @@ API_EXAMPLES = [
     },
 ]
 
+EXT_DATA = {
+    "10060": "Power Infusion",
+    "19753": "Divine Intervention",
+    "49016": "Hysteria",
+    "57933": "Tricks of the Trade",
+}
+EXT_IDS = tuple(EXT_DATA)
+
+def has_external(auras: str):
+    for id in EXT_IDS:
+        if id in auras:
+            return True
+    return False
+
 def spec_db_query(class_i: int, spec_i: int):
     if class_i == -1:
         spec_q = ""
@@ -51,6 +65,7 @@ class TopValidation(BaseModel):
     sort_by: str = Columns.USEFUL_DPS
     limit: int = LIMITS[1]
     best_only: bool = True
+    externals: bool = True
 
     model_config = {
         "json_schema_extra": {
@@ -58,22 +73,35 @@ class TopValidation(BaseModel):
         }
     }
 
-    def build_query_string(self):
-        if self.best_only:
-            select_q = f"{Columns.FORMATTED_STRING}, guid"
-        else:
-            select_q = Columns.FORMATTED_STRING
-        
+    def build_query_string(self, filter_raid_ids: str=None):
         table_name = DB.get_table_name(self.boss, self.mode)
-        spec_q = spec_db_query(self.class_i, self.spec_i)
+        select_q = self._query_select()
         order = "ASC" if self.sort_by in SORT_REVERSED else "DESC"
+        if filter_raid_ids:
+            where_q = f"WHERE {Columns.PLAYER_RAID_ID} IN ({filter_raid_ids})"
+        else:
+            where_q = spec_db_query(self.class_i, self.spec_i)
 
-        return f'''
-        SELECT {select_q}
-        FROM [{table_name}]
-        {spec_q}
-        ORDER BY {self.sort_by} {order}
-        '''
+        return '\n'.join((
+            f"SELECT {select_q}",
+            f"FROM [{table_name}]",
+            where_q,
+            f"ORDER BY {self.sort_by} {order}",
+        ))
+    
+    def _query_select(self):
+        if self.best_only:
+            return f"{Columns.FORMATTED_STRING}, guid"
+        return Columns.FORMATTED_STRING
+    
+    def query_auras(self):
+        table_name = DB.get_table_name(self.boss, self.mode)
+        where = spec_db_query(self.class_i, self.spec_i)
+        return "\n".join((
+            f"SELECT {Columns.PLAYER_RAID_ID}, {Columns.AURAS}",
+            f"FROM [{table_name}]",
+            where,
+        ))
 
     @field_validator("server")
     @classmethod
@@ -142,10 +170,18 @@ class Top(TopDBCached):
     def __init__(self, model: TopValidation) -> None:
         super().__init__(model.server)
 
+        self.model = model
         self.json_query = model.model_dump_json()
-        self.db_query = model.build_query_string()
         self.limit = model.limit
         self.best_only = model.best_only
+        self.table_name = self.get_table_name(model.boss, model.mode)
+    
+    @property
+    def db_query(self):
+        filter_raid_ids = None
+        if not self.model.externals:
+            filter_raid_ids = self._raid_ids_no_ext()
+        return self.model.build_query_string(filter_raid_ids)
 
     def get_data(self):
         if self.db_was_updated():
@@ -196,6 +232,15 @@ class Top(TopDBCached):
     def _all(self) -> list[bytes]:
         rows_generator = self.cursor.execute(self.db_query)
         return [v for v, in islice(rows_generator, self.limit)]
+
+    def _raid_ids_no_ext(self):
+        query = self.model.query_auras()
+        raid_ids = (
+            raid_id
+            for raid_id, auras in self.cursor.execute(query)
+            if not has_external(auras)
+        )
+        return ','.join(f'"{x}"' for x in raid_ids)
 
 
 def _test1():

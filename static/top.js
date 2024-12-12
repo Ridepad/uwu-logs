@@ -30,6 +30,7 @@ const LOADING_INFO_PANEL = document.getElementById('loading-info-panel');
 const TOGGLE_TOTAL_DAMAGE = document.getElementById('toggle-total-damage');
 const TOGGLE_USEFUL_DAMAGE = document.getElementById('toggle-useful-damage');
 const TOGGLE_LIMIT = document.getElementById('toggle-limit');
+const TOGGLE_EXTERNALS = document.getElementById('toggle-externals');
 const THE_TOOLTIP = document.getElementById("the-tooltip");
 const THE_TOOLTIP_BODY = document.getElementById("tooltip-body");
 const SECTION_NO_DATA = document.getElementById("no-data");
@@ -68,6 +69,7 @@ const LOCAL_STORAGE = {
     [TOGGLE_TOTAL_DAMAGE.id]: "top_total",
     [TOGGLE_USEFUL_DAMAGE.id]: "top_useful",
     [TOGGLE_LIMIT.id]: "top_limit",
+    [TOGGLE_EXTERNALS.id]: "top_externals",
   },
   get(elm) {
     const key = this.convert_key(elm);
@@ -87,6 +89,7 @@ const IRRELEVANT_FOR_POINTS = [
   INTERACTABLES.best,
   TOGGLE_TOTAL_DAMAGE,
   TOGGLE_USEFUL_DAMAGE,
+  TOGGLE_EXTERNALS,
 ];
 const IRRELEVANT_FOR_SPEEDRUN = [
   INTERACTABLES.size,
@@ -96,6 +99,7 @@ const IRRELEVANT_FOR_SPEEDRUN = [
   INTERACTABLES.best,
   TOGGLE_TOTAL_DAMAGE,
   TOGGLE_USEFUL_DAMAGE,
+  TOGGLE_EXTERNALS,
 ];
 
 const ROW_LIMIT = 1000;
@@ -230,6 +234,7 @@ function _make_query_top() {
     spec_i: SELECT_SPEC.value,
     sort_by: SORT_VARS.last_column_sort[TABLE_TOP.id],
     limit: TOGGLE_LIMIT.checked ? 1000 : 10000,
+    externals: TOGGLE_EXTERNALS.checked,
   };
 }
 
@@ -826,10 +831,12 @@ function init_other_elements() {
   TOGGLE_TOTAL_DAMAGE.checked = show_total == "true" ? true : show_total == "false" ? false : is_landscape.matches;
   TOGGLE_USEFUL_DAMAGE.checked = LOCAL_STORAGE.get(TOGGLE_USEFUL_DAMAGE) != "false";
   TOGGLE_LIMIT.checked = LOCAL_STORAGE.get(TOGGLE_LIMIT) != "false";
+  TOGGLE_EXTERNALS.checked = LOCAL_STORAGE.get(TOGGLE_EXTERNALS) != "false";
 
   add_toggle_functions(TOGGLE_TOTAL_DAMAGE, () => TOGGLE_COLUMNS.total_columns());
   add_toggle_functions(TOGGLE_USEFUL_DAMAGE, () => TOGGLE_COLUMNS.useful_columns());
   add_toggle_functions(TOGGLE_LIMIT, new_state);
+  add_toggle_functions(TOGGLE_EXTERNALS, new_state);
 
   toggle_difficulty_checkbox();
 }
