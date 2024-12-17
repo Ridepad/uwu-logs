@@ -316,6 +316,19 @@ COWARDS = {
     "008067": "Algalon the Observer",
 }
 
+BOSSES_ICC = [
+    "Lord Marrowgar",
+    "Lady Deathwhisper",
+    "Deathbringer Saurfang",
+    "Festergut",
+    "Rotface",
+    "Professor Putricide",
+    "Blood Prince Council",
+    "Blood-Queen Lana'thel",
+    "Sindragosa",
+    "The Lich King",
+]
+
 ENCOUNTER_MIN_DURATION = {
     "Malygos": 120,
     "Onyxia": 25,
