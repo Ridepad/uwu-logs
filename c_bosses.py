@@ -121,10 +121,10 @@ BOSSES_GUIDS = {
     # Gruul"s Lair
     "004A64": "Gruul the Dragonkiller",
     "00498F": "High King Maulgar",
-    # "004990": "Krosh Firehand",
-    # "004992": "Olm the Summoner",
-    # "004993": "Kiggler the Crazed",
-    # "004994": "Blindeye the Seer",
+    "004990": "Krosh Firehand",
+    "004992": "Olm the Summoner",
+    "004993": "Kiggler the Crazed",
+    "004994": "Blindeye the Seer",
     # Serpentshrine Cavern
     "0052E0": "Hydross the Unstable",
     "0052E1": "The Lurker Below",
