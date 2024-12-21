@@ -1,4 +1,4 @@
-export const wowSimTemplate = {
+export const wow_sim_template = {
   player: {
     equipment: {
       items: [],
@@ -16,7 +16,7 @@ export const wowSimTemplate = {
     itemSwap: {},
   },
 };
-export const specOverrides = {
+export const spec_overrides = {
   hunter: {
     player: {
       hunter: {

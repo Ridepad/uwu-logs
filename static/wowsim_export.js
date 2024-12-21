@@ -1,4 +1,4 @@
-import { wowSimTemplate, specOverrides } from "./proto/template.js";
+import { wow_sim_template, spec_overrides } from "./proto/template.js";
 const TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE";
 const WOWSIM_URL = "https://wowsims.github.io/wotlk/";
 const max_talents_tree_len = {
@@ -110,10 +110,9 @@ async function convert_to_link(e, name, set, talents) {
       })
       .catch((err) => console.error("Error loading file:", err));
   }
-  sim_data = structuredClone(wowSimTemplate);
+  sim_data = structuredClone(wow_sim_template);
 
   sim_data.player.name = name;
-  sim_data.player.class = SIM_CLASS[set.class];
   sim_data.player.class = SIM_CLASS[set.class];
   sim_data.player.race = SIM_RACE[set.race];
   sim_data.player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
@@ -127,7 +126,7 @@ async function convert_to_link(e, name, set, talents) {
   };
 
   const spec = find_spec(set.class, sim_gear);
-  const spec_override = specOverrides[spec.length ? spec + set.class : set.class.toLowerCase()];
+  const spec_override = spec_overrides[spec.length ? spec + set.class : set.class.toLowerCase()];
 
   sim_data = merge_deep(sim_data, spec_override);
   spec_path = spec + (spec.length ? "_" : "") + set.class.toLowerCase();
