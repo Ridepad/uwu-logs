@@ -311,7 +311,7 @@ export default class Gear {
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
       const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
       set_new_spec_profs_values(e, data[i], "specs", talents_string);
-      convert_to_link(e.querySelector(DEFAULT_SELECTOR["specs"][0]), this.NAME, SET, talents_string)
+      convert_to_link(i, e.querySelector(DEFAULT_SELECTOR["specs"][0]), this.NAME, SET, talents_string)
     });
   }
   add_profs() {

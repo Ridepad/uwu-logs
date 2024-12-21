@@ -90,10 +90,10 @@ const SPEC_GEMS = {
 
 let glyphs = null;
 let global_gems = null;
-let sim_data;
-let spec_path;
+let sim_data = [];
+let spec_path = [];
 
-async function convert_to_link(e, name, set, talents) {
+async function convert_to_link(i, e, name, set, talents) {
   if (!glyphs) {
     await fetch("/static/glyphs.json")
       .then((response) => response.json())
@@ -110,34 +110,50 @@ async function convert_to_link(e, name, set, talents) {
       })
       .catch((err) => console.error("Error loading file:", err));
   }
-  sim_data = structuredClone(wow_sim_template);
+  sim_data[i] = structuredClone(wow_sim_template);
 
-  sim_data.player.name = name;
-  sim_data.player.class = SIM_CLASS[set.class];
-  sim_data.player.race = SIM_RACE[set.race];
-  sim_data.player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
-  sim_data.player.profession2 = SIM_PROFESSIONS[!set.profs[1] ? Object.keys(set.profs)[1] : set.profs[1][0]];
+  sim_data[i].player.name = name;
+  sim_data[i].player.class = SIM_CLASS[set.class];
+  sim_data[i].player.race = SIM_RACE[set.race];
+  sim_data[i].player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
+  sim_data[i].player.profession2 = SIM_PROFESSIONS[!set.profs[1] ? Object.keys(set.profs)[1] : set.profs[1][0]];
 
   let sim_gear = transform_gear_data(set.gear_data);
-  sim_data.player.equipment["items"] = sim_gear;
-  sim_data.player = {
-    ...sim_data.player,
+  sim_data[i].player.equipment["items"] = sim_gear;
+
+  const spec = find_spec(set.class, sim_gear, set.specs[i][0]);
+  console.log(spec);
+  
+  const spec_override = spec_overrides[spec.length ? spec + set.class : set.class.toLowerCase()];
+  sim_data[i] = merge_deep(sim_data[i], spec_override);
+
+  sim_data[i].player = {
+    ...sim_data[i].player,
     ...convert_talents(set.class, talents),
   };
 
-  const spec = find_spec(set.class, sim_gear);
-  const spec_override = spec_overrides[spec.length ? spec + set.class : set.class.toLowerCase()];
+  if(Object.keys(sim_data[i].player.glyphs).length === 0 && spec_override.player.glyphsOverride !== undefined) {
+    sim_data[i].player.glyphs = spec_override.player.glyphsOverride[set.specs[i][0]];
+  }
 
-  sim_data = merge_deep(sim_data, spec_override);
-  spec_path = spec + (spec.length ? "_" : "") + set.class.toLowerCase();
-
-  //TODO fix issue which causes to open only last link
-  e.removeEventListener("click", handle_click);
-  e.addEventListener("click", handle_click);
+  spec_path[i] = spec + (spec.length ? "_" : "") + set.class.toLowerCase();
+  
+  if (i == 0) {
+    e.removeEventListener("click", handle_click_0);
+    e.addEventListener("click", handle_click_0);
+  } else if (i == 1) {
+    e.removeEventListener("click", handle_click_1);
+    e.addEventListener("click", handle_click_1);
+  }
 }
 // handler for clicks
-function handle_click(e) {
-  deflate(e, sim_data, spec_path)
+function handle_click_0(e) {
+  deflate(e, sim_data[0], spec_path[0])
+    .then((url) => window.open(url))
+    .catch((err) => console.error(err));
+}
+function handle_click_1(e) {
+  deflate(e, sim_data[1], spec_path[1])
     .then((url) => window.open(url))
     .catch((err) => console.error(err));
 }
@@ -221,7 +237,12 @@ function convert_talents(char_class, char_talents) {
   }
   const trees_enc_sims = trees_joined.join("-");
   const glyphs_sims = convert_glyps(char_class, char_talents_string);
-
+  
+  if (Object.keys(glyphs_sims).length === 0) {    
+    return {
+      talentsString: trees_enc_sims,
+    };
+  }
   return {
     talentsString: trees_enc_sims,
     glyphs: glyphs_sims,
@@ -284,12 +305,16 @@ function convert_glyps(char_class, char_talents_string) {
 
   return char_glyphs;
 }
-//uses meta gems to find spec
-function find_spec(set_class, sim_gear) {
+// uses set_spec or meta gems to find spec
+function find_spec(set_class, sim_gear, set_spec) {
   let spec = "";
   let intersec = [];
   switch (set_class) {
     case "Druid":
+      if (set_spec.toLowerCase() === 'balance') {
+        spec = "balance";
+        break;
+      }
       intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
       if (intersec.length) {
         spec = "feral_tank";
@@ -300,9 +325,17 @@ function find_spec(set_class, sim_gear) {
         spec = "feral";
         break;
       }
+      if (set_spec.toLowerCase() === 'feral combat') {
+        spec = "feral";
+        break;
+      }
       spec = "balance";
       break;
     case "Shaman":
+      if (["enhancement", "elemental"].includes(set_spec.toLowerCase())) {
+        spec = set_spec.toLowerCase();  
+        break;
+      }
       intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.apDps.includes(value));
       if (intersec.length) {
         spec = "enhancement";
@@ -311,6 +344,10 @@ function find_spec(set_class, sim_gear) {
       spec = "elemental";
       break;
     case "Paladin":
+      if (["protection", "retribution"].includes(set_spec.toLowerCase())) {
+        spec = set_spec.toLowerCase();  
+        break;
+      }
       intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
       if (intersec.length) {
         spec = "protection";
@@ -319,6 +356,10 @@ function find_spec(set_class, sim_gear) {
       spec = "retribution";
       break;
     case "Priest":
+      if (set_spec.toLowerCase() === 'shadow') {
+        spec = "shadow";
+        break;
+      }
       intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.heal.includes(value));
       if (intersec.length) {
         spec = "healing";
@@ -327,6 +368,10 @@ function find_spec(set_class, sim_gear) {
       spec = "shadow";
       break;
     case "Warrior":
+      if (set_spec.toLowerCase() === 'protection') {
+        spec = "protection";
+        break;
+      }
       intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
       if (intersec.length) {
         spec = "protection";
@@ -348,7 +393,6 @@ function find_spec(set_class, sim_gear) {
 
   return spec;
 }
-
 // can be used to test export strings
 function inflate(base64EncodedData) {
   protobuf.load("./static/proto/wowsim_pb.json", function (err, root) {
