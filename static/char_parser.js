@@ -237,8 +237,8 @@ export default class Gear {
     });
   }
   parse_json(response) {
-    
     response.json().then(data => {
+      console.log(data);
       this.CHAR_DATA = data;
       this.SET_NAMES = Object.keys(data);
       this.SET_AMOUNT = this.SET_NAMES.length;
