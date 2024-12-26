@@ -1,6 +1,7 @@
 from c_player_classes import SPECS_LIST
 
 import json
+from bisect import bisect_left
 
 import logs_fight_separator
 import logs_get_time
