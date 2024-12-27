@@ -120,8 +120,7 @@ def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str]
 class Timeline(logs_base.THE_LOGS):
     @logs_base.cache_wrap
     def get_spell_history(self, s: int, f: int, guid: str) -> dict[str, defaultdict[str, int]]:
-        ts = self.get_timestamp()
-        s_shifted = ts[self.find_index(s, 180)]
+        s_shifted = self.find_shifted_log_line(s, -180)
         logs_slice = self.LOGS[s_shifted:f]
 
         players_and_pets = self.get_players_and_pets_guids()

@@ -286,13 +286,13 @@ class THE_LOGS(
             return 0
         if not shift:
             shift = 0
-        return bisect_left(self.TIMESTAMPS, line_index) + shift
+        shifted = bisect_left(self.TIMESTAMPS, line_index) + shift
+        return max(shifted, 0)
     
     def find_shifted_log_line(self, line_index: int, shift: int):
         if not line_index or not shift:
             return line_index
-        index = self.find_index(line_index, shift)
-        new_index = index + shift
+        new_index = self.find_index(line_index, shift)
         return self.TIMESTAMPS[new_index]
     
     def find_sec_from_start(self, s):
