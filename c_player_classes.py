@@ -322,6 +322,7 @@ SPELL_BOOK_SPEC = {
         "63544": 2, # Empowered Renew
         "63725": 2, # Holy Concentration
         "34864": 2, # Circle of Healing (Rank 3)
+        "34866": 2, # Circle of Healing (Rank 5)
         "48089": 2, # Circle of Healing (Rank 7)
         "47788": 2, # Guardian Spirit
         "27827": 2, # Spirit of Redemption
