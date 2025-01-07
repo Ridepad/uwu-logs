@@ -238,6 +238,14 @@ BOSSES_GUIDS = {
     "002ECD": "Flamegor",
     "0036C4": "Chromaggus",
     "002D3F": "Nefarian",
+
+    "061A99": "Ysondre",
+    "061AB1": "Ragnaros",
+    "061A96": "Illidan Stormrage",
+    "061AB3": "Void Reaver",
+    "061AB2": "Son of Flame",
+    "061AB4": "Azuregos",
+    "061AB0": "Ebon Champion",
 }
 
 TOC_CHAMPIONS = {
