@@ -391,3 +391,10 @@ main {
   text-align: right;
   padding-right: .25em;
 }
+.row-spec > .name {
+  background-image: url('/static/wowsim-32x32.png');
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+  background-position: right center;
+  cursor: pointer;
+}

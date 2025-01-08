@@ -11,6 +11,9 @@ import {
   object_default_int,
 } from "./gear_constants.js?v=240814-1";
 
+
+import { convert_to_link } from "./wowsim_export.js";
+
 const ELEMENT_SET_NAME = document.getElementById("set-name");
 const BUTTON_SET_PREV = document.getElementById("set-prev");
 const BUTTON_SET_NEXT = document.getElementById("set-next");
@@ -247,8 +250,8 @@ export default class Gear {
 
       BUTTON_SET_PREV.addEventListener("click", this); // this.handleEvent
       BUTTON_SET_NEXT.addEventListener("click", this); // this.handleEvent
-    }).catch(() => {
-      console.log('error in parsing json');
+    }).catch((error) => {
+      console.log('error in parsing json',error);
       GEAR_WRAP.style.display = "none";
       NO_GEAR_INFO.style.removeProperty("display");
     }).finally(() => {
@@ -308,6 +311,7 @@ export default class Gear {
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
       const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
       set_new_spec_profs_values(e, data[i], "specs", talents_string);
+      convert_to_link(i, e.querySelector(DEFAULT_SELECTOR["specs"][0]), this.NAME, SET, talents_string)
     });
   }
   add_profs() {
