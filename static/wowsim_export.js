@@ -1,7 +1,7 @@
 import { wow_sim_template, spec_overrides } from "./proto/template.js";
 const TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE";
 const WOWSIM_URL = "https://wowsims.github.io/wotlk/";
-const max_talents_tree_len = {
+const MAX_TALENTS_TREE_LEN = {
   "Death Knight": [28, 29, 31],
   Druid: [28, 30, 27],
   Hunter: [26, 27, 28],
@@ -224,68 +224,46 @@ async function deflate(e, data, spec) {
     });
   });
 }
+
+// test talent strings
+// 0tMbuiIRcdIVuRuZbxczb            58/0/13
+// hih0qsdItGfzAo0xxI               55/16/0
+// IZcG0hkAbihsg0AoE0MVo:Tbn0Vz     0/53/18
 //converts talent string, with or without glyph part, eg:sZV0tAduMusIufdxfMzbM or cxbZ0eibRhzGIkguAox00b:Afi0Mz
-function convert_talents(char_class, char_talents) {
-  let char_talents_string = char_talents;
+function convert_talents(char_class, char_talents_string) {
   if (!char_talents_string) return;
   const trees = convert_talents_to_levels(char_class, char_talents_string);
   const trees_joined = [];
   for (let i = 0; i < 3; i++) {
-    const max_length = max_talents_tree_len[char_class][i];
-    const _joined = trees[i].slice(0, max_length).join("");
-    trees_joined.push(_joined);
+    const tree_talents_amount = MAX_TALENTS_TREE_LEN[char_class][i];
+    const tree_joined_string = trees[i].slice(0, tree_talents_amount).join("");
+    const padded_to_tree_size = tree_joined_string.padEnd(tree_talents_amount, "0");
+    trees_joined.push(padded_to_tree_size);
   }
-  const trees_enc_sims = trees_joined.join("-");
-  const glyphs_sims = convert_glyps(char_class, char_talents_string);
-  
-  if (Object.keys(glyphs_sims).length === 0) {    
-    return {
-      talentsString: trees_enc_sims,
-    };
-  }
-  return {
-    talentsString: trees_enc_sims,
-    glyphs: glyphs_sims,
-  };
+  return trees_joined.join("-");
 }
 function convert_talents_to_levels(char_class, char_talents_string) {
-  const trees = [];
-  let current_tree = [];
-  let tree_count = 1;
+  const tree_max_nodes = MAX_TALENTS_TREE_LEN[char_class];
+  const trees = [[], [], []];
+  let current_tree = 0;
+
   for (let i = 1; i < char_talents_string.length; i++) {
     const char = char_talents_string[i];
-    // console.log(char, i , tree_count, max_talents_tree_len[char_class][trees.length]);
-    if (char == ":") {
-      for (let j = tree_count * 2; j < max_talents_tree_len[char_class][trees.length]; j++) {
-        current_tree.push(0);
-      }
-      break;
+    
+    if (char == ":") break;
+    if (trees[current_tree].length >= tree_max_nodes[current_tree]) {
+      current_tree++
     }
-    if (
-      char == "Z" ||
-      tree_count * 2 > max_talents_tree_len[char_class][trees.length] - 1
-    ) {
-      tree_count = 0;
-      trees.push(current_tree);
-      for (let j = tree_count * 2; j < max_talents_tree_len[char_class][trees.length]; j++) {
-        current_tree.push(0);
-      }
-      current_tree = [];
-      if (char == "Z") continue;
+    if (char == "Z") {
+      current_tree++
+      continue;
     }
+
     const talent_index = TALENTS_ENCODE_STR.indexOf(char);
     const talent1_level = Math.floor(talent_index / 6);
     const talent2_level = talent_index % 6;
-    current_tree.push(talent1_level);
-    current_tree.push(talent2_level);
-    tree_count++;
-  }
-
-  if (current_tree.length) {
-    trees.push(current_tree);
-  }
-  while (trees.length < 3) {
-    trees.push([]);
+    trees[current_tree].push(talent1_level);
+    trees[current_tree].push(talent2_level);
   }
   return trees;
 }
