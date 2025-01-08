@@ -63,9 +63,10 @@ BOSS_MAX_SEP = {
     "008246": T_DELTA["1MIN"],
     "008208": T_DELTA["1MIN"],
     
+    "061A96": T_DELTA["2MIN"],
+    "061A98": T_DELTA["2MIN"],
     "061A99": T_DELTA["2MIN"],
     "061AB1": T_DELTA["2MIN"],
-    "061A96": T_DELTA["2MIN"],
     "061AB3": T_DELTA["2MIN"],
     "061AB4": T_DELTA["2MIN"],
 }

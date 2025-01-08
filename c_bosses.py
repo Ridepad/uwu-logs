@@ -239,9 +239,10 @@ BOSSES_GUIDS = {
     "0036C4": "Chromaggus",
     "002D3F": "Nefarian",
 
+    "061A96": "Illidan Stormrage",
+    "061A98": "Shade of Aran",
     "061A99": "Ysondre",
     "061AB1": "Ragnaros",
-    "061A96": "Illidan Stormrage",
     "061AB3": "Void Reaver",
     "061AB4": "Azuregos",
 }
