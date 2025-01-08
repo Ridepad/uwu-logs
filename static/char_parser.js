@@ -131,17 +131,14 @@ function format_timestamp(t) {
 
 
 
-function set_new_spec_profs_values(e, data, type, talents) {
-  const [query_name, query_value] = DEFAULT_SELECTOR[type];
-  const element_name = e.querySelector(query_name);
-  const element_value = e.querySelector(query_value);
-  const [name, value] = data ?? DEFAULT_NAME_VALUE[type];
+function set_new_spec_profs_values(e, name, value, talents) {
+  const element_name = e.querySelector(".name span");
+  const element_value = e.querySelector(".value span");
   element_name.textContent = name;
   element_value.textContent = value;
   if (talents) {
-    element_value.href = `${URL_PREFIX_TALENTS}${talents}`;
-  } else {
-    element_value.removeAttribute("href");
+    const element_link_1 = e.querySelector(".value a");
+    element_link_1.href = `${URL_PREFIX_TALENTS}${talents}`;
   }
 }
 
@@ -310,15 +307,16 @@ export default class Gear {
     const talents = SET.talents ?? [];
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
       const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
-      set_new_spec_profs_values(e, data[i], "specs", talents_string);
-      convert_to_link(i, e.querySelector(DEFAULT_SELECTOR["specs"][0]), this.NAME, SET, talents_string)
+      const [spec_name, spec_value] = data[i] ?? DEFAULT_NAME_VALUE.specs;
+      set_new_spec_profs_values(e, spec_name, spec_value, talents_string);
     });
   }
   add_profs() {
     const SET = this.get_current_set_data();
     const data = cnv_legacy(SET["profs"]);
     Array.from(document.querySelectorAll(".row-prof")).forEach((e, i) => {
-      set_new_spec_profs_values(e, data[i], "profs");
+      const [prof_name, prof_value] = data[i] ?? DEFAULT_NAME_VALUE.profs;
+      set_new_spec_profs_values(e, prof_name, prof_value);
     });
   }
   apply_new_items(stats) {
