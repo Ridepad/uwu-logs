@@ -1,6 +1,8 @@
 import { wow_sim_template, spec_overrides } from "./proto/template.js";
 const TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE";
 const WOWSIM_URL = "https://wowsims.github.io/wotlk/";
+const GLYPHS_JSON_FILE = "/static/glyphs.json";
+const GEM_TO_ENCH_JSON_FILE = "/static/gem_to_ench.json";
 const MAX_TALENTS_TREE_LEN = {
   "Death Knight": [28, 29, 31],
   Druid: [28, 30, 27],
