@@ -325,7 +325,7 @@ main {
   grid-auto-flow: column;
   justify-content: space-evenly;
 }
-#gear-wrap img {
+#gear-wrap .slot img {
   position: relative;
   min-width: var(--icon-size);
   min-height: var(--icon-size);
@@ -391,10 +391,10 @@ main {
   text-align: right;
   padding-right: .25em;
 }
-.row-spec > .name {
-  background-image: url('/static/wowsim-32x32.png');
-  background-size: auto 100%;
-  background-repeat: no-repeat;
-  background-position: right center;
-  cursor: pointer;
+.row-spec {
+  position: relative;
+}
+.row-spec .name a {
+  position: absolute;
+  right: 0;
 }
