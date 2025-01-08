@@ -309,7 +309,11 @@ export default class Gear {
       const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
       const [spec_name, spec_value] = data[i] ?? DEFAULT_NAME_VALUE.specs;
       set_new_spec_profs_values(e, spec_name, spec_value, talents_string);
-      convert_to_link(i, e.querySelector(DEFAULT_SELECTOR["specs"][0]), this.NAME, SET, talents_string)
+    
+      const sim_link = e.querySelector(".name a");
+      convert_to_link(SET, this.NAME, spec_name, talents_string)
+      .then(url => sim_link.href = url)
+      .catch(err => console.error(err))
     });
   }
   add_profs() {

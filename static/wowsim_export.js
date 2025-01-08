@@ -88,75 +88,132 @@ const SPEC_GEMS = {
   heal: [41333, 41401, 41376],
 };
 
-let glyphs = null;
-let global_gems = null;
-let sim_data = [];
-let spec_path = [];
 
-async function convert_to_link(i, e, name, set, talents) {
-  if (!glyphs) {
-    await fetch("/static/glyphs.json")
-      .then((response) => response.json())
-      .then((data) => {
-        glyphs = data;
-      })
-      .catch((err) => console.error("Error loading file:", err));
-  }
-  if (!global_gems) {
-    await fetch("/static/x_gem_to_ench.json")
-      .then((response) => response.json())
-      .then((data) => {
-        global_gems = Object.fromEntries(Object.entries(data).map(([key, value]) => [parseInt(value), parseInt(key)]));
-      })
-      .catch((err) => console.error("Error loading file:", err));
-  }
-  sim_data[i] = structuredClone(wow_sim_template);
+function is_spec(socketed_gems, spec_gems) {
+  return socketed_gems.filter((value) => spec_gems.includes(value)).length > 0;
+}
 
-  sim_data[i].player.name = name;
-  sim_data[i].player.class = SIM_CLASS[set.class];
-  sim_data[i].player.race = SIM_RACE[set.race];
-  sim_data[i].player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
-  sim_data[i].player.profession2 = SIM_PROFESSIONS[!set.profs[1] ? Object.keys(set.profs)[1] : set.profs[1][0]];
+function is_tank(gems) {
+  return is_spec(gems, SPEC_GEMS.tank);
+}
 
-  let sim_gear = transform_gear_data(set.gear_data);
-  sim_data[i].player.equipment["items"] = sim_gear;
+function is_heal(gems) {
+  return is_spec(gems, SPEC_GEMS.heal);
+}
 
-  const spec = find_spec(set.class, sim_gear, set.specs[i][0]);
-  console.log(spec);
+function is_apDps(gems) {
+  return is_spec(gems, SPEC_GEMS.apDps);
+}
+
+const CLASS_SPECS = {
+  find_spec(set_class, sim_gear, set_spec) {
+    const f = this[set_class] ?? this.default;
+    return f(set_spec, sim_gear[0].gems);
+  },
+  default: () => "",
+  Druid: (spec_name, gems) => {
+    if (spec_name === "balance") return "balance";
+    if (is_tank(gems)) return "feral_tank";
+    if (is_apDps(gems)) return "feral";
+    if (spec_name === "feral combat") return "feral";
+    return "balance";
+  },
+  Shaman: (spec_name, gems) => {
+    if (spec_name === "enhancement") return "enhancement";
+    if (spec_name === "elemental") return "elemental";
+    if (is_apDps(gems)) return "enhancement";
+    return "elemental";
+  },
+  Paladin: (spec_name, gems) => {
+    if (spec_name === "protection") return "protection";
+    if (spec_name === "retribution") return "retribution";
+    if (is_tank(gems)) return "protection";
+    return "retribution";
+  },
+  Priest: (spec_name, gems) => {
+    if (spec_name === "shadow") return "shadow";
+    if (is_heal(gems)) return "healing";
+    return "shadow";
+  },
+  Warrior: (spec_name, gems) => {
+    if (spec_name === "protection") return "protection";
+    if (is_tank(gems)) return "protection";
+  },
+  Deathknight: (spec_name, gems) => {
+    if (is_tank(gems)) return "tank";
+  },
+}
+
+function async_map(array, callback) {
+  const mapped = array.map(async element => await callback(element));
+  return Promise.all(mapped);
+}
+
+const glyphs_fetch = fetch(GLYPHS_JSON_FILE)
+  .then((response) => response.json())
+  .catch((err) => {
+    console.error(`Error loading file ${GLYPHS_JSON_FILE}:`, err);
+    return {};
+  });
+async function get_class_glyphs(char_class) {
+  const data = await glyphs_fetch;
+  return data[char_class];
+}
+
+const gems_fetch = fetch(GEM_TO_ENCH_JSON_FILE)
+  .then((response) => response.json())
+  .then((data) => {
+    return Object.fromEntries(Object.entries(data).map(([key, value]) => [parseInt(value), parseInt(key)]));
+  })
+  .catch((err) => {
+    console.error(`Error loading file ${GEM_TO_ENCH_JSON_FILE}:`, err);
+    return {};
+  });
+async function get_gem_ench_id(gem_id) {
+  if (gem_id <= 0) return 0;
+  const gem_data = await gems_fetch;
+  return gem_data[parseInt(gem_id)];
+}
+function map_gems(gems) {
+  gems = gems.filter(gem_id => gem_id > 0);
+  return async_map(gems, get_gem_ench_id);
+}
+
+function to_title(string) {
+  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
+}
+async function convert_to_link(set, player_name, spec_name, talents_string) {
+  const spec_class = to_title(set.class).replace(" ", "");
   
-  const spec_override = spec_overrides[spec.length ? spec + set.class : set.class.toLowerCase()];
-  sim_data[i] = merge_deep(sim_data[i], spec_override);
-
-  sim_data[i].player = {
-    ...sim_data[i].player,
-    ...convert_talents(set.class, talents),
-  };
-
-  if(Object.keys(sim_data[i].player.glyphs).length === 0 && spec_override.player.glyphsOverride !== undefined) {
-    sim_data[i].player.glyphs = spec_override.player.glyphsOverride[set.specs[i][0]];
-  }
-
-  spec_path[i] = spec + (spec.length ? "_" : "") + set.class.toLowerCase();
+  const data = structuredClone(wow_sim_template);
+  data.player.name = player_name;
+  data.player.class = SIM_CLASS[spec_class];
+  data.player.race = SIM_RACE[set.race];
+  data.player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
+  data.player.profession2 = SIM_PROFESSIONS[!set.profs[1] ? Object.keys(set.profs)[1] : set.profs[1][0]];
+  data.player.talentsString = convert_talents(spec_class, talents_string);
+  console.log(data.player.talentsString);
   
-  if (i == 0) {
-    e.removeEventListener("click", handle_click_0);
-    e.addEventListener("click", handle_click_0);
-  } else if (i == 1) {
-    e.removeEventListener("click", handle_click_1);
-    e.addEventListener("click", handle_click_1);
+  const sim_gear = await transform_gear_data(set.gear_data);
+  data.player.equipment.items = sim_gear;
+
+  const spec = CLASS_SPECS.find_spec(spec_class, sim_gear, spec_name);
+  
+  const spec_override_key = spec.length ? spec + spec_class : spec_class.toLowerCase();
+  const spec_override = spec_overrides[spec_override_key];
+  merge_deep(data, spec_override);
+
+  const glyphs = await convert_glyphs(spec_class, talents_string);
+  if (Object.keys(glyphs).length > 0) {
+    data.player.glyphs = glyphs;
+  } else if (spec_override.player.glyphsOverride !== undefined) {
+    data.player.glyphs = spec_override.player.glyphsOverride[spec_name];
   }
+
+  const spec_path = spec + (spec.length ? "_" : "") + spec_class.toLowerCase();
+  return deflate(data, spec_path);
 }
-// handler for clicks
-function handle_click_0(e) {
-  deflate(e, sim_data[0], spec_path[0])
-    .then((url) => window.open(url))
-    .catch((err) => console.error(err));
-}
-function handle_click_1(e) {
-  deflate(e, sim_data[1], spec_path[1])
-    .then((url) => window.open(url))
-    .catch((err) => console.error(err));
-}
+
 //merges target object with sources into one object
 function merge_deep(target, ...sources) {
   if (!sources.length) return target;
@@ -179,21 +236,20 @@ function is_object(item) {
   return item && typeof item === "object" && !Array.isArray(item);
 }
 //transforms gem enchant ids to gem items
-function transform_gear_data(gearData) {
-  const transformed = gearData.map((gear) => {
-    if (!gear.item) return {}; // Handle empty objects
-    const transformed_item = { id: parseInt(gear.item) };
-    if (gear.ench) transformed_item.enchant = parseInt(gear.ench);
-    if (gear.gems) {
-      // Filter out "0" gems and convert to integers
-      transformed_item.gems = gear.gems.map((gem) => (gem > 0 ? global_gems[parseInt(gem)] : 0)).filter((gem) => gem !== 0);
-    }
-    return transformed_item;
-  });
-  return transformed;
+async function transform_item_slot(slot) {
+  if (!slot.item) return {};
+  
+  const transformed_item = { id: parseInt(slot.item) };
+  if (slot.ench) transformed_item.enchant = parseInt(slot.ench);
+  // Filter out "0" gems and convert to integers
+  if (slot.gems) transformed_item.gems = await map_gems(slot.gems);
+  return transformed_item;
+}
+function transform_gear_data(items) {
+  return async_map(items, transform_item_slot);
 }
 //uses google's protocol buffers to encode structured and typed data into link
-async function deflate(e, data, spec) {
+async function deflate(data, spec) {
   return new Promise((resolve, reject) => {
     protobuf.load("./static/proto/wowsim_pb.json", function (err, root) {
       if (err) {
@@ -267,110 +323,27 @@ function convert_talents_to_levels(char_class, char_talents_string) {
   }
   return trees;
 }
-function convert_glyps(char_class, char_talents_string) {
+async function convert_glyphs(char_class, char_talents_string) {
   const glyph_string = char_talents_string.split(":")[1];
   if (!glyph_string) return {};
 
-  const class_glyphs = glyphs[char_class];
+  const class_glyphs = await get_class_glyphs(char_class);
+  if (!class_glyphs) return {};
+  
   const char_glyphs = {};
   for (let i = 0; i < glyph_string.length; i++) {
-    const char = glyph_string[i];
-    const glyph_index = TALENTS_ENCODE_STR.indexOf(char);
+    const glyph_char = glyph_string[i];
+    const glyph_index = TALENTS_ENCODE_STR.indexOf(glyph_char);
     const glyph_type = i < 3 ? "major" : "minor";
-
-    char_glyphs[glyph_type + ((i % 3) + 1)] = parseInt(Object.keys(class_glyphs[glyph_type])[glyph_index]);
+    const glyph_slot = i % 3 + 1;
+    const glyph_key = `${glyph_type}${glyph_slot}`;
+    const glyph_spell_ids = Object.keys(class_glyphs[glyph_type]);
+    char_glyphs[glyph_key] = parseInt(glyph_spell_ids[glyph_index]);
   }
 
   return char_glyphs;
 }
-// uses set_spec or meta gems to find spec
-function find_spec(set_class, sim_gear, set_spec) {
-  let spec = "";
-  let intersec = [];
-  switch (set_class) {
-    case "Druid":
-      if (set_spec.toLowerCase() === 'balance') {
-        spec = "balance";
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
-      if (intersec.length) {
-        spec = "feral_tank";
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.apDps.includes(value));
-      if (intersec.length) {
-        spec = "feral";
-        break;
-      }
-      if (set_spec.toLowerCase() === 'feral combat') {
-        spec = "feral";
-        break;
-      }
-      spec = "balance";
-      break;
-    case "Shaman":
-      if (["enhancement", "elemental"].includes(set_spec.toLowerCase())) {
-        spec = set_spec.toLowerCase();  
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.apDps.includes(value));
-      if (intersec.length) {
-        spec = "enhancement";
-        break;
-      }
-      spec = "elemental";
-      break;
-    case "Paladin":
-      if (["protection", "retribution"].includes(set_spec.toLowerCase())) {
-        spec = set_spec.toLowerCase();  
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
-      if (intersec.length) {
-        spec = "protection";
-        break;
-      }
-      spec = "retribution";
-      break;
-    case "Priest":
-      if (set_spec.toLowerCase() === 'shadow') {
-        spec = "shadow";
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.heal.includes(value));
-      if (intersec.length) {
-        spec = "healing";
-        break;
-      }
-      spec = "shadow";
-      break;
-    case "Warrior":
-      if (set_spec.toLowerCase() === 'protection') {
-        spec = "protection";
-        break;
-      }
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
-      if (intersec.length) {
-        spec = "protection";
-        break;
-      }
-      spec = "";
-      break;
-    case "Deathknight":
-      intersec = sim_gear[0].gems.filter((value) => SPEC_GEMS.tank.includes(value));
-      if (intersec.length) {
-        spec = "tank";
-        break;
-      }
-      spec = "";
-      break;
-    default:
-      spec = "";
-  }
 
-  return spec;
-}
 // can be used to test export strings
 function inflate(base64EncodedData) {
   protobuf.load("./static/proto/wowsim_pb.json", function (err, root) {
