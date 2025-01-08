@@ -243,9 +243,7 @@ BOSSES_GUIDS = {
     "061AB1": "Ragnaros",
     "061A96": "Illidan Stormrage",
     "061AB3": "Void Reaver",
-    "061AB2": "Son of Flame",
     "061AB4": "Azuregos",
-    "061AB0": "Ebon Champion",
 }
 
 TOC_CHAMPIONS = {
