@@ -131,14 +131,21 @@ function format_timestamp(t) {
 
 
 
-function set_new_spec_profs_values(e, name, value, talents) {
+function set_new_spec_profs_values(e, name, value) {
   const element_name = e.querySelector(".name span");
   const element_value = e.querySelector(".value span");
   element_name.textContent = name;
   element_value.textContent = value;
+}
+
+function set_new_spec_values(e, name, value, talents) {
+  set_new_spec_profs_values(e, name, value, talents);
+  const a = e.querySelector(".value a");
+  if (!a) return;
   if (talents) {
-    const element_link_1 = e.querySelector(".value a");
-    element_link_1.href = `${URL_PREFIX_TALENTS}${talents}`;
+    a.href = `${URL_PREFIX_TALENTS}${talents}`;
+  } else {
+    a.removeAttribute("href");
   }
 }
 
@@ -308,7 +315,7 @@ export default class Gear {
     Array.from(document.querySelectorAll(".row-spec")).forEach((e, i) => {
       const talents_string = talents[i] ?? (data[i] ? data[i][2] : undefined);
       const [spec_name, spec_value] = data[i] ?? DEFAULT_NAME_VALUE.specs;
-      set_new_spec_profs_values(e, spec_name, spec_value, talents_string);
+      set_new_spec_values(e, spec_name, spec_value, talents_string);
     
       const sim_link = e.querySelector(".name a");
       convert_to_link(SET, this.NAME, spec_name, talents_string)

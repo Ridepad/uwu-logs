@@ -326,6 +326,8 @@ function convert_talents_to_levels(char_class, char_talents_string) {
   return trees;
 }
 async function convert_glyphs(char_class, char_talents_string) {
+  if (!char_talents_string) return {};
+  
   const glyph_string = char_talents_string.split(":")[1];
   if (!glyph_string) return {};
 
