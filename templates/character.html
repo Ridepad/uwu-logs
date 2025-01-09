@@ -3,12 +3,12 @@
 {% block scripts_head %}
 <script src="//cdn.jsdelivr.net/npm/protobufjs@7.X.X/dist/protobuf.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-<script type="module" src="/static/character.js?v=241106-1"></script>
+<script type="module" src="/static/character.js?v=250108-1"></script>
 <script type="module" src="/static/gear_tooltip.js?v=240831-1"></script>
 {% endblock scripts_head %}
 
 {% block add_css_file %}
-<link rel="stylesheet" type="text/css" href="/static/character.css?v=241201-1">
+<link rel="stylesheet" type="text/css" href="/static/character.css?v=250108-1">
 {% endblock add_css_file %}
 
 {% block the_main %}
@@ -70,14 +70,25 @@
             </tr>
             {% for i in range(2) %}
             <tr class="row-spec">
-              <td class="value"><a target="_blank"></a></td>
-              <td class="name"></td>
+              <td class="value">
+                <a target="_blank">
+                  <span></span>
+                </a>
+              </td>
+              <td class="name">
+                <span></span>
+                <a target="_blank"><img src="/static/wowsim-32x32.png"></a>
+              </td>
             </tr>
             {% endfor %}
             {% for i in range(2) %}
             <tr class="row-prof">
-              <td class="value"></td>
-              <td class="name"></td>
+              <td class="value">
+                <span></span>
+              </td>
+              <td class="name">
+                <span></span>
+              </td>
             </tr>
             {% endfor %}
           </tbody>

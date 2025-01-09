@@ -103,13 +103,18 @@ def method429(e: TooManyRequests):
         response = render_template("429.html", retry_in=retry_in)
     return response, 429
 
-@SERVER.errorhandler(500)
-def method500(e):
+@SERVER.errorhandler(Exception)
+def handle_exception(e):
     LOGGER_CONNECTIONS.exception(f"{request.remote_addr:>15} | {request.method:<7} | {get_incoming_connection_info()}")
-    response = ""
+    error_class = f"{e.__class__.__module__}.{e.__class__.__name__}"
+    error_msg = ""
+    if error_class == "zstd.Error":
+        error_msg = "Logs file is corrupted"
+    else:
+        error_msg = f"{error_class}: {e}"
     if request.method == 'GET':
-        response = render_template("500.html")
-    return response, 500
+        return render_template("500.html", ERROR_MESSAGE=error_msg)
+    return error_msg, 500
 
 @SERVER.route("/pw_validate", methods=["POST"])
 def pw_validate():

@@ -121,10 +121,10 @@ BOSSES_GUIDS = {
     # Gruul"s Lair
     "004A64": "Gruul the Dragonkiller",
     "00498F": "High King Maulgar",
-    # "004990": "Krosh Firehand",
-    # "004992": "Olm the Summoner",
-    # "004993": "Kiggler the Crazed",
-    # "004994": "Blindeye the Seer",
+    "004990": "Krosh Firehand",
+    "004992": "Olm the Summoner",
+    "004993": "Kiggler the Crazed",
+    "004994": "Blindeye the Seer",
     # Serpentshrine Cavern
     "0052E0": "Hydross the Unstable",
     "0052E1": "The Lurker Below",
@@ -238,6 +238,13 @@ BOSSES_GUIDS = {
     "002ECD": "Flamegor",
     "0036C4": "Chromaggus",
     "002D3F": "Nefarian",
+
+    "061A96": "Illidan Stormrage",
+    "061A98": "Shade of Aran",
+    "061A99": "Ysondre",
+    "061AB1": "Ragnaros",
+    "061AB3": "Void Reaver",
+    "061AB4": "Azuregos",
 }
 
 TOC_CHAMPIONS = {
@@ -315,6 +322,19 @@ COWARDS = {
     "00808A": "Freya",
     "008067": "Algalon the Observer",
 }
+
+BOSSES_ICC = [
+    "Lord Marrowgar",
+    "Lady Deathwhisper",
+    "Deathbringer Saurfang",
+    "Festergut",
+    "Rotface",
+    "Professor Putricide",
+    "Blood Prince Council",
+    "Blood-Queen Lana'thel",
+    "Sindragosa",
+    "The Lich King",
+]
 
 ENCOUNTER_MIN_DURATION = {
     "Malygos": 120,

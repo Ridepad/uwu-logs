@@ -1,6 +1,7 @@
 from c_player_classes import SPECS_LIST
 
 import json
+from bisect import bisect_left
 
 import logs_fight_separator
 import logs_get_time
@@ -278,12 +279,21 @@ class THE_LOGS(
             self._classes_with_names_json = json.dumps(self.CLASSES_NAMES)
             return self._classes_with_names_json
     
-    def find_index(self, n, shift=0):
-        if n is None:
-            return
-        for i, line_n in enumerate(self.TIMESTAMPS, -shift):
-            if n <= line_n:
-                return max(i, 0)
+    def find_index(self, line_index: int, shift: int=0, slice_end=False):
+        if line_index is None:
+            if slice_end:
+                return self.TIMESTAMPS[-1]
+            return 0
+        if not shift:
+            shift = 0
+        shifted = bisect_left(self.TIMESTAMPS, line_index) + shift
+        return max(shifted, 0)
+    
+    def find_shifted_log_line(self, line_index: int, shift: int):
+        if not line_index or not shift:
+            return line_index
+        new_index = self.find_index(line_index, shift)
+        return self.TIMESTAMPS[new_index]
     
     def find_sec_from_start(self, s):
         return self.get_timedelta_seconds(self.LOGS[0], self.LOGS[s])

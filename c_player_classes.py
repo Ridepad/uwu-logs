@@ -322,6 +322,7 @@ SPELL_BOOK_SPEC = {
         "63544": 2, # Empowered Renew
         "63725": 2, # Holy Concentration
         "34864": 2, # Circle of Healing (Rank 3)
+        "34866": 2, # Circle of Healing (Rank 5)
         "48089": 2, # Circle of Healing (Rank 7)
         "47788": 2, # Guardian Spirit
         "27827": 2, # Spirit of Redemption
@@ -399,6 +400,7 @@ SPELL_BOOK_SPEC = {
     },
     "warrior": {
         "7384": 1, # Overpower
+        "12294": 1, # Mortal Strike
         "47486": 1, # Mortal Strike
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
@@ -408,7 +410,7 @@ SPELL_BOOK_SPEC = {
         "23881": 2, # Bloodthirst
         "23894": 2, # Bloodthirst
         "30335": 2, # Bloodthirst
-        "12292": 2, # Death Wish
+        # "12292": 2, # Death Wish
         "30033": 2, # Rampage
 
         "46968": 3, # Shockwave

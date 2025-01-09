@@ -20,7 +20,7 @@ RISING_GODS = "Rising-Gods"
 DATABASE = GearDB(RISING_GODS, new=True)
 
 TEMP_PROFILE_DATA_DIR = Directories.main.new_child("temp").new_child(RISING_GODS)
-GEM_TO_ENCH_DICT_PATH = Directories.main / "x_gem_to_ench.json"
+GEM_TO_ENCH_DICT_PATH = Directories.static / "gem_to_ench.json"
 
 URL_RG_PROFILE = "https://db.rising-gods.de/?profile=eu.rising-gods"
 URL_RG_PROFILE_LOAD = "https://db.rising-gods.de/?profile=load&id"

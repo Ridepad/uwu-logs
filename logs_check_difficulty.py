@@ -154,6 +154,8 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
             continue
         if flag == 'SPELL_AURA_REMOVED':
             continue
+        if flag == 'SPELL_AURA_REFRESH':
+            continue
 
         players.add(guid)
         if more_than_10_players():
@@ -456,8 +458,8 @@ class LogsSegments(logs_base.THE_LOGS):
             encounter_name=boss_name,
             start=s,
             end=f,
-            t_start=self.find_index(s) - 1,
-            t_end=self.find_index(f),
+            t_start=self.find_index(s, shift=-1),
+            t_end=self.find_index(f, slice_end=True),
             difficulty=diff,
             attempt=attempt,
             attempt_from_last_kill=attempt-shift+1,

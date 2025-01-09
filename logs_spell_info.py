@@ -217,6 +217,10 @@ AURAS_EXTERNAL = {
         "name": "Overkill",
         "icon": "ability_hunter_rapidkilling",
     },
+    "54153": {
+        "name": "Judgements of the Pure",
+        "icon": "ability_paladin_judgementofthepure",
+    },
     "51800": {
         "name": "Might of Malygos",
         "icon": "inv_misc_head_dragon_blue"
@@ -574,6 +578,9 @@ class SpellCount(logs_base.THE_LOGS):
         spells_data = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         all_targets: list[str] = ["Total", ]
         for s, f in segments:
+            print(s)
+            s = self.find_shifted_log_line(s, -10)
+            print(s)
             _segment_data = self.get_spell_count(s, f, spell_id)
             for flag, sources in _segment_data.items():
                 for source_name, targets in sources.items():
