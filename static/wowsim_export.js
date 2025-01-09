@@ -184,34 +184,37 @@ function to_title(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 async function convert_to_link(set, player_name, spec_name, talents_string) {
-  const spec_class = to_title(set.class).replace(" ", "");
+  const player_class = to_title(set.class).replace(" ", "");
+  const player_class_lower = player_class.toLowerCase();
   
   const data = structuredClone(wow_sim_template);
   data.player.name = player_name;
-  data.player.class = SIM_CLASS[spec_class];
+  data.player.class = SIM_CLASS[player_class];
   data.player.race = SIM_RACE[set.race];
-  data.player.profession1 = SIM_PROFESSIONS[!set.profs[0] ? Object.keys(set.profs)[0] : set.profs[0][0]];
-  data.player.profession2 = SIM_PROFESSIONS[!set.profs[1] ? Object.keys(set.profs)[1] : set.profs[1][0]];
-  data.player.talentsString = convert_talents(spec_class, talents_string);
-  console.log(data.player.talentsString);
+  data.player.talentsString = convert_talents(player_class, talents_string);
+
+  const professions = Array.isArray(set.profs) ? set.profs : Object.entries(set.profs);
+  data.player.profession1 = professions[0] ? SIM_PROFESSIONS[professions[0][0]] : 0;
+  data.player.profession2 = professions[1] ? SIM_PROFESSIONS[professions[1][0]] : 0;
   
   const sim_gear = await transform_gear_data(set.gear_data);
   data.player.equipment.items = sim_gear;
 
-  const spec = CLASS_SPECS.find_spec(spec_class, sim_gear, spec_name);
+  const spec = CLASS_SPECS.find_spec(player_class, sim_gear, spec_name);
   
-  const spec_override_key = spec.length ? spec + spec_class : spec_class.toLowerCase();
+  const spec_override_key = spec.length ? spec + player_class : player_class_lower;
   const spec_override = spec_overrides[spec_override_key];
   merge_deep(data, spec_override);
 
-  const glyphs = await convert_glyphs(spec_class, talents_string);
+  const glyphs = await convert_glyphs(player_class, talents_string);
   if (Object.keys(glyphs).length > 0) {
     data.player.glyphs = glyphs;
   } else if (spec_override.player.glyphsOverride !== undefined) {
     data.player.glyphs = spec_override.player.glyphsOverride[spec_name];
   }
 
-  const spec_path = spec + (spec.length ? "_" : "") + spec_class.toLowerCase();
+  const separator = spec.length ? "_" : "";
+  const spec_path = spec + separator + player_class_lower;
   return deflate(data, spec_path);
 }
 
