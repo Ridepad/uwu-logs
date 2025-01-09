@@ -136,9 +136,11 @@ const CLASS_SPECS = {
   Warrior: (spec_name, gems) => {
     if (spec_name === "protection") return "protection";
     if (is_tank(gems)) return "protection";
+    return "";
   },
   Deathknight: (spec_name, gems) => {
     if (is_tank(gems)) return "tank";
+    return "";
   },
 }
 
