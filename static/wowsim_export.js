@@ -327,6 +327,21 @@ function convert_talents_to_levels(char_class, char_talents_string) {
   }
   return trees;
 }
+
+function split_glyphs_string(glyph_string) {
+  glyph_string = glyph_string.slice(0, 6);
+  if (glyph_string.includes("Z")) {
+    return glyph_string.split("Z");
+  }
+  return [glyph_string.slice(0, 3), glyph_string.slice(3, 6)];
+}
+function split_glyphs(glyph_string) {
+  const [major, minor] = split_glyphs_string(glyph_string);
+  return {
+    major: major,
+    minor: minor,
+  };
+}
 async function convert_glyphs(char_class, char_talents_string) {
   if (!char_talents_string) return {};
   
@@ -337,18 +352,24 @@ async function convert_glyphs(char_class, char_talents_string) {
   if (!class_glyphs) return {};
   
   const char_glyphs = {};
-  for (let i = 0; i < glyph_string.length; i++) {
-    const glyph_char = glyph_string[i];
-    const glyph_index = TALENTS_ENCODE_STR.indexOf(glyph_char);
-    const glyph_type = i < 3 ? "major" : "minor";
-    const glyph_slot = i % 3 + 1;
-    const glyph_key = `${glyph_type}${glyph_slot}`;
+  const glyphs_split_by_type = split_glyphs(glyph_string);
+  for (const glyph_type in glyphs_split_by_type) {
     const glyph_spell_ids = Object.keys(class_glyphs[glyph_type]);
-    char_glyphs[glyph_key] = parseInt(glyph_spell_ids[glyph_index]);
+    const glyph_string_split = glyphs_split_by_type[glyph_type];
+    for (let i = 0; i < glyph_string_split.length; i++) {
+      const glyph_char = glyph_string_split[i];
+      const glyph_index = TALENTS_ENCODE_STR.indexOf(glyph_char);
+      const glyph_key = `${glyph_type}${i+1}`;
+      char_glyphs[glyph_key] = parseInt(glyph_spell_ids[glyph_index]);
+    }
   }
 
   return char_glyphs;
 }
+// test glyph string with missing glyphs
+// convert_glyphs("Rogue", "0xcZb:TpZVmz")
+// convert_glyphs("Rogue", "0xcZb:TZVmz")
+// convert_glyphs("Rogue", "0xcZb:ZVmz")
 
 // can be used to test export strings
 function inflate(base64EncodedData) {
