@@ -105,8 +105,11 @@ function is_apDps(gems) {
 
 const CLASS_SPECS = {
   find_spec(set_class, sim_gear, set_spec) {
-    const f = this[set_class] ?? this.default;
-    return f(set_spec, sim_gear[0].gems);
+    set_spec = set_spec.toLowerCase();
+    const f = this[set_class];
+    if (!f) return "";
+    const spec = f(set_spec, sim_gear[0].gems);
+    return spec ?? "";
   },
   default: () => "",
   Druid: (spec_name, gems) => {
