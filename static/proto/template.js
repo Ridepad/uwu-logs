@@ -215,7 +215,6 @@ export const spec_overrides = {
       },
     },
   },
-  smitePriest: {},
   rogue: {
     player: {
       rogue: {
