@@ -197,7 +197,7 @@ async function convert_to_link(set, player_name, spec_name, talents_string) {
   data.player.profession1 = professions[0] ? SIM_PROFESSIONS[professions[0][0]] : 0;
   data.player.profession2 = professions[1] ? SIM_PROFESSIONS[professions[1][0]] : 0;
   
-  const sim_gear = await transform_gear_data(set.gear_data);
+  const sim_gear = await transform_gear_data(set.gear_data, professions);
   data.player.equipment.items = sim_gear;
 
   const spec = CLASS_SPECS.find_spec(player_class, sim_gear, spec_name);
@@ -249,7 +249,13 @@ async function transform_item_slot(slot) {
   if (slot.gems) transformed_item.gems = await map_gems(slot.gems);
   return transformed_item;
 }
-function transform_gear_data(items) {
+function remove_ench_from_rings(items) {
+  items[12].ench = undefined;
+  items[13].ench = undefined;
+}
+function transform_gear_data(items, professions) {
+  const professions_set = professions.map(([prof, _]) => prof);
+  if (!professions_set.includes("Enchanting")) remove_ench_from_rings(items);
   return async_map(items, transform_item_slot);
 }
 //uses google's protocol buffers to encode structured and typed data into link
