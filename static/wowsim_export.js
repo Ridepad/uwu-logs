@@ -215,6 +215,7 @@ async function convert_to_link(set, player_name, spec_name, talents_string) {
 
   const separator = spec.length ? "_" : "";
   const spec_path = spec + separator + player_class_lower;
+
   return deflate(data, spec_path);
 }
 
@@ -283,7 +284,7 @@ async function deflate(data, spec) {
 
       let deflate = pako.deflate(binaryData);
       const encoded = window.btoa(String.fromCharCode(...deflate));
-      const linkUrl = new URL(WOWSIM_URL + spec + "/?i=gtm#");
+      const linkUrl = new URL(WOWSIM_URL + spec + "/?i=gtmc#");
       linkUrl.hash = encoded;
 
       resolve(linkUrl);
