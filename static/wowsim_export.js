@@ -49,12 +49,12 @@ const SIM_FACTION = {
 };
 const SIM_RACE = {
   Unknown: 0,
-  BloodElf: 1,
+  "Blood Elf": 1,
   Draenei: 2,
   Dwarf: 3,
   Gnome: 4,
   Human: 5,
-  NightElf: 6,
+  "Night Elf": 6,
   Orc: 7,
   Tauren: 8,
   Troll: 9,
