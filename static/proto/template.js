@@ -207,7 +207,7 @@ export const spec_overrides = {
           armor: 1,
         },
       },
-      channelClipDelayMs: 100,
+      channelClipDelayMs: 0,
       glyphs: {
         major1: 42407,
         major2: 42415,
