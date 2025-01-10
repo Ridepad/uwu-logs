@@ -17,6 +17,13 @@ export const wow_sim_template = {
 export const spec_overrides = {
   hunter: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 1,
+        petFood: 1,
+        defaultPotion: 4,
+        prepopPotion: 4,
+      },
       hunter: {
         options: {
           ammo: 2,
@@ -59,6 +66,12 @@ export const spec_overrides = {
   },
   feralDruid: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 13,
+        defaultPotion: 4,
+        prepopPotion: 4,
+      },
       feralDruid: {
         options: {
           latencyMs: 100,
@@ -74,6 +87,13 @@ export const spec_overrides = {
   },
   balanceDruid: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 1,
+        defaultPotion: 4,
+        prepopPotion: 5,
+        fillerExplosive: 1,
+      },
       balanceDruid: {
         options: {
           innervateTarget: {},
@@ -89,6 +109,16 @@ export const spec_overrides = {
   },
   feral_tankDruid: {
     player: {
+      consumes: {
+        battleElixir: 8,
+        guardianElixir: 7,
+        food: 3,
+        defaultPotion: 3,
+        prepopPotion: 3,
+        defaultConjured: 5,
+        thermalSapper: true,
+        fillerExplosive: 1,
+      },
       inFrontOfTarget: true,
       feralTankDruid: {
         options: {
@@ -116,6 +146,13 @@ export const spec_overrides = {
   restorationDruid: {},
   mage: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 11,
+        defaultPotion: 4,
+        prepopPotion: 4,
+        defaultConjured: 2,
+      },
       mage: {
         options: {
           armor: 2,
@@ -145,6 +182,12 @@ export const spec_overrides = {
   },
   retributionPaladin: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 13,
+        defaultPotion: 4,
+        defaultConjured: 1,
+      },
       retributionPaladin: {
         options: {
           aura: 3,
@@ -159,6 +202,12 @@ export const spec_overrides = {
   },
   protectionPaladin: {
     player: {
+      consumes: {
+        flask: 4,
+        food: 13,
+        defaultPotion: 3,
+        prepopPotion: 3,
+      },
       inFrontOfTarget: true,
       protectionPaladin: {
         options: {
@@ -182,9 +231,14 @@ export const spec_overrides = {
       },
     ],
   },
-  holyPaladin: {},
   healingPriest: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 1,
+        defaultPotion: 14,
+        prepopPotion: 5,
+      },
       healingPriest: {
         options: {
           useShadowfiend: true,
@@ -202,6 +256,12 @@ export const spec_overrides = {
   },
   shadowPriest: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 1,
+        defaultPotion: 4,
+        prepopPotion: 5,
+      },
       shadowPriest: {
         options: {
           armor: 1,
@@ -217,6 +277,13 @@ export const spec_overrides = {
   },
   rogue: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 5,
+        defaultPotion: 4,
+        prepopPotion: 4,
+        defaultConjured: 4,
+      },
       rogue: {
         options: {
           mhImbue: 2,
@@ -242,6 +309,11 @@ export const spec_overrides = {
   },
   elementalShaman: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 1,
+        defaultPotion: 5,
+      },
       elementalShaman: {
         options: {
           shield: 1,
@@ -264,6 +336,11 @@ export const spec_overrides = {
   },
   enhancementShaman: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 1,
+        defaultPotion: 4,
+      },
       enhancementShaman: {
         options: {
           shield: 2,
@@ -288,6 +365,13 @@ export const spec_overrides = {
   restorationShaman: {},
   warlock: {
     player: {
+      consumes: {
+        flask: 1,
+        food: 1,
+        petFood: 1,
+        defaultPotion: 5,
+        prepopPotion: 5,
+      },
       warlock: {
         options: {
           armor: 1,
@@ -319,6 +403,12 @@ export const spec_overrides = {
   },
   warrior: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 6,
+        defaultPotion: 3,
+        prepopPotion: 4,
+      },
       warrior: {
         options: {
           useRecklessness: true,
@@ -342,6 +432,15 @@ export const spec_overrides = {
   },
   protectionWarrior: {
     player: {
+      consumes: {
+        battleElixir: 4,
+        guardianElixir: 5,
+        food: 13,
+        defaultPotion: 3,
+        prepopPotion: 3,
+        thermalSapper: true,
+        fillerExplosive: 1,
+      },
       protectionWarrior: {
         options: {
           shout: 2,
@@ -367,6 +466,15 @@ export const spec_overrides = {
   },
   deathknight: {
     player: {
+      consumes: {
+        flask: 2,
+        food: 13,
+        petFood: 1,
+        defaultPotion: 4,
+        prepopPotion: 4,
+        thermalSapper: true,
+        fillerExplosive: 1,
+      },
       deathknight: {
         options: {
           petUptime: 1,
@@ -390,6 +498,12 @@ export const spec_overrides = {
   },
   tankDeathknight: {
     player: {
+      consumes: {
+        flask: 4,
+        food: 13,
+        defaultPotion: 3,
+        prepopPotion: 3,
+      },
       inFrontOfTarget: true,
       healingModel: {
         hps: 7583.333333333333,
