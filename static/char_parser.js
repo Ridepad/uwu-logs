@@ -37,10 +37,6 @@ const DEFAULT_NAME_VALUE = {
   specs: ["No spec", "0/0/0"],
   profs: ["No prof", "0"],
 };
-const DEFAULT_SELECTOR = {
-  specs: [".name", ".value a"],
-  profs: [".name", ".value"],
-};
 const SERVERS_AVAILABLE_GEAR = [
   "Icecrown",
   "Lordaeron",
