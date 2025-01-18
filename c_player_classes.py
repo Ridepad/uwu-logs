@@ -386,6 +386,7 @@ SPELL_BOOK_SPEC = {
         "47843": 1, # Unstable Affliction (Rank 5)
         "64368": 1, # Eradication (Rank 2)
         "64371": 1, # Eradication (Rank 3)
+        "30911": 1, # Siphon Life
 
         "71165": 2, # Molten Core
         "47241": 2, # Metamorphosis
