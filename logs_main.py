@@ -152,11 +152,16 @@ class THE_LOGS(
     logs_ucm.UCM,
     logs_toc_valks.ValksTOC,
 ):
-    def get_segments_data_json(self):
-        _data = {
-            convert_to_html_name(fight_name): v
-            for fight_name, v in self.SEGMENTS.items()
-        }
+    def get_segments_data_json(self, encounter_name_html: str):
+        if encounter_name_html not in BOSSES_FROM_HTML:
+            return "[]"
+        encounter_name = BOSSES_FROM_HTML[encounter_name_html]
+        if encounter_name not in self.SEGMENTS:
+            return "[]"
+        _data = [
+            segment.segment_str
+            for segment in self.SEGMENTS[encounter_name]
+        ]
         return json.dumps(_data)
     
     def _attempt_name(self, boss_name: str, attempt: int):
