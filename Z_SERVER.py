@@ -383,7 +383,8 @@ def casts_post(report_id):
 @SERVER.route("/reports/<report_id>/report_slices/", methods=['POST'])
 def report_slices(report_id):
     report = load_report(report_id)
-    return report.get_segments_data_json()
+    data = request.get_json(force=True, silent=True)
+    return report.get_segments_data_json(data.get("boss"))
 
 @SERVER.route("/reports/<report_id>/players_classes/", methods=['POST'])
 def players_classes(report_id):
