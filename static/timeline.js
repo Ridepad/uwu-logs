@@ -73,6 +73,75 @@ CONFIG = {
   player_class: undefined,
 }
 
+const CURRENT_QUERY = new URLSearchParams(window.location.search);
+const ENCOUNTER_NAME = CURRENT_QUERY.get("boss");
+
+
+function new_option(value, text) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = text;
+  return option;
+}
+
+function get_response_error_wrap(xmlrequest) {
+  if (xmlrequest.status == 404) {
+    show_error("Report wasn't found");
+    return;
+  }
+  if (xmlrequest.status == 429) {
+    show_error(`Retry in: ${xmlrequest.response}`);
+    return;
+  }
+  if (xmlrequest.status != 200 || xmlrequest.readyState != 4) return;
+  return xmlrequest.response;
+}
+
+
+const FETCH_PLAYERS = new XMLHttpRequest();
+FETCH_PLAYERS.onreadystatechange = () => {
+  SELECT_PLAYERS.innerHTML = '';
+  DIALOG_MSG.style.visibility = "hidden";
+
+  const response = get_response_error_wrap(FETCH_PLAYERS);
+  console.log(response);
+  if (!response) return;
+  const parsed_json = JSON.parse(response);
+  
+  for (let player_name in parsed_json) {
+    if (parsed_json[player_name] == CONFIG.player_class) {
+      SELECT_PLAYERS.appendChild(new_option(player_name, player_name))
+    }
+  }
+
+  SELECT_PLAYERS_WRAP.style.visibility = "visible";
+  if (SELECT_ATTEMPTS_WRAP.style.visibility == "visible") {
+    BUTTON_CONFIRM.style.visibility = "visible";
+  }
+}
+
+const FETCH_SEGMENTS = new XMLHttpRequest();
+FETCH_SEGMENTS.onreadystatechange = () => {
+  SELECT_ATTEMPTS.innerHTML = '';
+  DIALOG_MSG.style.visibility = "hidden";
+
+  const response = get_response_error_wrap(FETCH_SEGMENTS);
+  console.log(response);
+  if (!response) return;
+  const segments = JSON.parse(response);
+  if (!segments) return;
+
+  for (let i in segments) {
+    const segment_str = segments[i];
+    SELECT_ATTEMPTS.appendChild(new_option(i, segment_str))
+  }
+  SELECT_ATTEMPTS_WRAP.style.visibility = "visible";
+  if (SELECT_PLAYERS_WRAP.style.visibility == "visible") {
+    BUTTON_CONFIRM.style.visibility = "visible";
+  }
+}
+
+
 function get_pad_value(element) {
   return element.getAttribute("data-pad");
 }
@@ -456,8 +525,8 @@ function check_timeline(new_duraion) {
 
 
 function make_query(name) {
-  const current_query = new URLSearchParams(window.location.search);
-  const boss = current_query.get("boss");
+  const CURRENT_QUERY = new URLSearchParams(window.location.search);
+  const boss = CURRENT_QUERY.get("boss");
   if (!boss) return;
 
   const new_query = {
@@ -468,7 +537,7 @@ function make_query(name) {
   if (SELECT_ATTEMPTS.value) {
     new_query.attempt = SELECT_ATTEMPTS.value;
   } else {
-    new_query.attempt = current_query.get("attempt") || -1;
+    new_query.attempt = CURRENT_QUERY.get("attempt") || -1;
   }
   console.log(JSON.stringify(new_query));
   return JSON.stringify(new_query);
@@ -496,6 +565,8 @@ function section_append(section, row) {
 
 class Character {
   constructor(report_id, name) {
+    console.log(report_id, name);
+    
     this.REPORT_ID = report_id;
     this.NAME = name;
 
@@ -539,7 +610,9 @@ class Character {
     CASTS_SECTION_WRAP.appendChild(this.CASTS_SECTION);
 
     this.WIDTH = `calc(var(--mult) * ${((this.DURATION + CONFIG.shift)*10).toFixed(2)}px)`;
-    CASTS_SECTION_WRAP.style.setProperty("--timeline-width", this.WIDTH)
+    if (CASTS_SECTION_WRAP.style.getPropertyValue("--timeline-width") < this.WIDTH) {
+      CASTS_SECTION_WRAP.style.setProperty("--timeline-width", this.WIDTH)
+    }
     check_timeline(this.DURATION);
     this.new_character();
   }
@@ -595,6 +668,7 @@ class Character {
       spellRow.setAttribute("data-tab-n", this.TAB_N);
       spellRow.setAttribute("data-spell-id", spell_id);
       spellRow.setAttribute("data-spell-name", this.SPELLS[spell_id]['name']);
+      spellRow.style.setProperty("--timeline-width", this.WIDTH);
       
       spellRow.appendChild(this.new_spell_name_cell(spell_id));
       
@@ -778,90 +852,39 @@ BUTTON_FAV.addEventListener("click", event => {
   }
 });
 
-function newOption(value, text) {
-  const option = document.createElement("option");
-  option.value = value;
-  option.textContent = text;
-  return option;
+function show_error(error_msg) {
+  DIALOG_MSG.style.color = "red";
+  DIALOG_MSG.textContent = error_msg;
+  DIALOG_MSG.style.visibility = "visible";
 }
 
-function get_response_error_wrap(request) {
-  DIALOG_MSG.style.color = "red";
-    if (request.status == 404) {
-      DIALOG_MSG.textContent = "Report wasn't found"
-      DIALOG_MSG.style.visibility = "visible";
-      return;
-    }
-    if (request.status == 429) {
-      DIALOG_MSG.textContent = `Retry in: ${request.response}`;
-      DIALOG_MSG.style.visibility = "visible";
-      return;
-    }
-    if (request.status != 200 || request.readyState != 4) return;
-    
-    DIALOG_MSG.style.visibility = "hidden";
-    return request.response;
+function find_report_id() {
+  const input_str = INPUT_REPORT_ID.value;
+  const pathname = decodeURI(input_str).split('/');
+  if (!pathname.includes("reports")) return input_str;
+  const index = pathname.indexOf("reports") + 1;
+  return pathname[index];
 }
 
 function get_report_slices() {
-  if (!boss) {
-    DIALOG_MSG.textContent = "Required slice with boss";
-    DIALOG_MSG.style.color = "red";
-    DIALOG_MSG.style.visibility = "visible";
+  if (!ENCOUNTER_NAME) {
+    show_error("Required slice with boss");
     return;
   }
-  const report_id = INPUT_REPORT_ID.value;
-  if (!report_id) return;
-
-  const fetch_segments = new XMLHttpRequest();
-  fetch_segments.onreadystatechange = () => {
-    SELECT_ATTEMPTS.innerHTML = '';
-
-    const response = get_response_error_wrap(fetch_segments);
-    console.log(response);
-    if (!response) return;
-    const parsed_json = JSON.parse(response);
-    
-    const segments = parsed_json[boss];
-    if (!segments) return;
-
-    for (let i in segments) {
-      const segment = segments[i];
-      const segment_type = `${segment.duration_str} ${segment.segment_type}`;
-      SELECT_ATTEMPTS.appendChild(newOption(i, segment_type))
-    }
-    SELECT_ATTEMPTS_WRAP.style.visibility = "visible";
-    if (SELECT_PLAYERS_WRAP.style.visibility == "visible") {
-      BUTTON_CONFIRM.style.visibility = "visible";
-    }
+  const report_id = find_report_id();
+  if (!report_id) {
+    show_error("Not a valid report ID/link");
+    return;
   }
 
-  fetch_segments.open("POST", `/reports/${report_id}/report_slices/`);
-  fetch_segments.send();
+  const request = JSON.stringify({
+    boss: ENCOUNTER_NAME,
+  });
+  FETCH_SEGMENTS.open("POST", `/reports/${report_id}/report_slices/`);
+  FETCH_SEGMENTS.send(request);
 
-  const fetch_players = new XMLHttpRequest();
-  fetch_players.onreadystatechange = () => {
-    SELECT_PLAYERS.innerHTML = '';
-
-    const response = get_response_error_wrap(fetch_players);
-    console.log(response);
-    if (!response) return;
-    const parsed_json = JSON.parse(response);
-    
-    for (let player_name in parsed_json) {
-      if (parsed_json[player_name] == CONFIG.player_class) {
-        SELECT_PLAYERS.appendChild(newOption(player_name, player_name))
-      }
-    }
-
-    SELECT_PLAYERS_WRAP.style.visibility = "visible";
-    if (SELECT_ATTEMPTS_WRAP.style.visibility == "visible") {
-      BUTTON_CONFIRM.style.visibility = "visible";
-    }
-  }
-
-  fetch_players.open("POST", `/reports/${report_id}/players_classes/`);
-  fetch_players.send();
+  FETCH_PLAYERS.open("POST", `/reports/${report_id}/players_classes/`);
+  FETCH_PLAYERS.send();
 }
 
 TIMELINE_MULT_RANGE.value = localStorage.getItem("ZOOM") || "3";
@@ -884,18 +907,17 @@ BUTTON_ADD_CHARACTER.addEventListener("click", () => {
 });
 INPUT_REPORT_ID.addEventListener("keypress", event => event.key == "Enter" && get_report_slices());
 BUTTON_FETCH_SEGMENTS.addEventListener("click", () => get_report_slices());
+BUTTON_CANCEL.addEventListener("click", () => DIALOG_CHARACTER_SELECTION.close());
 BUTTON_CONFIRM.addEventListener("click", () => {
   DIALOG_MSG.textContent = "Loading...";
-  DIALOG_MSG.style.color = "gainsboro";
+  DIALOG_MSG.style.removeProperty("color");
   DIALOG_MSG.style.visibility = "visible";
-  new Character(INPUT_REPORT_ID.value, SELECT_PLAYERS.value);
+  const report_id = find_report_id();
+  new Character(report_id, SELECT_PLAYERS.value);
   CASTS_SECTION_WRAP.style.display = "";
 });
-BUTTON_CANCEL.addEventListener("click", () => DIALOG_CHARACTER_SELECTION.close());
 
-const current_query = new URLSearchParams(window.location.search);
-const boss = current_query.get("boss");
-if (boss) {
+if (ENCOUNTER_NAME) {
   TABS_WRAP.style.display = "";
   BOSS_REMINDER.style.display = "none";
   const _pathname = decodeURI(window.location.pathname).split('/');
