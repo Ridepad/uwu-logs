@@ -160,6 +160,7 @@ BOSS_PETS = {
     # "0xF1300084D1000833": "00820D", # Void Zone
     "00826B": "00808A", # Writhing Lasher'
     "0085E3": "00808A", # Ward of Life'
+    "01ADBA": "01ADB4", # Felguard
 }
 
 
