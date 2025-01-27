@@ -24,6 +24,9 @@ TOC_PETS = {
     "008B1A": "Cat",
     "008A89": "Demon",
     "008CE6": "Treants",
+    "01ADBD": "Wolves",
+    "01ADBB1": "Loque'nahak",
+    "01ADBC1": "King Krush",
 }
 USEFUL = {
     # Icecrown Citadel
