@@ -277,6 +277,10 @@ TOC_CHAMPIONS = {
     "00868C": "Thrakgar <Shaman>",
     "008692": "Harkzog <Warlock>",
     "008695": "Narrhok Steelbreaker <Warrior>",
+    "01ADB0": "Monroth the Exiled <Demon Hunter>",
+    "01ADB3": "Yal'u <Hunter>",
+    "01ADB4": "Gor'gaz the Terror <Warlock>",
+    "01ADBA": "Felguard",
 }
 
 MULTIBOSSES = {
