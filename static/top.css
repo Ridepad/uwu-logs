@@ -127,6 +127,9 @@ tbody > tr:nth-child(odd) > td {
   }
 }
 
+#table-top {
+  padding-bottom: 5rem;
+}
 
 select:disabled,
 input:disabled + label {
