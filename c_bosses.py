@@ -278,6 +278,7 @@ TOC_CHAMPIONS = {
     "008692": "Harkzog <Warlock>",
     "008695": "Narrhok Steelbreaker <Warrior>",
     "01ADB0": "Monroth the Exiled <Demon Hunter>",
+    "01ADB1": "Haruln Soundstorm <Shaman>",
     "01ADB2": "Krall Sharpclaw <Druid>",
     "01ADB3": "Yal'u <Hunter>",
     "01ADB4": "Gor'gaz the Terror <Warlock>",
