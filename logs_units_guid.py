@@ -297,6 +297,8 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
                 temp_pets[tGUID] = new_unit(tName, sName, sGUID)
 
         elif spell_id in PET_FILTER_SPELLS:
+            if tGUID[6:-6] in BOSS_PETS:
+                continue
             if sGUID == tGUID:
                 if is_perma_pet(sGUID):
                     pets_perma_all.add(sGUID)
