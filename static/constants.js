@@ -46,7 +46,7 @@ const BOSSES = {
     "Fathom-Lord Karathress", "Morogrim Tidewalker", "Lady Vashj",
   ],
   "The Eye": [
-    "Void Reaver", "Al'ar", "High Astromancer Solarian", "Kael'thas Sunstrider",
+    "Al'ar", "Void Reaver", "High Astromancer Solarian", "Kael'thas Sunstrider",
   ],
   "Black Temple": [
     "High Warlord Naj'entus", "Supremus", "Shade of Akama", "Teron Gorefiend", "Gurtogg Bloodboil",
