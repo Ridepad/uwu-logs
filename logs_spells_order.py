@@ -7,8 +7,8 @@ from h_debug import running_time
 
 
 IGNORED_FLAGS = {
-    "SPELL_HEAL",
-    "SPELL_PERIODIC_HEAL",
+    # "SPELL_HEAL",
+    # "SPELL_PERIODIC_HEAL",
     "ENCHANT_APPLIED",
     "ENCHANT_REMOVED",
     "SPELL_DRAIN",

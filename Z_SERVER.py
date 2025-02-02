@@ -341,7 +341,7 @@ def healed(report_id, target_name):
     
     return render_template(
         'dmg_done2.html', **default_params, **data,
-        ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
+        # ABORBS_DETAILS=report.get_absorbs_details_wrap(segments, tGUID)
     )
 
 @SERVER.route("/reports/<report_id>/casts/<source_name>/")
