@@ -103,7 +103,8 @@ def get_history(logs_slice: list[str], source_guid: str, ignored_guids: set[str]
             continue
         try:
             timestamp, flag, _, sName, tGUID, tName, spell_id, _, etc = line.split(',', 8)
-            if flag in IGNORED_FLAGS or tGUID in ignored_guids:
+            # if flag in IGNORED_FLAGS or tGUID in ignored_guids:
+            if flag in IGNORED_FLAGS:
                 continue
             _delta = get_delta(timestamp)
             history[spell_id].append((_delta, flag, sName, tName, tGUID, etc))
