@@ -32,6 +32,7 @@ BOSSES_GUIDS = {
     "009B47": "Baltharus the Warborn",
     "009BB7": "Halion",
     "009CCE": "Halion",
+    "009CD2": "Halion Controller",
     
     # "0087EC": "Gormok the Impaler",
     # "008948": "Acidmaw",
