@@ -303,7 +303,15 @@ class LogsSlice(list[bytes]):
     
     def _raid_id(self):
         self.trim_invalid_lines_wrap()
-        _dt = self.to_dt(self[0])
+        for i in range(10):
+            try:
+                _dt = self.to_dt(self[i])
+                break
+            except Exception:
+                pass
+        else:
+            raise RuntimeError
+        
         _dt = self._fix_dt(_dt)
         date = _dt.strftime("%y-%m-%d--%H-%M")
 
