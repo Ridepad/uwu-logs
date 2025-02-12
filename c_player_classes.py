@@ -402,7 +402,13 @@ SPELL_BOOK_SPEC = {
     "warrior": {
         "7384": 1, # Overpower
         "12294": 1, # Mortal Strike
+        "47485": 1, # Mortal Strike
         "47486": 1, # Mortal Strike
+        "30330": 1, # Mortal Strike
+        "25248": 1, # Mortal Strike
+        "21551": 1, # Mortal Strike
+        "21552": 1, # Mortal Strike
+        "21553": 1, # Mortal Strike
         "52437": 1, # Sudden Death
         "60503": 1, # Taste for Blood
         "46924": 1, # Bladestorm
