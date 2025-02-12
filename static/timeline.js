@@ -55,6 +55,8 @@ const DEFAULT_COLORS = {
   "SPELL_CAST_SUCCESS": "#00CC44",
   "SPELL_ENERGIZE": "#80ECFF",
   "SPELL_PERIODIC_ENERGIZE": "#80ECFF",
+  "SPELL_HEAL": "#4CFF00",
+  "SPELL_PERIODIC_HEAL": "#B2FF00",
 }
 const TIMELINE_TICK_TYPES = {
   0: "timeline-ruler-second",
@@ -448,23 +450,31 @@ function make_timeline(milliseconds) {
 }
 function new_timestamp(t) {
   if (t == 0) return "0:00.000";
-  const negative = t.charAt(0) == "-" ? "-" : "";
-  const [_s, _ms] = t.split(".");
-  const _s_abs = Math.abs(_s)
-  const m = Math.floor(_s_abs / 60);
-  const s = Math.floor(_s_abs % 60).toString().padStart(2, "0");
-  const ms = _ms.padEnd(3, "0");
-  return `${negative}${m}:${s}.${ms}`;
+  const sign = t.charAt(0) == "-" ? "-" : "";
+  const [seconds, milliseconds] = t.split(".");
+  const seconds_abs = Math.abs(seconds);
+  const minutes_string = Math.floor(seconds_abs / 60);
+  const seconds_string = Math.floor(seconds_abs % 60).toString().padStart(2, "0");
+  const milliseconds_string = milliseconds ? milliseconds.padEnd(3, "0") : "000";
+  return `${sign}${minutes_string}:${seconds_string}.${milliseconds_string}`;
 }
 function format_dmg_line(e) {
-  const [, dmg, ok, , res, , abs, iscrit,] = e.map(v => parseInt(v)); 
+  const [, value, over, , resist, , absorb, iscrit,] = e.map(v => parseInt(v)); 
+  const value_no_over = value - over;
   const crit = iscrit ? "🌟" : "";
-  const whole_dmg = dmg + res + abs;
-  const res_p = ~~(res / whole_dmg * 100 + 0.1);
-  const res_p_s = res == 0 ? 0 : `${res}(${res_p}%)`;
-  const abs_s = abs ? `+🛡️${abs}` : "";
-  const ok_s = ok ? ` | 💀${ok} ` : "";
-  return `${crit}${whole_dmg}${crit} | 🎯${dmg}+🖤${res_p_s}${abs_s}${ok_s}`;
+  const whole_dmg = value + resist + absorb;
+  const res_p = ~~(resist / whole_dmg * 100 + 0.1);
+  const res_p_s = resist ? ` - 🖤${resist}(${res_p}%)` : "";
+  const abs_s = absorb ? ` - 🛡️${absorb}` : "";
+  const ok_s = over ? ` - 💀${over} ` : "";
+  return `${crit}${value_no_over}${crit} | 🎯${whole_dmg}${res_p_s}${abs_s}${ok_s}`;
+}
+function format_heal_line(e) {
+  const [, value, over, , , iscrit,] = e.map(v => parseInt(v)); 
+  const value_no_over = value - over;
+  const crit = iscrit ? "🌟" : "";
+  const ok_s = over ? ` - 🍃${over} ` : "";
+  return `${crit}${value_no_over}${crit} | 💚${value}${ok_s}`;
 }
 function parse_etc(etc) {
   const e = etc.split(",");
@@ -472,6 +482,8 @@ function parse_etc(etc) {
     return e[1];
   } else if (e.length == 3) {
     return `${e[1]} (${e[2]})`;
+  } else if (e.length == 5) {
+    return format_heal_line(e);
   } else if (e.length == 10) {
     return format_dmg_line(e);
   }
