@@ -470,7 +470,7 @@ function format_dmg_line(e) {
   return `${crit}${value_no_over}${crit} | 🎯${whole_dmg}${res_p_s}${abs_s}${ok_s}`;
 }
 function format_heal_line(e) {
-  const [, value, over, , , iscrit,] = e.map(v => parseInt(v)); 
+  const [, value, over, , iscrit,] = e.map(v => parseInt(v));
   const value_no_over = value - over;
   const crit = iscrit ? "🌟" : "";
   const ok_s = over ? ` - 🍃${over} ` : "";
