@@ -10,6 +10,7 @@ from h_other import (
 )
 
 LOGGER_REPORTS = Loggers.reports
+UPTIME_IGNORED = 0.5
 
 def get_other_count(logs_slice: list[str], _filter: str):
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -642,8 +643,11 @@ class AuraUptime(logs_base.THE_LOGS):
                     start = timestamp
                     count += 1
             elif flag == "SPELL_AURA_REMOVED":
-                uptime += self.get_timedelta_seconds(start, timestamp)
+                new_uptime = self.get_timedelta_seconds(start, timestamp)
                 start = None
+                if new_uptime < UPTIME_IGNORED:
+                    continue
+                uptime += new_uptime
             else:
                 count += 1
         
@@ -663,6 +667,8 @@ class AuraUptime(logs_base.THE_LOGS):
                 if spell_data[-1][0] != "SPELL_AURA_REMOVED":
                     spell_data.append(("SPELL_AURA_REMOVED", last_line))
                 count, uptime = self.iter_spell(spell_data)
+                if uptime < UPTIME_IGNORED:
+                    continue
                 new_auras[target_guid][spell_id] = (count, uptime/DUR)
         
         return new_auras
