@@ -7,6 +7,10 @@ from h_other import sort_dict_by_value
 DEFAULT_DURATION = 60
 ROOM_DURATION = 50
 ROOM_AURA_ID = "74297"
+UPTIME_IGNORED = 0.5
+UPTIME_IGNORED_FORCED = {
+    "19753",
+}
 
 SERVERS_NO_ICC_BUFF = {
     "Lordaeron",
@@ -260,6 +264,8 @@ class AuraLine:
         self.timestamp = timestamp
         self.flag = flag
 
+    def __str__(self):
+        return f"{self.timestamp} | {self.flag}"
 
 class AuraLines(list[AuraLine]):
     def calc_total_uptime(self, spell_id: str, delta_func):
@@ -270,6 +276,8 @@ class AuraLines(list[AuraLine]):
             if applied_timestamp is not None:
                 _delta = delta_func(applied_timestamp, aura_line.timestamp)
                 _delta = min(_delta, MAX_DURATION)
+                if _delta < UPTIME_IGNORED and spell_id not in UPTIME_IGNORED_FORCED:
+                    continue
                 if _delta > 0:
                     aura.count += 1
                     aura.uptime += _delta
@@ -352,7 +360,10 @@ class AuraUptimeDurationByTarget(dict[str, dict[str, AuraUptimeDuration]]):
             for spell_id, aura_timestamps in target_data.items():
                 if target_guid[:3] != "0x0":
                     continue
-                self[target_guid][spell_id] = aura_timestamps.calc_total_uptime(spell_id, delta_func)
+                aura = aura_timestamps.calc_total_uptime(spell_id, delta_func)
+                if not aura.count:
+                    continue
+                self[target_guid][spell_id] = aura
 
 
 class AuraUptimePercentageByTarget(dict[str, dict[str, AuraUptimePercentage]]):
