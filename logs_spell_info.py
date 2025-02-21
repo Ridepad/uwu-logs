@@ -11,6 +11,9 @@ from h_other import (
 
 LOGGER_REPORTS = Loggers.reports
 UPTIME_IGNORED = 0.5
+UPTIME_IGNORED_FORCED = {
+    "19753",
+}
 
 def get_other_count(logs_slice: list[str], _filter: str):
     spells = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -633,7 +636,7 @@ class _TargetAuraUptime(dict[str, tuple[int, float]]):
     pass
 
 class AuraUptime(logs_base.THE_LOGS):
-    def iter_spell(self, data: list[str, str]):
+    def iter_spell(self, data: list[str, str], ignore_fast_remove=True):
         count = 0
         uptime = 0.0
         start = None
@@ -645,7 +648,7 @@ class AuraUptime(logs_base.THE_LOGS):
             elif flag == "SPELL_AURA_REMOVED":
                 new_uptime = self.get_timedelta_seconds(start, timestamp)
                 start = None
-                if new_uptime < UPTIME_IGNORED:
+                if ignore_fast_remove and new_uptime < UPTIME_IGNORED:
                     continue
                 uptime += new_uptime
             else:
@@ -666,8 +669,9 @@ class AuraUptime(logs_base.THE_LOGS):
                     spell_data.insert(0, ("SPELL_AURA_APPLIED", first_line))
                 if spell_data[-1][0] != "SPELL_AURA_REMOVED":
                     spell_data.append(("SPELL_AURA_REMOVED", last_line))
-                count, uptime = self.iter_spell(spell_data)
-                if uptime < UPTIME_IGNORED:
+                ignore_fast_remove = spell_id not in UPTIME_IGNORED_FORCED
+                count, uptime = self.iter_spell(spell_data, ignore_fast_remove=ignore_fast_remove)
+                if ignore_fast_remove and uptime < UPTIME_IGNORED:
                     continue
                 new_auras[target_guid][spell_id] = (count, uptime/DUR)
         
