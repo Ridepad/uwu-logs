@@ -140,8 +140,8 @@ class Tier_4:
 
 class Tier_5:
     FOR_POINTS = (
-        Encounter("Void Reaver", "25N"),
         Encounter("Al'ar", "25N"),
+        Encounter("Void Reaver", "25N"),
         Encounter("High Astromancer Solarian", "25N"),
         Encounter("Kael'thas Sunstrider", "25N"),
 
