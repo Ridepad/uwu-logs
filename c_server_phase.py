@@ -111,7 +111,7 @@ class Tier_3:
     ALL_BOSSES = FOR_POINTS + OTHER
 
 
-class Tier_5:
+class Tier_4:
     BOSSES_GET_GUID_NAME_PAIRS_FROM = (
         Encounter("Maiden of Virtue", "10N"),
         Encounter("Prince Malchezaar", "10N"),
@@ -134,6 +134,25 @@ class Tier_5:
 
         Encounter("Magtheridon", "25N"),
     )
+    OTHER = ()
+    ALL_BOSSES = FOR_POINTS + OTHER
+
+
+class Tier_5:
+    FOR_POINTS = (
+        Encounter("Void Reaver", "25N"),
+        Encounter("Al'ar", "25N"),
+        Encounter("High Astromancer Solarian", "25N"),
+        Encounter("Kael'thas Sunstrider", "25N"),
+
+        Encounter("Hydross the Unstable", "25N"),
+        Encounter("The Lurker Below", "25N"),
+        Encounter("Leotheras the Blind", "25N"),
+        Encounter("Fathom-Lord Karathress", "25N"),
+        Encounter("Morogrim Tidewalker", "25N"),
+        Encounter("Lady Vashj", "25N"),
+    )
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = FOR_POINTS
     OTHER = ()
     ALL_BOSSES = FOR_POINTS + OTHER
 
