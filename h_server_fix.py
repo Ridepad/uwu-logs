@@ -16,7 +16,6 @@ SERVERS_WC = {
     "WoW-Circle-x5":   "1",
     "WoW-Circle-Fun":  "13",
 }
-SERVERS_NAMES = set(SERVERS.values())
 
 
 class ServerID:
@@ -44,7 +43,12 @@ class ServerID:
     
     __repr__ = __str__
          
-
+SERVERS_WITH_SERVER_ID_IN_LOGS = [
+    ServerID("Lordaeron", "(lordaeron)"),
+    ServerID("Icecrown", "(icecrown)"),
+    ServerID("Blackrock", "(blackrock)"),
+    ServerID("Onyxia", "(onyxia)"),
+]
 SERVERS_OTHER = [
     ServerID("Rising Gods", "(risin.*?god)"),
     ServerID("WoW Circle", "(circle)"),
@@ -55,22 +59,27 @@ SERVERS_OTHER = [
     ServerID("ChromieCraft", "(chromie.*?craft)"),
     ServerID("EzWoW", "(ez.*?wow)"),
     ServerID("NaerZone", "(naer.*?zone)"),
-    ServerID("Way of Elendil", "(way.*?elendil)"),
+    ServerID("Way of Elendil", "(elendil)"),
     ServerID("WoW Brasil", "(wow.*?brasil)"),
     ServerID("Aequitas", "(aequitas)"),
     ServerID("Everlook", "(everlook)"),
     ServerID("UltimoWoW", "(ultim.*wow)"),
     ServerID("UltimoWoW", "(benn?u)"),
+    ServerID("FreedomUA", "(freedom)"),
+    ServerID("Hellscream", "(hellscream)"),
+    ServerID("Hellscream", "(garrosh)"),
     # ServerName("", ""),
 ]
 
 def server_cnv(server: str):
     if not server:
         return ""
-    if server in SERVERS_NAMES:
-        return server
     
     _server_l = server.lower()
+    for _server in SERVERS_WITH_SERVER_ID_IN_LOGS:
+        if re.findall(_server.re_string, _server_l):
+            return
+
     for _server in SERVERS_OTHER:
         if re.findall(_server.re_string, _server_l):
             return _server.no_space
@@ -98,13 +107,17 @@ def test1():
         "Wow Circle 3.3.5a x5",
         "rIsing godSs",
         "risINGg godds",
+        "Way Elendil",
         "Way-of-Elendil",
         "Benu",
         "Bennu",
         "ULTIMAWOW",
+        "ez--wow",
+        "onyxia",
+        "onyxia-test",
     ]
     for s in re_test:
-        print(server_cnv(s))
+        print(f"{s:30} | {server_cnv(s)}")
 
 if __name__ == "__main__":
     test1()
