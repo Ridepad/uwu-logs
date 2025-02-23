@@ -172,6 +172,9 @@ class BossDataBySpec(TopDB):
             return self.__points
 
         top1dps = next(iter(self.players.values())).dps
+        if not top1dps:
+            self.__points = {}
+            return self.__points
         
         # number_of_players = len(self.players)
         # number_of_raids = self.__raids_amount
