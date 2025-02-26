@@ -31,6 +31,8 @@ SPELLS: dict[str, tuple[str]] = {
     "Gunship2":
         ("70161", "72540", "72539", "72541"), # Hurl Axe
     "Deathbringer Saurfang":
+        ("72380", "72439", "72438", "72440"), # Blood Nova
+    "Deathbringer Saurfang2":
         ("72385", "72442", "72441", "72443"), # Boiling Blood
     "Festergut":
         ("72219", "72552", "72551", "72553"), # Gastric Bloat
