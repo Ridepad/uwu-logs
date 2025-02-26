@@ -27,8 +27,13 @@ FLAGS = {
     "RANGE_DAMAGE",
     "DAMAGE_SHIELD",
     "SPELL_HEAL",
+    "SPELL_PERIODIC_HEAL",
     "SPELL_AURA_APPLIED",
     "SPELL_AURA_REMOVED",
+}
+FLAGS_HEAL = {
+    "SPELL_HEAL",
+    "SPELL_PERIODIC_HEAL",
 }
 SPELL_AURA = {
     "SPELL_AURA_APPLIED",
@@ -127,15 +132,6 @@ def split_to_pulls(boss_id: str, lines: BossLines):
 
     yield CURRENT_LINES
 
-def get_overkill(etc: str):
-    try:
-        _, _, dmg, ok, _ = etc.split(",", 4)
-        if ok == "0":
-            return 0
-        return int(dmg) - int(ok)
-    except ValueError:
-        return 0
-    
 def get_more_precise_start(lines: BossLines):
     # print('++++ get_more_precise_start')
     index = 0
@@ -149,13 +145,14 @@ def get_more_precise_start(lines: BossLines):
 def get_more_precise_end(lines: BossLines):
     # print('++++ get_more_precise_end')
     index = 0
-    damaged = 0
     removed = 0
     first_removed_index = 0
     for i, line in enumerate(reversed(lines)):
         if i > MAX_LINES:
             # print(f">>> get_more_precise_end i > MAX_LINES\n{line}")
             break
+        
+        # print(f">>> {i:>5} | {line}")
         
         if line[2] in SPELL_AURA:
             if line[2] == "SPELL_AURA_REMOVED" and line[4][6:-6] in COWARDS:
@@ -170,25 +167,34 @@ def get_more_precise_end(lines: BossLines):
         removed = 0
         first_removed_index = 0
         if line[2] == "UNIT_DIED" and index < 10:
-            # print(f">>> get_more_precise_end UNIT_DIED\n{line}")
+            # print(f">>> get_more_precise_end UNIT_DIED")
             index = i
             continue
-
-        overkill = get_overkill(line[-1])
-        if overkill == 0:
-            damaged += 1
-            if damaged > 20:
-                # print(">>> get_more_precise_end _damaged > 20")
+        
+        try:
+            _, _, value, overkill, _ = line[-1].split(",", 4)
+            if overkill == "0":
+                # print(f"overkill == '0'\n{line}")
+                # if last_overkill:
+                #     index = i
                 break
-        elif overkill > 2:
-            if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
-                continue
-            if line[4][6:-6] not in BOSSES_GUIDS_ALL:
-                continue
-            # print(f">>> get_more_precise_end overkill > 2\n{line}")
-            index = i
-            break
-    
+                # continue
+            value_no_overkill = int(value) - int(overkill)
+        except ValueError:
+            # print(f"ValueError")
+            continue
+        # print(f">>> {i:>5} | {value_no_overkill} value_no_overkill")
+        if value_no_overkill == 1:
+            continue
+        # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
+        if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
+            continue
+        if line[4][6:-6] not in BOSSES_GUIDS_ALL:
+            continue
+        
+        # print(f">>> {i:>5} | get_more_precise_end overkill > 1")
+        index = i
+
     return -index
 
 # def get_more_precise_wrap(lines: BossLines, bossname='?'):
@@ -230,7 +236,6 @@ def refine_lk(segments: list[BossLines]):
     for attempt, _split in reversed(attempts_to_replace):
         segments[attempt:attempt+1] = _split
 
-@running_time
 def split_boss_lines_to_pulls(groupped_boss_lines: dict[str, BossLines]):
     for boss_id, dumped_lines in groupped_boss_lines.items():
         if len(dumped_lines) < 100:
