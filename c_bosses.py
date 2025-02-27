@@ -357,7 +357,7 @@ ENCOUNTER_MIN_DURATION = {
     "Blood-Queen Lana'thel": 70,
     "Valithria Dreamwalker": 30,
     "Sindragosa": 70,
-    "The Lich King": 320,
+    "The Lich King": 120,
     "Halion": 75,
     "Northrend Beasts": 75,
 }
