@@ -220,21 +220,24 @@ def get_more_precise_wrap(lines: BossLines):
     return lines
 
 def refine_lk(segments: list[BossLines]):
-    # print(segments)
-    attempts_to_replace = []
-    for attempt, segment in enumerate(segments):
-        fofs = [line for line in segment if "72350" in line]
+    for attempt, segment in reversed(list(enumerate(segments))):
+        fofs = [
+            i
+            for (i, line) in enumerate(segment)
+            if "72350" in line
+        ]
         if not fofs:
             continue
-        first = fofs[0]
-        last = fofs[-1]
-        segment1 = segment[:segment.index(first)+1]
-        segment2 = segment[segment.index(last):]
-        _split = [segment1, segment2]
-        attempts_to_replace.append((attempt, _split))
 
-    for attempt, _split in reversed(attempts_to_replace):
-        segments[attempt:attempt+1] = _split
+        index_first_fof = fofs[0]
+        index_last_fof = fofs[-1]
+        # print("> fofs:")
+        # print(index_first_fof, segment[index_first_fof])
+        # print(index_last_fof, segment[index_last_fof])
+        segment_before_fof = segment[:index_first_fof+1]
+        segment_after_fof = segment[index_last_fof:]
+        segments[attempt] = segment_before_fof
+        segments.insert(attempt+1, segment_after_fof)
 
 def split_boss_lines_to_pulls(groupped_boss_lines: dict[str, BossLines]):
     for boss_id, dumped_lines in groupped_boss_lines.items():
