@@ -144,45 +144,48 @@ def get_more_precise_start(lines: BossLines):
 
 def get_more_precise_end(lines: BossLines):
     # print('++++ get_more_precise_end')
-    index = 0
-    removed = 0
-    first_removed_index = 0
-    for i, line in enumerate(reversed(lines)):
-        if i > MAX_LINES:
-            # print(f">>> get_more_precise_end i > MAX_LINES\n{line}")
-            break
-        
-        # print(f">>> {i:>5} | {line}")
+    new_fight_end_line_index = 0
+    removed_auras = 0
+    damaged_times = -20
+    first_removed_aura_line_index = 0
+    for line_index, line in enumerate(reversed(lines)):
+        # print(f">>> {line_index:>5} | {line}")
         
         if line[2] in SPELL_AURA:
             if line[2] == "SPELL_AURA_REMOVED" and line[4][6:-6] in COWARDS:
-                removed += 1
-                if not first_removed_index:
-                    first_removed_index = -i
-                if removed > 15:
+                removed_auras += 1
+                if not first_removed_aura_line_index:
+                    first_removed_aura_line_index = -line_index
+                if removed_auras > 15:
                     # print(f">>> get_more_precise_end removed > 15\n{line}")
-                    return first_removed_index
+                    return first_removed_aura_line_index
             continue
         
-        removed = 0
-        first_removed_index = 0
-        if line[2] == "UNIT_DIED" and index < 10:
+        removed_auras = 0
+        first_removed_aura_line_index = 0
+        if line[2] == "UNIT_DIED" and line_index < 10:
             # print(f">>> get_more_precise_end UNIT_DIED")
-            index = i
+            new_fight_end_line_index = line_index
+            damaged_times = 0
             continue
         
         try:
             _, _, value, overkill, _ = line[-1].split(",", 4)
-            if overkill == "0":
-                # print(f"overkill == '0'\n{line}")
-                # if last_overkill:
-                #     index = i
-                break
-                # continue
-            value_no_overkill = int(value) - int(overkill)
-        except ValueError:
-            # print(f"ValueError")
+        except ValueError: # not enough values to unpack
             continue
+        
+        if overkill == "0":
+            # print(f">>>>> damaged {damaged:5} | overkill == 0")
+            damaged_times += 1
+            if damaged_times > 5:
+                break
+            continue
+
+        try:
+            value_no_overkill = int(value) - int(overkill)
+        except ValueError: # invalid literal for int
+            continue
+        
         # print(f">>> {i:>5} | {value_no_overkill} value_no_overkill")
         if value_no_overkill == 1:
             continue
@@ -192,10 +195,10 @@ def get_more_precise_end(lines: BossLines):
         if line[4][6:-6] not in BOSSES_GUIDS_ALL:
             continue
         
-        # print(f">>> {i:>5} | get_more_precise_end overkill > 1")
-        index = i
+        # print(f">>> {line_index:>5} | get_more_precise_end overkill > 1")
+        new_fight_end_line_index = line_index
 
-    return -index
+    return -new_fight_end_line_index
 
 # def get_more_precise_wrap(lines: BossLines, bossname='?'):
 def get_more_precise_wrap(lines: BossLines):
@@ -205,7 +208,7 @@ def get_more_precise_wrap(lines: BossLines):
     # print()
     # print(bossname)
     index_start = get_more_precise_start(lines)
-    index_end = get_more_precise_end(lines)
+    index_end = get_more_precise_end(lines[-MAX_LINES:])
     # print("==== GET MORE PRECISE AFTER", "="*50)
     # print('....... index_start', index_start)
     # print('....... index_end', index_end)
