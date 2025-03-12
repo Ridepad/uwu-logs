@@ -221,7 +221,7 @@ class SevenZipArchiveInfo(SevenZip):
                 return p.stdout.read().decode().splitlines()
             except Exception:
                 pass
-        return None
+        return []
     
     @staticmethod
     def _make_re_string(line: str):
