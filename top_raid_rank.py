@@ -128,8 +128,7 @@ class RaidRank(TopDBCached):
         dps = dps + 0.01
         rank_reversed = bisect_right(spec_data, dps)
         rank = total_raids - rank_reversed + 1
-        percentile = rank_reversed / total_raids * 100
-        percentile = round(percentile, 2)
+        percentile = rank_reversed / total_raids * 10000 // 1 / 100
         perc_from_top1 = dps / spec_data[-1] * 100
         perc_from_top1 = round(perc_from_top1, 1)
         return {
