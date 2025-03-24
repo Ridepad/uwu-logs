@@ -271,11 +271,6 @@ USEFUL = {
         "003F18": "Attumen the Huntsman",
     },
     # Tempest Keep
-    "High Astromancer Solarian": {
-        "004975": "High Astromancer Solarian",
-        "004976": "Solarium Priest",
-        "0049ED": "Solarium Agent",
-    },
     "Kael'thas Sunstrider": {
         "004CA6": "Kael'thas Sunstrider",
         "004E5C": "Lord Sanguinar",
@@ -294,16 +289,6 @@ USEFUL = {
         "005372": "Phoenix",
     },
     # Serpentshrine Cavern
-    "The Lurker Below": {
-        "0052E1": "The Lurker Below",
-        "005569": "Coilfang Ambusher",
-        "005571": "Coilfang Guardian",
-    },
-    "Hydross the Unstable": {
-        "0052E0": "Hydross the Unstable",
-        "005613": "Pure Spawn of Hydross",
-        "005614": "Tainted Spawn of Hydross",
-    },
     "Leotheras the Blind": {
         "0052DF": "Leotheras the Blind",
         "005561": "Inner Demon",
@@ -315,16 +300,10 @@ USEFUL = {
         "0055CD": "Fathom-Guard Tidalvess",
         "0055CE": "Fathom-Guard Sharkkis",
     },
-    "Morogrim Tidewalker": {
-        "0052DD": "Morogrim Tidewalker",
-        "0055A0": "Tidewalker Lurker",
-    },
     "Lady Vashj": {
         "0052DC": "Lady Vashj",
-        "0055C6": "Enchanted Elemental",
         "005627": "Coilfang Elite",
         "005628": "Coilfang Strider",
-        "0055F9": "Tainted Elemental",
     },
 }
 
@@ -465,6 +444,38 @@ ALL_GUIDS = {
         "003F17": "Midnight",
         "003F18": "Attumen the Huntsman",
         "003CBE": "Pre phase Attumen the Huntsman",
+    },
+    # Serpentshrine Cavern
+    "The Lurker Below": {
+        "0052E1": "The Lurker Below",
+        "005569": "Coilfang Ambusher",
+        "005571": "Coilfang Guardian",
+    },
+    "Hydross the Unstable": {
+        "0052E0": "Hydross the Unstable",
+        "005613": "Pure Spawn of Hydross",
+        "005614": "Tainted Spawn of Hydross",
+    },
+    "Morogrim Tidewalker": {
+        "0052DD": "Morogrim Tidewalker",
+        "0055A0": "Tidewalker Lurker",
+    },
+    "Lady Vashj": {
+        "0052DC": "Lady Vashj",
+        "005627": "Coilfang Elite",
+        "005628": "Coilfang Strider",
+        "0055C6": "Enchanted Elemental",
+        "0055F9": "Tainted Elemental",
+    },
+    # Tempest Keep
+    "Al'ar": {
+        "0xF130004C3A000008": "Al'ar",
+        "0xF130004C5F000194": "Ember of Al'ar",
+    },
+    "High Astromancer Solarian": {
+        "004975": "High Astromancer Solarian",
+        "004976": "Solarium Priest",
+        "0049ED": "Solarium Agent",
     },
 }
 
