@@ -398,7 +398,6 @@ SPELL_BOOK_SPEC = {
         "47847": 3, # Shadowfury
         "17962": 3, # Conflagrate (Rank 1)
         "30912": 3, # Conflagrate (Rank 6)
-        "18871": 3, # Shadowburn
     },
     "warrior": {
         "7384": 1, # Overpower
