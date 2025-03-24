@@ -270,6 +270,62 @@ USEFUL = {
         "003F17": "Midnight",
         "003F18": "Attumen the Huntsman",
     },
+    # Tempest Keep
+    "High Astromancer Solarian": {
+        "004975": "High Astromancer Solarian",
+        "004976": "Solarium Priest",
+        "0049ED": "Solarium Agent",
+    },
+    "Kael'thas Sunstrider": {
+        "004CA6": "Kael'thas Sunstrider",
+        "004E5C": "Lord Sanguinar",
+        "004E5E": "Grand Astromancer Capernian",
+        "004E5F": "Master Engineer Telonicus",
+        "004E60": "Thaladred the Darkener",
+
+        "005314": "Netherstrand Longbow",
+        "005315": "Devastation",
+        "005316": "Cosmic Infuser",
+        "005317": "Infinity Blades",
+        "005318": "Warp Slicer",
+        "005319": "Phaseshift Bulwark",
+        "00531A": "Staff of Disintegration",
+        "005374": "Phoenix Egg",
+        "005372": "Phoenix",
+    },
+    # Serpentshrine Cavern
+    "The Lurker Below": {
+        "0052E1": "The Lurker Below",
+        "005569": "Coilfang Ambusher",
+        "005571": "Coilfang Guardian",
+    },
+    "Hydross the Unstable": {
+        "0052E0": "Hydross the Unstable",
+        "005613": "Pure Spawn of Hydross",
+        "005614": "Tainted Spawn of Hydross",
+    },
+    "Leotheras the Blind": {
+        "0052DF": "Leotheras the Blind",
+        "005561": "Inner Demon",
+        "005573": "Shadow of Leotheras",
+    },
+    "Fathom-Lord Karathress": {
+        "0052DE": "Fathom-Lord Karathress",
+        "0055CC": "Fathom-Guard Caribdis",
+        "0055CD": "Fathom-Guard Tidalvess",
+        "0055CE": "Fathom-Guard Sharkkis",
+    },
+    "Morogrim Tidewalker": {
+        "0052DD": "Morogrim Tidewalker",
+        "0055A0": "Tidewalker Lurker",
+    },
+    "Lady Vashj": {
+        "0052DC": "Lady Vashj",
+        "0055C6": "Enchanted Elemental",
+        "005627": "Coilfang Elite",
+        "005628": "Coilfang Strider",
+        "0055F9": "Tainted Elemental",
+    },
 }
 
 ALL_GUIDS = {
@@ -422,6 +478,25 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     "Halion": {
         "Halion": ("009BB7", "009CCE"),
         "Adds": ("009EE9", "009EEB"),
+    },
+    "Kael'thas Sunstrider": {
+        "Mini Bosses": ("004E5C", "004E5E", "004E5F", "004E60"),
+        "Weapons": ("005314", "005315", "005316", "005317", "005318", "005319", "00531A", ),
+    },
+    "Fathom-Lord Karathress": {
+        "Mini Bosses": ("0055CC", "0055CD", "0055CE"),
+    },
+    "The Lurker Below": {
+        "Adds": ("005571", "005569"),
+    },
+    "Lady Vashj": {
+        "Adds": ("0055C6", "005627", "005628", "0055F9"),
+    },
+    "Hydross the Unstable": {
+        "Adds": ("005305", "005614", "005613"),
+    },
+    "High Astromancer Solarian": {
+        "Adds": ("004976", "0049ED"),
     },
 }
 
