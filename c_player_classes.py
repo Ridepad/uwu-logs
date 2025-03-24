@@ -392,6 +392,7 @@ SPELL_BOOK_SPEC = {
         "47241": 2, # Metamorphosis
         "63167": 2, # Decimation
         "47193": 2, # Demonic Empowerment
+        "32553": 2, # Life Tap # SPELL_ENERGIZE Mana Feed
 
         "59172": 3, # Chaos Bolt
         "47847": 3, # Shadowfury
