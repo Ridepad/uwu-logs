@@ -56,7 +56,7 @@ function add_spells(spells) {
   SELECT_SPELL.innerHTML = "";
   SELECT_SPELL.style.display = object_is_empty(spells) ? "none" : "";
   for (const id in spells) {
-    SELECT_SPELL.appendChild(new_option(id, spells[id]["name"]));
+    SELECT_SPELL.appendChild(new_option(id, `${spells[id]['name']} [${id.split('--')[0]}]`));
   }
 }
 
