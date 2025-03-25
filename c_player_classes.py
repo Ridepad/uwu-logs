@@ -386,7 +386,10 @@ SPELL_BOOK_SPEC = {
         "47843": 1, # Unstable Affliction (Rank 5)
         "64368": 1, # Eradication (Rank 2)
         "64371": 1, # Eradication (Rank 3)
+        "18265": 1, # Siphon Life (TBC)
         "30911": 1, # Siphon Life
+        "32388": 1, # Shadow Embrace
+        "32391": 1, # Shadow Embrace
 
         "71165": 2, # Molten Core
         "47241": 2, # Metamorphosis
