@@ -149,26 +149,34 @@ def get_more_precise_end(lines: BossLines):
     new_fight_end_line_index = 0
     removed_auras = 0
     damaged_times = -20
-    first_removed_aura_line_index = 0
+    died = False
     for line_index, line in enumerate(reversed(lines)):
         # print(f">>> {line_index:>5} | {line}")
         
         if line[2] in SPELL_AURA:
-            if line[2] == "SPELL_AURA_REMOVED" and line[4][6:-6] in COWARDS:
-                removed_auras += 1
-                if not first_removed_aura_line_index:
-                    first_removed_aura_line_index = -line_index
-                if removed_auras > 15:
-                    # print(f">>> get_more_precise_end removed > 15\n{line}")
-                    return first_removed_aura_line_index
-            continue
+            if died:
+                continue
+            if line[2] != "SPELL_AURA_REMOVED":
+                continue
+            if line[4][6:-6] not in COWARDS:
+                continue
+            
+            removed_auras += 1
+            if removed_auras < 15:
+                continue
+            
+            new_fight_end_line_index = line_index
+            print(f">>> get_more_precise_end removed > 15")
+            break
+            # return first_removed_aura_line_index
         
         removed_auras = 0
-        first_removed_aura_line_index = 0
         if line[2] == "UNIT_DIED" and line_index < 10:
+            print('line[2] == "UNIT_DIED" and line_index < 10')
             # print(f">>> get_more_precise_end UNIT_DIED")
             new_fight_end_line_index = line_index
             damaged_times = 0
+            died = True
             continue
         
         try:
@@ -177,7 +185,7 @@ def get_more_precise_end(lines: BossLines):
             continue
         
         if overkill == "0":
-            # print(f">>>>> damaged {damaged:5} | overkill == 0")
+            # print(f">>>>> damaged {damaged_times:5} | overkill == 0")
             damaged_times += 1
             if damaged_times > 5:
                 break
@@ -188,7 +196,7 @@ def get_more_precise_end(lines: BossLines):
         except ValueError: # invalid literal for int
             continue
         
-        # print(f">>> {i:>5} | {value_no_overkill} value_no_overkill")
+        # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
         if value_no_overkill == 1:
             continue
         # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
