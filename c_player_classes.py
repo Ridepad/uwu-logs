@@ -275,8 +275,8 @@ SPELL_BOOK_SPEC = {
         "55360": 2, # Living Bomb
         "48108": 2, # Hot Streak
         "28682": 2, # Combustion
-        "11958": 3, # Cold Snap
 
+        # "11958": 3, # Cold Snap
         "12579": 3, # Winter's Chill
         "31687": 3, # Summon Water Elemental
         "44572": 3, # Deep Freeze
@@ -386,7 +386,10 @@ SPELL_BOOK_SPEC = {
         "47843": 1, # Unstable Affliction (Rank 5)
         "64368": 1, # Eradication (Rank 2)
         "64371": 1, # Eradication (Rank 3)
+        "18265": 1, # Siphon Life (TBC)
         "30911": 1, # Siphon Life
+        "32388": 1, # Shadow Embrace
+        "32391": 1, # Shadow Embrace
 
         "71165": 2, # Molten Core
         "47241": 2, # Metamorphosis
@@ -398,6 +401,7 @@ SPELL_BOOK_SPEC = {
         "47847": 3, # Shadowfury
         "17962": 3, # Conflagrate (Rank 1)
         "30912": 3, # Conflagrate (Rank 6)
+        "30294": 3, # Soul Leech
     },
     "warrior": {
         "7384": 1, # Overpower

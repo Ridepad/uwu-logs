@@ -59,21 +59,24 @@ IGNORED_SPELL_IDS = {
     # Surge of Darkness
     # Surge of Light
 }
-BOSS_MAX_SEP = {
+BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT = T_DELTA["30SEC"]
+BOSS_MAX_IDLE_TIME_IN_FIGHT = {
     # "008FF5": T_DELTA["30SEC"],
-    "008EF5": T_DELTA["1MIN"],
-    "009BB7": T_DELTA["2MIN"],
-    "008704": T_DELTA["2MIN"],
-    "008EF5": T_DELTA["2MIN"],
-    "008246": T_DELTA["1MIN"],
-    "008208": T_DELTA["1MIN"],
+    "009BB7": T_DELTA["2MIN"], # Halion
+    "008704": T_DELTA["2MIN"], # Anub'arak
+    # "008EF5": T_DELTA["1MIN"],
+    "008EF5": T_DELTA["2MIN"], # The Lich King
+    "008246": T_DELTA["1MIN"], # Mimiron
+    "008208": T_DELTA["1MIN"], # Yogg-Saron
     
-    "061A96": T_DELTA["2MIN"],
-    "061A98": T_DELTA["2MIN"],
-    "061A99": T_DELTA["2MIN"],
-    "061AB1": T_DELTA["2MIN"],
-    "061AB3": T_DELTA["2MIN"],
-    "061AB4": T_DELTA["2MIN"],
+    "061A96": T_DELTA["2MIN"], # Illidan Stormrage
+    "061A98": T_DELTA["2MIN"], # Shade of Aran
+    "061A99": T_DELTA["2MIN"], # Ysondre
+    "061AB1": T_DELTA["2MIN"], # Ragnaros
+    "061AB3": T_DELTA["2MIN"], # Void Reaver
+    "061AB4": T_DELTA["2MIN"], # Azuregos
+
+    "004CA6": T_DELTA["1MIN"], # Kael'thas Sunstrider
 }
 HEAL_BOSSES = {
     "008FB5",
@@ -99,8 +102,7 @@ def to_int(timestamp: str):
     return int(timestamp[i-8:i].replace(':', ''))
 
 def split_to_pulls(boss_id: str, lines: BossLines):
-    # MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
-    MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["30SEC"])
+    MAX_IDLE_TIME = BOSS_MAX_IDLE_TIME_IN_FIGHT.get(boss_id, BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT)
     CURRENT_LINES = BossLines()
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
@@ -117,12 +119,12 @@ def split_to_pulls(boss_id: str, lines: BossLines):
         if now - last_time > 60 or last_time > now:
             td = get_delta(new_timestamp, last_timestamp)
             # print()
-            # print(td, td > MAX_SEP)
+            # print(td, td > MAX_IDLE_TIME)
             # print(f"{last_time:06} > {now:06}")
             # print("/// S:", CURRENT_LINES[0])
             # print("/// E:", CURRENT_LINES[-1])
             # print(">>> N:", line)
-            if td > MAX_SEP:
+            if td > MAX_IDLE_TIME:
                 yield CURRENT_LINES
                 CURRENT_LINES = BossLines()
         
@@ -147,26 +149,34 @@ def get_more_precise_end(lines: BossLines):
     new_fight_end_line_index = 0
     removed_auras = 0
     damaged_times = -20
-    first_removed_aura_line_index = 0
+    died = False
     for line_index, line in enumerate(reversed(lines)):
         # print(f">>> {line_index:>5} | {line}")
         
         if line[2] in SPELL_AURA:
-            if line[2] == "SPELL_AURA_REMOVED" and line[4][6:-6] in COWARDS:
-                removed_auras += 1
-                if not first_removed_aura_line_index:
-                    first_removed_aura_line_index = -line_index
-                if removed_auras > 15:
-                    # print(f">>> get_more_precise_end removed > 15\n{line}")
-                    return first_removed_aura_line_index
-            continue
+            if died:
+                continue
+            if line[2] != "SPELL_AURA_REMOVED":
+                continue
+            if line[4][6:-6] not in COWARDS:
+                continue
+            
+            removed_auras += 1
+            if removed_auras < 15:
+                continue
+            
+            new_fight_end_line_index = line_index
+            print(f">>> get_more_precise_end removed > 15")
+            break
+            # return first_removed_aura_line_index
         
         removed_auras = 0
-        first_removed_aura_line_index = 0
         if line[2] == "UNIT_DIED" and line_index < 10:
+            # print('line[2] == "UNIT_DIED" and line_index < 10')
             # print(f">>> get_more_precise_end UNIT_DIED")
             new_fight_end_line_index = line_index
             damaged_times = 0
+            died = True
             continue
         
         try:
@@ -175,7 +185,7 @@ def get_more_precise_end(lines: BossLines):
             continue
         
         if overkill == "0":
-            # print(f">>>>> damaged {damaged:5} | overkill == 0")
+            # print(f">>>>> damaged {damaged_times:5} | overkill == 0")
             damaged_times += 1
             if damaged_times > 5:
                 break
@@ -186,7 +196,7 @@ def get_more_precise_end(lines: BossLines):
         except ValueError: # invalid literal for int
             continue
         
-        # print(f">>> {i:>5} | {value_no_overkill} value_no_overkill")
+        # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
         if value_no_overkill == 1:
             continue
         # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
@@ -206,7 +216,6 @@ def get_more_precise_wrap(lines: BossLines):
     # print(lines[0])
     # print(lines[-1])
     # print()
-    # print(bossname)
     index_start = get_more_precise_start(lines)
     index_end = get_more_precise_end(lines[-MAX_LINES:])
     # print("==== GET MORE PRECISE AFTER", "="*50)
