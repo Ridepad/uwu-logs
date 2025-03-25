@@ -8703,6 +8703,12 @@
   "inv_misc_drum_02": {
     "35476": "Drums of Battle"
   },
+  "inv_misc_drum_03": {
+    "35475": "Drums of War"
+  },
+  "inv_misc_drum_07": {
+    "35478": "Drums of Restoration"
+  },
   "inv_misc_eye_02": {
     "65006": "Eye of the Broodmother"
   },
@@ -9005,6 +9011,9 @@
   "inv_potion_156": {
     "41618": "Bottled Nethergon Energy"
   },
+  "inv_potion_168": {
+    "41617": "Cenarion Mana Salve"
+  },
   "inv_potion_17": {
     "27746": "Nitrous Boost"
   },
@@ -9281,6 +9290,9 @@
   },
   "inv_trinket_naxxramas04": {
     "60492": "Embrace of the Spider"
+  },
+  "inv_weapon_shortblade_23": {
+    "35163": "Icon of the Silver Crescent"
   },
   "inv_weapon_shortblade_38": {
     "35541": "Combat Potency",
@@ -23192,6 +23204,7 @@
   "spell_nature_invisibilitytotem": {
     "19872": "Calm Dragonkin",
     "32138": "Corrupted Air",
+    "25359": "Grace of Air Totem",
     "32662": "Shadow Totem",
     "52796": "Summon Seed Pod"
   },
