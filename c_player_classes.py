@@ -401,6 +401,7 @@ SPELL_BOOK_SPEC = {
         "17962": 3, # Conflagrate (Rank 1)
         "30912": 3, # Conflagrate (Rank 6)
         "18871": 3, # Shadowburn
+        "30294": 3, # Soul Leech
     },
     "warrior": {
         "7384": 1, # Overpower
