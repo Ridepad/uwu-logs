@@ -59,21 +59,24 @@ IGNORED_SPELL_IDS = {
     # Surge of Darkness
     # Surge of Light
 }
-BOSS_MAX_SEP = {
+BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT = T_DELTA["30SEC"]
+BOSS_MAX_IDLE_TIME_IN_FIGHT = {
     # "008FF5": T_DELTA["30SEC"],
-    "008EF5": T_DELTA["1MIN"],
-    "009BB7": T_DELTA["2MIN"],
-    "008704": T_DELTA["2MIN"],
-    "008EF5": T_DELTA["2MIN"],
-    "008246": T_DELTA["1MIN"],
-    "008208": T_DELTA["1MIN"],
+    "009BB7": T_DELTA["2MIN"], # Halion
+    "008704": T_DELTA["2MIN"], # Anub'arak
+    # "008EF5": T_DELTA["1MIN"],
+    "008EF5": T_DELTA["2MIN"], # The Lich King
+    "008246": T_DELTA["1MIN"], # Mimiron
+    "008208": T_DELTA["1MIN"], # Yogg-Saron
     
-    "061A96": T_DELTA["2MIN"],
-    "061A98": T_DELTA["2MIN"],
-    "061A99": T_DELTA["2MIN"],
-    "061AB1": T_DELTA["2MIN"],
-    "061AB3": T_DELTA["2MIN"],
-    "061AB4": T_DELTA["2MIN"],
+    "061A96": T_DELTA["2MIN"], # Illidan Stormrage
+    "061A98": T_DELTA["2MIN"], # Shade of Aran
+    "061A99": T_DELTA["2MIN"], # Ysondre
+    "061AB1": T_DELTA["2MIN"], # Ragnaros
+    "061AB3": T_DELTA["2MIN"], # Void Reaver
+    "061AB4": T_DELTA["2MIN"], # Azuregos
+
+    "004CA6": T_DELTA["1MIN"], # Kael'thas Sunstrider
 }
 HEAL_BOSSES = {
     "008FB5",
@@ -99,8 +102,7 @@ def to_int(timestamp: str):
     return int(timestamp[i-8:i].replace(':', ''))
 
 def split_to_pulls(boss_id: str, lines: BossLines):
-    # MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["1MIN"])
-    MAX_SEP = BOSS_MAX_SEP.get(boss_id, T_DELTA["30SEC"])
+    MAX_IDLE_TIME = BOSS_MAX_IDLE_TIME_IN_FIGHT.get(boss_id, BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT)
     CURRENT_LINES = BossLines()
     last_timestamp = lines[0][1]
     last_time = to_int(last_timestamp)
@@ -117,12 +119,12 @@ def split_to_pulls(boss_id: str, lines: BossLines):
         if now - last_time > 60 or last_time > now:
             td = get_delta(new_timestamp, last_timestamp)
             # print()
-            # print(td, td > MAX_SEP)
+            # print(td, td > MAX_IDLE_TIME)
             # print(f"{last_time:06} > {now:06}")
             # print("/// S:", CURRENT_LINES[0])
             # print("/// E:", CURRENT_LINES[-1])
             # print(">>> N:", line)
-            if td > MAX_SEP:
+            if td > MAX_IDLE_TIME:
                 yield CURRENT_LINES
                 CURRENT_LINES = BossLines()
         
