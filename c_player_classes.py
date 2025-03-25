@@ -275,8 +275,8 @@ SPELL_BOOK_SPEC = {
         "55360": 2, # Living Bomb
         "48108": 2, # Hot Streak
         "28682": 2, # Combustion
-        "11958": 3, # Cold Snap
 
+        # "11958": 3, # Cold Snap
         "12579": 3, # Winter's Chill
         "31687": 3, # Summon Water Elemental
         "44572": 3, # Deep Freeze
