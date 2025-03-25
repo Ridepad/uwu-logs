@@ -172,7 +172,7 @@ def get_more_precise_end(lines: BossLines):
         
         removed_auras = 0
         if line[2] == "UNIT_DIED" and line_index < 10:
-            print('line[2] == "UNIT_DIED" and line_index < 10')
+            # print('line[2] == "UNIT_DIED" and line_index < 10')
             # print(f">>> get_more_precise_end UNIT_DIED")
             new_fight_end_line_index = line_index
             damaged_times = 0
@@ -216,7 +216,6 @@ def get_more_precise_wrap(lines: BossLines):
     # print(lines[0])
     # print(lines[-1])
     # print()
-    # print(bossname)
     index_start = get_more_precise_start(lines)
     index_end = get_more_precise_end(lines[-MAX_LINES:])
     # print("==== GET MORE PRECISE AFTER", "="*50)
