@@ -17,6 +17,7 @@ SPELL_BOOK = {
     "29166": 1, # Innervate
      "5570": 1, # Insect Swarm
     "24977": 1, # Insect Swarm
+    "27013": 1, # Insect Swarm
     "48468": 1, # Insect Swarm
     "24932": 1, # Leader of the Pack
     "48566": 1, # Mangle (Cat)
