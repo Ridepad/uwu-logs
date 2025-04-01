@@ -211,6 +211,7 @@ SPELL_BOOK_SPEC = {
     },
     "druid": {
         "60433": 1, # Earth and Moon
+        "27013": 1, # Insect Swarm
         "48468": 1, # Insect Swarm
         "48518": 1, # Eclipse (Lunar)
         "48517": 1, # Eclipse (Solar)
