@@ -44,6 +44,7 @@ def get_specs(logs: list[str], players: dict[str, str], classes: dict[str, str],
             continue
         spec = CLASSES_LIST_HTML.index(player_class) * 4
         if player_class == "warlock":
+            # default to Destruction spec if it could not be detected
             spec += 3
         SPECS[player_guid] = spec
 
