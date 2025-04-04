@@ -68,6 +68,7 @@ SERVERS_OTHER = [
     ServerID("FreedomUA", "(freedom)"),
     ServerID("Hellscream", "(hellscream)"),
     ServerID("Hellscream", "(garrosh)"),
+    ServerID("WoWZone", "(wowzone)"),
     # ServerName("", ""),
 ]
 
