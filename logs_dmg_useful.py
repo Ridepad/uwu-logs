@@ -294,12 +294,12 @@ USEFUL = {
         "005561": "Inner Demon",
         "005573": "Shadow of Leotheras",
     },
-    "Fathom-Lord Karathress": {
-        "0052DE": "Fathom-Lord Karathress",
-        "0055CC": "Fathom-Guard Caribdis",
-        "0055CD": "Fathom-Guard Tidalvess",
-        "0055CE": "Fathom-Guard Sharkkis",
-    },
+    # "Fathom-Lord Karathress": {
+    #     "0052DE": "Fathom-Lord Karathress",
+    #     "0055CC": "Fathom-Guard Caribdis",
+    #     "0055CD": "Fathom-Guard Tidalvess",
+    #     "0055CE": "Fathom-Guard Sharkkis",
+    # },
     "Lady Vashj": {
         "0052DC": "Lady Vashj",
         "005627": "Coilfang Elite",

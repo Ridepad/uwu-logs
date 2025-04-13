@@ -305,7 +305,7 @@ MULTIBOSSES = {
     "Moroes": ["003D47", "00426F", "004DA0", "004DA1", "004DA2", "004DA3", "004DA4"],
     "Attumen the Huntsman": ["003F18", "003F17"],
     "Opera House": ["00447F", "00448C", "00448A", "004487", "00448B", "0046F8", "004471", "00447D", "00447E"],
-    "Fathom-Lord Karathress": ["0052DE", "0055CE", "0055CD", "0055CC"],
+    # "Fathom-Lord Karathress": ["0052DE", "0055CE", "0055CD", "0055CC"],
     "The Lurker Below": ["0052E1", "005571", "005569"],
     "Lady Vashj": ["0052DC", "005627", "005628", "0055C6"],
     "Kael'thas Sunstrider": [
