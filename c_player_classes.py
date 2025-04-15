@@ -397,12 +397,12 @@ SPELL_BOOK_SPEC = {
         "47241": 2, # Metamorphosis
         "63167": 2, # Decimation
         "47193": 2, # Demonic Empowerment
+        "32553": 2, # Life Tap # SPELL_ENERGIZE Mana Feed
 
         "59172": 3, # Chaos Bolt
         "47847": 3, # Shadowfury
         "17962": 3, # Conflagrate (Rank 1)
         "30912": 3, # Conflagrate (Rank 6)
-        "18871": 3, # Shadowburn
         "30294": 3, # Soul Leech
     },
     "warrior": {
