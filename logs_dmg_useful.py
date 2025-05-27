@@ -305,6 +305,19 @@ USEFUL = {
         "005627": "Coilfang Elite",
         "005628": "Coilfang Strider",
     },
+    # Mount Hyjal
+    "Reliquary of Souls": {
+        "005B7A": "Essence of Suffering",
+        "005B7B": "Essence of Desire",
+        "005B7C": "Essence of Anger",
+    },
+    # Black Temple
+    "Illidari Council": {
+        "0059A6": "Gathios the Shatterer",
+        "0059A5": "High Nethermancer Zerevor",
+        "0059A7": "Lady Malande",
+        "0059A8": "Veras Darkshadow",
+    },
 }
 
 ALL_GUIDS = {
@@ -469,13 +482,29 @@ ALL_GUIDS = {
     },
     # Tempest Keep
     "Al'ar": {
-        "0xF130004C3A000008": "Al'ar",
-        "0xF130004C5F000194": "Ember of Al'ar",
+        "004C3A": "Al'ar",
+        "004C5F": "Ember of Al'ar",
     },
     "High Astromancer Solarian": {
         "004975": "High Astromancer Solarian",
         "004976": "Solarium Priest",
         "0049ED": "Solarium Agent",
+    },
+    # Mount Hyjal
+    "Reliquary of Souls": {
+        "005B7A": "Essence of Suffering",
+        "005B7B": "Essence of Desire",
+        "005B7C": "Essence of Anger",
+        "005BAD": "Enslaved Soul",
+    },
+    # Black Temple
+    "Shade of Akama": {
+        "005939": "Shade of Akama",
+        "005AAF": "Ashtongue Sorcerer",
+        "005AB0": "Ashtongue Defender",
+        "005B16": "Ashtongue Rogue",
+        "005BE3": "Ashtongue Elementalist",
+        "005BE4": "Ashtongue Spiritbinder",
     },
 }
 
@@ -508,6 +537,9 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     },
     "High Astromancer Solarian": {
         "Adds": ("004976", "0049ED"),
+    },
+    "Shade of Akama": {
+        "Adds": ("005AAF", "005AB0", "005B16", "005BE3", "005BE4"),
     },
 }
 
