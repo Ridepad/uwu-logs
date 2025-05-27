@@ -313,8 +313,8 @@ USEFUL = {
     },
     # Black Temple
     "Illidari Council": {
-        "0059A6": "Gathios the Shatterer",
         "0059A5": "High Nethermancer Zerevor",
+        "0059A6": "Gathios the Shatterer",
         "0059A7": "Lady Malande",
         "0059A8": "Veras Darkshadow",
     },
