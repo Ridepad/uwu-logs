@@ -155,8 +155,8 @@ BOSSES_GUIDS = {
     # "005B7A": "Essence of Suffering",
     # "005B7B": "Essence of Desire",
     "005B7C": "Essence of Anger",
-    "0059A3": "Mother of Shahraz",
-    # Illidari Council
+    "0059A3": "Mother Shahraz",
+    # The Illidari Council
     "0059A5": "High Nethermancer Zerevor",
     "0059A6": "Gathios the Shatterer",
     "0059A7": "Lady Malande",
@@ -315,7 +315,7 @@ MULTIBOSSES = {
         "005374",
     ],
     "Reliquary of Souls": ["005B7A", "005B7B", "005B7C", "005BAD"],
-    "Illidari Council": ["0059A5", "0059A6", "0059A7", "0059A8"],
+    "The Illidari Council": ["0059A5", "0059A6", "0059A7", "0059A8"],
     "Kalecgos": ["006112", "00613C"],
     "Eredar Twins": ["00624E", "00624D"],
     "M'uru": ["00648D", "0064F0"],

@@ -312,7 +312,7 @@ USEFUL = {
         "005B7C": "Essence of Anger",
     },
     # Black Temple
-    "Illidari Council": {
+    "The Illidari Council": {
         "0059A5": "High Nethermancer Zerevor",
         "0059A6": "Gathios the Shatterer",
         "0059A7": "Lady Malande",
