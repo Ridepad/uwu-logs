@@ -67,9 +67,11 @@ class PlayerDataServer(TopDBCached):
 
     @running_time
     def _renew_data(self):
+        tables = self.tables_names()
         query = '\nUNION\n'.join((
             encounter.query_players_data()
             for encounter in self.phase.BOSSES_GET_GUID_NAME_PAIRS_FROM
+            if encounter.table_name in tables
         ))
         rows = self.cursor.execute(query)
         players = PlayerData()
