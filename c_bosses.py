@@ -182,7 +182,7 @@ BOSSES_GUIDS = {
     "0061CE": "Felmyst",
     "00624E": "Grand Warlock Alythess",
     "00624D": "Lady Sacrolash",
-    "00648D": "M'uru",
+    # "00648D": "M'uru",
     "0064F0": "Entropius",
     "0062E3": "Kil'jaeden",
 

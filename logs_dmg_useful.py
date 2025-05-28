@@ -318,6 +318,18 @@ USEFUL = {
         "0059A7": "Lady Malande",
         "0059A8": "Veras Darkshadow",
     },
+    "Kalecgos": {
+        "006112": "Kalecgos",
+        "00613C": "Sathrovarr the Corruptor",
+    },
+    "Eredar Twins": {
+        "00624E": "Grand Warlock Alythess",
+        "00624D": "Lady Sacrolash",
+    },
+    "M'uru": {
+        "00648D": "M'uru",
+        "0064F0": "Entropius",
+    },
 }
 
 ALL_GUIDS = {

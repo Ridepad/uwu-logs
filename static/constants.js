@@ -59,11 +59,11 @@ const BOSSES = {
     "Akil'zon", "Nalorakk", "Jan'alai", "Halazzi", "Hex Lord Malacrass", "Zul'jin",
   ],
   "Sunwell Plateau": [
-    "Kalecgos", "Sathrovarr",
+    "Kalecgos",
     "Brutallus",
     "Felmyst",
-    "Alythess", "Sacrolash",
-    "M'uru", "Entropius",
+    "Eredar Twins",
+    "M'uru",
     "Kil'jaeden",
   ],
   "Ahn'Qiraj": [
