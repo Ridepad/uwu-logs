@@ -166,15 +166,14 @@ def get_more_precise_end(lines: BossLines):
                 continue
             
             new_fight_end_line_index = line_index
-            print(f">>> get_more_precise_end removed > 15")
+            print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | get_more_precise_end removed > 15")
             break
             # return first_removed_aura_line_index
         
         removed_auras = 0
         if line[2] == "UNIT_DIED" and line_index < 10:
-            # print('line[2] == "UNIT_DIED" and line_index < 10')
-            # print(f">>> get_more_precise_end UNIT_DIED")
             new_fight_end_line_index = line_index
+            print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | line[2] == UNIT_DIED")
             damaged_times = 0
             died = True
             continue
@@ -205,8 +204,8 @@ def get_more_precise_end(lines: BossLines):
         if line[4][6:-6] not in BOSSES_GUIDS_ALL:
             continue
         
-        # print(f">>> {line_index:>5} | get_more_precise_end overkill > 1")
         new_fight_end_line_index = line_index
+        print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | value_no_overkill != 1")
 
     return -new_fight_end_line_index
 

@@ -235,7 +235,7 @@ def is_overkill_on_boss(line: list[str]):
         return
     if line[4][6:-6] not in BOSSES_GUIDS:
         return
-    return int(line[9]) - int(line[10]) > 2
+    return int(line[9]) - int(line[10]) != 1
 
 def is_kill(last_line: str):
     line = last_line.split(',', 11)
