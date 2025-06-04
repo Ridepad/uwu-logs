@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import logs_core
 from c_bosses import (
     BOSSES_GUIDS,
@@ -7,15 +5,19 @@ from c_bosses import (
     MULTIBOSSES,
     convert_to_fight_name,
 )
+from c_path import FileNames
 from h_debug import running_time
 from h_datetime import (
     T_DELTA,
     get_delta,
 )
 
-MAX_LINES = 1000
+MAX_LINES_DEFAULT = 1000
+MAX_LINES_BY_BOSS = {
+    "004630": 10000,
+}
 MULTIBOSSES_MAIN = {
-    guid: boss_guids[0]
+    guid: list(boss_guids)[0]
     for boss_guids in MULTIBOSSES.values()
     for guid in boss_guids
 }
@@ -85,198 +87,234 @@ SOME_BOSS_SPELLS = {
     "72350", # Fury of Frostmourne
     "70157", # Ice Tomb
 }
-CAN_BE_SMALL = {
-    "Heroic Training Dummy",
-    "Highlord's Nemesis Trainer",
+CAN_BE_SHORT = {
+    "007F23": "Highlord's Nemesis Trainer",
+    "0079AA": "Heroic Training Dummy",
 }
 
-
-class LogLine(tuple[int, str, str, str, str, str, str]):
-    pass
-
-class BossLines(list[LogLine]):
-    pass
 
 def to_int(timestamp: str):
     i = timestamp.index('.')
     return int(timestamp[i-8:i].replace(':', ''))
 
-def split_to_pulls(boss_id: str, lines: BossLines):
-    MAX_IDLE_TIME = BOSS_MAX_IDLE_TIME_IN_FIGHT.get(boss_id, BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT)
-    CURRENT_LINES = BossLines()
-    last_timestamp = lines[0][1]
-    last_time = to_int(last_timestamp)
 
-    # print()
-    # print("="*150)
-    # boss = convert_to_fight_name(boss_id)
-    # print(boss)
+class LogLine(tuple[int, str, str, str, str, str, str]):
+    pass
 
-    for line in lines:
-        new_timestamp = line[1]
-        
-        now = to_int(new_timestamp)
-        if now - last_time > 60 or last_time > now:
-            td = get_delta(new_timestamp, last_timestamp)
-            # print()
-            # print(td, td > MAX_IDLE_TIME)
-            # print(f"{last_time:06} > {now:06}")
-            # print("/// S:", CURRENT_LINES[0])
-            # print("/// E:", CURRENT_LINES[-1])
-            # print(">>> N:", line)
-            if td > MAX_IDLE_TIME:
-                yield CURRENT_LINES
-                CURRENT_LINES = BossLines()
-        
-        last_time = now
-        last_timestamp = new_timestamp
-        CURRENT_LINES.append(line)
+class BossSegment(list[LogLine]):
+    def __init__(self, boss_id: str):
+        self.boss_id = boss_id
+        super().__init__()
 
-    yield CURRENT_LINES
+    def start_end_index(self):
+        return [self[0][0], self[-1][0] + 1]
 
-def get_more_precise_start(lines: BossLines):
-    # print('++++ get_more_precise_start')
-    index = 0
-    for index, line in enumerate(lines):
-        # print(line)
-        if line[-1][-5:] != ",BUFF":
-            break
-    
-    return index
+    def get_more_precise_wrap(self):
+        # print("===== BossSegment.get_more_precise_wrap")
+        # print(self[0])
+        # print(self[-1])
 
-def get_more_precise_end(lines: BossLines):
-    # print('++++ get_more_precise_end')
-    new_fight_end_line_index = 0
-    removed_auras = 0
-    damaged_times = -20
-    died = False
-    for line_index, line in enumerate(reversed(lines)):
-        # print(f">>> {line_index:>5} | {line}")
-        
-        if line[2] in SPELL_AURA:
-            if died:
-                continue
-            if line[2] != "SPELL_AURA_REMOVED":
-                continue
-            if line[4][6:-6] not in COWARDS:
-                continue
-            
-            removed_auras += 1
-            if removed_auras < 15:
-                continue
-            
-            new_fight_end_line_index = line_index
-            print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | get_more_precise_end removed > 15")
-            break
-            # return first_removed_aura_line_index
-        
-        removed_auras = 0
-        if line[2] == "UNIT_DIED" and line_index < 10:
-            new_fight_end_line_index = line_index
-            print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | line[2] == UNIT_DIED")
-            damaged_times = 0
-            died = True
-            continue
-        
-        try:
-            _, _, value, overkill, _ = line[-1].split(",", 4)
-        except ValueError: # not enough values to unpack
-            continue
-        
-        if overkill == "0":
-            # print(f">>>>> damaged {damaged_times:5} | overkill == 0")
-            damaged_times += 1
-            if damaged_times > 5:
-                break
-            continue
+        index_start = self.get_more_precise_start()
+        index_end = self.get_more_precise_end()
 
-        try:
-            value_no_overkill = int(value) - int(overkill)
-        except ValueError: # invalid literal for int
-            continue
-        
-        # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
-        if value_no_overkill == 1:
-            continue
-        # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
-        if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
-            continue
-        if line[4][6:-6] not in BOSSES_GUIDS_ALL:
-            continue
-        
-        new_fight_end_line_index = line_index
-        print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | value_no_overkill != 1")
-
-    return -new_fight_end_line_index
-
-# def get_more_precise_wrap(lines: BossLines, bossname='?'):
-def get_more_precise_wrap(lines: BossLines):
-    # print("==== GET MORE PRECISE START", "="*50)
-    # print(lines[0])
-    # print(lines[-1])
-    # print()
-    index_start = get_more_precise_start(lines)
-    index_end = get_more_precise_end(lines[-MAX_LINES:])
-    # print("==== GET MORE PRECISE AFTER", "="*50)
-    # print('....... index_start', index_start)
-    # print('....... index_end', index_end)
-    # print(lines[index_start])
-    # print(lines[index_end and index_end - 1 or -1])
-    if index_start:
         if index_end:
-            return lines[index_start:index_end]
-        return lines[index_start:]
-    elif index_end:
-        return lines[:index_end]
-    return lines
-
-def refine_lk(segments: list[BossLines]):
-    for attempt, segment in reversed(list(enumerate(segments))):
-        fofs = [
-            i
-            for (i, line) in enumerate(segment)
-            if "72350" in line
-        ]
-        if not fofs:
-            continue
-
-        index_first_fof = fofs[0]
-        index_last_fof = fofs[-1]
-        # print("> fofs:")
-        # print(index_first_fof, segment[index_first_fof])
-        # print(index_last_fof, segment[index_last_fof])
-        segment_before_fof = segment[:index_first_fof+1]
-        segment_after_fof = segment[index_last_fof:]
-        segments[attempt] = segment_before_fof
-        segments.insert(attempt+1, segment_after_fof)
-
-def split_boss_lines_to_pulls(groupped_boss_lines: dict[str, BossLines]):
-    for boss_id, dumped_lines in groupped_boss_lines.items():
-        if len(dumped_lines) < 100:
-            continue
+            for _ in range(index_end):
+                self.pop()
         
-        fight_name = convert_to_fight_name(boss_id)
-        if fight_name is None:
-            continue
+        if index_start:
+            for _ in range(index_start):
+                self.pop(0)
+
+        # print(f'... new range [{index_start}:{-index_end}]')
+        # print(self[0])
+        # print(self[-1])
         
-        new_segments = [
-            # get_more_precise_wrap(segment, fight_name)
-            get_more_precise_wrap(segment)
-            for segment in split_to_pulls(boss_id, dumped_lines)
-            if len(segment) > 100 or fight_name in CAN_BE_SMALL
+        return self
+
+    def get_more_precise_start(self):
+        # print('++++ get_more_precise_start')
+        index = 0
+        for index, line in enumerate(self):
+            # print(line)
+            if line[-1][-5:] != ",BUFF":
+                break
+        
+        return index
+
+    def get_more_precise_end(self):
+        # print('++++ get_more_precise_end')
+        new_fight_end_line_index = 0
+        boss_died = False
+        damaged_times = -20
+        removed_auras = 0
+        first_removed_aura_line_index = 0
+        max_lines = MAX_LINES_BY_BOSS.get(self.boss_id, MAX_LINES_DEFAULT)
+        lines = self[-max_lines:]
+        for line_index, line in enumerate(reversed(lines)):
+            # print(f">>> {line_index:>5} | {line}")
+            
+            if self.boss_id in COWARDS and line[2] in SPELL_AURA:
+                if boss_died:
+                    continue
+                if line[2] != "SPELL_AURA_REMOVED":
+                    continue
+                # if line[4][6:-6] not in COWARDS:
+                #     continue
+                if not removed_auras:
+                    first_removed_aura_line_index = line_index
+                removed_auras += 1
+                if removed_auras < 15:
+                    continue
+                
+                new_fight_end_line_index = first_removed_aura_line_index
+                # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | get_more_precise_end removed > 15")
+                break
+            
+            removed_auras = 0
+            if line[2] == "UNIT_DIED" and line_index < 10:
+                new_fight_end_line_index = line_index
+                # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | line[2] == UNIT_DIED")
+                damaged_times = 0
+                boss_died = True
+                continue
+            
+            try:
+                _, _, value, overkill, _ = line[-1].split(",", 4)
+            except ValueError: # not enough values to unpack
+                continue
+            
+            if overkill == "0":
+                # print(f">>>>> damaged {damaged_times:5} | overkill == 0")
+                damaged_times += 1
+                if damaged_times > 5:
+                    break
+                continue
+
+            try:
+                value_no_overkill = int(value) - int(overkill)
+            except ValueError: # invalid literal for int
+                continue
+            
+            # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
+            if value_no_overkill == 1:
+                continue
+            # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
+            if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
+                continue
+            if line[4][6:-6] not in BOSSES_GUIDS_ALL:
+                continue
+            new_fight_end_line_index = line_index
+            # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | value_no_overkill != 1")
+            
+        return new_fight_end_line_index
+
+
+class BossLines(list[LogLine]):
+    def __init__(self, boss_id: str):
+        self.boss_id = boss_id
+        self.fight_name = convert_to_fight_name(boss_id)
+        super().__init__()
+
+    def split_to_segments(self):
+        segments = [
+            segment.get_more_precise_wrap()
+            for segment in self._split_to_pulls()
+            if len(segment) > 100 or self.boss_id in CAN_BE_SHORT
         ]
+        
+        if self.boss_id == "008EF5":
+            self.refine_lk(segments)
 
-        if not new_segments:
-            continue
-
-        if boss_id == "008EF5":
-            refine_lk(new_segments)
-
-        start_end = [
-            [segment[0][0], segment[-1][0] + 1]
-            for segment in new_segments
+        return [
+            segment.start_end_index()
+            for segment in segments
         ]
-        yield fight_name, start_end
+    
+    @staticmethod
+    def refine_lk(segments: list[BossSegment]):
+        for attempt, segment in reversed(list(enumerate(segments))):
+            fofs = [
+                i
+                for (i, line) in enumerate(segment)
+                if "72350" in line
+            ]
+            if not fofs:
+                continue
+
+            index_first_fof = fofs[0]
+            index_last_fof = fofs[-1]
+            # print("\n> fofs:")
+            # print(index_first_fof, segment[index_first_fof])
+            # print(index_last_fof, segment[index_last_fof])
+            segment_before_fof = BossSegment(segment.boss_id)
+            segment_before_fof.extend(segment[:index_first_fof+1])
+            segments[attempt] = segment_before_fof
+
+            segment_after_fof = BossSegment(segment.boss_id)
+            segment_after_fof.extend(segment[index_last_fof:])
+            segments.insert(attempt+1, segment_after_fof)
+    
+    def _new_boss_segment(self):
+        return BossSegment(self.boss_id)
+    
+    def _split_to_pulls(self):
+        MAX_IDLE_TIME = BOSS_MAX_IDLE_TIME_IN_FIGHT.get(self.boss_id, BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT)
+        boss_segment = self._new_boss_segment()
+        last_timestamp = self[0][1]
+        last_time = to_int(last_timestamp)
+
+        # print()
+        # print("="*150)
+        # boss = convert_to_fight_name(boss_id)
+        # print(boss)
+
+        for line in self:
+            new_timestamp = line[1]
+            
+            now = to_int(new_timestamp)
+            if now - last_time > 60 or last_time > now:
+                td = get_delta(new_timestamp, last_timestamp)
+                # print()
+                # print(td, td > MAX_IDLE_TIME)
+                # print(f"{last_time:06} > {now:06}")
+                # print("/// S:", boss_segment[0])
+                # print("/// E:", boss_segment[-1])
+                # print(">>> N:", line)
+                if td > MAX_IDLE_TIME:
+                    yield boss_segment
+                    boss_segment = self._new_boss_segment()
+            
+            last_time = now
+            last_timestamp = new_timestamp
+            boss_segment.append(line)
+
+        yield boss_segment
+
+class BossLinesGroupped(dict[str, BossLines]):
+    def __missing__(self, key):
+        v = self[key] = BossLines(key)
+        return v
+
+    def segments_dict(self):
+        return dict(self.split_boss_lines_to_pulls())
+
+    def split_boss_lines_to_pulls(self):
+        for boss_id, dumped_lines in self.items():
+            # DONT FORGET TO COMMENT THIS OUT
+            # if dumped_lines.boss_id != "004630":
+            #     continue
+            if len(dumped_lines) < 100 and dumped_lines.boss_id not in CAN_BE_SHORT:
+                continue
+            
+            if dumped_lines.fight_name is None:
+                continue
+            
+            # print("\n> split_boss_lines_to_pulls |", dumped_lines.fight_name)
+            segments = dumped_lines.split_to_segments()
+            if not segments:
+                continue
+
+            yield dumped_lines.fight_name, segments
 
 
 class Fights(logs_core.Logs):
@@ -288,33 +326,38 @@ class Fights(logs_core.Logs):
             pass
         self.__ENCOUNTER_DATA = self._get_enc_data()
         return self.__ENCOUNTER_DATA
+        
+    @property
+    def encounter_data_path(self):
+        return self.relative_path(FileNames.logs_encounter_data)
 
     def _get_enc_data(self):
         try:
             return self._read_enc_data()
         except Exception:
             return self._redo_enc_data()
-    
     def _read_enc_data(self) -> dict[str, list[list[int]]]:
-        return self.relative_path("ENCOUNTER_DATA.json").json()
+        return self.encounter_data_path.json()
 
     def _redo_enc_data(self):
-        groupped_boss_lines = self._dump_all_boss_lines()
-        enc_data = dict(split_boss_lines_to_pulls(groupped_boss_lines))
-        enc_data_file_name = self.relative_path("ENCOUNTER_DATA.json")
-        enc_data_file_name.json_write(enc_data)
+        enc_data = self._make_enc_data()
+        self.encounter_data_path.json_write(enc_data)
         return enc_data
+
+    def _make_enc_data(self):
+        groupped_boss_lines = self._dump_all_boss_lines()
+        return groupped_boss_lines.segments_dict()
 
     @running_time
     def _dump_all_boss_lines(self):
         NIL = "nil"
-        BOSSES: defaultdict[str, BossLines] = defaultdict(BossLines)
+        BOSSES = BossLinesGroupped()
         
-        for n, line in enumerate(self.LOGS):
+        for line_index, line in enumerate(self.LOGS):
             if 'xF' not in line:
                 continue
             
-            ts, flag, etc = line.split(',', 2)
+            timestamp, flag, etc = line.split(',', 2)
             if flag not in FLAGS:
                 continue
             
@@ -336,73 +379,84 @@ class Fights(logs_core.Logs):
                     guid_id = sGUID[6:-6]
             
             guid_id = MULTIBOSSES_MAIN.get(guid_id, guid_id)
-            BOSSES[guid_id].append((n, ts, flag, sGUID, tGUID, spell_id, other))
+            BOSSES[guid_id].append((line_index, timestamp, flag, sGUID, tGUID, spell_id, other))
 
         return BOSSES
 
 
 #####################################
 
-from time import perf_counter
-
-def pretty_print(boss_id, dumped_lines):
-    print("==== PRETTY PRINT", "="*50)
-    for i in range(5):
-        print(dumped_lines[i])
-    if boss_id in {"008FF5", "0086C0", "008FB5", "009443", "009454", "008F46", "00869D"}:
-        for i in range(5, 20):
-            print(dumped_lines[i])
-    print()
-    # a = (line for line in reversed(lines) if "SPELL_AURA_REMOVED" not in line)
-    a = reversed(dumped_lines)
-    for _ in range(66):
-        print(next(a))
-    if boss_id in {"008EF5"}:
+def print_differences(report: Fights, enc_data, enc_data_old):
+    print("\n\n")
+    print("="*50)
+    if enc_data == enc_data_old:
+        print(">>>>> enc_data == enc_data_old")
+        return
+    print(">>>>> enc_data != enc_data_old")
+    print(enc_data)
+    print(enc_data_old)
+    for enc_name in enc_data_old:
+        segments_old = enc_data_old[enc_name]
+        segments = enc_data[enc_name]
+        if segments_old == segments:
+            continue
         print()
-        a = (line for line in reversed(dumped_lines) if "72350" in line)
-        for i in a:
-            print(i)
+        print(len(report.LOGS))
+        print(enc_name)
+        print(segments_old)
+        print(segments)
+        
+        last_segment = segments_old[-1]
+        start = report.LOGS[last_segment[0]]
+        try:
+            end = report.LOGS[last_segment[1]-1]
+        except IndexError:
+            end = report.LOGS[-1]
+        print(start)
+        print(end)
+        
+        last_segment = segments[-1]
+        start = report.LOGS[last_segment[0]]
+        try:
+            end = report.LOGS[last_segment[1]-1]
+        except IndexError:
+            end = report.LOGS[-1]
+        print(start)
+        print(end)
 
-def t1(logs):
-    pc = perf_counter()
-    fights = Fights(logs)._dump_all_boss_lines()
-    print(f'{(perf_counter() - pc)*1000:>10,.3f}ms | Fights(logs).dump_all_boss_lines')
-    return fights
-
-def t3():
-    fights = Fights("24-05-14--21-17--Meownya--Lordaeron")._get_enc_data()
-    print(fights)
-
-def _test_uld():
-    import logs_base
-    report = logs_base.THE_LOGS("24-08-27--22-00--Blokhastiq--Lordaeron")
-    groupped_boss_lines = report._dump_all_boss_lines()
-
-    BOSS_GUID = "008063"
-    lines = groupped_boss_lines[BOSS_GUID]
-    for x in lines[:20]:
-        print(x)
-    print('='*111)
-    for x in lines[-30:]:
-        print(x)
-    
-    q = {
-        BOSS_GUID: groupped_boss_lines[BOSS_GUID]
-    }
-    z = split_boss_lines_to_pulls(q)
-    for name, ss in z:
-        print(name)
-        print(ss)
 
 def test1():
-    report = Fights("24-10-02--21-25--Gattamorta--Icecrown")
+    report_id = "24-08-27--22-00--Blokhastiq--Lordaeron"
+    report_id = "24-10-02--21-25--Gattamorta--Icecrown"
+    report_id = "24-12-04--19-37--Zralog--Onyxia"
+    report_id = "24-12-18--19-23--Zralog--Onyxia"
+    report_id = "25-01-30--21-44--Nikrozja--Icecrown"
+    report_id = "25-02-24--20-26--Chickenjuice--Whitemane-Frostmourne"
+    report_id = "25-02-11--19-23--Homoskup--Icecrown"
+    report_id = "25-01-10--21-01--Meownya--Lordaeron"
+    report_id = "25-02-26--19-59--Elementherr--Rising-Gods"
+    report_id = "25-03-01--18-46--Fede--Icecrown"
+    report_id = "25-03-14--23-41--Mesugaki--Onyxia"
+    report_id = "25-03-06--20-34--Harybolseq--Onyxia"
+    report_id = "25-03-14--23-41--Mesugaki--Onyxia"
+    report_id = "25-03-13--19-45--Keppzor--Onyxia"
+    report_id = "25-03-04--19-49--Easygoplay--Onyxia"
+    report_id = "25-02-27--20-28--Sewagewater--Onyxia"
+    report_id = "25-03-27--20-59--Penetrationx--Onyxia"
+    report_id = "25-05-26--20-09--Flamed--Onyxia"
+    report_id = "25-05-16--23-05--Notvikk--Icecrown"
+    report_id = "25-05-24--15-59--Kadaj--Onyxia"
+    report = Fights(report_id)
     report.LOGS
-    report._redo_enc_data()
+    enc_data = report._make_enc_data()
+    enc_data_old = report._read_enc_data()
+    print_differences(report, enc_data, enc_data_old)
+    # LICH_KING = "The Lich King"
+    # print(enc_data[LICH_KING])
+    # print(enc_data_old[LICH_KING])
 
 def main():
     test1()
-    # _test_uld()
-
 
 if __name__ == "__main__":
     main()
