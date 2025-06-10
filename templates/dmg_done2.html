@@ -265,8 +265,8 @@ option {
           <td class="total-cell border has-tooltip">{{ REDUCED[spell_id] }}
             {% if REDUCED_DETAILED[spell_id] %}
             <table class="tooltip table-details">
-              {% for t, a in REDUCED_DETAILED[spell_id].items() %}
-              <tr><td>{{ t }}</td><td>{{ a }}</td></tr>
+              {% for category, amount in REDUCED_DETAILED[spell_id].items() %}
+              <tr><td>{{ category }}</td><td>{{ amount }}</td></tr>
               {% endfor %}
             </table>
             {% endif %}
@@ -275,11 +275,8 @@ option {
           <td class="count-small border has-tooltip">{{ MISSES[spell_id] }}
             {% if MISS_DETAILED[spell_id] %}
             <table class="tooltip table-details">
-              {% for t, a in MISS_DETAILED[spell_id].items() %}
-              <tr>
-                <td>{{ t }}</td>
-                <td>{{ a }}</td>
-              </tr>
+              {% for category, amount in MISS_DETAILED[spell_id].items() %}
+              <tr><td>{{ category }}</td><td>{{ amount }}</td></tr>
               {% endfor %}
             </table>
             {% endif %}
