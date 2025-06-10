@@ -32,7 +32,10 @@ button:hover {
 	font-size: clamp(1vw, 2rem, 5.5vw);
 }
 #target-select * {
-  font-size: 50%;
+  font-size: 1rem;
+}
+option {
+  color: gainsboro;
 }
 
 #player-info {
@@ -146,8 +149,12 @@ button:hover {
   <button type="button" id="target-select-reset">All</button>
   <select id="target-select">
     <option>Select specific target:</option>
-    {% for guid_id, target_name in TARGETS.items() %}
-    <option value="{{ guid_id }}">{{ target_name }}</option>
+    {% for group_name, targets in TARGETS.items() %}
+    <optgroup label="{{ group_name }}">
+      {% for guid_id, target_name in targets.items() %}
+      <option value="{{ guid_id }}" class="{{ PLAYER_CLASSES[target_name] }}">{{ target_name }}</option>
+      {% endfor %}
+    </optgroup>
     {% endfor %}
   </select>
 </section>

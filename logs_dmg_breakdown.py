@@ -358,17 +358,22 @@ class SourceNumbers(logs_base.THE_LOGS):
             for spell_id in spell_ids
         }
 
-    def _order_targets(self, all_targets: set[str]):
-        t = {
-            guid: self.guid_to_name(guid)
-            for guid in all_targets
+    def _order_targets(self, targets_guids: set[str]):
+        def dict_to_name(d: list[str]):
+            return {
+                target_id(guid): self.guid_to_name(guid)
+                for guid in d
+            }
+        
+        guids = sorted(targets_guids, key=self.guid_to_name)
+        players = list(filter(lambda x: x[:3] == "0x0", guids))
+        pets = list(filter(lambda x: x[:5] == "0xF14", guids))
+        npcs = list(filter(lambda x: x not in players and x not in pets, guids))
+        return {
+            "NPCS": dict_to_name(npcs),
+            "Players": dict_to_name(players),
+            "Pets": dict_to_name(pets),
         }
-        t = dict(sorted(t.items(), key=lambda x: x[1]))
-        t2 = {}
-        for guid in sort_by_name_type(t):
-            target_id = guid if guid.startswith("0x0") else guid[6:-6]
-            t2[target_id] = t[guid]
-        return t2
     
     def _filter_sources(self, data: dict[str, dict], guids):
         if type(guids) == set:
