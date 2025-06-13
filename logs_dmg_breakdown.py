@@ -34,6 +34,9 @@ class BreakdownTypeExtended(BreakdownType):
     TARGETS: set[str]
 
 
+def target_id(guid: str):
+    return guid if guid.startswith("0x0") else guid[6:-6]
+
 def total_detailed(d: dict[str, dict[str, int]]):
     total = defaultdict(int)
     detailed = defaultdict(dict)
