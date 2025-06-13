@@ -330,6 +330,10 @@ USEFUL = {
         "00648D": "M'uru",
         "0064F0": "Entropius",
     },
+    "Illidan Stormrage": {
+        "005985": "Illidan Stormrage",
+        "0059D5": "Flame of Azzinoth",
+    },
 }
 
 ALL_GUIDS = {

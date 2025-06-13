@@ -316,6 +316,7 @@ MULTIBOSSES = {
     ],
     "Reliquary of Souls": ["005B7A", "005B7B", "005B7C", "005BAD"],
     "The Illidari Council": ["0059A5", "0059A6", "0059A7", "0059A8"],
+    "Illidan Stormrage": ["005985", "0059D5"],
     "Kalecgos": ["006112", "00613C"],
     "Eredar Twins": ["00624E", "00624D"],
     "M'uru": ["00648D", "0064F0"],
