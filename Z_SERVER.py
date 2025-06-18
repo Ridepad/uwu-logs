@@ -265,6 +265,12 @@ def report_page(report_id):
     report = load_report(report_id)
     default_params = report.get_default_params(request)
 
+    if request.args.get("attempt") == "kill":
+        segment = report.request_get_kill_segment(request)
+        if segment:
+            url = f"/reports/{report_id}/{segment.href}"
+            return redirect(url)
+
     segments = default_params["SEGMENTS"]
     boss_name = request.args.get("boss")
     data = report.get_report_page_all_wrap(segments, boss_name)

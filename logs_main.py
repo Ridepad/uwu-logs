@@ -298,6 +298,11 @@ class THE_LOGS(
         }
         cached_data[QUERY] = return_data
         return return_data
+    
+    def request_get_kill_segment(self, request):
+        query_data = QuerySegment(**request.args)
+        boss_name = BOSSES_FROM_HTML[query_data.boss]
+        return self.get_latest_kill(boss_name, query_data.mode)
 
 
     @logs_base.cache_wrap
