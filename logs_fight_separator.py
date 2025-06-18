@@ -26,6 +26,7 @@ FLAGS = {
     "UNIT_DIED",
     "SWING_DAMAGE",
     "SPELL_DAMAGE",
+    "SPELL_PERIODIC_DAMAGE",
     "RANGE_DAMAGE",
     "DAMAGE_SHIELD",
     "SPELL_HEAL",
@@ -153,13 +154,13 @@ class BossSegment(list[LogLine]):
         for line_index, line in enumerate(reversed(lines)):
             # print(f">>> {line_index:>5} | {line}")
             
-            if self.boss_id in COWARDS and line[2] in SPELL_AURA:
+            if line[2] in SPELL_AURA:
                 if boss_died:
+                    continue
+                if self.boss_id not in COWARDS:
                     continue
                 if line[2] != "SPELL_AURA_REMOVED":
                     continue
-                # if line[4][6:-6] not in COWARDS:
-                #     continue
                 if not removed_auras:
                     first_removed_aura_line_index = line_index
                 removed_auras += 1
@@ -171,7 +172,11 @@ class BossSegment(list[LogLine]):
                 break
             
             removed_auras = 0
-            if line[2] == "UNIT_DIED" and line_index < 10:
+            if line[2] == "UNIT_DIED":
+                if boss_died:
+                    continue
+                if line_index > 30:
+                    continue
                 new_fight_end_line_index = line_index
                 # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | line[2] == UNIT_DIED")
                 damaged_times = 0
@@ -195,6 +200,7 @@ class BossSegment(list[LogLine]):
             except ValueError: # invalid literal for int
                 continue
             
+            damaged_times = 0
             # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
             if value_no_overkill == 1:
                 continue
@@ -203,6 +209,7 @@ class BossSegment(list[LogLine]):
                 continue
             if line[4][6:-6] not in BOSSES_GUIDS_ALL:
                 continue
+            
             new_fight_end_line_index = line_index
             # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | value_no_overkill != 1")
             
@@ -263,11 +270,6 @@ class BossLines(list[LogLine]):
         last_timestamp = self[0][1]
         last_time = to_int(last_timestamp)
 
-        # print()
-        # print("="*150)
-        # boss = convert_to_fight_name(boss_id)
-        # print(boss)
-
         for line in self:
             new_timestamp = line[1]
             
@@ -301,8 +303,10 @@ class BossLinesGroupped(dict[str, BossLines]):
     def split_boss_lines_to_pulls(self):
         for boss_id, dumped_lines in self.items():
             # DONT FORGET TO COMMENT THIS OUT
-            # if dumped_lines.boss_id != "004630":
-            #     continue
+            # if dumped_lines.boss_id != "009BB7": continue # halion
+            # if dumped_lines.boss_id != "0093B5": continue # dbs
+            # if dumped_lines.boss_id != "005985": continue # Illidan
+            # if dumped_lines.boss_id != "004630": continue # Archimonde
             if len(dumped_lines) < 100 and dumped_lines.boss_id not in CAN_BE_SHORT:
                 continue
             
@@ -336,6 +340,7 @@ class Fights(logs_core.Logs):
             return self._read_enc_data()
         except Exception:
             return self._redo_enc_data()
+
     def _read_enc_data(self) -> dict[str, list[list[int]]]:
         return self.encounter_data_path.json()
 
@@ -386,6 +391,27 @@ class Fights(logs_core.Logs):
 
 #####################################
 
+def print_segment(report: Fights, segment_new, segment_old):
+    start = report.LOGS[segment_old[0]]
+    try:
+        end = report.LOGS[segment_old[1]-1]
+    except IndexError:
+        end = report.LOGS[-1]
+    
+    print("OLD", segment_old)
+    print(start)
+    print(end)
+
+    start = report.LOGS[segment_new[0]]
+    try:
+        end = report.LOGS[segment_new[1]-1]
+    except IndexError:
+        end = report.LOGS[-1]
+    
+    print("NEW", segment_new)
+    print(start)
+    print(end)
+
 def print_differences(report: Fights, enc_data, enc_data_old):
     print("\n\n")
     print("="*50)
@@ -393,8 +419,8 @@ def print_differences(report: Fights, enc_data, enc_data_old):
         print(">>>>> enc_data == enc_data_old")
         return
     print(">>>>> enc_data != enc_data_old")
-    print(enc_data)
-    print(enc_data_old)
+    # print(enc_data)
+    # print(enc_data_old)
     for enc_name in enc_data_old:
         segments_old = enc_data_old[enc_name]
         segments = enc_data[enc_name]
@@ -405,25 +431,15 @@ def print_differences(report: Fights, enc_data, enc_data_old):
         print(enc_name)
         print(segments_old)
         print(segments)
-        
-        last_segment = segments_old[-1]
-        start = report.LOGS[last_segment[0]]
-        try:
-            end = report.LOGS[last_segment[1]-1]
-        except IndexError:
-            end = report.LOGS[-1]
-        print(start)
-        print(end)
-        
-        last_segment = segments[-1]
-        start = report.LOGS[last_segment[0]]
-        try:
-            end = report.LOGS[last_segment[1]-1]
-        except IndexError:
-            end = report.LOGS[-1]
-        print(start)
-        print(end)
 
+        for i, (segment_new, segment_old) in enumerate(zip(segments, segments_old), 1):
+            if segment_new == segment_old:
+                continue
+    
+            print()
+            print(i)
+            print_segment(report, segment_new, segment_old)
+        
 
 def test1():
     report_id = "24-08-27--22-00--Blokhastiq--Lordaeron"
@@ -435,6 +451,7 @@ def test1():
     report_id = "25-02-11--19-23--Homoskup--Icecrown"
     report_id = "25-01-10--21-01--Meownya--Lordaeron"
     report_id = "25-02-26--19-59--Elementherr--Rising-Gods"
+    report_id = "24-07-20--20-21--Atilicious--Rising-Gods"
     report_id = "25-03-01--18-46--Fede--Icecrown"
     report_id = "25-03-14--23-41--Mesugaki--Onyxia"
     report_id = "25-03-06--20-34--Harybolseq--Onyxia"
@@ -446,8 +463,12 @@ def test1():
     report_id = "25-05-26--20-09--Flamed--Onyxia"
     report_id = "25-05-16--23-05--Notvikk--Icecrown"
     report_id = "25-05-24--15-59--Kadaj--Onyxia"
+    report_id = "25-06-01--08-44--Ovenmt--Onyxia"
+    report_id = "25-06-05--22-54--Neth--Onyxia"
+    report_id = "25-06-08--19-46--Meno--Onyxia"
     report = Fights(report_id)
     report.LOGS
+    # report._redo_enc_data()
     enc_data = report._make_enc_data()
     enc_data_old = report._read_enc_data()
     print_differences(report, enc_data, enc_data_old)
