@@ -9,7 +9,7 @@ from c_path import FileNames
 from h_debug import running_time
 from h_datetime import (
     T_DELTA,
-    get_delta,
+    to_dt_year,
 )
 
 MAX_LINES_DEFAULT = 1000
@@ -217,10 +217,14 @@ class BossSegment(list[LogLine]):
 
 
 class BossLines(list[LogLine]):
-    def __init__(self, boss_id: str):
+    def __init__(self, boss_id: str, year: int):
         self.boss_id = boss_id
+        self.year = year
         self.fight_name = convert_to_fight_name(boss_id)
         super().__init__()
+
+    def get_timedelta(self, last, now):
+        return to_dt_year(now, self.year) - to_dt_year(last, self.year)
 
     def split_to_segments(self):
         segments = [
@@ -263,7 +267,7 @@ class BossLines(list[LogLine]):
     
     def _new_boss_segment(self):
         return BossSegment(self.boss_id)
-    
+
     def _split_to_pulls(self):
         MAX_IDLE_TIME = BOSS_MAX_IDLE_TIME_IN_FIGHT.get(self.boss_id, BOSS_MAX_IDLE_TIME_IN_FIGHT_DEFAULT)
         boss_segment = self._new_boss_segment()
@@ -275,7 +279,7 @@ class BossLines(list[LogLine]):
             
             now = to_int(new_timestamp)
             if now - last_time > 60 or last_time > now:
-                td = get_delta(new_timestamp, last_timestamp)
+                td = self.get_timedelta(new_timestamp, last_timestamp)
                 # print()
                 # print(td, td > MAX_IDLE_TIME)
                 # print(f"{last_time:06} > {now:06}")
@@ -293,8 +297,12 @@ class BossLines(list[LogLine]):
         yield boss_segment
 
 class BossLinesGroupped(dict[str, BossLines]):
+    def __init__(self, year: int):
+        self.year = year
+        return
+    
     def __missing__(self, key):
-        v = self[key] = BossLines(key)
+        v = self[key] = BossLines(boss_id=key, year=self.year)
         return v
 
     def segments_dict(self):
@@ -356,7 +364,7 @@ class Fights(logs_core.Logs):
     @running_time
     def _dump_all_boss_lines(self):
         NIL = "nil"
-        BOSSES = BossLinesGroupped()
+        BOSSES = BossLinesGroupped(year=self.year)
         
         for line_index, line in enumerate(self.LOGS):
             if 'xF' not in line:
@@ -466,12 +474,13 @@ def test1():
     report_id = "25-06-01--08-44--Ovenmt--Onyxia"
     report_id = "25-06-05--22-54--Neth--Onyxia"
     report_id = "25-06-08--19-46--Meno--Onyxia"
+    report_id = "24-02-29--22-55--Napfelsiine--Rising-Gods"
     report = Fights(report_id)
     report.LOGS
-    # report._redo_enc_data()
-    enc_data = report._make_enc_data()
-    enc_data_old = report._read_enc_data()
-    print_differences(report, enc_data, enc_data_old)
+    report._redo_enc_data()
+    # enc_data = report._make_enc_data()
+    # enc_data_old = report._read_enc_data()
+    # print_differences(report, enc_data, enc_data_old)
     # LICH_KING = "The Lich King"
     # print(enc_data[LICH_KING])
     # print(enc_data_old[LICH_KING])

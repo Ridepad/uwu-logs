@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import logs_base
-from h_datetime import get_delta_simple_precise
 from h_debug import running_time
 
 # THIS IS A FUCKING DISASTER
@@ -361,11 +360,6 @@ def parse_absorb_related(logs: list[str], discos: set[str]=None):
 
     return events
 
-def get_delta_simple_precise_wrap(c, last=None):
-    if last is None:
-        return -1
-    return get_delta_simple_precise(c, last).total_seconds()
-
 def getabsorderindex(spid, offset=0):
     try:
         return ABS_ORDER.index(spid)
@@ -397,260 +391,6 @@ SPELLS_NAMES = {
     VALANYR: "Protection of Ancient Kings",
 }
 
-def proccess_absorb(lines, discos, is_bdk=False):
-    CURRENT_SHIELDS = {}
-    CURRENT_MAX_SHIELD = {}
-    ABSORBS = defaultdict(lambda: defaultdict(int))
-    ABSORBS_DETAILS = []
-    for ts, flag, sGUID, sName, tGUID, tName, _id, spell_name, _ABSORB, _DAMAGE, res, sch in lines:
-        _ABSORB = to_int(_ABSORB)
-        _DAMAGE = to_int(_DAMAGE)
-        # res = int(res)
-        SPELLS_NAMES[_id] = spell_name
-        _line = f"{ts:18} | {flag:21} | {sGUID} | {sName:30} | {tGUID} | {tName:30} | {_id:>5} | {spell_name:30}"
-        if _ABSORB and _ABSORB != "0":
-            _line = f"{_line} | {_ABSORB:>6} | {_DAMAGE:>6} | {res:>6} | {sch:>6}"
-        if _ABSORB:
-            ABSORBS_DETAILS.append((ts, flag, sName, spell_name, _ABSORB, _DAMAGE+_ABSORB))
-        else:
-            ABSORBS_DETAILS.append((ts, flag, sName, spell_name, "", ""))
-        # print(_line)
-            
-        if flag == "DAMAGE_SPLIT":
-            if _id in DMG_SPLIT:
-                CURRENT_SHIELDS[_id] = {
-                    "sGUID": sGUID,
-                    "sName": sName,
-                    "remain": _ABSORB,
-                    "ts": ts,
-                    "transient": True,
-                }
-        elif flag in HEAL_FLAGS:
-            if sGUID in discos:
-                __shield = CURRENT_SHIELDS.get(DAEGIS)
-                if not __shield or __shield.get("transient"):
-                    __shield = CURRENT_SHIELDS[DAEGIS] = new_shield(_id, sGUID, sName)
-                __shield["ts"] = ts
-                __shield["remain"] = min(10000, __shield.get("remain", 0) + int(_ABSORB *.3))
-            else:
-                __shield = CURRENT_SHIELDS.get(VALANYR)
-                if not __shield or __shield.get("transient"):
-                    __shield = CURRENT_SHIELDS[VALANYR] = new_shield(_id, sGUID, sName)
-                __shield["ts"] = ts
-                __shield["remain"] = min(20000, __shield.get("remain", 0) + int(_ABSORB *.15))
-
-        elif flag in AURA_FLAGS:
-            __shield = CURRENT_SHIELDS.get(_id)
-            if not __shield or __shield.get("transient") or get_delta_simple_precise_wrap(ts, __shield.get("tsrem")) > 0.5:
-                __shield = new_shield(_id, sGUID, sName)
-                if _id in CURRENT_MAX_SHIELD:
-                    __shield["cap"] = CURRENT_MAX_SHIELD[_id]
-                
-            if flag == "SPELL_AURA_REMOVED":
-                __shield["transient"] = True
-                __shield["tsrem"] = ts
-            else:
-                __shield["ts"] = ts
-            
-            CURRENT_SHIELDS[_id] = __shield
-            
-        elif flag in ABS_FLAGS:
-            
-            # sort shields by prio  
-            shields_list = list(CURRENT_SHIELDS)
-            # print([getabsorderindex(x, shields_list.index(x)) for x in CURRENT_SHIELDS])
-            CURRENT_SHIELD_IDS = sorted(CURRENT_SHIELDS, key=lambda x: getabsorderindex(x, shields_list.index(x)))
-            if VALANYR in CURRENT_SHIELDS:
-                if CURRENT_SHIELDS[VALANYR].get("transient"):
-                    CURRENT_SHIELD_IDS.insert(0, CURRENT_SHIELD_IDS.pop(CURRENT_SHIELD_IDS.index(VALANYR)))
-
-                # print(shields_list)
-                # print(CURRENT_SHIELD_IDS)
-            # for current_shield_id, shieild_ts in sorted(shields.items(), key=getabsorderindex):
-            _filtered_shit = {
-                s_id: CURRENT_SHIELDS[s_id]
-                for s_id in CURRENT_SHIELD_IDS
-                if s_id not in IGNORED_MAX_VALUES
-            }
-            # print(_filtered_shit.keys())
-            
-            if is_bdk:
-                _max_cap = sum(
-                    CURRENT_SHIELDS[x].get("remain") or CURRENT_MAX_SHIELD.get(x) or CURRENT_SHIELDS[x].get("cap") or 0
-                    for x in CURRENT_SHIELD_IDS
-                )
-                _max_avg = sum(
-                    CURRENT_SHIELDS[x].get("remain") or CURRENT_SHIELDS[x].get("avg") or 0
-                    for x in CURRENT_SHIELD_IDS
-                )
-                if _max_cap < _ABSORB:
-                    ratio = _ABSORB / (_ABSORB + _DAMAGE) * 100
-                    # print("0"*100, "WTF", ratio)
-                    if int(45 - ratio) == 0:
-                        if flag != "SWING_DAMAGE":
-                            ABSORBS[tGUID]["49497"] += _ABSORB
-                            ABSORBS_DETAILS.append((ts, "ADDED_sd1", tName, "Spell Deflection", _ABSORB, ""))
-                            _ABSORB = 0
-                            # prettyprint("++++??sd1 ADDED", _ABSORB, "Spell Deflection", tName)
-                    elif int(15 - ratio) == 0:
-                        ABSORBS[tGUID]["52286"] += _ABSORB
-                        ABSORBS_DETAILS.append((ts, "ADDED_wn1", tName, "Will of the Necropolis", _ABSORB, ""))
-                        _ABSORB = 0
-                        # prettyprint("++++??wn0 ADDED", _ABSORB, "Will of the Necropolis", tName)
-                    elif ratio > 45:
-                        _rem_abs = _ABSORB - (_ABSORB + _DAMAGE) * .45 - _DAMAGE * 3
-                        # print(CURRENT_SHIELDS)
-                        # print(_max_cap)
-                        # print(_max_avg)
-                        # print(_rem_abs)
-                        if "48707" in CURRENT_SHIELDS:
-                            if _max_cap and _rem_abs > _max_cap - 15 :
-                                _abs = int((_ABSORB + _DAMAGE) * .15)
-                                _ABSORB = _ABSORB - _abs
-                                ABSORBS[tGUID]["52286"] += _abs
-                                ABSORBS_DETAILS.append((ts, "ADDED_wn2", tName, "Will of the Necropolis", _abs, ""))
-                                # prettyprint("++++??wn2 ADDED", _abs, "Will of the Necropolis", tName)
-                            elif _rem_abs > _max_avg - 15:
-                                _abs = int((_ABSORB + _DAMAGE) * .45)
-                                _ABSORB = _ABSORB - _abs
-                                ABSORBS[tGUID]["49497"] += _abs
-                                ABSORBS_DETAILS.append((ts, "ADDED_sd2", tName, "Spell Deflection", _abs, ""))
-                                # prettyprint("++++??sd2 ADDED", _abs, "Spell Deflection", tName)
-                            elif abs(_DAMAGE * 3 - _ABSORB) > 10:
-                                _abs = int((_ABSORB + _DAMAGE) * .15)
-                                _ABSORB = _ABSORB - _abs
-                                ABSORBS[tGUID]["52286"] += _abs
-                                ABSORBS_DETAILS.append((ts, "ADDED_wn3", tName, "Will of the Necropolis", _abs, ""))
-                                # prettyprint("++++??wn3 ADDED", _abs, "Will of the Necropolis", tName)
-                            # elif _rem_abs < 0:
-                            # else:
-                            #     _abs = int((_ABSORB + _DAMAGE) * .15)
-                            #     # prettyprint("++++??wn4 ADDED", _abs, "Will of the Necropolis", tName)
-                            #     _ABSORB = _ABSORB - _abs
-                            
-                        elif flag != "SWING_DAMAGE" and _ABSORB > _max_cap + 500:
-                            _rem_abs = int((_ABSORB + _DAMAGE) * .45)
-                            _ABSORB = _ABSORB - _rem_abs
-                            ABSORBS[tGUID]["49497"] += _rem_abs
-                            ABSORBS_DETAILS.append((ts, "ADDED_sd3", tName, "Spell Deflection", _rem_abs, ""))
-                            # prettyprint("++++??sd3 ADDED", _abs, "Spell Deflection", tName)
-                    elif ratio > 15 and _ABSORB > _max_cap + 500:
-                        _rem_abs = int((_ABSORB + _DAMAGE) * .15)
-                        _ABSORB = _ABSORB - _rem_abs
-                        ABSORBS[tGUID]["52286"] += _rem_abs
-                        ABSORBS_DETAILS.append((ts, "ADDED_wnx4", tName, "Will of the Necropolis", _rem_abs, ""))
-                        # prettyprint("++++??wn1 ADDED", _abs, "Will of the Necropolis", tName)
-
-            for current_shield_id in CURRENT_SHIELD_IDS:
-                CURR_SHIELD = CURRENT_SHIELDS[current_shield_id]
-                transient = CURR_SHIELD.get("transient")
-                if transient:
-                    d = get_delta_simple_precise_wrap(ts, CURR_SHIELD.get("tsrem"))
-                    del CURRENT_SHIELDS[current_shield_id]
-                    # prettyprint2("------- REMOVED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
-                    if d > 0.5:
-                        if current_shield_id in _filtered_shit:
-                            del _filtered_shit[current_shield_id]
-                        # prettyprint2("------1 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
-                        continue
-
-                if current_shield_id in APPLY_ON_DMG and ts == CURR_SHIELD.get("ts"):
-                    d = get_delta_simple_precise_wrap(ts, CURR_SHIELD.get("ts"))
-                    # prettyprint2("------2 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
-                    continue
-                    
-                d = get_delta_simple_precise_wrap(ts, CURR_SHIELD.get("ts"))
-                # prettyprint2("======== SHIELD", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
-                if current_shield_id == "48707": # Anti-Magic Shell
-                    if sch != "0x1":
-                        # print(CURRENT_SHIELDS)
-                        _abs = _DAMAGE * 3
-                        if len(CURRENT_SHIELDS) < 2:
-                            _abs = _ABSORB
-                            _ABSORB = 0
-                        else:
-                            _ABSORB = _ABSORB - _abs
-                        # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
-                        ABSORBS[CURR_SHIELD["sGUID"]]["48707"] += _abs
-                        ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
-                
-                elif current_shield_id in DMG_SPLIT:
-                    _abs = CURR_SHIELD["remain"]
-                    _ABSORB = _ABSORB - _abs
-                    # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
-                    ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
-                    ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
-
-                elif current_shield_id in IDKSHIELDS:
-                    if current_shield_id == DAEGIS and "ts" in CURR_SHIELD:
-                        d = get_delta_simple_precise_wrap(ts, CURR_SHIELD["ts"])
-                        if 0 < d < 0.1 and CURRENT_SHIELDS:
-                            # prettyprint2("------3 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id)
-                            continue
-                        
-                    currv = CURR_SHIELD.get("remain") or CURRENT_MAX_SHIELD.get(current_shield_id)
-                    if not currv:
-                        if len(CURRENT_SHIELDS) == 1 or current_shield_id == CURRENT_SHIELD_IDS[-1]:
-                            currv = CURR_SHIELD.get("cap")
-                        if not currv:
-                            currv = CURR_SHIELD.get("avg") or CURR_SHIELD.get("cap") or 0
-                        
-                    if currv > _ABSORB:
-                        _abs = _ABSORB
-                        CURR_SHIELD["remain"] = currv - _ABSORB
-                        _ABSORB = 0
-                            # if transient:
-                            #     _cur = CURRENT_MAX_SHIELD.get(current_shield_id, 0)
-                            #     _max_default = ABSORB_SPELLS.get(current_shield_id, {}).get("avg", 0)
-                            #     if _cur:
-                            #         CURRENT_MAX_SHIELD[current_shield_id] = max(_cur, abs(_cur - CURR_SHIELD["remain"]))
-                            #     else:
-                            #         CURRENT_MAX_SHIELD[current_shield_id] = abs(_max_default - CURR_SHIELD["remain"])
-                            #     # prettyprint("......2 NEW MAX", CURRENT_MAX_SHIELD[current_shield_id], CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id])
-                    else:
-                        _abs = currv
-                        CURR_SHIELD["remain"] = 0
-                        _ABSORB = _ABSORB - currv
-                    # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
-                    ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
-                    ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
-                else:
-                    pass
-                    # prettyprint("++++++??? ADDED", _ABSORB, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
-                # prettyprint2("======== SHIELD", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
-
-                # if _ABSORB > 0 and current_shield_id not in IGNORED_MAX_VALUES:
-                #     _LAST_SHIELD = CURR_SHIELD
-                #     _LAST_SHIELD_ID = current_shield_id
-            
-            if _ABSORB < 1:
-                continue
-            # print(_filtered_shit.keys())
-            try:
-                _LAST_SHIELD_ID, _LAST_SHIELD = _filtered_shit.popitem()
-                # _LAST_SHIELD_ID = _filtered_shit[-1]
-                # _LAST_SHIELD = CURRENT_SHIELDS[_LAST_SHIELD_ID]
-                # print("LAST SHIELD:", CURRENT_SHIELD_IDS[-1])
-            except Exception:
-                _LAST_SHIELD_ID = None
-                _LAST_SHIELD = None
-            # print("LAST SHIELD", _LAST_SHIELD)
-            if _LAST_SHIELD is None:
-                continue
-            # prettyprint(">>>>>>>> REMAIN", _ABSORB, _LAST_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
-            ABSORBS_DETAILS.append((ts, "REMAIN", "nil", str(_filtered_shit), _ABSORB, ""))
-            if _LAST_SHIELD_ID in IGNORED_MAX_VALUES2:
-                continue
-            
-            ABSORBS[_LAST_SHIELD["sGUID"]][_LAST_SHIELD_ID] += _ABSORB
-            if _LAST_SHIELD_ID in CURRENT_MAX_SHIELD:
-                CURRENT_MAX_SHIELD[_LAST_SHIELD_ID] += _ABSORB
-            else:
-                _max_default = ABSORB_SPELLS.get(_LAST_SHIELD_ID, {}).get("avg", 0)
-                CURRENT_MAX_SHIELD[_LAST_SHIELD_ID] = _max_default + _ABSORB
-            # prettyprint("....... NEW MAX", CURRENT_MAX_SHIELD[_LAST_SHIELD_ID], CURR_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
-    return ABSORBS, ABSORBS_DETAILS
-
 
 class Absorbs(logs_base.THE_LOGS):
     @logs_base.cache_wrap
@@ -666,7 +406,7 @@ class Absorbs(logs_base.THE_LOGS):
         DETAILS = {}
         
         for target, lines in events.items():
-            _absorbs, _details = proccess_absorb(lines, discos, specs.get(target) == 1)
+            _absorbs, _details = self.proccess_absorb(lines, discos, specs.get(target) == 1)
             ABSORBS[target] = _absorbs
             DETAILS[target] = _details
 
@@ -730,6 +470,265 @@ class Absorbs(logs_base.THE_LOGS):
             source_filter = "Total"
         return _abs[target_filter][source_filter]
 
+    def absorbs_delta_simple_precise_wrap(self, current: str, last=None):
+        if last is None:
+            return -1
+        return self.get_timedelta_seconds(last, current)
+
+    def proccess_absorb(self, lines, discos, is_bdk=False):
+        CURRENT_SHIELDS = {}
+        CURRENT_MAX_SHIELD = {}
+        ABSORBS = defaultdict(lambda: defaultdict(int))
+        ABSORBS_DETAILS = []
+        for ts, flag, sGUID, sName, tGUID, tName, _id, spell_name, _ABSORB, _DAMAGE, res, sch in lines:
+            _ABSORB = to_int(_ABSORB)
+            _DAMAGE = to_int(_DAMAGE)
+            # res = int(res)
+            SPELLS_NAMES[_id] = spell_name
+            _line = f"{ts:18} | {flag:21} | {sGUID} | {sName:30} | {tGUID} | {tName:30} | {_id:>5} | {spell_name:30}"
+            if _ABSORB and _ABSORB != "0":
+                _line = f"{_line} | {_ABSORB:>6} | {_DAMAGE:>6} | {res:>6} | {sch:>6}"
+            if _ABSORB:
+                ABSORBS_DETAILS.append((ts, flag, sName, spell_name, _ABSORB, _DAMAGE+_ABSORB))
+            else:
+                ABSORBS_DETAILS.append((ts, flag, sName, spell_name, "", ""))
+            # print(_line)
+                
+            if flag == "DAMAGE_SPLIT":
+                if _id in DMG_SPLIT:
+                    CURRENT_SHIELDS[_id] = {
+                        "sGUID": sGUID,
+                        "sName": sName,
+                        "remain": _ABSORB,
+                        "ts": ts,
+                        "transient": True,
+                    }
+            elif flag in HEAL_FLAGS:
+                if sGUID in discos:
+                    __shield = CURRENT_SHIELDS.get(DAEGIS)
+                    if not __shield or __shield.get("transient"):
+                        __shield = CURRENT_SHIELDS[DAEGIS] = new_shield(_id, sGUID, sName)
+                    __shield["ts"] = ts
+                    __shield["remain"] = min(10000, __shield.get("remain", 0) + int(_ABSORB *.3))
+                else:
+                    __shield = CURRENT_SHIELDS.get(VALANYR)
+                    if not __shield or __shield.get("transient"):
+                        __shield = CURRENT_SHIELDS[VALANYR] = new_shield(_id, sGUID, sName)
+                    __shield["ts"] = ts
+                    __shield["remain"] = min(20000, __shield.get("remain", 0) + int(_ABSORB *.15))
+
+            elif flag in AURA_FLAGS:
+                __shield = CURRENT_SHIELDS.get(_id)
+                if not __shield or __shield.get("transient") or self.absorbs_delta_simple_precise_wrap(ts, __shield.get("tsrem")) > 0.5:
+                    __shield = new_shield(_id, sGUID, sName)
+                    if _id in CURRENT_MAX_SHIELD:
+                        __shield["cap"] = CURRENT_MAX_SHIELD[_id]
+                    
+                if flag == "SPELL_AURA_REMOVED":
+                    __shield["transient"] = True
+                    __shield["tsrem"] = ts
+                else:
+                    __shield["ts"] = ts
+                
+                CURRENT_SHIELDS[_id] = __shield
+                
+            elif flag in ABS_FLAGS:
+                
+                # sort shields by prio  
+                shields_list = list(CURRENT_SHIELDS)
+                # print([getabsorderindex(x, shields_list.index(x)) for x in CURRENT_SHIELDS])
+                CURRENT_SHIELD_IDS = sorted(CURRENT_SHIELDS, key=lambda x: getabsorderindex(x, shields_list.index(x)))
+                if VALANYR in CURRENT_SHIELDS:
+                    if CURRENT_SHIELDS[VALANYR].get("transient"):
+                        CURRENT_SHIELD_IDS.insert(0, CURRENT_SHIELD_IDS.pop(CURRENT_SHIELD_IDS.index(VALANYR)))
+
+                    # print(shields_list)
+                    # print(CURRENT_SHIELD_IDS)
+                # for current_shield_id, shieild_ts in sorted(shields.items(), key=getabsorderindex):
+                _filtered_shit = {
+                    s_id: CURRENT_SHIELDS[s_id]
+                    for s_id in CURRENT_SHIELD_IDS
+                    if s_id not in IGNORED_MAX_VALUES
+                }
+                # print(_filtered_shit.keys())
+                
+                if is_bdk:
+                    _max_cap = sum(
+                        CURRENT_SHIELDS[x].get("remain") or CURRENT_MAX_SHIELD.get(x) or CURRENT_SHIELDS[x].get("cap") or 0
+                        for x in CURRENT_SHIELD_IDS
+                    )
+                    _max_avg = sum(
+                        CURRENT_SHIELDS[x].get("remain") or CURRENT_SHIELDS[x].get("avg") or 0
+                        for x in CURRENT_SHIELD_IDS
+                    )
+                    if _max_cap < _ABSORB:
+                        ratio = _ABSORB / (_ABSORB + _DAMAGE) * 100
+                        # print("0"*100, "WTF", ratio)
+                        if int(45 - ratio) == 0:
+                            if flag != "SWING_DAMAGE":
+                                ABSORBS[tGUID]["49497"] += _ABSORB
+                                ABSORBS_DETAILS.append((ts, "ADDED_sd1", tName, "Spell Deflection", _ABSORB, ""))
+                                _ABSORB = 0
+                                # prettyprint("++++??sd1 ADDED", _ABSORB, "Spell Deflection", tName)
+                        elif int(15 - ratio) == 0:
+                            ABSORBS[tGUID]["52286"] += _ABSORB
+                            ABSORBS_DETAILS.append((ts, "ADDED_wn1", tName, "Will of the Necropolis", _ABSORB, ""))
+                            _ABSORB = 0
+                            # prettyprint("++++??wn0 ADDED", _ABSORB, "Will of the Necropolis", tName)
+                        elif ratio > 45:
+                            _rem_abs = _ABSORB - (_ABSORB + _DAMAGE) * .45 - _DAMAGE * 3
+                            # print(CURRENT_SHIELDS)
+                            # print(_max_cap)
+                            # print(_max_avg)
+                            # print(_rem_abs)
+                            if "48707" in CURRENT_SHIELDS:
+                                if _max_cap and _rem_abs > _max_cap - 15 :
+                                    _abs = int((_ABSORB + _DAMAGE) * .15)
+                                    _ABSORB = _ABSORB - _abs
+                                    ABSORBS[tGUID]["52286"] += _abs
+                                    ABSORBS_DETAILS.append((ts, "ADDED_wn2", tName, "Will of the Necropolis", _abs, ""))
+                                    # prettyprint("++++??wn2 ADDED", _abs, "Will of the Necropolis", tName)
+                                elif _rem_abs > _max_avg - 15:
+                                    _abs = int((_ABSORB + _DAMAGE) * .45)
+                                    _ABSORB = _ABSORB - _abs
+                                    ABSORBS[tGUID]["49497"] += _abs
+                                    ABSORBS_DETAILS.append((ts, "ADDED_sd2", tName, "Spell Deflection", _abs, ""))
+                                    # prettyprint("++++??sd2 ADDED", _abs, "Spell Deflection", tName)
+                                elif abs(_DAMAGE * 3 - _ABSORB) > 10:
+                                    _abs = int((_ABSORB + _DAMAGE) * .15)
+                                    _ABSORB = _ABSORB - _abs
+                                    ABSORBS[tGUID]["52286"] += _abs
+                                    ABSORBS_DETAILS.append((ts, "ADDED_wn3", tName, "Will of the Necropolis", _abs, ""))
+                                    # prettyprint("++++??wn3 ADDED", _abs, "Will of the Necropolis", tName)
+                                # elif _rem_abs < 0:
+                                # else:
+                                #     _abs = int((_ABSORB + _DAMAGE) * .15)
+                                #     # prettyprint("++++??wn4 ADDED", _abs, "Will of the Necropolis", tName)
+                                #     _ABSORB = _ABSORB - _abs
+                                
+                            elif flag != "SWING_DAMAGE" and _ABSORB > _max_cap + 500:
+                                _rem_abs = int((_ABSORB + _DAMAGE) * .45)
+                                _ABSORB = _ABSORB - _rem_abs
+                                ABSORBS[tGUID]["49497"] += _rem_abs
+                                ABSORBS_DETAILS.append((ts, "ADDED_sd3", tName, "Spell Deflection", _rem_abs, ""))
+                                # prettyprint("++++??sd3 ADDED", _abs, "Spell Deflection", tName)
+                        elif ratio > 15 and _ABSORB > _max_cap + 500:
+                            _rem_abs = int((_ABSORB + _DAMAGE) * .15)
+                            _ABSORB = _ABSORB - _rem_abs
+                            ABSORBS[tGUID]["52286"] += _rem_abs
+                            ABSORBS_DETAILS.append((ts, "ADDED_wnx4", tName, "Will of the Necropolis", _rem_abs, ""))
+                            # prettyprint("++++??wn1 ADDED", _abs, "Will of the Necropolis", tName)
+
+                for current_shield_id in CURRENT_SHIELD_IDS:
+                    CURR_SHIELD = CURRENT_SHIELDS[current_shield_id]
+                    transient = CURR_SHIELD.get("transient")
+                    if transient:
+                        d = self.absorbs_delta_simple_precise_wrap(ts, CURR_SHIELD.get("tsrem"))
+                        del CURRENT_SHIELDS[current_shield_id]
+                        # prettyprint2("------- REMOVED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
+                        if d > 0.5:
+                            if current_shield_id in _filtered_shit:
+                                del _filtered_shit[current_shield_id]
+                            # prettyprint2("------1 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
+                            continue
+
+                    if current_shield_id in APPLY_ON_DMG and ts == CURR_SHIELD.get("ts"):
+                        d = self.absorbs_delta_simple_precise_wrap(ts, CURR_SHIELD.get("ts"))
+                        # prettyprint2("------2 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
+                        continue
+                        
+                    d = self.absorbs_delta_simple_precise_wrap(ts, CURR_SHIELD.get("ts"))
+                    # prettyprint2("======== SHIELD", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
+                    if current_shield_id == "48707": # Anti-Magic Shell
+                        if sch != "0x1":
+                            # print(CURRENT_SHIELDS)
+                            _abs = _DAMAGE * 3
+                            if len(CURRENT_SHIELDS) < 2:
+                                _abs = _ABSORB
+                                _ABSORB = 0
+                            else:
+                                _ABSORB = _ABSORB - _abs
+                            # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
+                            ABSORBS[CURR_SHIELD["sGUID"]]["48707"] += _abs
+                            ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
+                    
+                    elif current_shield_id in DMG_SPLIT:
+                        _abs = CURR_SHIELD["remain"]
+                        _ABSORB = _ABSORB - _abs
+                        # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
+                        ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
+                        ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
+
+                    elif current_shield_id in IDKSHIELDS:
+                        if current_shield_id == DAEGIS and "ts" in CURR_SHIELD:
+                            d = self.absorbs_delta_simple_precise_wrap(ts, CURR_SHIELD["ts"])
+                            if 0 < d < 0.1 and CURRENT_SHIELDS:
+                                # prettyprint2("------3 IGNORED", d, SPELLS_NAMES[current_shield_id], current_shield_id)
+                                continue
+                            
+                        currv = CURR_SHIELD.get("remain") or CURRENT_MAX_SHIELD.get(current_shield_id)
+                        if not currv:
+                            if len(CURRENT_SHIELDS) == 1 or current_shield_id == CURRENT_SHIELD_IDS[-1]:
+                                currv = CURR_SHIELD.get("cap")
+                            if not currv:
+                                currv = CURR_SHIELD.get("avg") or CURR_SHIELD.get("cap") or 0
+                            
+                        if currv > _ABSORB:
+                            _abs = _ABSORB
+                            CURR_SHIELD["remain"] = currv - _ABSORB
+                            _ABSORB = 0
+                                # if transient:
+                                #     _cur = CURRENT_MAX_SHIELD.get(current_shield_id, 0)
+                                #     _max_default = ABSORB_SPELLS.get(current_shield_id, {}).get("avg", 0)
+                                #     if _cur:
+                                #         CURRENT_MAX_SHIELD[current_shield_id] = max(_cur, abs(_cur - CURR_SHIELD["remain"]))
+                                #     else:
+                                #         CURRENT_MAX_SHIELD[current_shield_id] = abs(_max_default - CURR_SHIELD["remain"])
+                                #     # prettyprint("......2 NEW MAX", CURRENT_MAX_SHIELD[current_shield_id], CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id])
+                        else:
+                            _abs = currv
+                            CURR_SHIELD["remain"] = 0
+                            _ABSORB = _ABSORB - currv
+                        # prettyprint("+++++++++ ADDED", _abs, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
+                        ABSORBS[CURR_SHIELD["sGUID"]][current_shield_id] += _abs
+                        ABSORBS_DETAILS.append((ts, "ADDED", CURR_SHIELD["sName"], SPELLS_NAMES[current_shield_id], _abs, ""))
+                    else:
+                        pass
+                        # prettyprint("++++++??? ADDED", _ABSORB, SPELLS_NAMES[current_shield_id], CURR_SHIELD["sName"])
+                    # prettyprint2("======== SHIELD", d, SPELLS_NAMES[current_shield_id], current_shield_id, CURR_SHIELD)
+
+                    # if _ABSORB > 0 and current_shield_id not in IGNORED_MAX_VALUES:
+                    #     _LAST_SHIELD = CURR_SHIELD
+                    #     _LAST_SHIELD_ID = current_shield_id
+                
+                if _ABSORB < 1:
+                    continue
+                # print(_filtered_shit.keys())
+                try:
+                    _LAST_SHIELD_ID, _LAST_SHIELD = _filtered_shit.popitem()
+                    # _LAST_SHIELD_ID = _filtered_shit[-1]
+                    # _LAST_SHIELD = CURRENT_SHIELDS[_LAST_SHIELD_ID]
+                    # print("LAST SHIELD:", CURRENT_SHIELD_IDS[-1])
+                except Exception:
+                    _LAST_SHIELD_ID = None
+                    _LAST_SHIELD = None
+                # print("LAST SHIELD", _LAST_SHIELD)
+                if _LAST_SHIELD is None:
+                    continue
+                # prettyprint(">>>>>>>> REMAIN", _ABSORB, _LAST_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
+                ABSORBS_DETAILS.append((ts, "REMAIN", "nil", str(_filtered_shit), _ABSORB, ""))
+                if _LAST_SHIELD_ID in IGNORED_MAX_VALUES2:
+                    continue
+                
+                ABSORBS[_LAST_SHIELD["sGUID"]][_LAST_SHIELD_ID] += _ABSORB
+                if _LAST_SHIELD_ID in CURRENT_MAX_SHIELD:
+                    CURRENT_MAX_SHIELD[_LAST_SHIELD_ID] += _ABSORB
+                else:
+                    _max_default = ABSORB_SPELLS.get(_LAST_SHIELD_ID, {}).get("avg", 0)
+                    CURRENT_MAX_SHIELD[_LAST_SHIELD_ID] = _max_default + _ABSORB
+                # prettyprint("....... NEW MAX", CURRENT_MAX_SHIELD[_LAST_SHIELD_ID], CURR_SHIELD["sName"], SPELLS_NAMES[_LAST_SHIELD_ID])
+        return ABSORBS, ABSORBS_DETAILS
+
 
 def _test():
     report = Absorbs("23-07-10--16-00--Praystation--Lordaeron")
@@ -764,7 +763,7 @@ def _test():
         print(len(sources), sources)
         print(lines[0])
         # continue
-        _absorbs, _details = proccess_absorb(lines, discos, is_bdk)
+        _absorbs, _details = report.proccess_absorb(lines, discos, is_bdk)
         ABSORBS2[target] = _absorbs
         ABSORBS_DETAILS[target] = _details
         # print(_absorbs)

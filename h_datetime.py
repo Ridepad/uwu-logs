@@ -78,18 +78,18 @@ def get_delta(current, previous):
 def get_delta_simple_precise(current, previous):
     return to_dt_simple_precise(current) - to_dt_simple_precise(previous)
 
-def to_dt_year(s: str, year: int):
+def to_dt_year(s: str, year: int=CURRENT_YEAR):
     return datetime(year, *map(int, RE_FIND_ALL(s[:18])))
 
-def to_dt_year_precise(s: str, year: int):
-    q = list(map(int, RE_TIMESTAMP(s)[0]))
+def to_dt_year_precise(s: str, year: int=CURRENT_YEAR):
+    q = list(map(int, RE_FIND_ALL(s[:18])))
     q[-1] *= 1000
     return datetime(year, *q)
 
 def to_dt_simple_bytes(s: bytes):
     return datetime(CURRENT_YEAR, *map(int, RE_FIND_ALL_BYTES(s[:18])))
 
-def to_dt_year_bytes(s: bytes, year: int):
+def to_dt_year_bytes(s: bytes, year: int=CURRENT_YEAR):
     return datetime(year, *map(int, RE_FIND_ALL_BYTES(s[:18])))
 
 def to_dt_bytes_closure(year: int=None):
