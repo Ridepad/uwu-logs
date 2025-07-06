@@ -229,7 +229,12 @@ class ReportPlayers:
         for server in SERVERS_WC:
             LOGGER.debug(f"> Checking from api {server}")
             overlap = 0
-            characters = WCServer(server).get_multi_char_data(players)
+            wcserver = WCServer(server)
+            try:
+                characters = wcserver.get_multi_char_data(players)
+            except ValueError:
+                continue
+
             for character in characters:
                 if not character.exists:
                     continue
