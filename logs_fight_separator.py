@@ -223,8 +223,8 @@ class BossLines(list[LogLine]):
         self.fight_name = convert_to_fight_name(boss_id)
         super().__init__()
 
-    def get_timedelta(self, last, now):
-        return to_dt_year(now, self.year) - to_dt_year(last, self.year)
+    def get_timedelta(self, now: str, before: str):
+        return to_dt_year(now, self.year) - to_dt_year(before, self.year)
 
     def split_to_segments(self):
         segments = [
