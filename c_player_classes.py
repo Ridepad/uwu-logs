@@ -298,6 +298,7 @@ SPELL_BOOK_SPEC = {
         "32700": 2, # Avenger's Shield (Rank 3)
         "48827": 2, # Avenger's Shield (Rank 5)
         "20132": 2, # Redoubt
+        "20925": 2, # Holy Shield (Rank 1)
         "27179": 2, # Holy Shield (Rank 4)
         "48952": 2, # Holy Shield (Rank 6)
         "70760": 2, # Deliverance
