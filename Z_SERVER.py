@@ -53,7 +53,7 @@ OPENED_LOGS: dict[str, logs_main.THE_LOGS] = {}
 
 CLEANER = h_cleaner.MemoryCleaner(OPENED_LOGS)
 
-LOGGER_CONNECTIONS = Loggers.connections
+LOGGER_CONNECTIONS = Loggers.server_main
 LOGGER_CONNECTIONS.debug("Starting server...")
 
 def add_log_entry(ip, method, msg):

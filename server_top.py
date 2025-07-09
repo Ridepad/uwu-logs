@@ -35,7 +35,7 @@ TEMPLATES = Jinja2Templates(directory="templates")
 TEMPLATES.env.trim_blocks = True
 TEMPLATES.env.lstrip_blocks = True
 
-LOGGER_CONNECTIONS = Loggers.connections
+LOGGER_CONNECTIONS = Loggers.server_top
 
 def add_log_entry(ip, method, msg):
     LOGGER_CONNECTIONS.info(f"{ip:>15} | {method:<7} | {msg}")

@@ -26,7 +26,8 @@ def setup_logger(logger_name):
 class Loggers(dict[str, logging.Logger]):
     __getattr__ = dict.get
 
-    connections = setup_logger('connections')
+    server_main = setup_logger('server_main')
+    server_top = setup_logger('server_top')
     reports = setup_logger('reports')
     uploads = setup_logger('uploads')
     unusual_spells = setup_logger('unusual_spells')
