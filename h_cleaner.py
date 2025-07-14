@@ -40,7 +40,7 @@ class MemoryCleaner(threading.Thread):
             LOGGER_MEMORY.exception("sorted")
 
         for report_id in reports:
-            if psutil.virtual_memory().percent < 90:
+            if psutil.virtual_memory().percent < 80:
                 break
             del self.OPENED_LOGS[report_id]
         
