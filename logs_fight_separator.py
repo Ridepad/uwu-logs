@@ -278,7 +278,7 @@ class BossLines(list[LogLine]):
             new_timestamp = line[1]
             
             now = to_int(new_timestamp)
-            if now - last_time > 60 or last_time > now:
+            if now - last_time > 30 or last_time > now:
                 td = self.get_timedelta(new_timestamp, last_timestamp)
                 # print()
                 # print(td, td > MAX_IDLE_TIME)
