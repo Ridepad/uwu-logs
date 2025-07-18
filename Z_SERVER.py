@@ -174,20 +174,19 @@ def before_request():
             return redirect(f"/reports/{report_id}")
         raise NotFound()
     
-    if not USE_FILTER:
-        pass
-    elif _validate is None:
-        pass
-    elif report_id not in Files.reports_private.text_lines():
-        pass
-    elif _validate.pwcheck.banned(request.remote_addr):
+    if _validate is None:
+        return
+    
+    if _validate.pwcheck.banned(request.remote_addr):
         if request.method == "GET":
             raise NotFound
         return "", 403
-    elif not _validate.cookie(request):
-        if request.method == "GET":
-            return render_template('protected.html'), 401
-        return "", 403
+        
+    if report_id in Files.reports_private.text_lines():
+        if not _validate.cookie(request):
+            if request.method == "GET":
+                return render_template('protected.html'), 401
+            return "", 403
 
 
 @SERVER.route("/")
