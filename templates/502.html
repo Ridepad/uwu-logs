@@ -20,7 +20,18 @@
     font-family: Ubuntu;
   }
   #error-page {
-    font-size: 200%;
+    font-size: 150%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #error-page > img {
+    width: clamp(112px, 95vw, 40vh);
+    height: clamp(112px, 95vw, 40vh);
+  }
+  #error-page p {
+    margin: 1rem;
   }
   </style>
 </head>
@@ -29,7 +40,15 @@
     <a id="home-button" href="/">UwU LOGS</a>
   </nav>
   <main id="error-page">
-    <p>Server is restarting or under maintenance, standby...</p>
+    <img id="error-page-img" src="/static/bedge.png">
+    <p>Server is restarting or under maintenance</p>
+    <p>try again later</p>
   </main>
+  <script>
+    const img = document.getElementById("error-page-img");
+    setTimeout(() => img.src = "/static/wokge.png", 3000)
+    setTimeout(() => img.src = "/static/wokayge.png", 6000)
+    setTimeout(() => img.src = "/static/wokeg.png", 10000)
+  </script>
 </body>
 </html>
