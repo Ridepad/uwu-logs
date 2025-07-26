@@ -157,7 +157,7 @@ class Tier_5:
     ALL_BOSSES = FOR_POINTS + OTHER
 
 
-class Tier_6:
+class Tier_6_0:
     FOR_POINTS = (
         Encounter("Rage Winterchill", "25N"),
         Encounter("Anetheron", "25N"),
@@ -174,20 +174,27 @@ class Tier_6:
         Encounter("Mother Shahraz", "25N"),
         Encounter("The Illidari Council", "25N"),
         Encounter("Illidan Stormrage", "25N"),
-
-        Encounter("Akil'zon", "25N"),
-        Encounter("Nalorakk", "25N"),
-        Encounter("Jan'alai", "25N"),
-        Encounter("Halazzi", "25N"),
-        Encounter("Hex Lord Malacrass", "25N"),
-        Encounter("Zul'jin", "25N"),
     )
     BOSSES_GET_GUID_NAME_PAIRS_FROM = FOR_POINTS
     OTHER = ()
     ALL_BOSSES = FOR_POINTS + OTHER
 
 
-class Tier_6_5:
+class Tier_6_1:
+    FOR_POINTS = Tier_6_0.FOR_POINTS + (
+        Encounter("Akil'zon", "10N"),
+        Encounter("Nalorakk", "10N"),
+        Encounter("Jan'alai", "10N"),
+        Encounter("Halazzi", "10N"),
+        Encounter("Hex Lord Malacrass", "10N"),
+        Encounter("Zul'jin", "10N"),
+    )
+    BOSSES_GET_GUID_NAME_PAIRS_FROM = FOR_POINTS
+    OTHER = ()
+    ALL_BOSSES = FOR_POINTS + OTHER
+
+
+class Tier_6_2:
     FOR_POINTS = (
         Encounter("Kalecgos", "25N"),
         Encounter("Brutallus", "25N"),
