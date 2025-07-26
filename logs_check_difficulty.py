@@ -472,7 +472,8 @@ class LogsSegments(logs_base.THE_LOGS):
 
     def is_kill(self, s: int, f: int, boss_name: str):
         slice_duration = self.get_slice_duration(s, f)
-        if slice_duration < ENCOUNTER_MIN_DURATION.get(boss_name, 15):
+        min_kill_duration = ENCOUNTER_MIN_DURATION.get(boss_name, 15)
+        if slice_duration < min_kill_duration:
             return False
 
         if is_kill(self.LOGS[f-1]):

@@ -368,6 +368,7 @@ ENCOUNTER_MIN_DURATION = {
     "The Lich King": 120,
     "Halion": 75,
     "Northrend Beasts": 75,
+    "Shade of Akama": 8,
 }
 
 ALL_FIGHT_NAMES = set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
