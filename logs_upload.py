@@ -310,7 +310,7 @@ class LogsSlice(list[bytes]):
             except Exception:
                 pass
         else:
-            raise RuntimeError
+            raise RuntimeError("Unsupported logs format or corrupted log file")
         
         _dt = self._fix_dt(_dt)
         date = _dt.strftime("%y-%m-%d--%H-%M")
@@ -721,7 +721,7 @@ class LogsArchive(LogsArchiveParser):
 
     def finish(self, msg: str, is_error=False):
         self.finished = True
-        self.has_error = is_error
+        self.has_error = is_error and msg or None
         
         self.change_main_status(msg, int(not is_error))
         self.add_logger_msg(msg, pc=self.pc_main, is_error=is_error)
@@ -805,8 +805,12 @@ class LogsArchive(LogsArchiveParser):
         if self.archive_path.parent != self.upload_data.directory:
             return
         
-        if self.has_error:
+        if self.has_error == LOGS_ERROR_NO_TXT:
+            _dir = Directories.no_text
+        elif self.has_error == LOGS_ERROR_NO_SPACE:
             _dir = Directories.todo
+        elif self.has_error:
+            _dir = Directories.errors
         else:
             _dir = Directories.uploaded
         ip = self.upload_data.ip

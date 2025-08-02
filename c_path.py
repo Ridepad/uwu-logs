@@ -238,6 +238,7 @@ class Directories(dict[str, PathExt]):
     info_uploads = uploads / "0file_info"
     todo = uploads / "0todo"
     errors = uploads / "0errors"
+    no_text = uploads / "0no_text"
 
     @classmethod
     def mkdirs(cls):
