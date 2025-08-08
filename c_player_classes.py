@@ -34,15 +34,20 @@ SPELL_BOOK = {
     "70691": 1, # Rejuvenation
     "52610": 1, # Savage Roar
     "48572": 1, # Shred
-    "48465": 1, # Starfire
+    "25298": 1, # Starfire (Rank 7)
+    "26986": 1, # Starfire (Rank 8)
+    "48465": 1, # Starfire (Rank 10)
     "48562": 1, # Swipe (Bear)
     "62078": 1, # Swipe (Cat)
     "48438": 1, # Wild Growth
-    "48461": 1, # Wrath
+    "9912": 1, # Wrath (Rank 8)
+    "26985": 1, # Wrath (Rank 10)
+    "48461": 1, # Wrath (Rank 12)
     "48466": 1, # Hurricane
     "33831": 1, # Force of Nature
     "48391": 1, # Owlkin Frenzy
     "22812": 1, # Barkskin
+    "24907": 1, # Moonkin Aura
     # Hunter
     "14325": 2, # Hunter's Mark
     "53338": 2, # Hunter's Mark
