@@ -367,7 +367,7 @@ function cell_date(report_ID) {
   const date_text = is_landscape.matches ? `${day} ${months_str} ${year} ${hour}:${minute}` : `${day} ${months_str} ${year}`;
 
   const a = document.createElement('a');
-  const boss = SELECT_BOSS.value.toLowerCase().replaceAll(" ", "-");
+  const boss = SELECT_BOSS.value.toLowerCase().replaceAll(" ", "-").replaceAll("'", "");
   const link_root = `/reports/${report_ID}--${SELECT_SERVER.value}`;
   const link_query = `?boss=${boss}&mode=${selected_difficuty()}&attempt=kill`;
   a.href = `${link_root}/${link_query}`;
