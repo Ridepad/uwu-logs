@@ -154,7 +154,7 @@ BOSSES_GUIDS = {
     # "005948": "Reliquary of Souls",
     # "005B7A": "Essence of Suffering",
     # "005B7B": "Essence of Desire",
-    "005B7C": "Essence of Anger",
+    # "005B7C": "Essence of Anger",
     "0059A3": "Mother Shahraz",
     # The Illidari Council
     "0059A5": "High Nethermancer Zerevor",

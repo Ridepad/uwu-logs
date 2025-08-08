@@ -80,6 +80,7 @@ BOSS_MAX_IDLE_TIME_IN_FIGHT = {
     "061AB4": T_DELTA["2MIN"], # Azuregos
 
     "004CA6": T_DELTA["1MIN"], # Kael'thas Sunstrider
+    "005B7A": T_DELTA["1MIN"], # Reliquary of Souls
 }
 HEAL_BOSSES = {
     "008FB5",
