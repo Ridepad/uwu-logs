@@ -220,6 +220,19 @@ TOGGLE_MORE.addEventListener("click", () => {
   const is_shown = CALENDAR_CONTROLS_BOT.style.display == "block";
   CALENDAR_CONTROLS_BOT.style.display = is_shown ? "none" : "block";
 });
+
+function input_trim(event) {
+  if (event.inputType !== "insertFromPaste") return;
+  event.preventDefault();
+  event.target.value = event.data.trim();
+}
+
+[
+  INPUT_FIGHT,
+  INPUT_PLAYER,
+  INPUT_AUTHOR,
+].forEach(element => element.addEventListener("input", input_trim))
+
 })();
 </script>
 {% endblock the_scripts %}
