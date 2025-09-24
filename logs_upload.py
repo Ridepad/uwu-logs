@@ -360,7 +360,7 @@ class LogsSeparator:
             min_overlap = max_len // 5
         else:
             min_overlap = max_len // 2
-        LOGGER_UPLOADS.debug(f'/// is_different_raid | {min_overlap:>2} {overlap:>2} | {min_overlap > overlap}')
+        LOGGER_UPLOADS.debug(f'is_different_raid | min_overlap: {min_overlap:>2} / overlap: {overlap:>2} | {min_overlap > overlap}')
         return min_overlap > overlap
 
     def new_segment(self):

@@ -1,6 +1,7 @@
 import re
 import subprocess
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from sys import platform
 from threading import RLock
@@ -120,9 +121,22 @@ class SevenZipLine:
         self.attributes = attributes
         self.datetime = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         self.timestamp = self.datetime.timestamp()
-        self.size_bytes = int(size)
-        self.compressed_size_bytes = int(compressed)
+        self.size_bytes = int(size) if size else 0
+        self.compressed_size_bytes = int(compressed) if compressed else 0
         self.file_name = path
+
+    @classmethod
+    def from_line(cls, line: str, column_widths: list[int]):
+        columns = []
+        for column_width in column_widths:
+            column = line[:column_width]
+            line = line[column_width:]
+            columns.append(column.strip())
+        
+        if len(columns) != len(column_widths):
+            raise ValueError
+        
+        return cls(*columns)
 
     def __repr__(self) -> str:
         self_name = self.__class__.__name__
@@ -139,7 +153,7 @@ class SevenZipLine:
     def __str__(self) -> str:
         self_name = self.__class__.__name__
         date = f"Date: {self.date_full_str}"
-        size = f"Size (compressed): {self.size_bytes} ({self.compressed_size_bytes})"
+        size = f"Size (compressed): {self.size_bytes:,} ({self.compressed_size_bytes:,})"
         name = f"Name: {self.file_name}"
         return f"{self_name}({date}, {size}, {name})"
 
@@ -168,44 +182,40 @@ class SevenZipArchiveInfo(SevenZip):
         except Exception:
             return False
     
-    @property
+    @cached_property
     def archive_info(self):
-        try:
-            return self.__archive_info
-        except AttributeError:
-            pass
-        
-        self.__archive_info = list(self._to_parsed_lines())
-        return self.__archive_info
+        return list(self._to_parsed_lines())
+
+    @cached_property
+    def last_line(self):
+        return self.archive_info[-1]
 
     @property
     def compressed_size(self):
-        return self.archive_info[-1].compressed_size_bytes
+        return self.last_line.compressed_size_bytes
 
     @property
     def uncompressed_size(self):
-        return self.archive_info[-1].size_bytes
+        return self.last_line.size_bytes
 
     @property
     def date_str(self):
-        return self.archive_info[-1].date_str
+        return self.last_line.date_str
 
-    @property
+    @cached_property
     def archive_id(self):
         if not self.archive_path.is_file():
             return None
+        
         try:
-            a = self.archive_info[-1]
-            i = [
-                a.date_str,
-                a.time_str,
-                f"{a.size_bytes:0>11}",
-                f"{a.compressed_size_bytes:0>11}",
-            ]
-            return '--'.join(i)
+            return '--'.join((
+                self.last_line.date_str,
+                self.last_line.time_str,
+                f"{self.last_line.size_bytes:0>11}",
+                f"{self.last_line.compressed_size_bytes:0>11}",
+            ))
         except IndexError:
-            pass
-        return None
+            return None
     
     def get_all_files_with_suffix(self, suffix):
         return [
@@ -224,35 +234,25 @@ class SevenZipArchiveInfo(SevenZip):
         return []
     
     @staticmethod
-    def _make_re_string(line: str):
-        '''define regex to generate column parser'''
-        columns_lengths = [
+    def _get_column_widths(line: str):
+        return [
             len(s)
-            for s in re.findall("(-+ +)", line)
+            for s in re.findall("([ ]{0,2}-+)", line)
         ]
-        column_regex = "(.{{{}}})"
-        columns = len(columns_lengths)
-        columns_regex = column_regex * columns + "(.+)"
-        # (.{{{}}})(.{{{}}})(.{{{}}})(.{{{}}})(.+)
-        columns_regex = columns_regex.format(*columns_lengths)
-        # (.{20})(.{6})(.{13})(.{14})(.+)
-        return columns_regex
     
     def _to_parsed_lines(self):
-        re_string = None
+        column_widths = None
         for line in self._get_raw_archive_info():
-            if not re_string:
+            if column_widths is None:
                 if TABLE_BORDER in line:
-                    re_string = self._make_re_string(line)
+                    column_widths = self._get_column_widths(line)
                 continue
             
             if TABLE_BORDER in line:
                 continue
 
             try:
-                row = re.findall(re_string, line)[0]
-                columns = [column.strip() for column in row]
-                yield SevenZipLine(*columns)
+                yield SevenZipLine.from_line(line, column_widths)
             except (IndexError, ValueError):
                 pass
 
