@@ -136,6 +136,7 @@ class SevenZipLine:
         if len(columns) != len(column_widths):
             raise ValueError
         
+        columns.append(line.strip())
         return cls(*columns)
 
     def __repr__(self) -> str:
@@ -246,6 +247,7 @@ class SevenZipArchiveInfo(SevenZip):
             if column_widths is None:
                 if TABLE_BORDER in line:
                     column_widths = self._get_column_widths(line)
+                    column_widths = column_widths[:4]
                 continue
             
             if TABLE_BORDER in line:
