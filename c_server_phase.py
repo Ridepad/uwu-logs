@@ -196,7 +196,7 @@ class Tier_6_1:
 
 class Tier_6_2:
     FOR_POINTS = (
-        Encounter("Kalecgos", "25N"),
+        # Encounter("Kalecgos", "25N"),
         Encounter("Brutallus", "25N"),
         Encounter("Felmyst", "25N"),
         Encounter("Eredar Twins", "25N"),

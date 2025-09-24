@@ -329,6 +329,15 @@ USEFUL = {
     "M'uru": {
         "00648D": "M'uru",
         "0064F0": "Entropius",
+        "0064C6": "Shadowsword Berserker",
+        "0064C7": "Shadowsword Fury Mage",
+        "0064AC": "Void Sentinel",
+        "0064E0": "Void Spawn",
+    },
+    "Kil'jaeden": {
+        "0062E3": "Kil'jaeden",
+        "00639E": "Shield Orb",
+        "00646C": "Sinister Reflection",
     },
     "Illidan Stormrage": {
         "005985": "Illidan Stormrage",
@@ -556,6 +565,10 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
     },
     "Shade of Akama": {
         "Adds": ("005AAF", "005AB0", "005B16", "005BE3", "005BE4"),
+    },
+    "M'uru": {
+        "Boss": ("00648D", "0064F0"),
+        "Adds": ("0064C6", "0064C7", "0064AC", "0064E0"),
     },
 }
 
