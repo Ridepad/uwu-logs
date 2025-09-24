@@ -210,7 +210,7 @@ class BossSegment(list[LogLine]):
             # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
             if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
                 continue
-            if line[4][6:-6] not in BOSSES_GUIDS_ALL:
+            if line[4][6:-6] not in BOSSES_GUIDS:
                 continue
             
             new_fight_end_line_index = line_index
