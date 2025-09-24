@@ -13,8 +13,8 @@ SERVERS = {
 SERVERS_WC = {
     "WoW-Circle-x100": "6",
     "WoW-Circle-x1":   "2",
-    "WoW-Circle-x5":   "1",
-    "WoW-Circle-Fun":  "13",
+    # "WoW-Circle-x5":   "1",
+    # "WoW-Circle-Fun":  "13",
 }
 
 
@@ -69,6 +69,7 @@ SERVERS_OTHER = [
     ServerID("Hellscream", "(hellscream)"),
     ServerID("Hellscream", "(garrosh)"),
     ServerID("WoWZone", "(wowzone)"),
+    ServerID("woe", "(elendil)"),
     # ServerName("", ""),
 ]
 
