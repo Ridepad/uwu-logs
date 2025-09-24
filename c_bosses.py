@@ -328,6 +328,7 @@ MULTIBOSSES = {
     "Majordomo Executus": ["002EF2", "002D90", "002D8F"],
     # "Gehennas": ["002FE3", "002D8D"],
     "Sulfuron Harbringer": ["002F42", "002D8E"],
+    "Felmyst": ["0061CE", "0062B4"],
 }
 
 COWARDS = {

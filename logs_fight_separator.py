@@ -81,6 +81,8 @@ BOSS_MAX_IDLE_TIME_IN_FIGHT = {
 
     "004CA6": T_DELTA["1MIN"], # Kael'thas Sunstrider
     "005B7A": T_DELTA["1MIN"], # Reliquary of Souls
+
+    "0061CE": T_DELTA["1MIN"], # Felmyst
 }
 HEAL_BOSSES = {
     "008FB5",
