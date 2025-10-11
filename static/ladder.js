@@ -293,7 +293,7 @@ function set_ongoing_time() {
 function init_websocket() {
   if (WEBSOCKET.websocket != null) return;
   
-  // const ws_host = `wss://${window.location.hostname}:8765`;
+  const ws_host = `wss://${window.location.hostname}:8765`;
   // const ws_host = `ws://127.0.0.1:8765`;
   const socket = new WebSocket(ws_host);
   WEBSOCKET.websocket = socket;
