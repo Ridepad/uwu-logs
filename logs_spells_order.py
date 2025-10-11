@@ -151,7 +151,6 @@ class Timeline(logs_base.THE_LOGS):
             player_history[main_spell_id] = sorted(combined)
 
     @running_time
-    def get_spell_history_wrap_json(self, s: int, f: int, player_name: str):
-        player_guid = self.name_to_guid(player_name)
+    def get_spell_history_wrap_json(self, s: int, f: int, player_guid: str):
         spell_history = self.get_spell_history(s, f, player_guid)
         return json.dumps(spell_history, default=list)

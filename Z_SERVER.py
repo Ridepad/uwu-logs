@@ -370,21 +370,39 @@ def casts_post(report_id):
         return "", 400
     
     _data: dict = request.json
+    boss_name_html = _data.get("boss")
     try:
-        boss_name = BOSSES_FROM_HTML[_data.get("boss")]
+        boss_name = BOSSES_FROM_HTML[boss_name_html]
     except KeyError:
-        raise BadRequest(f"[boss_name] is not a valid boss name")
+        msg = f"[{boss_name_html}] is not a valid boss name"
+        return msg, 400
     
+    _attempt = _data.get("attempt")
     try:
-        attempt = int(_data.get("attempt"))
+        attempt_n = int(_attempt)
     except (ValueError, TypeError):
-        raise BadRequest(f"[attempt] must be a number")
-    
-    player_name = _data.get("name")
+        msg = f"[{attempt_n}] must be a number"
+        return msg, 400
     
     report = load_report(report_id)
-    s, f = report.ENCOUNTER_DATA[boss_name][attempt]
-    return report.get_spell_history_wrap_json(s, f, player_name)
+
+    try:
+        boss_data = report.ENCOUNTER_DATA[boss_name]
+    except KeyError:
+        msg = f"boss [{boss_name}] wasn't found in the report"
+        return msg, 400
+    try:
+        s, f = boss_data[attempt_n]
+    except IndexError:
+        msg = f"attempt [{attempt_n}] for [{boss_name}] wasn't found in the report"
+        return msg, 400
+
+    player_name = _data.get("name")
+    player_guid = report.name_to_guid(player_name)
+    if not player_guid:
+        msg = f"unit with name [{player_name}] wasn't found in the report"
+        return msg, 400
+    return report.get_spell_history_wrap_json(s, f, player_guid)
 
 @SERVER.route("/reports/<report_id>/report_slices/", methods=['POST'])
 def report_slices(report_id):
