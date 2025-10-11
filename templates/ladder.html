@@ -93,6 +93,12 @@ td.cell-id {
     height: calc(var(--bottom-row-one) * 3);
   }
 }
+.status-disconnected {
+  color: red;
+}
+.status-connected {
+  color: greenyellow;
+}
 </style>
 {% endblock add_style %}
 
@@ -173,6 +179,7 @@ td.cell-id {
     <label for="show-live">Show live</label>
     <input type="checkbox" id="show-done">
     <label for="show-done">Show done</label>
+    <span id="span-status" class="status-disconnected">Disconnected</span>
   </section>
 </footer>
 {% endblock main_foot %}

@@ -1,6 +1,6 @@
 import {
   SPECS,
-} from "./constants.js?v=240830-1"
+} from "./constants.js?v=240830-1";
 
 const MAIN_TABLE_WRAP = document.getElementById("main-table-wrap");
 const MAIN_TABLE_BODY = document.getElementById("main-table-body");
@@ -18,6 +18,7 @@ const SELECT_FACTION = document.getElementById("select-faction");
 const CHECKBOX_SHOW_DONE = document.getElementById("show-done");
 const CHECKBOX_SHOW_LIVE = document.getElementById("show-live");
 const CHECKBOX_PLAYERS = document.getElementById("show-players");
+const SPAN_STATUS = document.getElementById("span-status");
 
 const KEYS = {
   type: "type",
@@ -37,7 +38,12 @@ const KEYS = {
 }
 
 const CONFIG = {
-  timeout: 30000,
+  timeout: 0,
+}
+const WEBSOCKET = {
+  websocket: null,
+  reconnect_interval: 10 * 1000,
+  reconnect_interval_id: 0,
 }
 
 const IN_PROGRESS = {};
@@ -63,7 +69,7 @@ function show_row_wrap() {
 function filter_table() {
   const show_row = show_row_wrap();
   MAIN_TABLE_BODY.querySelectorAll("tr").forEach(tr => {
-    toogle_display(tr, show_row(tr))
+    toogle_display(tr, show_row(tr));
   });
   checkbox_show_done_changed();
 }
@@ -72,13 +78,13 @@ function checkbox_show_done_changed() {
 
   const show_row = show_row_wrap();
   MAIN_TABLE_FOOT.querySelectorAll("tr").forEach(tr => {
-    toogle_display(tr, show_row(tr))
+    toogle_display(tr, show_row(tr));
   });
 }
 function time_to_text(t) {
   const minutes = `${Math.floor(t/60)}`.padStart(2, '0');
   const seconds = `${Math.floor(t%60)}`.padStart(2, '0');
-  return `${minutes}:${seconds}`
+  return `${minutes}:${seconds}`;
 }
 
 function add_cell(row, value, type, inner) {
@@ -245,7 +251,7 @@ function add_row(data) {
   row.setAttribute("data-timestamp", timestamp.valueOf());
 
   const show_row = show_row_wrap();
-  toogle_display(row, show_row(row))
+  toogle_display(row, show_row(row));
   MAIN_TABLE_BODY.appendChild(row);
 
   FRAGMENTS[_id] = data;
@@ -264,7 +270,7 @@ function set_finish_time() {
   PLAYERS_TABLE_TIME.textContent = `${hours_str}${minutes_str} ago`;
 }
 
-function onmsg(event) {
+function socket_on_message(event) {
   const data = JSON.parse(event.data);
   if (!Array.isArray(data)) {
     add_row(data);
@@ -275,6 +281,42 @@ function onmsg(event) {
   }
 }
 
+function set_ongoing_time() {
+  const now = Date.now();
+  for (const _id in IN_PROGRESS) {
+    const td = document.getElementById(_id).querySelector(".cell-time");
+    const diff = now - IN_PROGRESS[_id];
+    const v = Math.max(diff/1000, 0);
+    td.textContent = time_to_text(v);
+  }
+}
+function init_websocket() {
+  if (WEBSOCKET.websocket != null) return;
+  
+  // const ws_host = `wss://${window.location.hostname}:8765`;
+  const ws_host = `ws://127.0.0.1:8765`;
+  const socket = new WebSocket(ws_host);
+  WEBSOCKET.websocket = socket;
+
+  socket.onmessage = event => {
+    socket.onmessage = socket_on_message;
+    socket_on_message(event);
+    setTimeout(() => {
+      MAIN_TABLE_WRAP.style.removeProperty("display");
+    });
+    
+    CONFIG.timeout = (SELECT_TIMEOUT.value ?? 30) * 1000;
+    SPAN_STATUS.textContent = "Connected";
+    SPAN_STATUS.className = "status-connected";
+    console.log("WebSocket connected");
+  };
+  
+  socket.onclose = () => {
+    WEBSOCKET.websocket = null;
+    SPAN_STATUS.textContent = "Disconnected";
+    SPAN_STATUS.className = "status-disconnected";
+  };
+}
 
 function init() {
   CHECKBOX_SHOW_DONE.addEventListener("change", () => {
@@ -295,36 +337,14 @@ function init() {
     select.addEventListener("change", filter_table);
   }
   
-  setInterval(() => {
-    const now = Date.now();
-    for (const _id in IN_PROGRESS) {
-      const td = document.getElementById(_id).querySelector(".cell-time");
-      const diff = now - IN_PROGRESS[_id]
-      const v = Math.max(diff/1000, 0);
-      td.textContent = time_to_text(v);
-    }
-  }, 1000);
+  init_websocket();
+  setInterval(init_websocket, WEBSOCKET.reconnect_interval);
+  setInterval(set_ongoing_time, 1000);
+  setInterval(set_finish_time, 10000);
   
-  setInterval(() => {
-    set_finish_time();
-  }, 10000);
-  
-  const ws_host = `wss://${window.location.hostname}:8765`
-  // const ws_host = `ws://127.0.0.1:8765`
-  const socket = new WebSocket(ws_host);
-  socket.onmessage = event => {
-    CONFIG.timeout = 0;
-    onmsg(event);
-    setTimeout(() => {
-      MAIN_TABLE_WRAP.style.removeProperty("display");
-    });
-    
-    CONFIG.timeout = (SELECT_TIMEOUT.value ?? 30) * 1000;
-    toogle_display_checkbox(PLAYERS_TABLE_WRAP, CHECKBOX_PLAYERS);
-    toogle_display_checkbox(MAIN_TABLE_FOOT, CHECKBOX_SHOW_DONE);
-    toogle_display_checkbox(MAIN_TABLE_BODY, CHECKBOX_SHOW_LIVE);
-    socket.onmessage = onmsg;
-  };
+  toogle_display_checkbox(PLAYERS_TABLE_WRAP, CHECKBOX_PLAYERS);
+  toogle_display_checkbox(MAIN_TABLE_FOOT, CHECKBOX_SHOW_DONE);
+  toogle_display_checkbox(MAIN_TABLE_BODY, CHECKBOX_SHOW_LIVE);
 }
 
 document.readyState !== "loading" ? init() : document.addEventListener("DOMContentLoaded", init);
