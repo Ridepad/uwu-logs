@@ -283,6 +283,13 @@ def report_page(report_id):
 
 @SERVER.route("/reports/<report_id>/download")
 def download_logs(report_id):
+    ip = request.remote_addr
+    if _validate is not None:
+        _limit = _validate.rate_limited_downloads(ip, "download", report_id)
+        if _limit:
+            add_log_entry(ip, "SPAMDL", report_id)
+            raise TooManyRequests(retry_after=_limit)
+    
     FILE_NAME = f"{report_id}.7z"
     DIRECTORIES = [
         Directories.archives,
