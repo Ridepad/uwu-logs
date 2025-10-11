@@ -751,6 +751,13 @@ class WCCharacter:
 
 
 class WCCharacterBuild(dict):
+    __getattr__ = dict.__getitem__
+    char: WCCharacterResult
+    gear: WCGearResult
+    profs: WCProfsResults
+    spec1: WCTalentsResult
+    spec2: WCTalentsResult
+
     def __setitem__(self, key, value):
         if key == CharCategories.talents:
             if "spec1" in self:
@@ -761,26 +768,21 @@ class WCCharacterBuild(dict):
             key = "gear"
         elif key == CharCategories.profs:
             key = "profs"
+        elif key == CharCategories.char:
+            key = "char"
+        else:
+            raise KeyError(f"Wrong key: {key}")
+
         return super().__setitem__(key, value)
 
 
 class WCCharactersProfiles(WCServer):
     def split_to_characters(self, responses: list):
-        characters = []
-        current_character = WCCharacterBuild()
-        for response in responses:
-            # response: WCCharacterResult
-            if response.type == CharCategories.char:
-                LOGGER.debug(f"split_to_characters | {response.name}")
-                characters.append(current_character)
-                current_character = WCCharacterBuild()
-            current_character[response.type] = response
-        characters.append(current_character)
-
+        characters_gen = self._gen_split_to_characters(responses)
+        filtered_characters = self._filter_character_errors(characters_gen)
         return [
             WCCharacter(**character)
-            for character in characters
-            if character
+            for character in filtered_characters
         ]
         
     def get_profiles(self, guids: list[str]):
@@ -802,3 +804,36 @@ class WCCharactersProfiles(WCServer):
         ]
         request_data += char_talents_wrap(guid)
         return request_data
+
+    def _gen_split_to_characters(self, responses: list):
+        current_character = WCCharacterBuild()
+        
+        for response in responses:
+            if response.type == CharCategories.char:
+                yield current_character
+                current_character = WCCharacterBuild()
+            
+            current_character[response.type] = response
+        
+        yield current_character
+
+    def _filter_character_errors(self, characters: list[WCCharacterBuild]):
+        for character in characters:
+            if not character:
+                continue
+
+            try:
+                _char = character.char
+                _guid = _char.guid
+            except Exception as e:
+                LOGGER.warning(f"split_to_characters | {e}")
+                continue
+
+            try:
+                _name = _char.name
+                LOGGER.debug(f"split_to_characters | {_guid:>10} | {_name}")
+            except Exception as e:
+                LOGGER.warning(f"split_to_characters | {_guid:>10} | {e}")
+                continue
+
+            yield character
