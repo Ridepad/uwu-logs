@@ -116,11 +116,16 @@ class SevenZipLine:
         compressed: str,
         path: str,
     ) -> None:
+        try:
+            self.datetime = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            self.datetime = datetime(year=datetime.now().year, month=1, day=1)
+            time = self.datetime.strftime("%Y-%m-%d %H:%M:%S")
         self.date_full_str = time
-        self.date_str, self.time_str = time.replace(':', '-').split(' ', maxsplit=1)
-        self.attributes = attributes
-        self.datetime = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         self.timestamp = self.datetime.timestamp()
+        self.date_str, self.time_str = time.replace(':', '-').split(' ', maxsplit=1)
+ 
+        self.attributes = attributes
         self.size_bytes = int(size) if size else 0
         self.compressed_size_bytes = int(compressed) if compressed else 0
         self.file_name = path
