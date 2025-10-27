@@ -196,12 +196,16 @@ class LogsSlice(list[bytes]):
     def trim_invalid_lines(self, reverse=False):
         index = -1 if reverse else 0
         for _ in range(5):
-            line = self[index]
             try:
+                line = self[index]
                 return self.to_dt(line)
+            except IndexError:
+                break
             except (TypeError, ValueError):
                 self.pop(index)
         
+        return None
+
     def trim_invalid_lines_wrap(self):
         self.trim_invalid_lines()
         self.trim_invalid_lines(reverse=True)
@@ -401,6 +405,8 @@ class LogsSeparator:
                     _dt_last = self.to_dt(last_line)
                 except (TypeError, ValueError):
                     _dt_last = self.current_segment.trim_invalid_lines(reverse=True)
+                    if _dt_last is None:
+                        _dt_last = _dt_now
                 
                 if abs(_dt_now - _dt_last) > SMALL_GAP:
                     yield self.new_segment()
