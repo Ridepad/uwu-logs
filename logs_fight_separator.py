@@ -83,6 +83,7 @@ BOSS_MAX_IDLE_TIME_IN_FIGHT = {
     "005B7A": T_DELTA["1MIN"], # Reliquary of Souls
 
     "0061CE": T_DELTA["1MIN"], # Felmyst
+    "006132": T_DELTA["15SEC"], # Brutallus
 }
 HEAL_BOSSES = {
     "008FB5",
