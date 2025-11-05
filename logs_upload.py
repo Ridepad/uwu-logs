@@ -668,6 +668,9 @@ class LogsArchiveParser(api_7z.SevenZipArchive):
             self.has_duplicates = True
             self.change_slice_status("Exists", raid_id, slice_done=True)
             return
+        
+        if self.only_slices:
+            return
     
         try:
             self.save_raw_txt(logs_slice, timestamp)
