@@ -643,14 +643,22 @@ class LogsArchiveParser(api_7z.SevenZipArchive):
         self.change_slice_status("Formatting", raid_id)
         
         pc = perf_counter()
-        
-        slice_folder = Directories.logs.new_child(raid_id)
-        slice_path = slice_folder / LOGS_CUT_NAME
 
-        temp_slice_path = self.upload_data.directory / f"{raid_id}.txt"
-        
-        data = b'\n'.join(logs_fix.normalize_read_from_file(temp_slice_path))
-        slice_path.zstd_write(data)
+        path_slice_txt = self.upload_data.directory / f"{raid_id}.txt"
+        fixed_rows_gen = logs_fix.normalize_read_from_file(path_slice_txt)
+        data = b'\n'.join(fixed_rows_gen)
+
+        path_slice_zstd_temp = self.upload_data.directory / f"{raid_id}.zstd"
+        path_slice_zstd_temp.zstd_write(data)
+
+        path_slice_zstd = Directories.logs / raid_id / LOGS_CUT_NAME
+        for _ in range(3):
+            try:
+                path_slice_zstd.parent.mkdir(parents=True, exist_ok=True)
+                path_slice_zstd_temp.rename(path_slice_zstd)
+                break
+            except FileNotFoundError:
+                continue
 
         self.change_slice_status("Saved zstd", raid_id, pc=pc)
 
