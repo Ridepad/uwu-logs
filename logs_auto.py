@@ -23,6 +23,20 @@ from h_debug import Loggers, get_ms_str
 from h_other import get_report_name_info
 
 LOGGER_UPLOADS = Loggers.uploads
+# avg from 5 +-200mb files
+# time    /   diff | size     /  diff | mx | mo
+# 6.101 s / +20.6% | 5.082 MB / -0.8% |  9 | 14
+# 5.880 s / +16.2% | 5.095 MB / -0.6% |  9 | 13
+# 5.059 s /  +0.0% | 5.123 MB / +0.0% |  9 | 12
+# 4.819 s /  -4.7% | 5.170 MB / +0.9% |  9 | 11
+# 4.777 s /  -5.6% | 5.190 MB / +1.3% |  7 | 12
+# 4.689 s /  -7.3% | 5.215 MB / +1.8% |  7 | 11
+# 4.470 s / -11.6% | 5.283 MB / +3.1% |  9 | 10
+# 4.250 s / -16.0% | 5.311 MB / +3.7% |  7 | 10
+# 4.218 s / -16.6% | 5.383 MB / +5.1% |  5 | 12
+# 4.154 s / -17.9% | 5.392 MB / +5.2% |  5 | 11
+# 4.077 s / -19.4% | 5.455 MB / +6.5% |  5 | 10
+CUSTOM_MODE = ["-m0=PPMd", "-mx=9", "-mo=12"]
 
 
 def remove_old_dublicate(report_id: str):
@@ -44,7 +58,7 @@ def save_raw_logs(report_id: str):
     Directories.archives.mkdir(exist_ok=True)
     archive_path = Directories.archives / f"{report_id}.7z"
     archive = api_7z.SevenZipArchive(archive_path)
-    return_code = archive.create(pending_text)
+    return_code = archive.create(pending_text, custom_mode=CUSTOM_MODE)
     if return_code == 0:
         pending_text.unlink()
         remove_old_dublicate(report_id)
