@@ -223,6 +223,22 @@ class SevenZipArchiveInfo(SevenZip):
         except IndexError:
             return None
     
+    @cached_property
+    def compression_method(self):
+        method = None
+        for line in self._get_raw_archive_info():
+            if "Method = " in line:
+                method = line.split(" = ", 1)[-1]
+                break
+            
+            if method is None and "Type = " in line:
+                method = line.split(" = ", 1)[-1]
+
+        if method is None:
+            method = "Unknown"
+        
+        return method
+
     def get_all_files_with_suffix(self, suffix):
         return [
             line
@@ -231,6 +247,9 @@ class SevenZipArchiveInfo(SevenZip):
         ]
 
     def _get_raw_archive_info(self):
+        if not self.archive_path.is_file():
+            raise FileNotFoundError
+        
         cmd_list = [self.path, "l", self.archive_path]
         with subprocess.Popen(cmd_list, stdout=subprocess.PIPE) as p:
             try:
