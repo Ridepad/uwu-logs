@@ -13,8 +13,8 @@ from top_gear import Columns, GearDB
 
 LOGGER = Loggers.raging_gods
 
-IS_OLD_DT = datetime.now() - timedelta(hours=12)
-IS_OLD_DT_TS = IS_OLD_DT.timestamp()
+IS_OLD_DT = datetime.now() - timedelta(hours=3)
+IS_OLD_THRESHOLD = IS_OLD_DT.timestamp()
 
 RISING_GODS = "Rising-Gods"
 DATABASE = GearDB(RISING_GODS, new=True)
@@ -205,7 +205,13 @@ def rg_url_full(char_id):
 def profile_is_fresh(p: PathExt):
     if not p.is_file():
         return False
-    return p.mtime > IS_OLD_DT_TS
+    return p.mtime > IS_OLD_THRESHOLD
+
+def purge_cache():
+    for file in sorted(TEMP_PROFILE_DATA_DIR.files):
+        if not profile_is_fresh(file):
+            file.unlink()
+            print("! Removed", file)
 
 def get_profile(name: str, forced: bool=False):
     profile_path = TEMP_PROFILE_DATA_DIR / f"{name}.txt"
@@ -398,6 +404,9 @@ def test1():
 def main():
     import sys
     _forced = "-f" in sys.argv
+    
+    purge_cache()
+
     with RGParser(_forced) as parser:
         parser.run()
 
