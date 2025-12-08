@@ -30,6 +30,7 @@ class Loggers(dict[str, logging.Logger]):
     server_top = setup_logger('server_top')
     reports = setup_logger('reports')
     uploads = setup_logger('uploads')
+    uploads_finish = setup_logger('uploads_finish')
     unusual_spells = setup_logger('unusual_spells')
     memory = setup_logger('memory')
     archives = setup_logger("archives")
