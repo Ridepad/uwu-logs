@@ -22,7 +22,7 @@ from c_path import Directories, FileNames
 from h_debug import Loggers, get_ms_str
 from h_other import get_report_name_info
 
-LOGGER_UPLOADS = Loggers.uploads
+LOGGER = Loggers.uploads_finish
 # avg from 5 +-200mb files
 # time    /   diff | size     /  diff | mx | mo
 # 6.101 s / +20.6% | 5.082 MB / -0.8% |  9 | 14
@@ -62,10 +62,10 @@ def save_raw_logs(report_id: str):
     if return_code == 0:
         pending_text.unlink()
         remove_old_dublicate(report_id)
-        LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
+        LOGGER.debug(f'{get_ms_str(pc)} | {report_id:50} | Saved raw')
         return
     
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | {report_id:50} | ERROR {return_code}')
+    LOGGER.debug(f'{get_ms_str(pc)} | {report_id:50} | ERROR {return_code}')
 
 def _report_server(report_id: str):
     return get_report_name_info(report_id)["server"]
@@ -76,7 +76,7 @@ def top_has_errors(data: list[dict]):
             if not row.get(key):
                 if row.get(key) == 0:
                     continue
-                LOGGER_UPLOADS.error(f'top_has_errors | {key} | {row}')
+                LOGGER.error(f'top_has_errors | {key} | {row}')
                 return True
     return False
 
@@ -105,7 +105,7 @@ def add_new_top_data(server, reports):
 
     api_top_db_v2.TopDB(server, new=True).add_new_entries_wrap(_data)
     
-    LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Saved top | {server}')
+    LOGGER.debug(f'{get_ms_str(pc)} | Saved top | {server}')
 
     return errors
 
@@ -145,7 +145,7 @@ def add_to_archives(new_logs: list[str], processes: int=1):
 
 def remove_errors(reports: list, errors: list, func="?"):
     for report_id in errors:
-        LOGGER_UPLOADS.error(f'Removed due to error | {report_id}')
+        LOGGER.error(f'Removed due to error | {report_id}')
         
         try:
             reports.remove(report_id)
@@ -195,11 +195,11 @@ def main_wrap():
     no_debug = "--debug" not in sys.argv
     pc = perf_counter()
     try:
-        LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto start')
+        LOGGER.debug(f'{get_ms_str(pc)} | Auto start')
         main(multiprocessing=no_debug)
-        LOGGER_UPLOADS.debug(f'{get_ms_str(pc)} | Auto finish')
+        LOGGER.debug(f'{get_ms_str(pc)} | Auto finish')
     except Exception:
-        LOGGER_UPLOADS.exception(f'{get_ms_str(pc)} | Auto error')
+        LOGGER.exception(f'{get_ms_str(pc)} | Auto error')
 
 if __name__ == '__main__':
     main_wrap()
