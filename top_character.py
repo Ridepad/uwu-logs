@@ -47,7 +47,10 @@ class CharacterValidation(BaseModel):
     @field_validator('name')
     @classmethod
     def validate_name(cls, name: str):
-        return name.strip().lower().title().replace(" ", "")
+        if len(name) < 2:
+            raise ValueError(f"[name] value must be longer than 1 character")
+        name = name.lower().strip().replace(" ", "")
+        return f"{name[0].upper()}{name[1:]}"
 
     @field_validator('spec_i')
     @classmethod
