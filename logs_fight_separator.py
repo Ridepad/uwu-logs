@@ -14,7 +14,8 @@ from h_datetime import (
 
 MAX_LINES_DEFAULT = 1000
 MAX_LINES_BY_BOSS = {
-    "004630": 10000,
+    "004630": 10000, # Archimonde
+    "0061CE": 10000, # Felmyst
 }
 MULTIBOSSES_MAIN = {
     guid: list(boss_guids)[0]
@@ -158,6 +159,11 @@ class BossSegment(list[LogLine]):
         for line_index, line in enumerate(reversed(lines)):
             # print(f">>> {line_index:>5} | {line}")
             
+            if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
+                continue
+            if line[4][6:-6] not in BOSSES_GUIDS:
+                continue
+            
             if line[2] in SPELL_AURA:
                 if boss_died:
                     continue
@@ -207,11 +213,6 @@ class BossSegment(list[LogLine]):
             damaged_times = 0
             # print(f">>> {line_index:>5} | {value_no_overkill} value_no_overkill")
             if value_no_overkill == 1:
-                continue
-            # if line[2] == "SPELL_HEAL" and line[4][6:-6] not in HEAL_BOSSES:
-            if line[2] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
-                continue
-            if line[4][6:-6] not in BOSSES_GUIDS:
                 continue
             
             new_fight_end_line_index = line_index
