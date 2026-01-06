@@ -13,6 +13,7 @@ SERVERS = {
 SERVERS_WC = {
     "WoW-Circle-x100": "6",
     "WoW-Circle-x1":   "2",
+    "WoW-Circle-x4":   "5",
     # "WoW-Circle-x5":   "1",
     # "WoW-Circle-Fun":  "13",
 }
