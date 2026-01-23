@@ -33,8 +33,8 @@ USEFUL = {
     "Lord Marrowgar": {
         "008F04": "Lord Marrowgar",
         "008F0B": "Bone Spike",
-        "009738": "Bone Spike",
-        "009737": "Bone Spike",
+        "009738": "Bone Spike2",
+        "009737": "Bone Spike3",
     },
     "Lady Deathwhisper": {
         "008FF7": "Lady Deathwhisper",
@@ -534,6 +534,9 @@ ALL_GUIDS = {
 }
 
 CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
+    "Lord Marrowgar": {
+        "Bone Spikes": ("008F0B", "009738", "009737"),
+    },
     "Lady Deathwhisper": {
         "Adds": ("009402", "00943D", "009655"),
     },
