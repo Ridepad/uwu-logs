@@ -52,7 +52,7 @@ SERVERS_WITH_SERVER_ID_IN_LOGS = [
 ]
 SERVERS_OTHER = [
     ServerID("Rising Gods", "(risin.*?god)"),
-    ServerID("WoW Circle", "(circle)"),
+    ServerID("WoW Circle", "([cs][irckle]{4,7})"),
     ServerID("Whitemane-PTR", "(whitemane.*?ptr)"),
     # ServerID("Whitemane-Frostmourne", "(frostmo)"),
     ServerID("Whitemane-Frostmourne", "(whitema)"),
@@ -70,7 +70,6 @@ SERVERS_OTHER = [
     ServerID("Hellscream", "(hellscream)"),
     ServerID("Hellscream", "(garrosh)"),
     ServerID("WoWZone", "(wowzone)"),
-    ServerID("woe", "(elendil)"),
     ServerID("Stormforge", "(storm)"),
     # ServerName("", ""),
 ]
@@ -109,6 +108,12 @@ def test1():
     re_test = [
         "Lordaeron",
         "Wow Circle 3.3.5a x5",
+        'WowCricle-x4',
+        'WowCrricle-x1221',
+        'WowCiccle',
+        'WowSircle',
+        'WowSircl',
+        'WowSircllee',
         "rIsing godSs",
         "risINGg godds",
         "Way Elendil",
