@@ -161,6 +161,9 @@ AURAS_SPEC = {
     
     "53365": 15,    # Unholy Strength
     # "70657": 15,    # Advantage
+    
+    "64701": 15,    # Elemental Mastery
+    "70831": 10,    # Maelstrom Power
 }
 
 
