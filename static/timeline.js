@@ -724,7 +724,7 @@ class Character {
   add_control_events() {
     this.CASTS_SECTION.querySelectorAll("spell-name").forEach(element => {
       element.addEventListener("mouseleave", () => AURA_CONTROLS.style.display = "none");
-      element.addEventListener('mouseover', () => {
+      element.addEventListener('mouseenter', () => {
         element.appendChild(AURA_CONTROLS);
         AURA_CONTROLS.style.removeProperty("display");
       });
