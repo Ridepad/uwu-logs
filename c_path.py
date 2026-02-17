@@ -117,7 +117,12 @@ class _PathExt(type(Path())):
     def copy_from_backup(self, _main="mnt", _secondary="uwu-logs"):
         backup_path = self.backup_path(_main=_main, _secondary=_secondary)
         if backup_path.is_dir():
-            shutil.copytree(backup_path, self)
+            try:
+                shutil.copytree(backup_path, self, dirs_exist_ok=True)
+            except Exception:
+                if not self.parent.is_dir():
+                    raise FileNotFoundError(f"copy_from_backup {self.parent=}")
+                raise
         elif backup_path.is_file():
             shutil.copy(backup_path, self)
         else:
