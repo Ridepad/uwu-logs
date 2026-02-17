@@ -206,7 +206,7 @@ SPELL_BOOK_SPEC = {
         "51271": 2, # Unbreakable Armor
         "51411": 2, # Howling Blast
         "50401": 2, # Razor Frost
-        "51714": 2, # Frost Vulnerability
+        # "51714": 2, # Frost Vulnerability
         
         "49206": 3, # Summon Gargoyle
         "55271": 3, # Scourge Strike
