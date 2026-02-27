@@ -1,6 +1,6 @@
 import { wow_sim_template, spec_overrides } from "./proto/template.js";
 const TALENTS_ENCODE_STR = "0zMcmVokRsaqbdrfwihuGINALpTjnyxtgevE";
-const WOWSIM_URL = "https://wowsims.github.io/wotlk/";
+const WOWSIM_URL = "https://poli93.github.io/wotlk/";
 const GLYPHS_JSON_FILE = "/static/glyphs.json";
 const GEM_TO_ENCH_JSON_FILE = "/static/gem_to_ench.json";
 const MAX_TALENTS_TREE_LEN = {
