@@ -40,8 +40,10 @@ const DEFAULT_NAME_VALUE = {
 const SERVERS_AVAILABLE_GEAR = [
   "Icecrown",
   "Lordaeron",
+  "Onyxia",
   "Rising-Gods",
   "WoW-Circle-x1",
+  "WoW-Circle-x4",
   "WoW-Circle-x5",
   "WoW-Circle-x100",
 ];
