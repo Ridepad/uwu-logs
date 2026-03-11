@@ -140,7 +140,6 @@ class TopDB(DB):
         super().__init__(
             db_path,
             new=new,
-            without_row_id=True,
         )
         self.server = server
         self.object_id = f"{self.__class__.__module__}.{self.__class__.__name__}.{server}"

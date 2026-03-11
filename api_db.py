@@ -114,12 +114,11 @@ class TableMetadata(Table):
 class DB:
     cursors = Cursors()
 
-    def __init__(self, path: PathExt, new=False, without_row_id=False) -> None:
+    def __init__(self, path: PathExt, new=False) -> None:
         if not new and not path.is_file():
             raise FileNotFoundError
 
         self.path = path
-        self.without_row_id = without_row_id
         
     @property
     def cursor(self):
@@ -218,8 +217,8 @@ class Cache(DB):
     m_time = defaultdict(float)
     cooldown = timedelta(seconds=15)
 
-    def __init__(self, path, new=False, without_row_id=False):
-        super().__init__(path, new, without_row_id)
+    def __init__(self, path, new=False):
+        super().__init__(path, new)
 
         # top_points.Points.Lordaeron
         self.object_id = ".".join((

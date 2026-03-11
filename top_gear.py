@@ -125,7 +125,7 @@ class TableGear(Table):
 class GearDB(DB):
     def __init__(self, server: str, new=False) -> None:
         path = Directories.gear / f"{server}.db"
-        super().__init__(path, new, without_row_id=True)
+        super().__init__(path, new)
         self.server = server
         self.table = TableGear()
 

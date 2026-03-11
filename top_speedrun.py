@@ -36,6 +36,7 @@ HEADERS_TO_COLUMNS_NAMES = {
 
 
 class TableSpeedrun(Table):
+    without_row_id = True
     COLUMNS_ORDERED = list(Columns.__members__.values())
     COLUMNS_TABLE_CREATE = [
         f"{COLUMNS_ORDERED[0]} PRIMARY KEY",
@@ -63,7 +64,6 @@ class SpeedrunDB(DB):
         super().__init__(
             path,
             new=new,
-            without_row_id=True,
         )
         self.server = server
 
