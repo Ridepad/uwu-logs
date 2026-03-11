@@ -6,8 +6,12 @@ import re
 
 from h_other import requests_get
 
-URL_DOMAIN = "https://wotlk.evowow.com/"
-HEADERS = {"User-Agent": "ItemParser/1.1; +uwu-logs.xyz"}
+URL_DOMAIN = "https://wotlk.ultimowow.com/en/"
+# USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
+USER_AGENT = "ItemParser/1.1; +uwu-logs.xyz"
+HEADERS = {
+    "User-Agent": USER_AGENT,
+}
 STATS_DICT = {
     0: "armor",
     35: "resilience rating",

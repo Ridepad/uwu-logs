@@ -12,7 +12,7 @@ LOGGER = Loggers.missing
 MAIN_DIR = Directories.static
 
 HEADERS = {"User-Agent": "ItemParser/1.1; +uwu-logs.xyz"}
-ICON_URL_PREFIX = "https://wotlk.evowow.com/static/images/wow/icons/large"
+ICON_URL_PREFIX = "https://cdn.cavernoftime.com/wotlk/icons/large"
 
 DEBUG = True
 DEBUG = False
