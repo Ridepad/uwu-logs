@@ -18,7 +18,11 @@ function fetch_json_missing(type, id) {
   // }
   // const missing_options = fetch_json_options("PUT", item);
   // return fetch("/missing", missing_options);
-  return fetch(`/missing?type=${type}&id=${id}`)
+  const url = `/missing?type=${type}&id=${id}`;
+  const options = {
+    method: "PUT",
+  }
+  return fetch(url, options);
 }
 
 function empty_json_promise() {
