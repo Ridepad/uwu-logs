@@ -12,12 +12,13 @@ function fetch_json_options(method, data) {
 }
 
 function fetch_json_missing(type, id) {
-  const item = {
-    id: id,
-    type: type,
-  }
-  const missing_options = fetch_json_options("PUT", item);
-  return fetch("/missing", missing_options);
+  // const item = {
+  //   id: id,
+  //   type: type,
+  // }
+  // const missing_options = fetch_json_options("PUT", item);
+  // return fetch("/missing", missing_options);
+  return fetch(`/missing?type=${type}&id=${id}`)
 }
 
 function empty_json_promise() {
