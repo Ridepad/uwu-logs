@@ -279,7 +279,10 @@ class LogsSlice(list[bytes]):
 
     @staticmethod
     def _format_name(name: bytes):
-        return name.decode().replace('"', '')
+        try:
+            return name.decode().replace('"', '')
+        except UnicodeDecodeError:
+            return ""
 
     def _filter_fights(self, units: dict[bytes, int]):
         bosses: list[str] = []
