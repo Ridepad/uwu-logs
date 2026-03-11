@@ -157,7 +157,7 @@ input:disabled + label {
   position: sticky;
   top: var(--margin-top);
   width: 100%;
-  max-width: 55rem;
+  max-width: 58rem;
   padding-bottom: var(--padding-top);
   background-color: var(--background);
   z-index: 5;
@@ -190,6 +190,9 @@ input:disabled + label {
   }
   #controls-wrap {
     padding-inline: 5rem;
+  }
+  #select-server {
+	  max-width: 27rem;
   }
 }
 
