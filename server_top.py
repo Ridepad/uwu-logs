@@ -6,9 +6,7 @@ from fastapi import (
     status,
 )
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 
-import parser_all
 from api_db import DataCompressed
 from constants import GEAR
 from h_debug import Loggers
@@ -19,13 +17,6 @@ from top_points import Points, PointsValidation
 from top_pve_stats import PveStats, PveStatsValidation, SPECS_DATA_NOT_IGNORED
 from top_raid_rank import RaidRank, RaidRankValidation
 from top_speedrun import Speedrun, SpeedrunValidation
-
-from top_gear import GearDB
-
-try:
-    import _validate
-except ImportError:
-    _validate = None
 
 
 app = FastAPI(
@@ -127,55 +118,6 @@ async def character(server, name, spec):
 @app.post('/rank')
 async def rank(data: RaidRankValidation):
     return RaidRank(data).points()
-
-@app.get('/gear/{server}/{player_name}')
-async def rank(server: str, player_name: str):
-    try:
-        z = GearDB(server).get_player_data(player_name)
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    r = make_response_compressed_headers(z)
-    r.headers["Cache-Control"] = "public, max-age=900"
-    r.headers["ETag"] = z.gear_id()
-    return r
-
-async def check_rate_limit(request: Request, type: str, id: str):
-    if not _validate:
-        return
-    
-    ip = real_ip(request)
-    _limit = _validate.rate_limited_missing(ip, type, id)
-    if not _limit:
-        return
-
-    await add_log_entry_wrap(request, "SPAM")
-    
-    raise HTTPException(
-        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        detail=str(_limit),
-        headers={
-            "Retry-After": str(_limit),
-        }
-    )
-
-class Missing(BaseModel):
-    id: str
-    type: str
-
-@app.put("/missing")
-async def missing(item: Missing, request: Request, response: Response):
-    await check_rate_limit(request, type=item.type, id=item.id)
-
-    return_code = 400
-    if item.type == "enchant":
-        return_code = parser_all.Ench(item.id).load()
-    elif item.type == "icon":
-        return_code = parser_all.Icon(item.id).load()
-    elif item.type == "item":
-        return_code = parser_all.Item(item.id).load()
-    response.status_code = return_code
 
 
 ######## Get endpoints to prevent cors

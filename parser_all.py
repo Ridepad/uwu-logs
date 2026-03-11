@@ -18,10 +18,10 @@ DEBUG = True
 DEBUG = False
 
 class Loader:
-    threads: dict[str, Thread] = {}
-
     type: str
     extension: str
+
+    threads: dict[str, Thread] = {}
     
     def __init__(self, id) -> None:
         self.id = id
@@ -34,24 +34,6 @@ class Loader:
             self.__path = MAIN_DIR.new_child(self.type) / f"{self.id}.{self.extension}"
             return self.__path
     
-    def wait_for_thread(self):
-        try:
-            t = self.threads[self.id]
-        except KeyError:
-            return
-
-        try:
-            t.start()
-        except RuntimeError:
-            pass
-
-        t.join()
-        
-        try:
-            del self.threads[self.id]
-        except KeyError:
-            pass
-
     def download(self):
         ...
     def save(self, data):
@@ -69,7 +51,7 @@ class Loader:
             t = self.threads[self.id] = Thread(target=self._parse_and_save)
             t.start()
         
-        self.wait_for_thread()
+        self._wait_for_thread()
         
         if self.path.is_file():
             LOGGER.debug(f"201 get created")
@@ -94,14 +76,33 @@ class Loader:
     
     def _can_create_new(self):
         return self.id not in self.threads or not self.threads[self.id].is_alive()
+    
+    def _wait_for_thread(self):
+        try:
+            t = self.threads[self.id]
+        except KeyError:
+            return
+
+        try:
+            t.start()
+        except RuntimeError:
+            pass
+
+        t.join()
+        
+        try:
+            del self.threads[self.id]
+        except KeyError:
+            pass
 
 
 class Icon(Loader):
     type: str = "icons"
     extension: str = "jpg"
+    threads: dict[str, Thread] = {}
     
     def download(self):
-        url = f"{ICON_URL_PREFIX}/{self.id}.jpg"
+        url = f"{ICON_URL_PREFIX}/{self.id}.{self.extension}"
         return requests_get(url, HEADERS).content
 
     def save(self, data):
@@ -111,6 +112,7 @@ class Icon(Loader):
 class Item(Loader):
     type: str = "item"
     extension: str = "json"
+    threads: dict[str, Thread] = {}
     
     def download(self):
         return parser_item.parse_item(self.id)
@@ -122,6 +124,7 @@ class Item(Loader):
 class Ench(Loader):
     type: str = "enchant"
     extension: str = "json"
+    threads: dict[str, Thread] = {}
     
     def download(self):
         return parser_ench.get_ench(self.id)

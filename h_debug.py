@@ -28,6 +28,7 @@ class Loggers(dict[str, logging.Logger]):
 
     server_main = setup_logger('server_main')
     server_top = setup_logger('server_top')
+    server_gear = setup_logger('server_gear')
     reports = setup_logger('reports')
     uploads = setup_logger('uploads')
     uploads_finish = setup_logger('uploads_finish')
