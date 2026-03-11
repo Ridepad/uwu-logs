@@ -398,7 +398,7 @@ class LogsSeparator:
             if _delta > 100 or _delta < 0:
                 try:
                     _dt_now = self.to_dt(line)
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, OverflowError):
                     continue
                 
                 try:
