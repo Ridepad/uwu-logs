@@ -16,9 +16,7 @@ class Ports(dict[str, int]):
 def requests_get(page_url, headers, timeout=2, attempts=3):
     for _ in range(attempts):
         try:
-            page = requests.get(page_url, headers=headers, timeout=timeout, allow_redirects=False)
-            if page.status_code == 200:
-                return page
+            return requests.get(page_url, headers=headers, timeout=timeout, allow_redirects=False)
         except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
             time.sleep(2)
     

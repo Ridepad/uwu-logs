@@ -85,6 +85,7 @@ function has_additional_socket(item_data) {
 }
 
 function get_socket_amount(item_data) {
+  if (!item_data.sockets) return 0;
   const socket_amount = item_data.sockets.reduce((sum, a) => sum + a, 0);
   if (has_additional_socket(item_data)) {
     return socket_amount + 1;
@@ -165,6 +166,7 @@ function tooltip_row_armor_type(item_data) {
   return new_row(item_data["armor type"]);
 }
 function* tooltip_row_item_stats(item_data) {
+  if (!item_data.stats) return;
   for (const [stat, value] of item_data.stats) {
     yield new_row_num(value, stat);
   }
@@ -178,11 +180,10 @@ function tooltip_row_enchant(item_data, ench_id) {
   return row_ench;
 }
 function tooltip_row_additional_effect(item_data) {
-  if (item_data.add_text) {
-    const row_add_text = new_row(item_data.add_text);
-    row_add_text.classList.add("enchant");
-    return row_add_text;
-  }
+  if (!item_data.add_text) return;
+  const row_add_text = new_row(item_data.add_text);
+  row_add_text.classList.add("enchant");
+  return row_add_text;
 }
 
 async function show_tooltip(e) {

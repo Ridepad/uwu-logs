@@ -12,6 +12,11 @@ USER_AGENT = "ItemParser/1.1; +uwu-logs.xyz"
 HEADERS = {
     "User-Agent": USER_AGENT,
 }
+UNKNOWN_ITEM = {
+    "quality": 1,
+    "icon": "inv_misc_questionmark",
+    "name": "Unknown item",
+}
 STATS_DICT = {
     0: "armor",
     35: "resilience rating",
@@ -97,9 +102,17 @@ def get_additional_text(html: str):
 
 def parse_item(id):
     item_url = f'{URL_DOMAIN}?item={id}'
-    item_raw = requests_get(item_url, HEADERS).text
+    response = requests_get(item_url, HEADERS)
+    if response.status_code == 404:
+        return UNKNOWN_ITEM
+    
+    item_raw = response.text
     item_stats = re.findall('g_items[^{]+({.+?})', item_raw)
-    item: dict = json.loads(item_stats[0])
+    try:
+        item: dict = json.loads(item_stats[0])
+    except Exception:
+        return UNKNOWN_ITEM
+    
     # item = {'quality': 4, 'icon': 'inv_mace_115', 'name_enus': 'Royal Scepter of Terenas II'}
     item["name"] = item.pop('name_enus')
     # item = {'quality': 4, 'icon': 'inv_mace_115', 'name': 'Royal Scepter of Terenas II'}
