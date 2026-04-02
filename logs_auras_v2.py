@@ -63,7 +63,21 @@ AURAS_SELF = {
     "71564": 20,    # Nevermelting Ice Crystal
 }
 
-AURAS_EXTERNAL = {
+
+CHEESE = {
+    "34410": 60*60, # Hellscream's Warsong
+    "56827": 60,    # Aura of Arcane Haste
+    "47791": 5,     # Arcane Haste
+    "52281": 60*2,  # Flame of the Seer
+    "51800": 60*2,  # Might of Malygos
+    "51777": 60*2,  # Arcane Focus
+    "51605": 60*2,  # Zeal
+    "44335": 30,    # Energy Feedback
+    "38027": 60,    # Boiling Blood
+    "31626": 20,    # Unholy Frenzy
+    "29232": 60,    # Fungal Creep / Loatheb spore
+}
+AURAS_EXTERNAL = CHEESE | {
     "73822": 60*30, # Hellscream's Warsong
     "73828": 60*30, # Strength of Wrynn
      "2825": 40,    # Bloodlust
@@ -84,10 +98,6 @@ AURAS_EXTERNAL = {
     "67218": 20,    # Empowered Light
     "63848": 50,    # Hunger For Blood
     "14177": 60*10, # Cold Blood
-    "51800": 60*2,  # Might of Malygos
-    "51777": 60*2,  # Arcane Focus
-    "51605": 60*2,  # Zeal
-    "44335": 30,    # Energy Feedback
 }
 
 AURAS_BOSS_MECHANICS = {
