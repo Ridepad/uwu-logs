@@ -291,7 +291,7 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
         for line in logs_slice
     )
 
-def many_auras_removed(logs_slice: list[str], threshold: int=20):
+def many_auras_removed(logs_slice: list[str], threshold: int):
     removed = 0
     for line in logs_slice:
         line = line.split(',', 5)
@@ -490,7 +490,7 @@ class LogsSegments(logs_base.THE_LOGS):
         slice_duration_str = self.duration_to_string(slice_duration)
         slice_duration_str = slice_duration_str[2:]
 
-        kill = self.is_kill(s, f, boss_name)
+        kill = self.is_kill(s, f, boss_name, diff)
         attempt_type = "kill" if kill else "wipe"
         return LogsSegment(
             encounter_name=boss_name,
@@ -506,7 +506,7 @@ class LogsSegments(logs_base.THE_LOGS):
             duration_str=slice_duration_str,
         )
 
-    def is_kill(self, s: int, f: int, boss_name: str):
+    def is_kill(self, s: int, f: int, boss_name: str, mode="25N"):
         slice_duration = self.get_slice_duration(s, f)
         min_kill_duration = ENCOUNTER_MIN_DURATION.get(boss_name, 15)
         if slice_duration < min_kill_duration:
@@ -520,7 +520,7 @@ class LogsSegments(logs_base.THE_LOGS):
 
         if boss_name in COWARDS_NAMES:
             _slice = self.LOGS[f-100:f]
-            threshold = 20
+            threshold = COWARDS_MAX_REMOVED_AURAS[mode[:2]]
             return many_auras_removed(_slice, threshold)
 
         return False
