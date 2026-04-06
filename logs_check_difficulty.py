@@ -269,6 +269,8 @@ def is_overkill_on_boss(line: list[str]):
         return
     if line[4][6:-6] not in BOSSES_GUIDS:
         return
+    if line[1] in FLAGS_HEAL and line[4][6:-6] not in HEAL_BOSSES:
+        return False
     return int(line[9]) - int(line[10]) != 1
 
 def is_kill(last_line: str):
