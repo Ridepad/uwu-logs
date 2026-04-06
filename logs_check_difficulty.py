@@ -18,10 +18,10 @@ COWARDS_MAX_REMOVED_AURAS = {
     "25": 20,
 }
 YOGG_SARON_GUARDIAN_BUFFS = {
-    "62670": "Resilience of Nature",
-    "62650": "Fortitude of Frost",
-    "62702": "Fury of the Storm",
-    "62671": "Speed of Invention",
+    "62650", # Fortitude of Frost
+    "62670", # Resilience of Nature
+    "62671", # Speed of Invention
+    "62702", # Fury of the Storm
 }
 FREYA_GUARDIAN_BUFFS_10_MAN = {
     "62385", # Brightleaf's Essence
