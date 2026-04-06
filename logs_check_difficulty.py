@@ -245,6 +245,7 @@ def _get_difficulty(logs_slice: list[str], boss_name: str) -> str:
     return DEFAULT_DIFFICULTY
 
 def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
+    boss_name_raw = boss_name
     if boss_name not in SPELLS:
         difficulty = imagine_playing_shit_expansion(logs_slice)
         
@@ -259,7 +260,7 @@ def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
             return difficulty
         
     difficulty = _get_difficulty(logs_slice, boss_name)
-    if difficulty == DEFAULT_DIFFICULTY and boss_name in NOT_DETECTED_NORMAL_MODE:
+    if difficulty == DEFAULT_DIFFICULTY and boss_name_raw in NOT_DETECTED_NORMAL_MODE:
         return imagine_playing_shit_expansion(logs_slice)
     return difficulty
 
