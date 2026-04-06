@@ -13,6 +13,10 @@ CSS_BOSS_LINK = "boss-link"
 DEFAULT_DIFFICULTY = "TBD"
 DIFFICULTY = ('10N', '10H', '25N', '25H')
 COWARDS_NAMES = set(COWARDS.values())
+COWARDS_MAX_REMOVED_AURAS = {
+    "10": 10,
+    "25": 20,
+}
 YOGG_SARON_GUARDIAN_BUFFS = {
     "62670": "Resilience of Nature",
     "62650": "Fortitude of Frost",
@@ -28,6 +32,13 @@ FREYA_GUARDIAN_BUFFS_25_MAN = {
     "65585", # Brightleaf's Essence
     "65590", # Stonebark's Essence
     "65586", # Ironbranch's Essence
+}
+FLAGS_HEAL = {
+    "SPELL_HEAL",
+    "SPELL_PERIODIC_HEAL",
+}
+HEAL_BOSSES = {
+    "008FB5",
 }
 SPELLS: dict[str, tuple[str]] = {
     "Lord Marrowgar":
