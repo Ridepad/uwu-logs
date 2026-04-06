@@ -110,11 +110,11 @@ SPELLS: dict[str, tuple[str]] = {
     "Assembly of Iron":
         ("", "64637", "", "61888"), # Overwhelming Power
     "Thorim":
-        ("", " 62597", "", "62605"), # Frost Nova
+        ("", "62597", "", "62605"), # Frost Nova
     "Thorim2":
-        ("", " 62583", "", "62601"), # Frostbolt
+        ("", "62583", "", "62601"), # Frostbolt
     "Thorim22":
-        ("", " 62580", "", "62604"), # Frostbolt Volley
+        ("", "62580", "", "62604"), # Frostbolt Volley
     "Freya_Stonebark":
         ("", "62437", "", "62859"), # Ground Tremor
     "Freya_Ironbranch":
