@@ -19,6 +19,16 @@ YOGG_SARON_GUARDIAN_BUFFS = {
     "62702": "Fury of the Storm",
     "62671": "Speed of Invention",
 }
+FREYA_GUARDIAN_BUFFS_10_MAN = {
+    "62385", # Brightleaf's Essence
+    "62386", # Stonebark's Essence
+    "62387", # Ironbranch's Essence
+}
+FREYA_GUARDIAN_BUFFS_25_MAN = {
+    "65585", # Brightleaf's Essence
+    "65590", # Stonebark's Essence
+    "65586", # Ironbranch's Essence
+}
 SPELLS: dict[str, tuple[str]] = {
     "Lord Marrowgar":
         ("69146", "70824", "70823", "70825"), # Coldflame
@@ -165,19 +175,42 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
     
     return DIFFICULTY[0]
 
-def freya_diff(logs_slice: list[str]):
-    elder_boss_ids = {
-        "Freya_Stonebark",
-        "Freya_Ironbranch",
-        "Freya_Brightleaf",
-    }
+def freya_10hm(logs_slice: list[str]):
+    buffs = set()
+    for line in logs_slice[:1000]:
+        if ",62" not in line:
+            continue
+        try:
+            spell_id = line.split(',', 7)[6]
+            if spell_id in FREYA_GUARDIAN_BUFFS_10_MAN:
+                buffs.add(spell_id)
+            if len(buffs) == 3:
+                return "10H"
+        except Exception:
+            pass
     
-    for boss_id in elder_boss_ids:
-        diff = get_difficulty(logs_slice, boss_id)
-        if diff == DEFAULT_DIFFICULTY:
-            return None
-        
-    return diff
+    return "10N"
+
+def freya_25hm(logs_slice: list[str]):
+    buffs = set()
+    for line in logs_slice[:1000]:
+        if ",65" not in line:
+            continue
+        try:
+            spell_id = line.split(',', 7)[6]
+            if spell_id in FREYA_GUARDIAN_BUFFS_25_MAN:
+                buffs.add(spell_id)
+            if len(buffs) == 3:
+                return "25H"
+        except Exception:
+            pass
+    
+    return "25N"
+
+def freya_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
+    if default == "25N":
+        return freya_25hm(logs_slice)
+    return freya_10hm(logs_slice)
 
 def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
     buffs = set()
@@ -216,7 +249,7 @@ def get_difficulty(logs_slice: list[str], boss_name: str) -> str:
         difficulty = imagine_playing_shit_expansion(logs_slice)
         
         if boss_name == "Freya":
-            return freya_diff(logs_slice) or difficulty
+            return freya_hm(logs_slice, difficulty)
         
         if boss_name == "Yogg-Saron":
             return yogg_hm(logs_slice, difficulty) 
