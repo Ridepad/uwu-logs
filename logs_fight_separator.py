@@ -386,7 +386,10 @@ class Fights(logs_core.Logs):
                     continue
                 spell_id, other = NIL, NIL
             else:
-                sGUID, _, tGUID, _, spell_id, other = etc.split(',', 5)
+                try:
+                    sGUID, _, tGUID, _, spell_id, other = etc.split(',', 5)
+                except Exception:
+                    pass
                 if spell_id in IGNORED_SPELL_IDS:
                     continue
                 
