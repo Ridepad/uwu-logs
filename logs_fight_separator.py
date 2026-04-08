@@ -70,6 +70,7 @@ BOSS_MAX_IDLE_TIME_IN_FIGHT = {
     "008704": T_DELTA["2MIN"], # Anub'arak
     # "008EF5": T_DELTA["1MIN"],
     "008EF5": T_DELTA["2MIN"], # The Lich King
+    "0081A2": T_DELTA["3MIN"], # Razorscale
     "008246": T_DELTA["1MIN"], # Mimiron
     "008208": T_DELTA["1MIN"], # Yogg-Saron
     
