@@ -24,14 +24,14 @@ YOGG_SARON_GUARDIAN_BUFFS = {
     "62702", # Fury of the Storm
 }
 FREYA_GUARDIAN_BUFFS_10_MAN = {
-    "62385", # Brightleaf's Essence
-    "62386", # Stonebark's Essence
-    "62387", # Ironbranch's Essence
+    "62437", # Ground Tremor
+    "62438", # Iron Roots
+    "62623", # Sunbeam
 }
 FREYA_GUARDIAN_BUFFS_25_MAN = {
-    "65585", # Brightleaf's Essence
-    "65590", # Stonebark's Essence
-    "65586", # Ironbranch's Essence
+    "62859", # Ground Tremor
+    "62861", # Iron Roots
+    "62872", # Sunbeam
 }
 FLAGS_HEAL = {
     "SPELL_HEAL",
@@ -188,7 +188,7 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
 
 def freya_10hm(logs_slice: list[str]):
     buffs = set()
-    for line in logs_slice[:1000]:
+    for line in logs_slice[:3000]:
         if ",62" not in line:
             continue
         try:
@@ -204,8 +204,8 @@ def freya_10hm(logs_slice: list[str]):
 
 def freya_25hm(logs_slice: list[str]):
     buffs = set()
-    for line in logs_slice[:1000]:
-        if ",65" not in line:
+    for line in logs_slice[:3000]:
+        if ",62" not in line:
             continue
         try:
             spell_id = line.split(',', 7)[6]
