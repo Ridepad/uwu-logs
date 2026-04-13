@@ -229,7 +229,7 @@ class Tier_8:
         Encounter("Kologarn", "25N"),
         Encounter("Auriaya", "25N"),
         Encounter("Hodir", "25N"),
-        Encounter("Thorim", "25N"),
+        Encounter("Thorim", "25H"),
         Encounter("Freya", "25H"),
         Encounter("Mimiron", "25H"),
         Encounter("General Vezax", "25H"),
