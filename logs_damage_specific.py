@@ -180,7 +180,7 @@ def iron_useful(logs_slice: list[str]):
         for guid in DAMAGE
     }
     
-    def died_reset_not_dead(target_guid_id: str):
+    def reset_alive_bosses(target_guid_id: str):
         dead[target_guid_id] = True
         for guid_id, v in dead.items():
             if not v:
@@ -193,7 +193,8 @@ def iron_useful(logs_slice: list[str]):
         if "UNIT_DIED" in line:
             tGUID = line.split(',', 5)[4]
             target_guid_id = tGUID[6:-6]
-            died_reset_not_dead(target_guid_id)
+            if target_guid_id in DAMAGE:
+                reset_alive_bosses(target_guid_id)
             continue
         
         if "DAMAGE" not in line:
@@ -206,7 +207,7 @@ def iron_useful(logs_slice: list[str]):
                 continue
             DAMAGE[target_guid_id][sGUID] += int(dmg)
             if ok != "0":
-                died_reset_not_dead(target_guid_id)
+                reset_alive_bosses(target_guid_id)
         except ValueError:
             pass
     
