@@ -243,16 +243,21 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     players_classes = {}
     players_skip = set()
 
+    units_with_unknown_name = set()
+
     for line in logs:
         _, flag, sGUID, sName, tGUID, tName, *other = line.split(',', 8)
 
-        if sName == 'Unknown' or tName in NAMES_SKIP:
-            continue
-
         if sGUID not in everything:
-            everything[sGUID] = {'name': sName}
+            if sName == 'Unknown':
+                units_with_unknown_name.add(sGUID)
+            else:
+                everything[sGUID] = {'name': sName}
         elif tGUID not in everything:
-            everything[tGUID] = {'name': tName}
+            if tName == 'Unknown':
+                units_with_unknown_name.add(tGUID)
+            else:
+                everything[tGUID] = {'name': tName}
 
         try:
             spell_id = other[0]
@@ -328,6 +333,11 @@ def logs_parser(logs: list[str]): # sourcery no-metrics
     everything |= temp_pets
     for guid, name in players.items():
         everything[guid] = {'name': name}
+    
+    for guid in units_with_unknown_name:
+        if guid in everything:
+            continue
+        everything[guid] = {'name': "Unknown"}
 
     missing_owner = add_missing_pets(everything, pets_perma, pets_perma_all)
     return {
