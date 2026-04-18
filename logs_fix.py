@@ -106,7 +106,10 @@ def normalize(logs_slice: list[bytes]):
         if _line_s[1] in SWING_FLAGS:
             _line_s[6:6] = LOST_SWING
         elif _line_s[1] in ENCHANTS_FLAGS:
-            _fix_ench(_line_s)
+            try:
+                _fix_ench(_line_s)
+            except ValueError:
+                continue
         elif _line_s[1] == ENVIRONMENTAL_DAMAGE:
             _fix_env(_line_s)
             
