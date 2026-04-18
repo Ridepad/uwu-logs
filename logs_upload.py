@@ -381,11 +381,9 @@ class LogsSeparator:
         return segment
 
     def generate_segments(self, lines: list[bytes]):
-        NULL_BYTE = b'\x00'
         for line in lines:
             try:
-                if line[-1] == NULL_BYTE:
-                    continue
+                line = line.strip(b'\x00')
                 i = line.index(b'.')
                 timestamp = self.cache_int[line[i-8:i]]
             except (IndexError, ValueError):
