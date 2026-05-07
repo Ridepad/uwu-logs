@@ -186,42 +186,33 @@ def imagine_playing_shit_expansion(logs_slice: list[str]):
     
     return DIFFICULTY[0]
 
-def freya_10hm(logs_slice: list[str]):
+def _freya_hm(logs_slice: list[str]):
     buffs = set()
-    for line in logs_slice[:3000]:
+    for line in logs_slice:
         if ",62" not in line:
             continue
+        
         try:
             spell_id = line.split(',', 7)[6]
-            if spell_id in FREYA_GUARDIAN_BUFFS_10_MAN:
-                buffs.add(spell_id)
-            if len(buffs) == 3:
-                return "10H"
         except Exception:
             pass
-    
-    return "10N"
 
-def freya_25hm(logs_slice: list[str]):
-    buffs = set()
-    for line in logs_slice[:3000]:
-        if ",62" not in line:
+        if spell_id not in FREYA_GUARDIAN_SPELLS:
             continue
-        try:
-            spell_id = line.split(',', 7)[6]
-            if spell_id in FREYA_GUARDIAN_BUFFS_25_MAN:
-                buffs.add(spell_id)
-            if len(buffs) == 3:
-                return "25H"
-        except Exception:
-            pass
+        
+        buffs.add(spell_id)
+        if len(buffs) == 3:
+            return True
     
-    return "25N"
+    return False
 
 def freya_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
+    if not _freya_hm(logs_slice):
+        return default
+    
     if default == "25N":
-        return freya_25hm(logs_slice)
-    return freya_10hm(logs_slice)
+        return "25H"
+    return "10H"
 
 def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
     buffs = set()
