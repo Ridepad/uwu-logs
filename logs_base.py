@@ -143,7 +143,7 @@ class THE_LOGS(
     def _guids_data(self):
         try:
             self._read_guids()
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             self._redo_guids()
 
     def _read_guids(self):
