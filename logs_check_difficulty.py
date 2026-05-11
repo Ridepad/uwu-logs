@@ -529,6 +529,7 @@ class LogsSegments(logs_base.THE_LOGS):
         }
 
         s = max(f-1000, 0)
+        f = min(f+100, len(self.LOGS))
         for line in self.LOGS[s:f]:
             _, flag, _, _, target_guid, _, *etc = line.split(',', 11)
             target_guid_id = target_guid[6:-6]
