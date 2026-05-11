@@ -510,11 +510,37 @@ class LogsSegments(logs_base.THE_LOGS):
             duration_str=slice_duration_str,
         )
 
+    def _mimiron(self, f: int):
+        dead = {
+            "008298": False, # Leviathan Mk II
+            "008373": False, # VX-001
+            "008386": False, # Aerial Command Unit
+        }
+
+        s = max(f-1000, 0)
+        for line in self.LOGS[s:f]:
+            _, flag, _, _, target_guid, _, *etc = line.split(',', 11)
+            target_guid_id = target_guid[6:-6]
+            if target_guid_id not in dead:
+                continue
+
+            if flag in FLAGS_KILL:
+                dead[target_guid_id] = True
+                continue
+
+            if flag in FLAGS_DMG and etc[4] != "0":
+                dead[target_guid_id] = True
+
+        return all(dead.values())
+
     def is_kill(self, s: int, f: int, boss_name: str, mode="25N"):
         slice_duration = self.get_slice_duration(s, f)
         min_kill_duration = ENCOUNTER_MIN_DURATION.get(boss_name, 15)
         if slice_duration < min_kill_duration:
             return False
+
+        if boss_name == "Mimiron":
+            return self._mimiron(f)
 
         if is_kill(self.LOGS[f-1]):
             return True
