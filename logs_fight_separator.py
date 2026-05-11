@@ -152,6 +152,7 @@ class BossSegment(list[LogLine]):
         # print('++++ get_more_precise_end')
         new_fight_end_line_index = 0
         boss_died = False
+        overkilled = False
         damaged_times = -20
         removed_auras = 0
         first_removed_aura_line_index = 0
@@ -206,6 +207,9 @@ class BossSegment(list[LogLine]):
                     break
                 continue
 
+            if overkilled:
+                continue
+
             try:
                 value_no_overkill = int(value) - int(overkill)
             except ValueError: # invalid literal for int
@@ -216,6 +220,7 @@ class BossSegment(list[LogLine]):
             if value_no_overkill == 1:
                 continue
             
+            overkilled = True
             new_fight_end_line_index = line_index
             # print(f">>> new_fight_end_line_index {new_fight_end_line_index:>4} | value_no_overkill != 1")
             
