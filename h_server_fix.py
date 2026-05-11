@@ -71,6 +71,7 @@ SERVERS_OTHER = [
     ServerID("Hellscream", "(garrosh)"),
     ServerID("WoWZone", "(wowzone)"),
     ServerID("Stormforge", "(storm)"),
+    ServerID("uwow", "(uwow)"),
     # ServerName("", ""),
 ]
 
@@ -87,7 +88,10 @@ def server_cnv(server: str):
         if re.findall(_server.re_string, _server_l):
             return _server.no_space
 
-    return server.replace(" ", "-")
+    server = server.replace(" ", "-")
+    server = server.replace("/", "")
+    server = server.replace("\\", "")
+    return server
 
 
 @Directories.top.cache_until_new_self
@@ -124,6 +128,9 @@ def test1():
         "ez--wow",
         "onyxia",
         "onyxia-test",
+        "uwow/",
+        "uwow\\asd",
+        "uwow 123",
     ]
     for s in re_test:
         print(f"{s:30} | {server_cnv(s)}")
