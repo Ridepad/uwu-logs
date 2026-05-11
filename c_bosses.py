@@ -370,6 +370,24 @@ ENCOUNTER_MIN_DURATION = {
     "Halion": 75,
     "Northrend Beasts": 75,
     "Shade of Akama": 8,
+
+    "Mimiron": 160,
+    "Ignis the Furnace Master": 30,
+    # "Razorscale": 90,
+    "Razorscale": 40,
+    "XT-002 Deconstructor": 70,
+    "Assembly of Iron": 60,
+    "Kologarn": 15,
+    "Auriaya": 15,
+    "Hodir": 40,
+    # "Thorim": 100,
+    "Thorim": 30,
+    "Freya": 8,
+    "Mimiron": 160,
+    "General Vezax": 20,
+    "Yogg-Saron": 180,
+    "Algalon the Observer": 40,
+
 }
 
 ALL_FIGHT_NAMES = set(BOSSES_GUIDS.values()) | set(MULTIBOSSES)
