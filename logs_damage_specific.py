@@ -147,18 +147,15 @@ def get_valks_dmg(logs: list[str], half_hp=2992500 // 2) -> ValksDamage:
 def freya_useful(logs_slice: list[str]):
     FREYA = "00808A"
     DAMAGE: defaultdict[str, int] = defaultdict(int)
-    healing = True
-    for line in logs_slice:
+    for line in reversed(logs_slice):
         if FREYA not in line:
-            continue
-
-        if healing:
-            if "SPELL_PERIODIC_HEAL" in line and line.split(',', 11)[10] == '0':
-                healing = False
             continue
         
         if "DAMAGE" not in line:
+            if "SPELL_PERIODIC_HEAL" in line and line.split(',', 11)[10] != '0':
+                break
             continue
+
         try:
             _, _, sGUID, _, tGUID, _, _, _, _, dmg, _ = line.split(',', 10)
             if tGUID[6:-6] == FREYA:

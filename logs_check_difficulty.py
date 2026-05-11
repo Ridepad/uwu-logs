@@ -229,7 +229,7 @@ def freya_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
 
 def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
     buffs = set()
-    for line in logs_slice[:2000]:
+    for line in logs_slice:
         if ",62" not in line:
             continue
         try:
@@ -499,6 +499,9 @@ class LogsSegments(logs_base.THE_LOGS):
 
     def format_attempt(self, s: int, f: int, boss_name: str, attempt: int, shift: int):
         logs_slice = self.LOGS[s:f]
+        if boss_name == "Yogg-Saron":
+            _s = max(s-1000, 0)
+            logs_slice = self.LOGS[_s:f]
         diff = get_difficulty(logs_slice, boss_name)
 
         slice_duration = self.get_slice_duration(s, f)
