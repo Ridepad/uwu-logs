@@ -228,15 +228,12 @@ def freya_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
     return "10H"
 
 def yogg_hm(logs_slice: list[str], default: str=DEFAULT_DIFFICULTY):
-    buffs = set()
     for line in logs_slice:
         if ",62" not in line:
             continue
         try:
             spell_id = line.split(',', 7)[6]
             if spell_id in YOGG_SARON_GUARDIAN_BUFFS:
-                buffs.add(spell_id)
-            if len(buffs) > 1:
                 return default
         except Exception:
             pass
