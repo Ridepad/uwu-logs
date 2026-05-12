@@ -547,6 +547,10 @@ CUSTOM_GROUPS: dict[str, dict[str, tuple[str]]] = {
         "Halion": ("009BB7", "009CCE"),
         "Adds": ("009EE9", "009EEB"),
     },
+    "Mimiron": {
+        "Mimiron": ("008298", "008373", "008386"),
+        "Adds": ("00842C", "00843F", "008509", "008563"),
+    },
     "Kael'thas Sunstrider": {
         "Mini Bosses": ("004E5C", "004E5E", "004E5F", "004E60"),
         "Weapons": ("005314", "005315", "005316", "005317", "005318", "005319", "00531A", ),
