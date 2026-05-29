@@ -82,6 +82,10 @@ SPELLS: dict[str, tuple[str]] = {
         ("70985", "71699", "71698", "71700"), # Shroud of Sorrow
     "Valithria Dreamwalker":
         ("70759", "72015", "71889", "72016"), # Frostbolt Volley
+    "Valithria Dreamwalker2":
+        ("70744", "72017", "71733", "72018"), # Acid Burst
+    "Valithria Dreamwalker22":
+        ("70633", "72025", "71283", "72026"), # Gut Spray
     "Sindragosa":
         ("70084", "71051", "71050", "71052"), # Frost Aura
     "The Lich King":
