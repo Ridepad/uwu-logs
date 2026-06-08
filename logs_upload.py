@@ -355,8 +355,9 @@ class LogsSeparator:
             return True
         
         segments_tdelta = self.get_timedelta(self.current_segment[0], self.last_segment[-1])
-        LOGGER_UPLOADS.debug(f'is_big_gap {segments_tdelta}')
-        return segments_tdelta > BIG_GAP
+        _is_big_gap = segments_tdelta > BIG_GAP
+        LOGGER_UPLOADS.debug(f'is_big_gap | {_is_big_gap} | {segments_tdelta}')
+        return _is_big_gap
 
     def is_different_raid(self):
         players_last = self.last_segment.info.players
@@ -367,7 +368,7 @@ class LogsSeparator:
             min_overlap = max_len // 5
         else:
             min_overlap = max_len // 2
-        LOGGER_UPLOADS.debug(f'is_different_raid | min_overlap: {min_overlap:>2} / overlap: {overlap:>2} | {min_overlap > overlap}')
+        LOGGER_UPLOADS.debug(f'is_different_raid | {min_overlap > overlap} | min_overlap: {min_overlap:>2} / overlap: {overlap:>2}')
         return min_overlap > overlap
 
     def new_segment(self):
@@ -380,7 +381,7 @@ class LogsSeparator:
         self.current_segment = self._new_slice()
         return segment
 
-    def generate_segments(self, lines: list[bytes]):
+    def _generate_segments(self, lines: list[bytes]):
         for line in lines:
             try:
                 line = line.strip(b'\x00')
@@ -394,7 +395,6 @@ class LogsSeparator:
                 _delta = timestamp - last_timestamp
             except UnboundLocalError:
                 _delta = 0
-            
 
             if _delta > 100 or _delta < 0:
                 # try:
@@ -620,9 +620,6 @@ class LogsArchiveParser(api_7z.SevenZipArchive):
             lines = self.read_file_into_stdout(file_line)
             separator = LogsSeparator(server=self.server, timestamp=file_line.timestamp)
             for segment in separator.generate_segments(lines):
-                if not segment:
-                    continue
-                
                 self.save_segment(segment, file_line.timestamp)
                 self.adjust_mod_time(file_line, segment)
                 self.current_segment_pc = perf_counter()
