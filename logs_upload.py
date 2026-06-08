@@ -423,6 +423,11 @@ class LogsSeparator:
         yield self.new_segment()
         yield self.last_segment
 
+    def generate_segments(self, lines: list[bytes]):
+        for segment in self._generate_segments(lines):
+            if segment:
+                yield segment
+
 
 def get_now_timestamp():
     return datetime.now().strftime(DATE_FORMAT)
