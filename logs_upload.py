@@ -659,6 +659,9 @@ class LogsArchiveParser(api_7z.SevenZipArchive):
         path_slice_zstd_temp.zstd_write(data)
 
         path_slice_zstd = Directories.logs / raid_id / LOGS_CUT_NAME
+        if self.forced and path_slice_zstd.parent.is_dir():
+            nuke_folder(path_slice_zstd.parent)
+        
         for _ in range(3):
             try:
                 path_slice_zstd.parent.mkdir(parents=True, exist_ok=True)
