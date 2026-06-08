@@ -397,24 +397,28 @@ class LogsSeparator:
             
 
             if _delta > 100 or _delta < 0:
-                try:
-                    _dt_now = self.to_dt(line)
-                except (TypeError, ValueError, OverflowError):
-                    continue
+                # try:
+                #     _dt_now = self.to_dt(line)
+                #     print('_dt_now', _dt_now)
+                # except (TypeError, ValueError, OverflowError):
+                #     print('_dt_now TypeError, ValueError, OverflowError')
+                #     continue
                 
-                try:
-                    _dt_last = self.to_dt(last_line)
-                except (TypeError, ValueError):
-                    _dt_last = self.current_segment.trim_invalid_lines(reverse=True)
-                    if _dt_last is None:
-                        _dt_last = _dt_now
+                # try:
+                #     _dt_last = self.to_dt(last_line)
+                # except (TypeError, ValueError):
+                #     _dt_last = self.current_segment.trim_invalid_lines(reverse=True)
+                #     if _dt_last is None:
+                #         _dt_last = _dt_now
                 
-                if abs(_dt_now - _dt_last) > SMALL_GAP:
-                    yield self.new_segment()
+                # if abs(_dt_now - _dt_last) > SMALL_GAP:
+                #     yield self.new_segment()
+
+                yield self.new_segment()
 
             self.current_segment.append(line)
             last_timestamp = timestamp
-            last_line = line
+            # last_line = line
 
         yield self.new_segment()
         yield self.last_segment
