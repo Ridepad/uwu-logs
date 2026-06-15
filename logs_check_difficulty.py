@@ -307,6 +307,16 @@ def has_fury_of_frostmourne(logs_slice: list[str]):
         for line in logs_slice
     )
 
+def has_unleashed_dark_matter(logs_slice: list[str]):
+    for line in logs_slice:
+        if "008531" not in line:
+            continue
+        _, _, source_guid, _, target_guid, _ = line.split(",", 5)
+        if source_guid[6:-6] == "008531":
+            return True
+        if target_guid[6:-6] == "008531":
+            return True
+
 def many_auras_removed(logs_slice: list[str], threshold: int):
     removed = 0
     for line in logs_slice:
@@ -563,6 +573,11 @@ class LogsSegments(logs_base.THE_LOGS):
 
         if boss_name == "The Lich King":
             return has_fury_of_frostmourne(self.LOGS[f-10:f+20])
+
+        if boss_name == "Algalon the Observer":
+            _s = max(0, f-1000)
+            if not has_unleashed_dark_matter(self.LOGS[_s:f]):
+                return False
 
         if boss_name in COWARDS_NAMES:
             _slice = self.LOGS[f-100:f]
