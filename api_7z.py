@@ -5,12 +5,13 @@ from functools import cached_property
 from pathlib import Path
 from sys import platform
 from threading import RLock
+from typing import Union
 from urllib.request import urlopen
 
 THREAD_LOCK = RLock()
 PATH = Path(__file__).resolve().parent
 LINK_7Z_DL_PREFIX = "https://www.7-zip.org/a"
-TABLE_BORDER = '-------------------'
+TABLE_BORDER = b'-------------------'
 
 
 class _File:
@@ -110,12 +111,14 @@ class SevenZip:
 class SevenZipLine:
     def __init__(
         self,
-        time: str,
-        attributes: str,
-        size: str,
-        compressed: str,
-        path: str,
+        time: Union[str, bytes],
+        attributes: Union[str, bytes],
+        size: Union[str, bytes, int],
+        compressed: Union[str, bytes, int],
+        path: bytes,
     ) -> None:
+        time = time.decode() if type(time) == bytes else str(time)
+
         try:
             self.datetime = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -125,14 +128,14 @@ class SevenZipLine:
         self.timestamp = self.datetime.timestamp()
         self.date_str, self.time_str = time.replace(':', '-').split(' ', maxsplit=1)
  
-        self.attributes = attributes
+        self.attributes = attributes.decode() if type(attributes) == bytes else str(attributes)
         self.size_bytes = int(size) if size else 0
         self.compressed_size_bytes = int(compressed) if compressed else 0
         self.file_name = path
 
     @classmethod
-    def from_line(cls, line: str, column_widths: list[int]):
-        columns = []
+    def from_line(cls, line: bytes, column_widths: list[int]):
+        columns: list[bytes] = []
         for column_width in column_widths:
             column = line[:column_width]
             line = line[column_width:]
@@ -240,6 +243,7 @@ class SevenZipArchiveInfo(SevenZip):
         return method
 
     def get_all_files_with_suffix(self, suffix):
+        suffix = str(suffix).encode()
         return [
             line
             for line in self.archive_info
@@ -253,7 +257,7 @@ class SevenZipArchiveInfo(SevenZip):
         cmd_list = [self.path, "l", self.archive_path]
         with subprocess.Popen(cmd_list, stdout=subprocess.PIPE) as p:
             try:
-                return p.stdout.read().decode().splitlines()
+                return p.stdout.read().splitlines()
             except Exception:
                 pass
         return []
@@ -262,7 +266,7 @@ class SevenZipArchiveInfo(SevenZip):
     def _get_column_widths(line: str):
         return [
             len(s)
-            for s in re.findall("([ ]{0,2}-+)", line)
+            for s in re.findall(b"([ ]{0,2}-+)", line)
         ]
     
     def _to_parsed_lines(self):
@@ -286,12 +290,12 @@ class SevenZipArchiveInfo(SevenZip):
 class SevenZipArchive(SevenZipArchiveInfo):
     _7z_pipe: subprocess.Popen = None
 
-    def extract(self, extract_to: Path=None, file_name_to_extract: str=None):
+    def extract(self, extract_to: Path=None, file_to_extract: SevenZipLine=None):
         if extract_to is None:
             extract_to = self.archive_path.parent
         cmd = [self.path, 'e', self.archive_path, f'-o{extract_to}', "-y", "--"]
-        if file_name_to_extract:
-            cmd.append(file_name_to_extract)
+        if isinstance(file_to_extract, SevenZipLine):
+            cmd.append(file_to_extract.file_name)
         return subprocess.call(cmd)
 
     def append(self, file_path: Path, custom_mode: list[str]=None):
@@ -307,7 +311,7 @@ class SevenZipArchive(SevenZipArchiveInfo):
 
     def read_file_into_stdout(self, file_line: SevenZipLine):
         file_name = file_line.file_name
-        if "*" in file_name:
+        if b"*" in file_name:
             file_name = f'"{file_name}"'
         cmd_list = [self.path, 'e', self.archive_path, "-so", "--", file_name]
         self._7z_pipe = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
