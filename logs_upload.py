@@ -233,23 +233,29 @@ class LogsSlice(list[bytes]):
         return dt
     
     def _get_logs_author_info(self):
-        for line in self:
-            if b"SPELL_CAST_FAILED" not in line:
+        for line_b in self:
+            if b"SPELL_CAST_FAILED" not in line_b:
                 continue
-            if line.count(b'  ') > 1:
+            if line_b.count(b'  ') > 1:
                 continue
-            line = line.decode()
+            try:
+                line = line_b.decode()
+            except UnicodeDecodeError:
+                continue
             guid, name = line.split(',', 3)[1:3]
             name = name.replace('"', '')
             if name not in BUGGED_NAMES:
                 return guid, name
         
-        for line in self[:1_000]:
-            if b"0x0" not in line:
+        for line_b in self[:1_000]:
+            if b"0x0" not in line_b:
                 continue
-            if b"nil" in line:
+            if b"nil" in line_b:
                 continue
-            line = line.decode()
+            try:
+                line = line_b.decode()
+            except UnicodeDecodeError:
+                continue
             guid = line.split(',', 2)[1]
             return guid, "Unknown"
         
@@ -309,7 +315,6 @@ class LogsSlice(list[bytes]):
         return players
     
     def _raid_id(self):
-        self.trim_invalid_lines_wrap()
         for i in range(10):
             try:
                 _dt = self.to_dt(self[i])
@@ -372,6 +377,10 @@ class LogsSeparator:
         return min_overlap > overlap
 
     def new_segment(self):
+        self.current_segment.trim_invalid_lines_wrap()
+        if not self.current_segment:
+            return
+
         segment = None
         if self.is_different_raid() or self.is_big_gap():
             segment = self.last_segment
