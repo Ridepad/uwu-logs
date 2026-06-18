@@ -391,11 +391,18 @@ class LogsSeparator:
         return segment
 
     def _generate_segments(self, lines: list[bytes]):
+        # bytes = ord(b'') = list[int] 
+        # ord(b'.') = 46
+        # ord(b'\x00') = 0
+        # line[slice(1, 2)] = line[1:2] but cached slice
+        dot_index = 0
         for line in lines:
             try:
-                line = line.strip(b'\x00')
-                i = line.index(b'.')
-                timestamp = self.cache_int[line[i-8:i]]
+                if line[dot_index] != 46:
+                    line = line.strip(b'\x00')
+                    dot_index = line.index(b'.')
+                    _slice = slice(dot_index-8, dot_index)
+                timestamp = self.cache_int[line[_slice]]
             except (IndexError, ValueError):
                 continue
 

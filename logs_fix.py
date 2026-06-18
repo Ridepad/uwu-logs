@@ -93,7 +93,7 @@ def normalize(logs_slice: list[bytes]):
     for line in logs_slice:
         if line.count(b'/') > 1:
             continue
-        line = line.replace(b'  ', b',', 1).replace(b'"', b'').replace(b', ', b' ')
+        line = line.replace(b'  ', b',', 1).replace(b'"', b'').replace(b', ', b' ').strip(b'\x00')
         _line_s = line.split(b',', 8)
         if _line_s[1] in SKIP_FLAGS:
             continue
