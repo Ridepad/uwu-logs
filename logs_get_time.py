@@ -37,11 +37,11 @@ class Timestamps(logs_core.Logs):
             try:
                 minutes, seconds = int(line[i-5:i-3]), int(line[i-2:i])
             except ValueError:
-                # date change or bugged line 
-                i = line.index('.')
+                # date change or bugged line
                 try:
+                    i = line.index('.')
                     minutes, seconds = int(line[i-5:i-3]), int(line[i-2:i])
-                except ValueError:
+                except (IndexError, ValueError):
                     continue
             
             sec_diff = seconds - last_seconds
