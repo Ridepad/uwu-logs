@@ -97,10 +97,11 @@ class Character(TopDB):
             data = boss_data_by_spec.player_data(self.info.guid)
             if data:
                 key = data["raid_id"]
-                query = encounter.query_row_id_min(key)
-                duration, report_id = self.cursor.execute(query).fetchone()
-                data["fastest_kill_duration"] = duration
-                data["report_id"] = f"{report_id}--{self.server}"
+                query = encounter.query_additional_char_data(key)
+                row_data = self.cursor.execute(query).fetchone()
+                data["report_id"] = f"{row_data[0]}--{self.server}"
+                data["fastest_kill_duration"] = row_data[1]
+                data["auras"] = row_data[2]
             d[encounter.name] = data
 
         return d

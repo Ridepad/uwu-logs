@@ -22,6 +22,11 @@ const SPEC_BUTTONS = [1,2,3].map(i => ({
   input: document.getElementById(`spec-${i}-input`),
   label: document.getElementById(`spec-${i}-label`),
 }));
+const AURAS_TABLE_BODIES = [
+  document.querySelector("#tooltip-table-auras-externals tbody"),
+  document.querySelector("#tooltip-table-auras-buffs tbody"),
+];
+const AURAS_ICONS = fetch("/static/aura_icons.json").then(response => response.json());
 
 const CURRENT_CHARACTER = {
   name: undefined,
@@ -147,10 +152,62 @@ function cell_points(v) {
   return td;
 }
 
-function tooltip_set_values(row) {
+async function set_icon_link(img, spell_id) {
+  const _icons = await AURAS_ICONS;
+  const icon_name  = _icons[spell_id];
+  img.src = `/static/icons/${icon_name}.jpg`;
+}
+function get_boss_data(row) {
   const data = CACHE_CHARACTERS.current();
   const boss_name = row.getAttribute("data-boss-name");
-  const boss_data = data.bosses[boss_name];
+  return data.bosses[boss_name];
+}
+function aura_cell_icon(spell_id) {
+  const td_icon = document.createElement("td");
+  const img = document.createElement("img");
+  set_icon_link(img, spell_id);
+  img.alt = spell_id;
+  td_icon.appendChild(img);
+  return td_icon;
+}
+function aura_cell_count(count) {
+  const td_aura_count = document.createElement("td");
+  td_aura_count.className = "auras-count";
+  td_aura_count.textContent = count;
+  return td_aura_count;
+}
+function aura_cell_uptime(uptime) {
+  const td_aura_uptime = document.createElement("td");
+  td_aura_uptime.className = "auras-uptime";
+  td_aura_uptime.textContent = `${parseFloat(uptime).toFixed(1)}%`;
+  return td_aura_uptime;
+}
+function tooltip_auras_add_row(aura_data) {
+  console.log(aura_data);
+  if (aura_data == "") return;
+  const [spell_id, count, uptime, type] = aura_data.split("/");
+  const tbody = AURAS_TABLE_BODIES[type];
+  if (tbody === undefined) return;
+
+  const tr = document.createElement("tr");
+  [
+    aura_cell_icon(spell_id),
+    aura_cell_count(count),
+    aura_cell_uptime(uptime),
+  ].forEach(e => tr.appendChild(e));
+  tbody.appendChild(tr);
+}
+function tooltip_add_auras_data(row) {
+  const boss_data = get_boss_data(row);
+  const auras = boss_data["auras"].split("#");
+  console.log('tooltip_set_values');
+  for (const tbody of AURAS_TABLE_BODIES) {
+    tbody.innerHTML = "";
+  }
+  auras.forEach(tooltip_auras_add_row);
+}
+async function tooltip_set_values(row) {
+  const boss_data = get_boss_data(row);
 
   for (const selector in TOOLTIP_ELEMENTS) {
     const element = TOOLTIP_POINTS.querySelector(selector);
@@ -161,6 +218,7 @@ function tooltip_set_values(row) {
 function row_on_enter(event) {
   const row = event.target;
   tooltip_set_values(row);
+  tooltip_add_auras_data(row);
   const trRect = row.getBoundingClientRect();
   TOOLTIP_POINTS.style.top = `${trRect.bottom}px`;
   TOOLTIP_POINTS.style.left = is_landscape() ? `${trRect.left}px` : 0;

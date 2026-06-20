@@ -24,6 +24,12 @@ class Encounter:
         FROM [{self.table_name}]
         WHERE {Columns.PLAYER_RAID_ID}='{row_id}'
         '''
+    def query_additional_char_data(self, row_id):
+        return f'''
+        SELECT {Columns.REPORT_ID}, {Columns.DURATION}, {Columns.AURAS}
+        FROM [{self.table_name}]
+        WHERE {Columns.PLAYER_RAID_ID}='{row_id}'
+        '''
     def query_stats(self):
         return f"""
         SELECT {Columns.SPEC}, {Columns.USEFUL_DPS}

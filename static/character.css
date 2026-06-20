@@ -129,6 +129,29 @@ main {
   color: crimson;
 }
 
+.auras-table img {
+  min-height: 1em;
+  max-height: 1em;
+  min-width: 1em;
+  max-width: 1em;
+  vertical-align: middle;
+  padding-inline: .15em;
+}
+.auras-table td {
+  min-width: fit-content;
+  text-align: right;
+}
+.auras-table td.auras-count {
+  min-width: 2rem;
+}
+.auras-table td.auras-uptime {
+  min-width: 3rem;
+}
+#tooltip-points .tooltip-flex {
+  display: flex;
+  /* max-width: 95vw; */
+  flex-flow: wrap;
+}
 #tooltip-points {
   position: fixed;
   width: fit-content;
@@ -140,14 +163,14 @@ main {
           0 0  .5rem .1rem var(--primary-color);
   z-index: 5;
 }
-#tooltip-points td {
+#table-points td {
   text-align: right;
   padding-inline: .25em;
 }
-#tooltip-points tr.no-decimal td.value {
+#table-points tr.no-decimal td.value {
   padding-right: 1.05em;
 }
-#tooltip-points tr td:first-child {
+#table-points tr td:first-child {
   width: 5.5rem;
   min-width: 5.5rem;
 }
