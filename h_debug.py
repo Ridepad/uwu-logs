@@ -21,6 +21,7 @@ def setup_logger(logger_name):
     logger.setLevel(logging.DEBUG)
     logger.addHandler(fileHandler)
     logger.addHandler(streamHandler)
+    logger.propagate = False
     return logger
 
 class Loggers(dict[str, logging.Logger]):
