@@ -61,6 +61,7 @@ AURAS_SELF = {
 
     "64713": 10,    # Flare of the Heavens
     "71564": 20,    # Nevermelting Ice Crystal
+    "60229": 15,    # Darkmoon Card: Greatness / Strength
 }
 
 
