@@ -30,6 +30,7 @@ AURAS_SELF = {
     "72412": 10,    # Frostforged Champion
     "55637": 15,    # Lightweave
     "73422": 10,    # Chaos Bane
+    "55379": 6,     # Skyflare Swiftness
     
     "71561": 30,    # Strength of the Taunka
     "71484": 30,    # Strength of the Taunka
