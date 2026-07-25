@@ -211,8 +211,13 @@ async function tooltip_set_values(row) {
 
   for (const selector in TOOLTIP_ELEMENTS) {
     const element = TOOLTIP_POINTS.querySelector(selector);
-    const f = TOOLTIP_ELEMENTS[selector];
-    element.textContent = f(boss_data);
+    const get_cell_value = TOOLTIP_ELEMENTS[selector];
+    const value = get_cell_value(boss_data);
+    element.textContent = value;
+    if (element.classList.contains("td-points")) {
+      element.className = "td-points";
+      element.classList.add(points_rank_class(value));
+    }
   }
 }
 function row_on_enter(event) {
