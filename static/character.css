@@ -145,23 +145,25 @@ main {
   min-width: 2rem;
 }
 .auras-table td.auras-uptime {
-  min-width: 3rem;
+  min-width: 4rem;
+}
+#tooltip-points {
+  position: fixed;
+  z-index: 5;
 }
 #tooltip-points .tooltip-flex {
   display: flex;
   /* max-width: 95vw; */
   flex-flow: wrap;
 }
-#tooltip-points {
-  position: fixed;
-  width: fit-content;
+#tooltip-points .tooltip-sub {
+  height: fit-content;
   background-color: var(--background);
   padding: .5em;
   border-radius: 6px;
   box-shadow:
     inset 0 0 .25rem .1rem var(--primary-color),
           0 0  .5rem .1rem var(--primary-color);
-  z-index: 5;
 }
 #table-points td {
   text-align: right;
@@ -174,13 +176,13 @@ main {
   width: 5.5rem;
   min-width: 5.5rem;
 }
-.td-max,
-.td-player {
+#table-points .td-max,
+#table-points .td-player {
   width: 3.7rem;
   min-width: 3.7rem;
 }
-.td-points {
-  min-width: 2rem;
+#table-points .td-points {
+  min-width: 3.2rem;
 }
 
 #wraprwprperweproe {
