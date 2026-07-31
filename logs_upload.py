@@ -244,6 +244,7 @@ class LogsSlice(list[bytes]):
                 continue
             guid, name = line.split(',', 3)[1:3]
             name = name.replace('"', '')
+            name = name.replace("'", '')
             if name not in BUGGED_NAMES:
                 return guid, name
         
