@@ -54,7 +54,7 @@ SERVERS_OTHER = [
     ServerID("Rising Gods", "(risin.*?god)"),
     ServerID("WoW Circle", "([cs][irckle]{4,7})"),
     ServerID("Whitemane-PTR", "(whitemane.*?ptr)"),
-    # ServerID("Whitemane-Frostmourne", "(frostmo)"),
+    ServerID("Whitemane-Frostmourne", "(frostmo)"),
     ServerID("Whitemane-Frostmourne", "(whitema)"),
     ServerID("WoW-Mania", "(mania)"),
     ServerID("ChromieCraft", "(chromie.*?craft)"),
@@ -72,6 +72,7 @@ SERVERS_OTHER = [
     ServerID("WoWZone", "(wowzone)"),
     ServerID("Stormforge", "(storm)"),
     ServerID("uwow", "(uwow)"),
+    ServerID("VoidForge", "(void.*?forge)"),
     # ServerName("", ""),
 ]
 
