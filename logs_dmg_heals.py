@@ -169,7 +169,8 @@ def add_pets(data: dict[str, int], guids: dict[str, dict[str, str]]):
     
     for sGUID, value in combined_data["custom"].items():
         name = guids[sGUID]["name"]
-        players_dmg[f"{name}-A"] = players_dmg.get(name, 0) + value
+        # The owner's contribution is already included in the normal player row.
+        players_dmg[f"{name}-A"] = value
     
     return players_dmg
 
