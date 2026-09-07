@@ -1,0 +1,201 @@
+name: uwu-logs
+
+x-uwu-common: &uwu-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  working_dir: /app
+  restart: unless-stopped
+  environment:
+    PYTHONUNBUFFERED: "1"
+  # Development bind mount: code edits and generated parser data are shared by
+  # all four Python services and remain available on the host.
+  volumes:
+    - .:/app
+
+services:
+  main:
+    <<: *uwu-common
+    command:
+      - gunicorn
+      - --bind
+      - 0.0.0.0:5000
+      - --workers
+      - ${UWU_MAIN_WORKERS:-1}
+      - --threads
+      - ${UWU_MAIN_THREADS:-4}
+      - --timeout
+      - ${UWU_MAIN_TIMEOUT:-600}
+      - --access-logfile
+      - "-"
+      - --error-logfile
+      - "-"
+      - Z_SERVER:SERVER
+    expose:
+      - "5000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
+  upload:
+    <<: *uwu-common
+    # Keep exactly one worker here: upload progress/chunks are stored in
+    # process memory (CURRENT_UPLOADS), so multiple workers would split state.
+    command:
+      - uvicorn
+      - server_upload:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5010"
+      - --workers
+      - "1"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    expose:
+      - "5010"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5010/health', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
+  top:
+    <<: *uwu-common
+    command:
+      - uvicorn
+      - server_top:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5020"
+      - --workers
+      - ${UWU_TOP_WORKERS:-1}
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    expose:
+      - "5020"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5020/top', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
+    environment:
+      UWU_PVE_STATS_MIN_SAMPLES: ${UWU_PVE_STATS_MIN_SAMPLES:-1}
+  ladder:
+    <<: *uwu-common
+    command:
+      - uvicorn
+      - server_ladder:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5040"
+      - --workers
+      - "1"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UWU_LADDER_DEFAULT_SIZE: ${UWU_LADDER_DEFAULT_SIZE:-25}
+      UWU_LADDER_DEFAULT_MODE: ${UWU_LADDER_DEFAULT_MODE:-1}
+      UWU_LADDER_MAX_HISTORY: ${UWU_LADDER_MAX_HISTORY:-250}
+      UWU_LADDER_POLL_SECONDS: ${UWU_LADDER_POLL_SECONDS:-3}
+    expose:
+      - "5040"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5040/health', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
+  gear:
+    <<: *uwu-common
+    command:
+      - uvicorn
+      - server_gear:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5030"
+      - --workers
+      - "1"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    expose:
+      - "5030"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5030/docs', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
+
+  indexer:
+    <<: *uwu-common
+    # The upstream project expects logs_auto.py to run from cron. For local
+    # Docker self-hosting keep the Top database synchronized automatically.
+    command:
+      - sh
+      - -lc
+      - 'while true; do python logs_auto.py --debug; sleep "$${UWU_INDEXER_INTERVAL:-3}"; done'
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UWU_INDEXER_INTERVAL: ${UWU_INDEXER_INTERVAL:-3}
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      main:
+        condition: service_healthy
+      upload:
+        condition: service_healthy
+      top:
+        condition: service_healthy
+      gear:
+        condition: service_healthy
+      ladder:
+        condition: service_healthy
+    ports:
+      - "${UWU_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s

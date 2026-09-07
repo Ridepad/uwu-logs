@@ -1,0 +1,27 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+*.log
+*.db
+*.zip
+*.7z
+*.mp4
+venv/
+.venv/
+
+# Runtime/generated data. These are bind-mounted by docker-compose.yml.
+_loggers/
+bkup/
+cache/
+db/
+LogsDir/
+LogsRaw/
+parsed/
+temp/
+top/
+uploads/
+static/enchant/
+static/icons/
+static/item/
+static/gear/

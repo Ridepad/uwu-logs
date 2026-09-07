@@ -293,8 +293,11 @@ function set_ongoing_time() {
 function init_websocket() {
   if (WEBSOCKET.websocket != null) return;
   
-  const ws_host = `wss://${window.location.hostname}:8765`;
-  // const ws_host = `ws://127.0.0.1:8765`;
+  // Use the same origin as the website. Nginx proxies this path to the
+  // local ladder service, so localhost works over HTTP and production works
+  // over HTTPS without hardcoding a TLS-only port.
+  const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const ws_host = `${ws_protocol}//${window.location.host}/ws/ladder`;
   const socket = new WebSocket(ws_host);
   WEBSOCKET.websocket = socket;
 

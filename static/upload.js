@@ -18,9 +18,22 @@ const UPLOAD_TABLE_TBODY = document.getElementById("upload-table-tbody");
 
 const SERVER_ERRORS = [400, 500, 507];
 
+function response_error_message(xhr, fallback = "Server error!") {
+  const contentType = xhr.getResponseHeader("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      const responseJson = JSON.parse(xhr.responseText || xhr.response || "{}");
+      return responseJson.detail || fallback;
+    } catch (error) {
+      console.error("Could not parse server error response", error);
+    }
+  }
+  return xhr.responseText || fallback;
+}
+
 function new_status_msg(msg) {
   UPLOAD_STATUS.innerHTML = "";
-  for (const line of msg.split("  ")) {
+  for (const line of String(msg).split("  ")) {
     const p = document.createElement("p");
     p.textContent = line;
     UPLOAD_STATUS.appendChild(p);
@@ -41,7 +54,7 @@ function new_row(report_name, report_data) {
   const report_link_cell = document.createElement("td");
   if (report_data.done == 1) {
     const report_link = document.createElement("a");
-    report_link.href = `/reports/${report_name}`;
+    report_link.href = `/reports/${encodeURIComponent(report_name)}/`;
     report_link.target = "_blank";
     report_link.textContent = report_name;
     report_link_cell.appendChild(report_link);
@@ -107,7 +120,7 @@ class UploadProgress extends XMLHttpRequest {
       return;
     }
     if (SERVER_ERRORS.includes(this.status)) {
-      new_status_msg("Server error!");
+      new_status_msg(response_error_message(this));
       return;
     }
     if (this.status !== 200) return this.retry();
@@ -213,12 +226,10 @@ class Upload extends XMLHttpRequest {
     setTimeout(() => this.send_new_chunk_wrap(), 1000);
   }
   get_error_msg() {
-    const t = this.getResponseHeader("content-type");
-    if (t == "application/json") {
-      const response_json = JSON.parse(this.response);
-      return response_json.detail;
-    }
-    return "Server encountered unknown error!  Why can't it just work?";
+    return response_error_message(
+      this,
+      "Server encountered unknown error!  Why can't it just work?",
+    );
   }
   upload_error() {
     const error = this.get_error_msg();

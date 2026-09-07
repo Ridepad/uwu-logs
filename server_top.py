@@ -5,12 +5,14 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
 from api_db import DataCompressed
 from constants import GEAR
 from h_debug import Loggers
 from h_server_fix import get_servers
+from icon_assets import resolve_icon_file
 from top import Top, TopValidation
 from top_character import Character, CharacterValidation
 from top_points import Points, PointsValidation
@@ -60,6 +62,18 @@ async def request_format(request: Request):
 
     return f"{msg} | {request.headers.get('User-Agent')}"
 
+@app.get("/static/icons/{filename:path}", include_in_schema=False)
+async def wow_icon_asset(filename: str):
+    """Standalone top-server fallback for nested self-host icon packs."""
+    icon_path = resolve_icon_file(filename)
+    if icon_path is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return FileResponse(
+        icon_path,
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
+
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     await add_log_entry_wrap(request)
@@ -73,6 +87,13 @@ def make_response_compressed_headers(z: DataCompressed):
     response.headers["Content-Length-Full"] = str(z.size)
     return response
 
+
+def empty_top_response(index_state: str = "pending"):
+    """Return an API-compatible empty ranking while the local index is being built."""
+    response = make_response_compressed_headers(DataCompressed(b"[]"))
+    response.headers["X-UwU-Index-State"] = index_state
+    return response
+
 @app.post('/top_points')
 async def top_post(request: Request, data: PointsValidation):
     mimetype = request.headers.get('Content-Type')
@@ -82,7 +103,10 @@ async def top_post(request: Request, data: PointsValidation):
             detail="requires [application/json] mimetype/content-type",
         )
     
-    z = Points(data).parse_top_points()
+    try:
+        z = Points(data).parse_top_points()
+    except FileNotFoundError:
+        return empty_top_response()
     return make_response_compressed_headers(z)
 
 @app.post('/top_speedrun')
@@ -99,12 +123,19 @@ async def top_post(request: Request, data: TopValidation):
             detail="requires [application/json] mimetype/content-type",
         )
     
-    z = Top(data).get_data()
+    try:
+        z = Top(data).get_data()
+    except FileNotFoundError:
+        return empty_top_response()
     return make_response_compressed_headers(z)
 
 @app.post('/pve_stats')
 async def pve_stats(data: PveStatsValidation):
-    return PveStats(data).get_data()
+    try:
+        return PveStats(data).get_data()
+    except FileNotFoundError:
+        # Configured server exists, but logs_auto/indexer has not created the DB yet.
+        return {}
 
 @app.post('/character')
 async def character(data: CharacterValidation):

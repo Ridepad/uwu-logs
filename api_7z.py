@@ -3,6 +3,7 @@ import subprocess
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
+from shutil import which
 from sys import platform
 from threading import RLock
 from typing import Union
@@ -72,6 +73,17 @@ class SevenZip:
     
     @property
     def executable_path(self):
+        # Prefer a system-provided 7-Zip binary when available. The bundled
+        # Linux fallback is hard-coded to x86_64, so dynamically downloading it
+        # inside an ARM64 Docker container (for example on Apple Silicon) causes
+        # an Exec format error. Debian's 7zip package provides /usr/bin/7zz for
+        # the container's native architecture.
+        if platform.startswith("linux"):
+            for executable in ("7zz", "7z"):
+                system_path = which(executable)
+                if system_path:
+                    return Path(system_path)
+
         return self._7z_type.executable.path
 
     def _exists(self):

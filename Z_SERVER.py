@@ -23,6 +23,7 @@ from c_bosses import ALL_FIGHT_NAMES, BOSSES_FROM_HTML
 from c_path import Directories, Files
 from h_datetime import MONTHS, T_DELTA
 from h_debug import Loggers
+from icon_assets import resolve_icon_file
 
 try:
     import _validate
@@ -80,6 +81,19 @@ def load_report(report_id: str):
 
     report.last_access = now
     return report
+
+@SERVER.route("/static/icons/<path:filename>")
+def wow_icon_asset(filename: str):
+    """Serve icon packs from canonical or commonly nested extraction paths."""
+    icon_path = resolve_icon_file(filename)
+    if icon_path is None:
+        raise NotFound()
+
+    response = send_file(icon_path, conditional=True)
+    response.cache_control.public = True
+    response.cache_control.max_age = 7 * 24 * 60 * 60
+    return response
+
 
 @SERVER.errorhandler(404)
 def method404(e):

@@ -68,23 +68,29 @@ class Tier_10:
         Encounter("Blood-Queen Lana'thel"),
         Encounter("Valithria Dreamwalker"),
     )
+    # Self-host "Top of Top": every ICC encounter plus Ruby Sanctum.
+    # The three RS mini-bosses are stored as 25N by the 3.3.5 parser; Halion is 25H.
     FOR_POINTS = (
         Encounter("Lord Marrowgar"),
         Encounter("Lady Deathwhisper"),
+        Encounter("Gunship"),
         Encounter("Deathbringer Saurfang"),
         Encounter("Festergut"),
         Encounter("Rotface"),
         Encounter("Professor Putricide"),
         Encounter("Blood Prince Council"),
         Encounter("Blood-Queen Lana'thel"),
+        Encounter("Valithria Dreamwalker"),
         Encounter("Sindragosa"),
         Encounter("The Lich King"),
+        Encounter("Saviana Ragefire", "25N"),
+        Encounter("Baltharus the Warborn", "25N"),
+        Encounter("General Zarithrian", "25N"),
+        Encounter("Halion", "25H"),
     )
     OTHER = (
         Encounter("Toravon the Ice Watcher", "25N"),
-        Encounter("Halion"),
         Encounter("Anub'arak"),
-        Encounter("Valithria Dreamwalker"),
     )
     ALL_BOSSES = FOR_POINTS + OTHER
 
