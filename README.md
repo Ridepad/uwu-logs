@@ -10,6 +10,51 @@ Supports any Wrath of the Lich King (3.3.5) server.
 
 ## Self hosting
 
+### Docker Compose (recommended)
+
+Docker runs the four Python services plus an Nginx reverse proxy, so the whole
+application is available from a single local URL.
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+Open <http://localhost:8080/>.
+
+Useful commands:
+
+```bash
+# Follow all logs
+docker compose logs -f
+
+# Check container/health status
+docker compose ps
+
+# Rebuild from scratch when dependencies change
+docker compose build --no-cache
+docker compose up -d
+
+# Stop the stack
+docker compose down
+```
+
+The source tree is bind-mounted at `/app`, which means local code changes and
+generated log/database/upload data are shared with all services and survive
+container recreation. The public port can be changed with `UWU_HTTP_PORT` in
+`.env`.
+
+The upload service intentionally stays at one Uvicorn worker because its chunk
+and progress state is held in process memory. For the main service, increase
+`UWU_MAIN_THREADS` before increasing `UWU_MAIN_WORKERS`, because opened reports
+are also cached in process memory.
+
+If Docker Desktop itself does not have enough RAM/CPU, increase the Docker
+Desktop VM resources in Docker Desktop settings. Compose can limit container
+resources, but it cannot increase the memory assigned to the Docker engine.
+
+### Python directly
+
 - Install packages from `requirements.txt`
 
 - Run `python Z_SERVER.py` OR `gunicorn3 Z_SERVER:SERVER --port 5000 -D`
