@@ -146,32 +146,80 @@ function update_row(row, data) {
   cell.insertBefore(passthrudiv, cell.children[0]);
 }
 function table_add_new_data(data) {
-  const max_v = Math.max(...Object.values(data).map(d => d.top100[KEY_DPS]));
-  CONFIG.max_dps_value = Math.ceil((max_v+500)/1000)*1000;
-  CONFIG.dps_jump = Math.ceil(CONFIG.max_dps_value / 20000) * 1000;
+  const rows = Array.from(TBODY_STATS.querySelectorAll("tr"));
+  const values = Object.values(data || {});
+
+  // Fresh local indexes often have zero or only a few samples. Do not let an
+  // empty API response produce -Infinity/NaN chart math or leave stale bars.
+  if (!values.length) {
+    remove_children(CHART_TIMELINE);
+    rows.forEach(row => update_row(row, undefined));
+    return false;
+  }
+
+  const max_v = Math.max(...values.map(d => d.top100[KEY_DPS]));
+  CONFIG.max_dps_value = Math.max(1000, Math.ceil((max_v+500)/1000)*1000);
+  CONFIG.dps_jump = Math.max(1000, Math.ceil(CONFIG.max_dps_value / 20000) * 1000);
   
   new_dps_columns();
   
-  const rows = Array.from(TBODY_STATS.querySelectorAll("tr"));
   for (const tr of rows) {
     update_row(tr, data[tr.id]);
   }
 
   rows.sort(rows_sort_func("data-sort")).forEach(row => TBODY_STATS.appendChild(row));
+  return true;
 }
 
+
+function api_error_message() {
+  try {
+    const body = JSON.parse(xrequest.responseText);
+    if (Array.isArray(body.detail)) {
+      return body.detail.map(item => item.msg || JSON.stringify(item)).join("; ");
+    }
+    return body.detail || body.message || `HTTP ${xrequest.status}`;
+  } catch (_) {
+    return xrequest.responseText || `HTTP ${xrequest.status}`;
+  }
+}
 
 xrequest.onreadystatechange = () => {
   if (xrequest.readyState != 4) {
     BUTTON_SUBMIT.textContent = "Loading";
     return;
   }
-  if (xrequest.status != 200) return;
-  BUTTON_SUBMIT.textContent = "Submit";
-  const data = JSON.parse(xrequest.response);
-  const query = make_query();
-  CACHE[query] = data;
-  table_add_new_data(data);
+
+  if (xrequest.status != 200) {
+    BUTTON_SUBMIT.textContent = "Retry";
+    console.error(`PVE stats request failed (${xrequest.status}):`, api_error_message());
+    return;
+  }
+
+  let data;
+  try {
+    data = JSON.parse(xrequest.responseText);
+  } catch (error) {
+    BUTTON_SUBMIT.textContent = "Retry";
+    console.error("PVE stats returned invalid JSON:", error);
+    return;
+  }
+
+  if (!data || Array.isArray(data) || typeof data !== "object") {
+    BUTTON_SUBMIT.textContent = "Retry";
+    console.error("PVE stats returned an unexpected payload:", data);
+    return;
+  }
+
+  const hasData = table_add_new_data(data);
+  BUTTON_SUBMIT.textContent = hasData ? "Submit" : "No data - retry";
+
+  // Cache real datasets only. An empty response can be temporary while the
+  // local indexer creates the encounter table, so allow the next click to retry.
+  if (hasData) {
+    const query = make_query();
+    CACHE[query] = data;
+  }
 }
 
 function query_server(query) {

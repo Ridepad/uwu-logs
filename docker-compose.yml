@@ -67,7 +67,7 @@ services:
         - CMD
         - python
         - -c
-        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5010/upload', timeout=5).read(1)"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5010/health', timeout=5).read(1)"
       interval: 10s
       timeout: 6s
       retries: 10
@@ -100,6 +100,41 @@ services:
       retries: 10
       start_period: 10s
 
+    environment:
+      UWU_PVE_STATS_MIN_SAMPLES: ${UWU_PVE_STATS_MIN_SAMPLES:-1}
+  ladder:
+    <<: *uwu-common
+    command:
+      - uvicorn
+      - server_ladder:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5040"
+      - --workers
+      - "1"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UWU_LADDER_DEFAULT_SIZE: ${UWU_LADDER_DEFAULT_SIZE:-25}
+      UWU_LADDER_DEFAULT_MODE: ${UWU_LADDER_DEFAULT_MODE:-1}
+      UWU_LADDER_MAX_HISTORY: ${UWU_LADDER_MAX_HISTORY:-250}
+      UWU_LADDER_POLL_SECONDS: ${UWU_LADDER_POLL_SECONDS:-3}
+    expose:
+      - "5040"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5040/health', timeout=5).read(1)"
+      interval: 10s
+      timeout: 6s
+      retries: 10
+      start_period: 10s
+
   gear:
     <<: *uwu-common
     command:
@@ -127,6 +162,19 @@ services:
       retries: 10
       start_period: 10s
 
+
+  indexer:
+    <<: *uwu-common
+    # The upstream project expects logs_auto.py to run from cron. For local
+    # Docker self-hosting keep the Top database synchronized automatically.
+    command:
+      - sh
+      - -lc
+      - 'while true; do python logs_auto.py --debug; sleep "$${UWU_INDEXER_INTERVAL:-3}"; done'
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UWU_INDEXER_INTERVAL: ${UWU_INDEXER_INTERVAL:-3}
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -138,6 +186,8 @@ services:
       top:
         condition: service_healthy
       gear:
+        condition: service_healthy
+      ladder:
         condition: service_healthy
     ports:
       - "${UWU_HTTP_PORT:-8080}:80"

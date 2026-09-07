@@ -73,8 +73,9 @@ resources, but it cannot increase the memory assigned to the Docker engine.
 ##### Download spells/classes icons pack
 
 - [Google Drive download](https://drive.google.com/file/d/17DyiCJts01CkFIkd0-G1dVAypIlxd0pP)
-
-- Extract to root folder.
+- Preferred layout: `static/icons/*.jpg`.
+- UwU Logs also accepts packs nested as `static/icons/static/icons/*.jpg`, so a large pack already copied that way does not need to be moved.
+- Verify the installed pack with `python scripts/check_icon_pack.py`.
 
 ## Showcase
 
@@ -124,3 +125,41 @@ resources, but it cannot increase the memory assigned to the Docker engine.
 
 - add summary stats like max hit done max hit taken max absorb max grabs
 - 1 tick total - all targets dmg from 1 hurricane tick or typhoon
+
+### Comprehensive local smoke-test log
+
+Generate a synthetic WotLK 3.3.5 archive that exercises all ten classes plus
+multiple bosses, damage/healing, auras, casts, misses, powers, pet ownership,
+a death/resurrection, interrupts/dispels and environmental damage:
+
+```bash
+python scripts/generate_comprehensive_test_log.py
+```
+
+Upload `test-data/uwu-comprehensive-test-combatlog.zip` from `/upload`.
+
+### Local Ladder WebSocket
+
+The upstream `static/ladder.js` expects a separate production WebSocket on
+port `8765`, but that WebSocket server is not included in the public
+repository. The Docker self-host setup provides `server_ladder.py` instead and
+proxies it through the same site origin at `/ws/ladder`.
+
+The local Ladder reads processed reports from `LogsDir`, sends them as completed
+encounters when a browser connects, and polls for newly processed reports. This
+makes `/ladder` useful without an external private service.
+
+Optional `.env` settings:
+
+```env
+UWU_LADDER_DEFAULT_SIZE=25
+UWU_LADDER_DEFAULT_MODE=1
+UWU_LADDER_MAX_HISTORY=250
+UWU_LADDER_POLL_SECONDS=3
+```
+
+After applying the patch, rebuild/start the new service with:
+
+```bash
+docker compose up -d --build ladder nginx
+```

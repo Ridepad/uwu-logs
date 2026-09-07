@@ -1,5 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
+import os
+import sqlite3
 
 import numpy
 from pydantic import BaseModel, field_validator
@@ -7,12 +9,13 @@ from pydantic import BaseModel, field_validator
 from api_top_db_v2 import TopDBCached
 from c_bosses import ALL_FIGHT_NAMES
 from c_server_phase import Encounter
-from c_path import Directories
 from c_player_classes import SPECS_LIST
 from h_debug import running_time
+from h_server_fix import get_servers
 
 
 IGNORED_SPECS = set([*range(0, 40, 4), 7, 17, 18, 21, 22, 31, 39])
+PVE_STATS_MIN_SAMPLES = max(1, int(os.getenv("UWU_PVE_STATS_MIN_SAMPLES", "5")))
 SPECS_DATA_NOT_IGNORED = [
     spec_data
     for spec_data in SPECS_LIST
@@ -52,7 +55,7 @@ def convert_boss_data(data: dict[int, list[float]]):
     for spec_index, values in data.items():
         if spec_index in IGNORED_SPECS:
             continue
-        if len(values) < 5:
+        if len(values) < PVE_STATS_MIN_SAMPLES:
             continue
         
         data_s = numpy.fromiter(values, dtype=numpy.float64)
@@ -84,7 +87,10 @@ class PveStatsValidation(BaseModel):
     @field_validator('server')
     @classmethod
     def validate_server(cls, server: str):
-        servers = Directories.top.files_stems()
+        # The UI server list also includes configured servers before their Top DB
+        # has been created. Validate against the same source as the page itself so
+        # self-hosted installs do not return 422 while the indexer is catching up.
+        servers = get_servers()
         if server not in servers:
             _list = ', '.join(servers)
             raise ValueError(f"[server] value value must be from [{_list}]")
@@ -129,7 +135,14 @@ class PveStats(TopDBCached):
 
     def _renew_data(self):
         query = self.encounter.query_stats()
-        rows_generator = self.cursor.execute(query)
+        try:
+            rows_generator = self.cursor.execute(query)
+        except sqlite3.OperationalError as exc:
+            # A fresh self-host may have the server DB but not this encounter table
+            # yet. Treat that as "no indexed data" rather than a 500.
+            if "no such table" in str(exc).lower():
+                return {}
+            raise
 
         data = defaultdict(list)
         for spec, dps in rows_generator:

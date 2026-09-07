@@ -10,7 +10,7 @@ from api_top_db_v2 import (
     TopDB,
     TopDBCached,
 )
-from c_path import Directories
+from h_server_fix import get_servers
 from c_server_phase import get_server_phase
 from h_debug import running_time
 from h_other import sort_dict_by_value
@@ -346,7 +346,7 @@ class PointsValidation(BaseModel):
     @field_validator('server')
     @classmethod
     def validate_server(cls, server: str):
-        servers = Directories.top.files_stems()
+        servers = get_servers()
         if server not in servers:
             _list = ', '.join(servers)
             raise ValueError(f"[server] value value must be from [{_list}]")

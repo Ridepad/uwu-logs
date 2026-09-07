@@ -4,7 +4,7 @@ import {
   SPECS,
   SPECS_SELECT_OPTIONS,
   MONTHS,
-} from "./constants.js?v=240909-1";
+} from "./constants.js?v=260907-2";
 
 console.time("aura_icons fetch");
 const AURAS_ICONS = await fetch("/static/aura_icons.json").then(response => response.json());
@@ -208,7 +208,7 @@ function heroic_toggled() {
   return has_heroic() && CHECKBOX_DIFFICULTY.checked;
 }
 function points_selected() {
-  return SELECT_RAID.value == "Points";
+  return SELECT_BOSS.value == "Points";
 }
 function speedrun_selected() {
   return SELECT_RAID.value == "Speedrun";
@@ -368,7 +368,7 @@ function cell_date(report_ID) {
 
   const a = document.createElement('a');
   const boss = SELECT_BOSS.value.toLowerCase().replaceAll(" ", "-").replaceAll("'", "");
-  const link_root = `/reports/${report_ID}--${SELECT_SERVER.value}`;
+  const link_root = `/reports/${encodeURIComponent(`${report_ID}--${SELECT_SERVER.value}`)}/`;
   const link_query = `?boss=${boss}&mode=${selected_difficuty()}&attempt=kill`;
   a.href = `${link_root}/${link_query}`;
   a.target = "_blank";
@@ -544,7 +544,9 @@ function table_new_row_speedrun(data) {
 
 
 function update_progress_bar(done, total, network) {
-  const percent = Math.round(done / total * 100);
+  done = Number.isFinite(Number(done)) ? Number(done) : 0;
+  total = Number.isFinite(Number(total)) && Number(total) > 0 ? Number(total) : Math.max(done, 1);
+  const percent = Math.max(0, Math.min(100, Math.round(done / total * 100)));
   if (network) {
     done = `${(done / 1024).toFixed(1)}k`;
     total = `${(total / 1024).toFixed(1)}k`;
@@ -668,35 +670,52 @@ const TopRequest = new class extends XMLHttpRequest {
     update_progress_bar(e.loaded, contentLength, true);
   }
   _get_full_length() {
-    return parseInt(this.getResponseHeader('Content-Length-Full'));
+    const value = parseInt(this.getResponseHeader('Content-Length-Full'));
+    return Number.isFinite(value) && value > 0 ? value : 1;
   }
   _onload() {
     console.timeEnd("TopRequest | Response");
     LOADING_INFO_PANEL.style.display = "none";
 
-    if (this.status == 500) this.show_error("Server error!"); 
-  
-    const not_json = this.getResponseHeader("content-type") != "application/json";
-    if (not_json) return this.show_error("Server error!");
-  
-    const data_parsed = this.response_json();
+    const contentType = (this.getResponseHeader("content-type") || "").toLowerCase();
+    if (!contentType.includes("application/json")) {
+      return this.show_error(`Server error (${this.status || "network"})`);
+    }
+
+    let data_parsed;
+    try {
+      data_parsed = this.response_json();
+    } catch (error) {
+      return this.show_error(`Invalid server response (${this.status})`);
+    }
+
+    if (this.status < 200 || this.status >= 300) {
+      const detail = data_parsed?.detail;
+      const error_msg = Array.isArray(detail)
+        ? detail.map(item => item?.msg || JSON.stringify(item)).join("; ")
+        : (detail || `Request failed (${this.status})`);
+      return this.show_error(error_msg);
+    }
+
+    if (!Array.isArray(data_parsed)) {
+      return this.show_error("Unexpected ranking response format");
+    }
+
     const current_query = make_query();
-    
-    if (data_parsed.length != 0) {
-      if (current_query != this.current_query) return;
+    if (current_query != this.current_query) return;
+
+    if (data_parsed.length > 0) {
       REQUESTS_CACHE[current_query] = data_parsed;
       table_add_new_data_wrap(data_parsed);
       return;
     }
-  
+
     REQUESTS_CACHE[current_query] = [];
-  
-    try {
-      const error_msg = data_parsed.detail[0].msg;
-      return this.show_error(error_msg); 
-    } catch (error) {
-      return this.show_no_data();
+    const indexState = this.getResponseHeader("X-UwU-Index-State");
+    if (indexState === "pending") {
+      return this.show_no_data("Ranking index is being built. Refresh in a few seconds.");
     }
+    return this.show_no_data();
   }
   response_json() {
     console.time("TopRequest | JSONparse");
@@ -704,7 +723,9 @@ const TopRequest = new class extends XMLHttpRequest {
     console.timeEnd("TopRequest | JSONparse");
     return data_parsed;
   }
-  show_no_data() {
+  show_no_data(message = "No data") {
+    const text = SECTION_NO_DATA.querySelector("p");
+    if (text) text.textContent = message;
     SECTION_NO_DATA.style.removeProperty("display");
   }
   show_error(error) {

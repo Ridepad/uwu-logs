@@ -14,6 +14,7 @@ from logs_upload import (
     CurrentUploads,
     LogsArchive,
     UploadChunk,
+    LOGGER_UPLOADS,
 )
 
 app = FastAPI()
@@ -63,14 +64,19 @@ def get_servers(folder):
     servers = s - set(SERVERS.values())
     return sorted(servers)
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok"}
+
+
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_get(request: Request):
     return TEMPLATES.TemplateResponse(
-        "upload.html",
+        request=request,
+        name="upload.html",
         context={
-            "request": request,
             "SERVERS": get_servers(),
-        }
+        },
     )
 
 @app.post("/upload")
@@ -121,10 +127,23 @@ async def upload_progress(request: Request, response: Response):
         response.status_code = status.HTTP_204_NO_CONTENT
         return
         
-    if not uploads_progress.thread.is_alive():
-        del CURRENT_UPLOADS_PROGRESS[ip]
+    # Build the response before removing the completed upload from memory.
+    # The old order deleted the only progress object first, so any exception
+    # while serializing status turned into a one-off HTTP 500 and the next poll
+    # returned 204, making the original parser error impossible to diagnose.
+    try:
+        progress = uploads_progress.status_dict
+    except Exception as exc:
+        LOGGER_UPLOADS.exception("upload_progress status serialization failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Upload progress failed: {type(exc).__name__}: {exc}",
+        ) from exc
 
-    return uploads_progress.status_dict
+    if not uploads_progress.thread.is_alive():
+        CURRENT_UPLOADS_PROGRESS.pop(ip, None)
+
+    return progress
 
 
 if __name__ == "__main__":

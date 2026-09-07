@@ -17,7 +17,7 @@ from api_top_db_v2 import (
     SORT_REVERSED,
 )
 from c_bosses import ALL_FIGHT_NAMES
-from c_path import Directories
+from h_server_fix import get_servers
 from h_debug import running_time
 
 
@@ -106,7 +106,7 @@ class TopValidation(BaseModel):
     @field_validator("server")
     @classmethod
     def validate_server(cls, server: str):
-        servers = Directories.top.files_stems()
+        servers = get_servers()
         if server not in servers:
             _list = ", ".join(servers)
             raise ValueError(f"[server] value value must be from [{_list}]")

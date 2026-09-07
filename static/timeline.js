@@ -760,7 +760,7 @@ class Character {
     report_link_wrap.className = "char-report-id";
     const report_link = document.createElement("a");
     report_link.target = "_blank";
-    report_link.href = `/reports/${this.REPORT_ID}`;
+    report_link.href = `/reports/${encodeURIComponent(this.REPORT_ID)}/`;
     report_link.textContent = this.REPORT_ID;
     report_link_wrap.appendChild(report_link)
 
