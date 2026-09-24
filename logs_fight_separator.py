@@ -1,3 +1,6 @@
+import numpy
+
+import logs_columnar
 import logs_core
 from c_bosses import (
     BOSSES_GUIDS,
@@ -372,8 +375,112 @@ class Fights(logs_core.Logs):
         groupped_boss_lines = self._dump_all_boss_lines()
         return groupped_boss_lines.segments_dict()
 
+    def _dump_all_boss_lines_columns(self):
+        """
+        `_dump_all_boss_lines` off the columns, or None when the loop below has
+        to run.
+
+        Every filter in that loop is a membership test against a small constant
+        set, so each becomes a bool lookup indexed by a column. `other` is the
+        raw remainder of the line from the spell name on, which
+        `get_more_precise_start/end` need; it is a join of the tail columns.
+        """
+        LOGS = self.LOGS
+        if not hasattr(LOGS, "block_ranges"):
+            return None
+
+        # 'xF' is tested against the whole line, so it has to be provably
+        # confined to the guid columns before it can become a lookup
+        events, guids, guid_names, spells, strings, names = LOGS.dicts()
+        elsewhere = (
+            events, guid_names, strings, names,
+            [name for _, name in spells],
+        )
+        if any('xF' in value for dictionary in elsewhere for value in dictionary):
+            return None
+
+        NIL = "nil"
+        guid_has_xf = numpy.array(['xF' in guid for guid in guids], dtype=bool)
+        boss_guid = numpy.array(
+            [guid[6:-6] in BOSSES_GUIDS_ALL for guid in guids], dtype=bool
+        )
+        flag_ok = numpy.array([event in FLAGS for event in events], dtype=bool)
+        unit_died = numpy.array([event == "UNIT_DIED" for event in events], dtype=bool)
+        spell_ignored = numpy.array(
+            [spell_id in IGNORED_SPELL_IDS for spell_id, _ in spells], dtype=bool
+        )
+        spell_some_boss = numpy.array(
+            [spell_id in SOME_BOSS_SPELLS for spell_id, _ in spells], dtype=bool
+        )
+
+        BOSSES = BossLinesGroupped(year=self.year)
+
+        for block, lo, hi in LOGS.block_ranges():
+            ev = block.ev[lo:hi]
+            sguid = block.sguid[lo:hi]
+            tguid = block.tguid[lo:hi]
+            spell = block.spell[lo:hi]
+
+            died = unit_died[ev]
+            target_is_boss = boss_guid[tguid]
+            keep = flag_ok[ev]
+            keep &= guid_has_xf[sguid] | guid_has_xf[tguid]
+            keep &= numpy.where(
+                died,
+                target_is_boss,
+                ~spell_ignored[spell] & (target_is_boss | spell_some_boss[spell]),
+            )
+
+            local = numpy.flatnonzero(keep)
+            if not len(local):
+                continue
+            # `local` indexes the [lo:hi] views above, `rows` the whole block
+            rows = local + lo
+
+            arity = block.arity[rows].tolist()
+            tail = [column[rows].tolist() for column in block.tail]
+            ms = (block.ts[rows] + block.ms_base).tolist()
+            ev_rows = ev[local].tolist()
+            sguid_rows = sguid[local].tolist()
+            tguid_rows = tguid[local].tolist()
+            spell_rows = spell[local].tolist()
+            died_rows = died[local].tolist()
+            boss_rows = target_is_boss[local].tolist()
+
+            for i, row in enumerate((rows + block.global_start_row).tolist()):
+                sGUID = guids[sguid_rows[i]]
+                tGUID = guids[tguid_rows[i]]
+                guid_id = tGUID[6:-6]
+
+                if died_rows[i]:
+                    spell_id = other = NIL
+                else:
+                    spell_id, spell_name = spells[spell_rows[i]]
+                    fields = [spell_name]
+                    for column in tail[:arity[i]]:
+                        value = column[i]
+                        fields.append(
+                            str(value) if value >= 0 else strings[-value - 1]
+                        )
+                    other = ",".join(fields)
+                    if not boss_rows[i]:
+                        guid_id = sGUID[6:-6]
+
+                guid_id = MULTIBOSSES_MAIN.get(guid_id, guid_id)
+                BOSSES[guid_id].append((
+                    row,
+                    logs_columnar.ms_to_timestamp_str(ms[i]),
+                    events[ev_rows[i]], sGUID, tGUID, spell_id, other,
+                ))
+
+        return BOSSES
+
     @running_time
     def _dump_all_boss_lines(self):
+        columns = self._dump_all_boss_lines_columns()
+        if columns is not None:
+            return columns
+
         NIL = "nil"
         BOSSES = BossLinesGroupped(year=self.year)
         

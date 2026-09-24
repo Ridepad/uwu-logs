@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import logs_columnar
 from c_path import Directories, FileNames
 from h_debug import running_time, setup_logger
 from h_other import get_report_name_info
@@ -132,4 +133,8 @@ class Logs:
             report_dir.copy_from_backup()
             self.__path = report_dir
         
+        logs_bin = self.relative_path(FileNames.logs_cut_bin)
+        if logs_bin.is_file():
+            return logs_columnar.LogsView(logs_columnar.decode(logs_bin.read_bytes()))
+
         return self.relative_path(FileNames.logs_cut).zstd_read().splitlines()

@@ -29,6 +29,10 @@ class Timestamps(logs_core.Logs):
         return timestamps
     
     def _new_timestamps(self):
+        offsets = getattr(self.LOGS, "second_offsets", None)
+        if offsets is not None:
+            return offsets()
+
         times: list[int] = []
         first_line = self.LOGS[0]
         i = first_line.index('.')

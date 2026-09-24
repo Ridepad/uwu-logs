@@ -11,8 +11,10 @@ from time import perf_counter, sleep
 
 import api_7z
 import h_server_fix
+import logs_columnar
 import logs_fix
 from constants import (
+    LOGS_CUT_BIN_NAME,
     DEFAULT_SERVER_NAME,
     LOGS_CUT_NAME,
     SERVERS,
@@ -665,27 +667,38 @@ class LogsArchiveParser(api_7z.SevenZipArchive):
     def save_zstd(self, logs_slice: LogsSlice):
         raid_id = logs_slice.id
         self.change_slice_status("Formatting", raid_id)
-        
+
         pc = perf_counter()
 
         path_slice_txt = self.upload_data.directory / f"{raid_id}.txt"
         fixed_rows_gen = logs_fix.normalize_read_from_file(path_slice_txt)
-        data = b'\n'.join(fixed_rows_gen)
 
         path_slice_zstd_temp = self.upload_data.directory / f"{raid_id}.zstd"
-        path_slice_zstd_temp.zstd_write(data)
+        path_slice_zstd_temp.zstd_write(logs_fix.NEW_LINE.join(fixed_rows_gen))
 
-        path_slice_zstd = Directories.logs / raid_id / LOGS_CUT_NAME
-        if self.forced and path_slice_zstd.parent.is_dir():
-            nuke_folder(path_slice_zstd.parent)
-        
-        for _ in range(3):
-            try:
-                path_slice_zstd.parent.mkdir(parents=True, exist_ok=True)
-                path_slice_zstd_temp.rename(path_slice_zstd)
-                break
-            except FileNotFoundError:
-                continue
+        # written next to the text form during the rollout, so a rollback
+        # needs no re-ingest; re-read rather than keep a second copy in memory
+        path_slice_bin_temp = self.upload_data.directory / f"{raid_id}.bin"
+        rows = path_slice_zstd_temp.zstd_read_bytes().split(logs_fix.NEW_LINE)
+        path_slice_bin_temp.write_bytes(
+            logs_columnar.encode(row for row in rows if row)
+        )
+
+        report_dir = Directories.logs / raid_id
+        if self.forced and report_dir.is_dir():
+            nuke_folder(report_dir)
+
+        for temp_path, final_name in (
+            (path_slice_zstd_temp, LOGS_CUT_NAME),
+            (path_slice_bin_temp, LOGS_CUT_BIN_NAME),
+        ):
+            for _ in range(3):
+                try:
+                    report_dir.mkdir(parents=True, exist_ok=True)
+                    temp_path.replace(report_dir / final_name)
+                    break
+                except FileNotFoundError:
+                    continue
 
         self.change_slice_status("Saved zstd", raid_id, pc=pc)
 

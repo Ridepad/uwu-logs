@@ -1,6 +1,9 @@
 from collections import defaultdict
 
+import numpy
+
 import logs_base
+import logs_columnar
 from h_debug import running_time
 from h_other import sort_dict_by_value
 
@@ -316,20 +319,59 @@ class AuraLinesByTarget(dict[str, AuraLinesSources]):
     
     @running_time
     def __init__(self, logs_slice: list[str]):
-        for line in logs_slice:
-            if "SPELL_A" not in line:
-                continue
-            _line = line.split(',', 7)
-            if _line[6] not in SPELLS:
+        if not self._fill_from_columns(logs_slice):
+            for line in logs_slice:
+                if "SPELL_A" not in line:
+                    continue
+                _line = line.split(',', 7)
+                if _line[6] not in SPELLS:
+                    continue
+
+                # if _line[6] == "16886":
+                #     print(line)
+
+                spell_id = MULTISPELLS_D.get(_line[6], _line[6])
+                self[_line[4]][spell_id].append(AuraLine(*_line[:2]))
+
+        self._add_missing_events(logs_slice)
+
+    def _fill_from_columns(self, logs_slice):
+        # False leaves it to the loop above. The two filters collapse into one
+        # mask over the event and spell columns, so only the few surviving
+        # rows are looked at and only their timestamps are formatted.
+        try:
+            event_hit = logs_slice.substring_lookup("SPELL_A")
+        except AttributeError:
+            return False
+        if event_hit is None:
+            return False
+
+        events, guids, _, spells, *_ = logs_slice.dicts()
+        spell_hit = numpy.array(
+            [spell_id in SPELLS for spell_id, _ in spells], dtype=bool
+        )
+
+        for block, lo, hi in logs_slice.block_ranges():
+            mask = event_hit[block.ev[lo:hi]]
+            mask &= spell_hit[block.spell[lo:hi]]
+            rows = numpy.flatnonzero(mask) + lo
+            if not len(rows):
                 continue
 
-            # if _line[6] == "16886":
-            #     print(line)
-            
-            spell_id = MULTISPELLS_D.get(_line[6], _line[6])
-            self[_line[4]][spell_id].append(AuraLine(*_line[:2]))
-        
-        self._add_missing_events(logs_slice)
+            ms = (block.ts[rows] + block.ms_base).tolist()
+            ev_rows = block.ev[rows].tolist()
+            tguid_rows = block.tguid[rows].tolist()
+            spell_rows = block.spell[rows].tolist()
+
+            for i in range(len(rows)):
+                spell_id = spells[spell_rows[i]][0]
+                spell_id = MULTISPELLS_D.get(spell_id, spell_id)
+                self[guids[tguid_rows[i]]][spell_id].append(AuraLine(
+                    logs_columnar.ms_to_timestamp_str(ms[i]),
+                    events[ev_rows[i]],
+                ))
+
+        return True
 
     def _add_missing_events(self, logs_slice: list[str]):
         first_timestamp = logs_slice[0].split(',', 1)[0]

@@ -46,6 +46,7 @@ class FileNames(StrEnum):
     config_phase = "server_phases.json"
     config_server_main = "servers_main.json"
 
+    logs_cut_bin = "LOGS_CUT.bin"
     logs_cut = "LOGS_CUT.zstd"
     logs_cut_old = "LOGS_CUT.zlib"
     logs_top = "top.json"
@@ -163,9 +164,10 @@ class _PathExtFiles(_PathExt):
         self.write_bytes(data)
 
     def zstd_read(self):
-        data = self.read_bytes()
-        data = zstd.decompress(data)
-        return data.decode()
+        return self.zstd_read_bytes().decode()
+
+    def zstd_read_bytes(self):
+        return zstd.decompress(self.read_bytes())
 
 
 class _PathExtDirs(_PathExt):

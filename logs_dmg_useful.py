@@ -1,7 +1,10 @@
 from collections import defaultdict
 from typing import TypedDict
 
+import numpy
+
 import logs_base
+import logs_columnar
 from c_bosses import (
     TOC_CHAMPIONS,
     BOSSES_GUIDS,
@@ -606,8 +609,66 @@ class TargetDamageAllType(TypedDict):
 def target_order(boss_name):
     return USEFUL.get(boss_name, {}) | ALL_GUIDS.get(boss_name, {})
 
+def _get_dmg_columns(logs_slice):
+    """
+    `get_dmg` off the columns, or None when the text loop below has to run.
+
+    None means the columns cannot answer exactly: a text backed report, a
+    "DAMAGE" that is not confined to the event dict, or a row whose tail the
+    line based version would have choked on.
+    """
+    try:
+        ev_lookup = logs_slice.substring_lookup("DAMAGE")
+    except AttributeError:
+        return None
+    if ev_lookup is None:
+        return None
+
+    events, guids, *_ = logs_slice.dicts()
+    for i, event in enumerate(events):
+        if event in NOT_DMG:
+            ev_lookup[i] = False
+
+    total = defaultdict(lambda: defaultdict(int))
+    no_overkill = defaultdict(lambda: defaultdict(int))
+    stride = len(guids)
+
+    for block, lo, hi in logs_slice.block_ranges():
+        picked = logs_columnar.selected_rows(
+            block, lo, hi, ev_lookup,
+            (logs_columnar.TAIL_VALUE, logs_columnar.TAIL_OVERKILL),
+        )
+        if picked is None:
+            return None
+        rows, (dmg, overkill) = picked
+        if not len(rows):
+            continue
+
+        # one key per (target, source) pair, so both sums group in one pass
+        keys = block.tguid[rows].astype(numpy.int64) * stride + block.sguid[rows]
+        pairs, (dmg_sum, overkill_sum) = logs_columnar.group_sums(
+            keys, dmg, overkill
+        )
+        for key, _dmg, _overkill in zip(
+            pairs.tolist(), dmg_sum.tolist(), overkill_sum.tolist()
+        ):
+            tguid_i, sguid_i = divmod(key, stride)
+            tGUID_ID = guids[tguid_i][6:-6]
+            source_guid = guids[sguid_i]
+            total[tGUID_ID][source_guid] += _dmg
+            no_overkill[tGUID_ID][source_guid] += _dmg - _overkill
+
+    return {
+        "total": total,
+        "no_overkill": no_overkill,
+    }
+
 @running_time
 def get_dmg(logs_slice: list[str]):
+    columns = _get_dmg_columns(logs_slice)
+    if columns is not None:
+        return columns
+
     total = defaultdict(lambda: defaultdict(int))
     no_overkill = defaultdict(lambda: defaultdict(int))
     for line in logs_slice:

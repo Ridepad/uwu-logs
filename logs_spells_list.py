@@ -195,6 +195,15 @@ class Spells(Logs):
             "0": Spell("0", "Unknown", "0x1"),
             "1": Spell("1", "Melee", "0x1"),
         }
+
+        entries = getattr(self.LOGS, "spell_entries", None)
+        if entries is not None:
+            for spell_id, name, school in entries():
+                if spell_id in spells or not school:
+                    continue
+                spells[spell_id] = Spell(spell_id, name, school)
+            return spells
+
         for line in self.LOGS:
             try:
                 _line = line.split(',', 7)

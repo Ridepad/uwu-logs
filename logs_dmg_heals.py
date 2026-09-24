@@ -1,5 +1,8 @@
 from collections import defaultdict
 
+import numpy
+
+import logs_columnar
 from h_other import is_player, sort_dict_by_value
 from h_debug import Loggers, running_time
 
@@ -94,8 +97,79 @@ def parse_only_heal(logs):
     return parse_data(gen)
 
 
+def _parse_both_columns(logs, players_and_pets: set[str]):
+    """
+    `parse_both` off the columns, or None when the loop below has to run.
+
+    Four grouped sums over the guid columns, nothing rendered. min_arity is 4,
+    not 3, because the text form unpacks the split into twelve names.
+    """
+    try:
+        dmg_lookup = logs.substring_lookup("_DAMAGE")
+        heal_lookup = logs.substring_lookup("_H")
+    except AttributeError:
+        return None
+    if dmg_lookup is None or heal_lookup is None:
+        return None
+    # the text form tests "_H" only after "_DAMAGE" has missed
+    heal_lookup &= ~dmg_lookup
+
+    _, guids, *_ = logs.dicts()
+    is_pet = numpy.array([guid in players_and_pets for guid in guids], dtype=bool)
+
+    DMG: defaultdict[str, int] = defaultdict(int)
+    HEAL: defaultdict[str, int] = defaultdict(int)
+    TAKEN: defaultdict[str, int] = defaultdict(int)
+    HEAL_TOTAL: defaultdict[str, int] = defaultdict(int)
+
+    slots = (logs_columnar.TAIL_VALUE, logs_columnar.TAIL_OVERKILL)
+
+    def accumulate(into: dict, key_column, values):
+        keys, (sums,) = logs_columnar.group_sums(key_column, values)
+        for guid_i, value in zip(keys.tolist(), sums.tolist()):
+            into[guids[guid_i]] += value
+
+    for block, lo, hi in logs.block_ranges():
+        picked = logs_columnar.selected_rows(
+            block, lo, hi, dmg_lookup, slots, min_arity=4
+        )
+        if picked is None:
+            return None
+        rows, (d, _overkill) = picked
+        if len(rows):
+            taken = is_pet[block.tguid[rows]]
+            accumulate(TAKEN, block.tguid[rows][taken], d[taken])
+            accumulate(DMG, block.sguid[rows][~taken], d[~taken])
+
+        picked = logs_columnar.selected_rows(
+            block, lo, hi, heal_lookup, slots, min_arity=4
+        )
+        if picked is None:
+            return None
+        rows, (d, overkill) = picked
+        if len(rows):
+            accumulate(HEAL_TOTAL, block.sguid[rows], d)
+            # the text form compares the fields as strings; both render as
+            # plain decimals, so this is the same test
+            effective = d != overkill
+            accumulate(
+                HEAL, block.sguid[rows][effective],
+                d[effective] - overkill[effective],
+            )
+
+    return {
+        "damage": DMG,
+        "heal": HEAL,
+        "taken": TAKEN,
+        "heal_total": HEAL_TOTAL,
+    }
+
 @running_time
 def parse_both(logs: list[str], players_and_pets: set[str]):
+    columns = _parse_both_columns(logs, players_and_pets)
+    if columns is not None:
+        return columns
+
     DMG: defaultdict[str, int] = defaultdict(int)
     HEAL: defaultdict[str, int] = defaultdict(int)
     TAKEN: defaultdict[str, int] = defaultdict(int)

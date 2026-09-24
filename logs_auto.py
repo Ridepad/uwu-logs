@@ -17,6 +17,7 @@ import api_7z
 import api_top_db_v2
 import logs_calendar
 import logs_top
+import logs_columnar
 from constants import DEFAULT_SERVER_NAME
 from c_path import Directories, FileNames
 from h_debug import Loggers, get_ms_str
@@ -133,6 +134,47 @@ def make_top_data(new_logs: list[str], processes: int=1):
         if not done
     )
 
+def repack_columnar(report_id: str):
+    # upload writes a single block; the pull boundaries only exist once
+    # make_top_data has written ENCOUNTER_DATA.json
+    report_dir = Directories.logs / report_id
+    path_bin = report_dir / FileNames.logs_cut_bin
+    if not path_bin.is_file():
+        return
+
+    encounter_data = report_dir.joinpath(FileNames.logs_encounter_data).json_ignore_error()
+    if not encounter_data:
+        return
+
+    pc = perf_counter()
+    data = path_bin.read_bytes()
+    store = logs_columnar.decode(data)
+    if len(store.blocks) > 1:
+        return
+
+    block_starts = logs_columnar.block_starts_from_encounters(
+        encounter_data, store.row_count
+    )
+    if not block_starts:
+        return
+
+    repacked = logs_columnar.repack(data, block_starts)
+    temp = report_dir / f"{FileNames.logs_cut_bin}.tmp"
+    temp.write_bytes(repacked)
+    temp.replace(path_bin)
+    LOGGER.debug(
+        f'{get_ms_str(pc)} | {report_id:50} | '
+        f'Repacked into {len(block_starts) + 1} blocks | '
+        f'{len(data):,} -> {len(repacked):,}'
+    )
+
+def repack_all_columnar(new_logs: list[str]):
+    for report_id in new_logs:
+        try:
+            repack_columnar(report_id)
+        except Exception:
+            LOGGER.exception(f'{report_id:50} | Repack error')
+
 def add_to_archives(new_logs: list[str], processes: int=1):
     api_7z.SevenZip().download()
 
@@ -173,6 +215,8 @@ def main(multiprocessing=True):
 
     errors = make_top_data(NEW_LOGS, MAX_CPU)
     remove_errors(NEW_LOGS, errors, func="make_top_data")
+
+    repack_all_columnar(NEW_LOGS)
 
     errors = set()
     for server, reports in group_reports_by_server(NEW_LOGS):
